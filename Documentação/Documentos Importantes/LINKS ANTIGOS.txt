@@ -1,0 +1,61 @@
+LINKS ANTIGOS:
+
+
+TUTORIAL MATERIAL LARAVEL: 
+https://www.youtube.com/watch?v=qH7rsZBENJo&list=PLnDvRpP8BnewYKI1n2chQrrR4EYiJKbUG
+
+---------------------------------------------------------------------------------------
+
+LINK JIRA (Antigo)https://ademarteisen2004.atlassian.net/jira/software/projects/ADM2004/boards/2
+
+---------------------------------------------------------------------------------------
+
+GITHUB PROJETO ESCOLA DE TI (Antigo): https://github.com/ADM-448/Escola-Ti-Anjo-nexus/tree/developer
+
+---------------------------------------------------------------------------------------
+
+Docs Projeto escola de TI:
+
+IDEIAS PARA O PROJETO:
+https://docs.google.com/document/d/1lm-HcCZw2Q2OILpIf8QWHF60h8P6nj0zCfEM8R4zko0/edit?tab=t.0
+
+---------------------------------------------------------------------------------------
+
+ELICITAÇÃO DE REQUISITOS:
+https://docs.google.com/document/d/1dVifwWQdbr3x-LJXuH4npJpR9aWtxYdVddM_8YE88XU/edit?tab=t.0
+
+---------------------------------------------------------------------------------------
+
+EXEMPLO DE DOCUMENTO PARA A INSCRIÇÃO NO "ANJO INOVADOR":
+
+https://docs.google.com/document/d/1oYcfNZ1SAvrX_vOTk11BlhwtLcfih419/edit
+
+---------------------------------------------------------------------------------------
+
+DEFINIÇÃO REQUISITOS:
+https://docs.google.com/document/d/1tQngmBdCr0tuvQlpJ4qG5f90ZHYzQ6Ab2Okkf9NTrUg/edit?tab=t.0
+
+---------------------------------------------------------------------------------------
+
+DEFINIÇÃO REGRA DE NEGOCIO:
+https://docs.google.com/document/d/1zM_1O23Se__X0xKTv4qz4c9fv5oof3U4fR3Pf2_uxdQ/edit?usp=sharing
+
+---------------------------------------------------------------------------------------
+
+CASOS DE USO:
+https://docs.google.com/document/d/1j9hOXW-7lp3eITTonCaCnOXfdjbyoLg555iLytKKCkM/edit?usp=sharing
+
+---------------------------------------------------------------------------------------
+
+RASTREABILIDADE ENTRE CASOS DE USO E REQUISITOS: 
+https://docs.google.com/spreadsheets/d/1Z-GGl-TC9XrIYsptSmlmR0G0ej4b8yr-zurNfXSLmW4/edit?usp=sharing
+
+---------------------------------------------------------------------------------------
+
+DIAGRAMA DE CASO E USO:
+https://miro.com/welcomeonboard/aE5JMjZSbEJ6dTZhandiMjFaWkFFbXpzWkgrSk02NUhvVjdOYTdJUmdtRXZmd0FlZnZ6WmpXMXdzdEF4VG9UeTRaRExBZWIyZVU2aCtjUy82OTJ2YnE1d3lObStiajVGOVVLOU5kOGRKbjlOOUpyN3ZGMHdUS1Vlay9JSWhQNmFBd044SHFHaVlWYWk0d3NxeHNmeG9BPT0hdjE=?share_link_id=39636424944
+
+---------------------------------------------------------------------------------------
+
+RESUMO DAS ATIVIDADES:
+https://docs.google.com/document/d/11_zcsuDbzWPtT3mkcSGNLpIVCXmxrpSNNaSPwcQZNvI/edit?usp=sharing
