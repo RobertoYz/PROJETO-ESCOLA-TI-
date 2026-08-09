@@ -1,0 +1,144 @@
+# 📑 Especificação Consolidada de Requisitos - Anjo Nexus
+
+## 🟢 Nível 1: Fundação & Base da Aplicação (Dificuldade Baixa)
+
+### Módulo 1: Autenticação, Gestão de Perfil e LGPD
+* 🟢 RF-01 (Cadastro de Usuário): O sistema deve permitir o cadastro de usuários coletando nome, e-mail e senha.
+* 🟢 RF-02 (Autenticação / Login): O sistema deve permitir que o usuário realize o login na plataforma utilizando e-mail e senha.
+* 🟢 RF-03 (Recuperação de Acesso): O sistema deve permitir a recuperação de senha através do envio de um token/link seguro por e-mail.
+* 🟢 RF-04 (Perfil da Startup / Empresa): O sistema deve permitir que a Startup ou empresa preencha e atualize seu perfil completo com CNPJ, Porte, Área de Atuação, Faturamento, Nível de TRL e Pitch institucional.
+* 🟢 RF-05 (Múltiplas Áreas de Interesse): O usuário/empresa deve poder selecionar e editar múltiplas áreas de interesse tecnológico em seu perfil.
+* 🟢 RF-06 (Barra de Progresso do Perfil): O sistema deve exibir uma barra de progresso no painel indicando o percentual de completude dos dados obrigatórios.
+* 🟢 RF-07 (Conformidade LGPD e Exclusão): O sistema deve excluir dados pessoais ou anonimizá-los totalmente em caso de solicitação de exclusão da conta pelo usuário.
+
+🤔 Dúvidas do Módulo 1 para Definição:
+- Quem cria a conta para as empresas (startups)? O Consultor, a própria Empresa, ou ambos?
+- Quem alimenta os dados do perfil das empresas? A startup em si, a consultoria ou ambos?
+- Coletar os dados dos clientes pelo WhatsApp ainda é uma ideia de requisito que podemos implementar ou não?
+- Vou ter opções de preferências de editais para receber os alertas de compatibilidade? Quais tipos específicos seriam?
+
+### Módulo 2: Busca, Filtros Combinados e Acompanhamento de Editais
+* 🟢 RF-08 (Filtros Avançados de Pesquisa): O sistema deve permitir a filtragem combinada de editais por região, órgão emissor (fonte[]), status e valores.
+* 🟢 RF-09 (Filtro de Orçamentos Explícitos): O sistema deve disponibilizar um filtro exclusivo para selecionar apenas editais com valores/orçamentos explicitamente informados.
+* 🟢 RF-10 (Busca Textual Por Palavra-Chave): O sistema deve permitir a busca textual por palavra-chave filtrando em tempo real nos campos de título ou objetivo.
+* 🟢 RF-11 (Favoritar / Salvar Editais): O sistema deve possuir a funcionalidade de favoritar e salvar editais em uma lista pessoal de acompanhamento.
+
+🤔 Dúvidas do Módulo 2 para Definição:
+- Ao favoritar um edital, ele vai ficar no perfil do consultor ou na página de cada empresa específica?
+- Se a busca for geral (e não específica para cada empresa), na hora de favoritar, eu vou precisar selecionar para *qual* empresa estou favoritando (caso a página de favoritos seja por empresa e não para o consultor)?
+
+### Módulo 3: Painel Administrativo Global
+* 🟢 RF-12 (Dashboard de Métricas Globais): O sistema deve fornecer um Painel Administrativo para os gestores da plataforma com métricas de usuários ativos, editais coletados e volume de propostas geradas. No caso do consultor, também terá o panorama das empresas que ele está atendendo.
+* 🔴 RF-13 (Gestão Manual de Créditos): O sistema deve permitir ao administrador conceder, ajustar ou revogar o saldo de créditos virtuais de usuários manualmente.
+
+🤔 Dúvida do Módulo 3 para Definição:
+- Como o requisito RF-13 está marcado em vermelho, a gestão de créditos manuais como requisito foi totalmente descartada ou haverá outra forma?
+
+## 🟡 Nível 2: Coleta de Dados & Monetização B2B (Dificuldade Média)
+
+### Módulo 4: Motor de Mineração, Scraping e Indexação de Editais
+* 🟢 RF-14 (Web Scraping Automatizado Multi-Fonte): O sistema deve realizar a varredura automática (web scraping) em portais de fomento públicos e privados (ex: FINEP, FAPESC, etc).
+* 🟢 RF-15 (Idempotência e Prevenção de Duplicidade): O sistema deve validar e impedir a duplicidade de editais na base de dados através da geração de uma chave única.
+* 🟢 RF-16 (Extração Estruturada e Sanitização): O sistema deve extrair, limpar e indexar os campos cruciais dos editais (título, órgão emissor, prazos, orçamento, etc).
+* 🟢 RF-17 (Extração Dados por CNPJ): O sistema deve extrair dados das empresas que a consultoria está atendendo, através do CNPJ (dados do cartão CNPJ).
+* 🟢 RF-18 (Extração Dados de Situação/Débitos): O sistema deve extrair dados das empresas que a consultoria está atendendo, como situação e registros de débitos.
+
+🤔 Dúvidas do Módulo 4 para Definição:
+- Se temos notificação de início e fim das inscrições (RF-22 original), não é melhor que o scraping aconteça mais vezes ao dia em vez de uma hora "X"?
+- Para completar os dados do perfil (RF-17 e RF-18), esse scraping vai ser em algum site governamental aberto ou consumindo alguma API paga (ex: API do Serasa)?
+
+### Módulo 5: Planos, Assinaturas e Controle de Créditos
+* 🟢 RF-19 (Modelos de Assinatura): O sistema deve fornecer 2 modelos de plano: com uso de IA embutida na plataforma ou sem uso.
+* 🟢 RF-20 (Minuta Manual): Disponibilizar fluxo de criação manual caso o usuário contrate o plano sem IA.
+* 🟢 RF-21 (Integração com Gateway Mercado Pago): O sistema deve realizar a gestão de assinaturas recorrentes integrando-se à API do Mercado Pago.
+* 🟢 RF-22 (Liberação Instantânea via Webhook): O sistema deve processar confirmações de pagamento via Webhook e liberar acessos instantaneamente.
+* 🟢 RF-23 (Gestão de Créditos Virtuais): O sistema deve manter um controle de créditos virtuais, descontando 1 unidade a cada minuta de proposta gerada pela IA.
+* 🔴 RF-24 (BYOK - Bring Your Own Key): O sistema deve permitir que o usuário cadastre e gerencie sua própria chave de API para evitar consumo interno.
+
+🤔 Dúvidas do Módulo 5 para Definição:
+- Vamos ter um requisito para compra avulsa de mais créditos caso o do cliente acabe?
+- A assinatura é para utilização total do sistema ou só do recurso de IA?
+- Quem vai pagar na plataforma: as empresas (startups) ou o consultor?
+
+### Módulo 6: Gestão da Carteira de Clientes & Pipeline
+* 🟢 RF-25 (Carteira de Startups Clientes): O sistema deve permitir que a consultoria cadastre, edite e gerencie múltiplos perfis de startups sob uma única conta de consultoria.
+* 🟢 RF-26 (Matriz de Match e Elegibilidade Automatizada): O sistema deve cruzar os critérios do edital com o perfil da startup, gerando um Score de Elegibilidade (%) e apontando inconsistências.
+* 🟡 RF-27 (Pipeline Kanban de Oportunidades): O sistema deve disponibilizar um painel Kanban para acompanhamento das etapas por cliente e por edital (Coleta, Elaboração, Submetido, etc).
+
+🤔 Dúvidas do Módulo 6 para Definição:
+- 1 consultor para N startups (ok), mas vai ter N consultores para 1 startup?
+- Quem vai fazer a conexão entre os 2 tipos de perfis na plataforma: a empresa se conecta ao consultor ou o contrário (ou ambos)?
+- Na hora de ver o % de elegibilidade, eu vou selecionar a empresa já dentro do edital, ou na hora de ir buscar os editais eu já seleciono para qual empresa estou buscando?
+- A validade das documentações (RF-42) vai aparecer nessa parte detalhada para cada empresa?
+
+## 🟠 Nível 3: Inteligência Artificial, Prazos & Notificações (Dificuldade Alta)
+
+### Módulo 7: Notificações, Engajamento e Match-Making
+* 🟢 RF-28 (Alerta de Match de Editais): O sistema deve alertar o usuário automaticamente sobre novos editais abertos quando houver compatibilidade com o perfil e áreas cadastradas.
+* 🟢 RF-29 (Notificações Mobile de Atividades): O app mobile deve notificar as atividades realizadas e andamentos dos processos.
+
+🤔 Dúvidas do Módulo 7 para Definição:
+- O "Alerta de compatibilidade" vai ser enviado para quem? Empresa ou Consultor?
+- O disparo vai ser baseado no % de elegibilidade ou nas preferências manuais do perfil?
+- Quais canais de comunicação exatos serão usados (E-mail, WhatsApp, SMS, Push interno)?
+- O alerta mobile de status tem o mesmo problema: quais seriam os "status" exatos definidos?
+- O que *realmente* vai ter no app Mobile para cada tipo de perfil (quais os limites dos requisitos nele)?
+
+### Módulo 8: Gestão de Prazos e Recursos
+* 🟡 RF-30 (Calendário Unificado de Marcos): O sistema deve disponibilizar um calendário unificado com prazos de abertura, submissão, resultados e prestação de contas de todos os clientes.
+* 🟢 RF-31 (Gestão de Fases da Minuta): O sistema deve permitir a gestão da fase da minuta gerada a fim de acompanhar o processo do recurso.
+* 🟢 RF-32 (Notificações Multicanal - WhatsApp e E-mail): O sistema deve disparar alertas automáticos em contagens regressivas críticas (ex: 72h, 24h e 4h antes da inscrição/encerramento).
+
+### Módulo 9: Inteligência Artificial e Geração de Documentos
+* 🟢 RF-33 (Gerador de Minutas de Proposta via IA): O sistema deve gerar uma minuta inicial estruturada com base nas regras do edital e no perfil da startup.
+* 🟢 RF-34 (Edição de Proposta em Tela): O sistema deve disponibilizar um editor de texto interativo em tela para ajustes da proposta gerada.
+* 🟢 RF-35 (Cópia Rápida de Texto): O sistema deve permitir copiar o texto integral da proposta com 1 clique.
+* 🟢 RF-36 (Exportação em Formato .DOCX): O sistema deve exportar a proposta estruturada no formato Word.
+* 🟢 RF-37 (Exportação em Formato .PDF): O sistema deve exportar a proposta estruturada no formato PDF.
+* 🟢 RF-38 (Histórico de Minutas Geradas): O sistema deve salvar no histórico do painel todos os documentos e versões de propostas.
+* 🟢 RF-39 (Auditoria de Criação de Documentos): O sistema deve registrar de forma auditável a data, hora e autor de cada documento criado.
+* 🟢 RF-40 (Listagem de Fit com IA): IA deve gerar listas de editais com maior fit (compatibilidade) para a empresa e justificar os apontamentos.
+
+🤔 Dúvidas do Módulo 9 para Definição:
+- O histórico de minutas vai salvar *somente* o que foi gerado inicialmente pela IA ou também vai salvar cada edição manual feita nela?
+- Cada empresa tem sua página própria de histórico de minutas ou o consultor vai ter uma tela geral só mostrando para qual empresa o doc foi gerado?
+
+## 🔴 Nível 4: Parser OCR, Permissões, White-Label & WebSockets (Dificuldade Muito Alta)
+
+### Módulo 10: Leitura Inteligente de Editais e PDFs
+* 🟢 RF-41 (Extração Automática via OCR/IA): O sistema deve processar anexos e PDFs oficiais dos editais extraindo regras, contrapartidas e cronograma completo.
+* 🟢 RF-42 (Checklist de Documentos Obrigatórios): O sistema deve gerar um checklist automático de certidões e documentos exigidos com controle de validade.
+
+### Módulo 11: Gestão de Equipe e Portal do Cliente
+* 🟢 RF-43 (Controle de Acesso Baseado em Papéis - RBAC): O sistema deve suportar papéis específicos na consultoria (ex: Sócio/Gestor e Consultor/Elaborador) e a visão externa do Cliente.
+* 🟢 RF-44 (Atribuição de Tarefas e Responsáveis): O sistema deve permitir vincular consultores específicos a startups e propostas, atribuindo prazos e tarefas.
+* 🟢 RF-45 (Portal do Cliente / White-Label): O sistema deve fornecer um portal personalizável para a startup visualizar status, enviar certidões e aprovar minutas.
+
+🤔 Dúvidas do Módulo 11 para Definição:
+- O que seriam os nossos "status" exatos que as empresas vão poder ver na sua visão restrita (envio de documentos pendente, aprovação da minuta, envio da inscrição)?
+- O cliente (Startup) vai ter que aprovar as minutas feitas na plataforma, ou o consultor pode simplesmente fazer o processo sem ele aprovar nada via sistema?
+- O que seria a customização visual do Portal do Cliente? A Consultoria altera a logo para a Startup ver, ou a própria Startup altera algo?
+- O que realmente a Startup vai poder fazer logada (quais são os limites de requisito dessa visão)?
+
+### Módulo 12: Comunicação em Tempo Real (WebSockets)
+* 🟢 RF-46 (Streaming de Minutas via WebSocket): O sistema deve transmitir a minuta de proposta gerada pela IA em tempo real para a interface (efeito de digitação ao vivo).
+* 🟢 RF-47 (Sincronização do Kanban em Tempo Real): O sistema deve atualizar a posição dos cards e o status das propostas no painel Kanban instantaneamente para todos logados.
+
+---
+
+## ⚙️ Requisitos Não-Funcionais (RNF)
+
+### Desempenho, Arquitetura e Escala
+ RNF-01 (Performance Web) A listagem de editais e carregamento de painéis deve ser concluída e renderizada no navegador em no máximo 5 segundos.
+ RNF-02 (Caching de Requisições de IA) O sistema deve implementar rotinas de Cache nas chamadas às APIs de IA (GeminiOpenAI), impedindo cobranças duplicadas de créditos e lentidão por reenvio acidental durante a geração.
+ RNF-03 (Stack Tecnológica Core) O backend deve ser desenvolvido em PHP 8.2+ com o framework Laravel 11 e renderização de visões em Blade ou API REST padronizada.
+ RNF-04 (Comunicação em Tempo Real via WebSockets) A arquitetura deve integrar WebSockets (ex Laravel Reverb) para suportar notificações instantâneas de status e atualizações de IA na interface.
+ RNF-05 (Processamento Assíncrono de Pagamentos via Webhooks) O processamento de pagamentos do Mercado Pago deve ocorrer de forma assíncrona via Webhooks com confirmação segura e idempotente.
+ RNF-06 (Design Responsivo MobileDesktop) O layout deve ser adaptável e funcional em telas de dispositivos móveis (smartphones, tablets) e desktops.
+ RNF-07 (Isolamento Multi-Tenant e Segregação de Dados) O sistema deve garantir rigoroso isolamento dos dados (Multitenancy), assegurando que minutas, orçamentos e dados financeiros de uma empresaconsultoria jamais sejam acessíveis por terceiros.
+ RNF-08 (Proteção de Rotas via Middlewares) Todas as rotas protegidas da aplicação devem ser blindadas por Middlewares de autenticação e autorização (RBAC).
+ RNF-09 (Processamento Assíncrono de PDFs e Filas) A extração e leitura de regulamentos e anexos de editais em PDF deve ser processada em background via Laravel Queues  Redis sem bloquear a navegação.
+ RNF-10 (Isolamento de Segredo Industrial e LGPD entre Clientes) O sistema deve garantir que dados de inovaçãopatentes da Startup A não vazem nem alimentem a memória de geração de propostas da Startup B.
+ RNF-11 (Trilha de Auditoria Completa - Audit Trail) O sistema deve registrar em logs auditáveis todas as ações críticas (alterações de propostas, uploads, downloads, trocas de status) com usuário, IP e timestamp.
+ RNF-12 (Integrabilidade via API  Webhooks para CRMs) O sistema deve disponibilizar endpoints e webhooks para integração com sistemas de CRM (ex HubSpot, Pipedrive).
+ RNF-13 (Exportação Formatada em .DOCX) Os documentos gerados pela IA e exportados em Word (`.docx`) devem manter formatação profissional pré-configurada (estilos ABNT, títulos, tabelas e cabeçalhos).
