@@ -1,10 +1,41 @@
+# 📑 Especificação Consolidada de Requisitos - Radar de Editais B2B & Consultorias
+
+Este documento organiza **todos os Requisitos Funcionais (RF-01 a RF-46)** e **Requisitos Não-Funcionais (RNF-01 a RNF-13)** do sistema **Radar de Editais** em um fluxo **linear e ordenado por nível de dificuldade técnica de implementação** (da fundação básica até os recursos avançados de IA e WebSockets em tempo real).
+
+---
+
+## 🗺️ Roteiro Linear de Desenvolvimento (Roadmap por Dificuldade)
+
+```
+🟢 Nível 1: Fundação & Base da Aplicação (Dificuldade Baixa)
+ ├── Módulo 1: Autenticação, Gestão de Perfil e LGPD
+ ├── Módulo 2: Busca, Filtros Combinados e Acompanhamento de Editais
+ └── Módulo 3: Painel Administrativo Global
+
+🟡 Nível 2: Coleta de Dados & Monetização B2B (Dificuldade Média)
+ ├── Módulo 4: Motor de Mineração, Scraping e Indexação de Editais
+ ├── Módulo 5: Planos, Assinaturas e Controle de Créditos
+ └── Módulo 6: Gestão da Carteira de Clientes & Pipeline (Multi-Startup)
+
+🟠 Nível 3: Inteligência Artificial, Prazos & Notificações (Dificuldade Alta)
+ ├── Módulo 7: Notificações, Engajamento e Match-Making
+ ├── Módulo 8: Gestão de Prazos, Recursos e Notificações Multicanal
+ ├── Módulo 9: Inteligência Artificial e Geração de Documentos
+ └── Módulo 10: Engenharia de Orçamento e Biblioteca de Inovação
+
+🔴 Nível 4: Parser OCR, Permissões, White-Label & WebSockets (Dificuldade Muito Alta / Expert)
+ ├── Módulo 11: Leitura Inteligente de Editais e PDFs (Parser por IA)
+ ├── Módulo 12: Gestão de Equipe da Consultoria e Permissões (RBAC)
+ ├── Módulo 13: Portal White-Label do Cliente & Relatórios Executivos
+ └── Módulo 14: Comunicação em Tempo Real e Reatividade (WebSockets)
+```
 # 📑 Especificação de Requisitos - Anjo Nexus
 
 ## 🟢 Nível 1: Fundação & Base da Aplicação (Dificuldade Baixa)
 
 ### Módulo 1: Autenticação, Gestão de Perfil e LGPD
-* RF-01 (Cadastro de Usuário e Seleção de Perfil): O sistema deve permitir o cadastro de usuários coletando nome, e-mail e senha. No momento da criação da conta, o sistema deve apresentar a opção para o usuário escolher o tipo de perfil desejado (Consultor ou Empresa). A criação da conta é um processo independente do pagamento.
-* RF-02 (Autenticação / Login): O sistema deve permitir que o usuário realize o login na plataforma utilizando e-mail e senha.
+* RF-01  (Cadastro de Usuário e Seleção de Perfil): O sistema deve permitir o cadastro de usuários coletando nome, e-mail e senha. No momento da criação da conta, o sistema deve apresentar a opção para o usuário escolher o tipo de perfil desejado (Consultor ou Empresa). A criação da conta é um processo independente do pagamento.
+* RF-02 🟢 (Autenticação / Login): O sistema deve permitir que o usuário realize o login na plataforma utilizando e-mail e senha.
 * RF-03 (Recuperação de Acesso): O sistema deve permitir a recuperação de senha através do envio de um token/link seguro por e-mail.
 * RF-04 (Perfil da Startup / Empresa): O sistema deve permitir que o perfil da Startup ou empresa (CNPJ, Porte, Área de Atuação, Faturamento, Nível de TRL e Pitch institucional) seja preenchido e atualizado. Como regra de negócio, o usuário com perfil de Consultor será o responsável por inserir esses dados no sistema após recebê-los do cliente.
 * RF-05 (Múltiplas Áreas de Interesse e Preferências): O usuário/empresa deve poder selecionar e editar múltiplas áreas de interesse tecnológico em seu perfil. O sistema deve permitir a configuração de preferências específicas (ex: nicho da empresa, como agronegócio, e regime tributário, como MEI) para refinar o recebimento de notificações de editais compatíveis.
@@ -12,10 +43,10 @@
 * RF-07 (Conformidade LGPD e Exclusão): O sistema deve excluir dados pessoais ou anonimizá-los totalmente em caso de solicitação de exclusão da conta pelo usuário.
 
 ### Módulo 2: Busca, Filtros Combinados e Acompanhamento de Editais
-* RF-08 (Filtros Avançados de Pesquisa): O sistema deve permitir a filtragem combinada de editais por região, órgão emissor, status e valores.
-* RF-09 (Filtro de Orçamentos Explícitos): O sistema deve disponibilizar um filtro exclusivo para selecionar apenas editais com valores/orçamentos explicitamente informados.
-* RF-10 (Busca Textual Por Palavra-Chave): O sistema deve permitir a busca textual por palavra-chave filtrando em tempo real nos campos de título ou objetivo.
-* RF-11 (Favoritar / Salvar Editais no Perfil do Cliente): O sistema deve possuir a funcionalidade de favoritar e salvar editais. O consultor deverá entrar no perfil da empresa específica que está tratando no momento e, de dentro desse contexto, favoritar os editais desejados para aquela empresa.
+* RF-08 🟢(Filtros Avançados de Pesquisa): O sistema deve permitir a filtragem combinada de editais por região, órgão emissor, status e valores.
+* RF-09 🟢 (Filtro de Orçamentos Explícitos): O sistema deve disponibilizar um filtro exclusivo para selecionar apenas editais com valores/orçamentos explicitamente informados.
+* RF-10 🟢 (Busca Textual Por Palavra-Chave): O sistema deve permitir a busca textual por palavra-chave filtrando em tempo real nos campos de título ou objetivo.
+* RF-11 🟢 (Favoritar / Salvar Editais no Perfil do Cliente): O sistema deve possuir a funcionalidade de favoritar e salvar editais. O consultor deverá entrar no perfil da empresa específica que está tratando no momento e, de dentro desse contexto, favoritar os editais desejados para aquela empresa.
 
 ### Módulo 3: Painel Administrativo Global
 * RF-12 (Dashboard de Métricas Globais): O sistema deve fornecer um Painel Administrativo para os gestores da plataforma com métricas de usuários ativos, editais coletados e volume de propostas geradas. No caso do consultor, também terá o panorama das empresas que ele está atendendo. A gestão dos créditos será feita exclusivamente de forma automática pela IA.
@@ -25,10 +56,10 @@
 ## 🟡 Nível 2: Coleta de Dados & Monetização B2B (Dificuldade Média)
 
 ### Módulo 4: Motor de Mineração, Scraping e Indexação de Editais
-* RF-13 (Web Scraping Automatizado Multi-Fonte): O sistema deve realizar a varredura automática (web scraping) em portais de fomento públicos e privados.
-* RF-14 (Idempotência e Prevenção de Duplicidade): O sistema deve validar e impedir a duplicidade de editais na base de dados através da geração de uma chave única.
+* RF-13 🟢 (Web Scraping Automatizado Multi-Fonte): O sistema deve realizar a varredura automática (web scraping) em portais de fomento públicos e privados.
+* RF-14 🟢 (Idempotência e Prevenção de Duplicidade): O sistema deve validar e impedir a duplicidade de editais na base de dados através da geração de uma chave única.
 * RF-15 (Extração Estruturada e Sanitização): O sistema deve extrair, limpar e indexar os campos cruciais dos editais (título, órgão emissor, prazos, orçamento, etc).
-* RF-16 (Extração Dados por CNPJ): O sistema deve extrair dados das empresas que a consultoria está atendendo utilizando o CNPJ (dados do cartão CNPJ), através de integrações ou scraping em bases como Serasa, Econodata e/ou CNPJ Biz.
+* RF-16 🟢 (Extração Dados por CNPJ): O sistema deve extrair dados das empresas que a consultoria está atendendo utilizando o CNPJ (dados do cartão CNPJ), através de integrações ou scraping em bases como Serasa, Econodata e/ou CNPJ Biz.
 * RF-17 (Extração Dados de Situação/Débitos): O sistema deve extrair dados de situação e registros de débitos das empresas utilizando as mesmas fontes de consulta via CNPJ.
 
 ### Módulo 5: Planos, Assinaturas e Controle de Créditos
@@ -48,7 +79,7 @@
 ## 🟠 Nível 3: Inteligência Artificial, Prazos & Notificações (Dificuldade Alta)
 
 ### Módulo 7: Notificações, Engajamento e Match-Making
-* RF-26 (Alerta de Match de Editais): O sistema deve alertar o usuário logado automaticamente sobre novos editais abertos. O disparo dessas notificações utilizará o cruzamento do percentual de elegibilidade junto com as preferências manuais definidas no perfil.
+* RF-26 🟢 (Alerta de Match de Editais): O sistema deve alertar o usuário logado automaticamente sobre novos editais abertos. O disparo dessas notificações utilizará o cruzamento do percentual de elegibilidade junto com as preferências manuais definidas no perfil.
 * RF-27 (Notificações Multicanais de Atividades): O sistema deve notificar os usuários sobre novos editais compatíveis e sobre o andamento dos processos (fases do Kanban) através de E-mail, WhatsApp e uma aba interna de notificações no próprio sistema.
 * RF-28 (App Mobile para Visualização): O aplicativo mobile deve ser focado primordialmente na visualização de dados e recebimento de alertas e andamentos processuais.
 
