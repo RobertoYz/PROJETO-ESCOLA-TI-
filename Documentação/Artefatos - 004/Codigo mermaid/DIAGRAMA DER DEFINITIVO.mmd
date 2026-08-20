@@ -1,0 +1,171 @@
+classDiagram
+    direction TB
+
+    %% ----------------------------------------------------
+    %% 1. CLASSES DE DOMÍNIO (MODELOS)
+    %% ----------------------------------------------------
+
+    class Usuario {
+        -BigInt id
+        -String nome
+        -String email
+        -String senha_hash
+        -Enum papel
+        +login() void
+        +redefinirSenha() void
+        +temPermissao(String permissao) Boolean
+    }
+
+    class Assinatura {
+        -BigInt id
+        -Enum nome_plano
+        -Enum status
+        -Date data_proximo_pagamento
+        +processarWebhook(Json payload) void
+        +cotaExcedida(String tipo_cota) Boolean
+    }
+
+    class Startup {
+        -BigInt id
+        -BigInt usuario_id
+        -String cnpj
+        -String nome
+        -String cnae_primario
+        -Int nivel_trl
+        -Text pitch_padrao
+        +atualizarPerfil(Array dados) void
+    }
+
+    class Etiqueta {
+        -BigInt id
+        -Enum categoria
+        -String nome
+    }
+
+    class Edital {
+        -BigInt id
+        -String chave_unica
+        -String titulo
+        -DateTime prazo
+        -String url_fonte
+        -String caminho_arquivo_original
+        +extrairRequisitosViaOcr() void
+    }
+
+    class RequisitoEdital {
+        -BigInt id
+        -Text descricao
+        -Boolean e_obrigatorio
+    }
+
+    class ColunaKanban {
+        -BigInt id
+        -String nome
+        -Int ordem
+        +reordenar(Int novaOrdem) void
+    }
+
+    class TicketKanban {
+        -BigInt id
+        -String titulo
+        -DateTime data_vencimento
+        -Enum status
+        +moverParaColuna(BigInt colunaId) void
+        +anexarArquivo(File arquivo) void
+    }
+
+    class Minuta {
+        -BigInt id
+        -Int versao
+        -Text prompt_ia_usado
+        -LongText conteudo_html
+        -DateTime gerada_em
+        +exportarParaWord() File
+        +exportarParaPdf() File
+    }
+
+    class Notificacao {
+        -BigInt id
+        -Enum tipo
+        -Text mensagem
+        -Boolean foi_lida
+        +marcarComoLida() void
+    }
+
+    %% ----------------------------------------------------
+    %% RELACIONAMENTOS DOS MODELOS (DOMÍNIO)
+    %% ----------------------------------------------------
+
+    Usuario "1" o-- "*" Assinatura : assina
+    Usuario "1" o-- "*" Startup : gerencia
+
+    Startup "*" -- "*" Etiqueta : classificada_por
+    Edital "*" -- "*" Etiqueta : requer_etiquetas
+
+    Edital "1" *-- "*" RequisitoEdital : contem_regras
+    Startup "*" -- "*" Edital : favorita
+
+    Startup "1" *-- "*" ColunaKanban : possui_pipeline
+    ColunaKanban "1" *-- "*" TicketKanban : organiza
+    TicketKanban "*" -- "1" Edital : referente_a
+
+    TicketKanban "1" *-- "*" Minuta : historico_versoes
+    Minuta "*" -- "1" Edital : proposta_para
+
+    Usuario "1" *-- "*" Notificacao : recebe
+    Notificacao "*" -- "1" Edital : sobre_edital
+
+    %% ----------------------------------------------------
+    %% 2. CLASSES DE SERVIÇO E JOBS (ARQUITETURA)
+    %% ----------------------------------------------------
+
+    class ServicoAutenticacao {
+        +autenticarUsuario(email, senha) Token
+        +gerarLinkRecuperacao(email) Boolean
+    }
+
+    class ServicoRastreamentoCnpj {
+        +buscarDadosEmpresa(cnpj) Array
+    }
+
+    class JobColetaEdital {
+        +executarRotina() void
+        -limparDescricoes(htmlBruto) String
+        -evitarDuplicatas(chave_unica) Boolean
+    }
+
+    class ServicoOcrPdf {
+        +extrairTextoDoPdf(caminho) String
+        +identificarTermosChave(texto) Array
+    }
+
+    class ServicoIaGemini {
+        +gerarProposta(pitch, textoEdital) String
+        +formatarParaHtml(respostaBruta) String
+    }
+
+    class ServicoCompatibilidade {
+        +calcularPontuacao(startup, edital) Float
+        +dispararNotificacoesMatch() void
+    }
+
+    class ServicoPagamento {
+        +processarDowngrade(usuario, novoPlano) Boolean
+        +excluirContaCascata(usuario) void
+    }
+
+    %% ----------------------------------------------------
+    %% RELAÇÕES DE DEPENDÊNCIA (SERVIÇOS → MODELOS)
+    %% ----------------------------------------------------
+
+    ServicoAutenticacao ..> Usuario : usa
+    ServicoRastreamentoCnpj ..> Startup : usa
+    JobColetaEdital ..> Edital : usa
+    ServicoOcrPdf ..> Edital : usa
+    ServicoIaGemini ..> Minuta : usa
+    ServicoIaGemini ..> Startup : usa
+    ServicoCompatibilidade ..> Startup : usa
+    ServicoCompatibilidade ..> Edital : usa
+    ServicoCompatibilidade ..> Notificacao : usa
+    ServicoPagamento ..> Usuario : usa
+    ServicoPagamento ..> Assinatura : usa
