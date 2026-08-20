@@ -1,0 +1,52 @@
+%% ============================================================
+%% DIAGRAMA DE SEQUÊNCIA — ANJO NEXUS
+%% Artefatos - 003 | Gerado com base nos 44 Casos de Uso
+%% ============================================================
+
+
+%% ────────────────────────────────────────────────────────────
+%% DS-00: VISÃO GERAL DO SISTEMA (Big Picture)
+%% ────────────────────────────────────────────────────────────
+sequenceDiagram
+    autonumber
+    actor Consultor
+    actor Startup
+    participant Frontend
+    participant API_Laravel as API Laravel
+    participant BD as Banco de Dados
+    participant MercadoPago
+    participant SpiderJob as Spider / Job
+    participant GeminiAI as Gemini AI
+    participant WebSocket
+
+    Note over Consultor,WebSocket: MÓDULO 1 — Autenticação
+    Consultor->>Frontend: Acessa plataforma
+    Frontend->>API_Laravel: POST /login
+    API_Laravel-->>Frontend: Token JWT
+
+    Note over Consultor,WebSocket: MÓDULO 2 — Assinatura
+    Consultor->>Frontend: Seleciona plano
+    Frontend->>API_Laravel: POST /assinaturas
+    API_Laravel->>MercadoPago: Criar cobrança
+    MercadoPago-->>API_Laravel: Webhook status
+    API_Laravel-->>BD: Atualiza assinatura
+    API_Laravel-->>WebSocket: Push notificação
+
+    Note over Consultor,WebSocket: MÓDULO 3 — Coleta de Editais
+    SpiderJob->>API_Laravel: Executar rotina
+    API_Laravel->>SpiderJob: Dispara Spiders
+    SpiderJob-->>BD: updateOrCreate Edital
+
+    Note over Consultor,WebSocket: MÓDULO 4 — Match e Notificação
+    API_Laravel->>BD: Compara tags Startup x Edital
+    BD-->>API_Laravel: MatchScore calculado
+    API_Laravel->>WebSocket: Push alerta de match
+    WebSocket-->>Frontend: Notificação em tempo real
+
+    Note over Consultor,WebSocket: MÓDULO 5 — Kanban e Minuta IA
+    Startup->>Frontend: Cria ticket no Kanban
+    Frontend->>API_Laravel: POST /minutas/gerar
+    API_Laravel->>GeminiAI: Envia pitch + edital
+    GeminiAI-->>WebSocket: Stream do texto gerado
+    WebSocket-->>Frontend: Exibe em tempo real
+    API_Laravel-->>BD: Salva Minuta final
