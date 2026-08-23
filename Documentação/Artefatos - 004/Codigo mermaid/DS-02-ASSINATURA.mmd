@@ -1,0 +1,50 @@
+%% ────────────────────────────────────────────────────────────
+%% DS-02: ASSINATURA E WEBHOOK MERCADO PAGO (UC-04, UC-05, UC-06)
+%% Caso mais complexo: fluxo assíncrono de pagamento
+%% ────────────────────────────────────────────────────────────
+sequenceDiagram
+    autonumber
+    actor Consultor
+    participant Frontend
+    participant AssinaturaController
+    participant ServicoPagamento as BillingService
+    participant MercadoPago as MercadoPago API
+    participant BD as Banco de Dados
+    participant WebSocket
+
+    Note over Consultor,WebSocket: FLUXO 1 — Escolha e Criação de Assinatura
+    Consultor->>Frontend: Seleciona plano (Starter/Basic/Pro)
+    Frontend->>AssinaturaController: POST /api/assinaturas {plano}
+    AssinaturaController->>MercadoPago: Criar preferência de pagamento
+    MercadoPago-->>AssinaturaController: {checkout_url, payment_id}
+    AssinaturaController->>BD: INSERT subscriptions {status: pending}
+    AssinaturaController-->>Frontend: 200 OK {checkout_url}
+    Frontend-->>Consultor: Redireciona para Checkout MP
+
+    Note over Consultor,WebSocket: FLUXO 2 — Webhook Assíncrono (Pós-pagamento)
+    MercadoPago->>AssinaturaController: POST /api/webhook/mercadopago
+    Note right of AssinaturaController: Valida HMAC do payload
+    AssinaturaController->>ServicoPagamento: processarWebhook(payload)
+
+    alt Pagamento aprovado
+        ServicoPagamento->>BD: UPDATE subscriptions SET status=active
+        ServicoPagamento->>BD: INSERT notificacoes {tipo: pagamento_confirmado}
+        ServicoPagamento->>WebSocket: Push notificação ao usuário
+        WebSocket-->>Frontend: Exibe "Assinatura ativa!"
+    else Pagamento recusado
+        ServicoPagamento->>BD: UPDATE subscriptions SET status=overdue
+        ServicoPagamento->>BD: INSERT notificacoes {tipo: pagamento_recusado}
+        ServicoPagamento->>WebSocket: Push alerta de falha
+        WebSocket-->>Frontend: Exibe alerta de falha
+    end
+
+    Note over Consultor,WebSocket: FLUXO 3 — Cancelamento e Downgrade (UC-06)
+    Consultor->>Frontend: Solicita cancelamento do plano
+    Frontend->>AssinaturaController: DELETE /api/assinaturas
+    AssinaturaController->>ServicoPagamento: processarDowngrade(usuario, novoPlano)
+    ServicoPagamento->>MercadoPago: Cancelar assinatura recorrente
+    MercadoPago-->>ServicoPagamento: Confirmação de cancelamento
+    ServicoPagamento->>BD: UPDATE subscriptions SET status=canceled
+    ServicoPagamento->>BD: Ajusta limites de cota do usuário
+    AssinaturaController-->>Frontend: 200 OK {mensagem: "Plano cancelado"}
+    Frontend-->>Consultor: Exibe confirmação e novo plano ativo
