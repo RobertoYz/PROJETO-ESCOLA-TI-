@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anjo Nexus - Dashboard Startup X</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --sidebar-bg: #111418;
+            --card-bg: #1a1d21;
+            --navbar-bg: #0d0f12;
+            --text-light: #ffffff;
+            --text-muted: #a0a0a0;
+            --accent-blue: #1b36ff;
+            --menu-bg: #f5f5f5;
+            --menu-text: #333333;
+            
+            /* Status Colors */
+            --status-aberto: #10b981; /* Verde */
+            --status-inscrito: #3b82f6; /* Azul */
+            --status-encerrado: #ef4444; /* Vermelho */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); display: flex; height: 100vh; overflow: hidden; }
+
+        /* SVG definitions */
+        svg { fill: currentColor; }
+
+        /* ================= SIDEBAR ================= */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease;
+            position: relative;
+            border-right: 1px solid #222;
+        }
+        
+        .sidebar.collapsed { width: 70px; }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+        .toggle-btn:hover { background-color: rgba(255,255,255,0.1); }
+
+        .logo { font-size: 1.5rem; font-weight: 600; transition: opacity 0.3s; }
+        .logo span { font-weight: 400; }
+        .sidebar.collapsed .logo { opacity: 0; pointer-events: none; height: 0; margin: 0; }
+
+        .nav-menu { flex: 1; display: flex; flex-direction: column; padding: 1rem 0; }
+        .nav-item {
+            padding: 1rem 1.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+        .nav-item:hover { background-color: rgba(255,255,255,0.05); }
+        .nav-icon { width: 20px; height: 20px; }
+        .nav-text { transition: opacity 0.3s; }
+        .sidebar.collapsed .nav-text { opacity: 0; pointer-events: none; width: 0; }
+
+        .sidebar-footer { padding: 1rem 0; border-top: 1px solid #222; }
+
+        /* ================= MAIN CONTENT ================= */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        /* Navbar Superior */
+        .top-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--navbar-bg);
+            border-bottom: 1px solid #222;
+        }
+
+        .startup-info { display: flex; align-items: center; gap: 1rem; }
+        .startup-avatar {
+            width: 45px; height: 45px; background-color: #d9d9d9;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666;
+        }
+        .startup-name { font-size: 1.2rem; font-weight: 600; }
+
+        /* Componente Dropdown do Roberto (Reutilizado) */
+        .user-section { 
+            display: flex; align-items: center; gap: 1rem; 
+            position: relative; cursor: pointer;
+        }
+        .user-name { font-weight: 400; font-size: 1rem; }
+        .avatar { 
+            width: 40px; height: 40px; background-color: #d9d9d9; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666;
+        }
+        .dropdown-menu {
+            position: absolute; top: 100%; right: 0; margin-top: 10px;
+            background-color: var(--menu-bg); color: var(--menu-text);
+            border-radius: 8px; width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: none; flex-direction: column; z-index: 100; padding: 0.5rem 0;
+        }
+        .dropdown-menu.active { display: flex; }
+        .dropdown-item {
+            padding: 10px 20px; font-size: 0.95rem; cursor: pointer;
+            transition: background-color 0.2s; display: flex; align-items: center; justify-content: space-between;
+        }
+        .dropdown-item:hover { background-color: #e0e0e0; }
+        .submenu-container { position: relative; }
+        .submenu {
+            position: absolute; top: 0; right: 100%; margin-right: 5px;
+            background-color: var(--menu-bg); border-radius: 8px; width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: none; flex-direction: column; padding: 0.5rem 0;
+        }
+        .submenu.active { display: flex; }
+        .submenu-item { display: flex; align-items: center; gap: 10px; padding: 8px 15px; font-size: 0.9rem; cursor: pointer; }
+        .submenu-item:hover { background-color: #e0e0e0; }
+        .small-avatar { width: 24px; height: 24px; background-color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .btn-add-user { margin: 10px 15px 5px; background-color: #b9bec6; color: #333; border: none; padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+
+        /* ================= DASHBOARD GRID ================= */
+        .dashboard-container {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 2rem;
+            height: calc(100% - 78px);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .card h2 {
+            font-size: 1.4rem;
+            font-weight: 400;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 0.8rem;
+        }
+
+        /* Tabela Melhorada */
+        .table-container { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px; /* Espaço entre as linhas */
+        }
+        th {
+            text-align: left;
+            padding: 0 1rem 0.5rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        td {
+            padding: 1rem;
+            background-color: rgba(255,255,255,0.03);
+        }
+        /* Bordas arredondadas nas pontas das linhas */
+        td:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; font-weight: 500; }
+        td:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; text-align: center; }
+        
+        /* Badges de Status */
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-aberto { background-color: rgba(16, 185, 129, 0.15); color: var(--status-aberto); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-inscrito { background-color: rgba(59, 130, 246, 0.15); color: var(--status-inscrito); border: 1px solid rgba(59, 130, 246, 0.3); }
+        .status-encerrado { background-color: rgba(239, 68, 68, 0.15); color: var(--status-encerrado); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .score-bar {
+            background-color: #333;
+            border-radius: 10px;
+            height: 8px;
+            width: 60px;
+            margin: 5px auto 0;
+            overflow: hidden;
+        }
+        .score-fill { height: 100%; background-color: var(--accent-blue); }
+
+        /* Listas (Prazos e Logs) */
+        ul.log-list { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+        ul.log-list li {
+            position: relative;
+            padding-left: 20px;
+            font-size: 0.95rem;
+            color: #ccc;
+            line-height: 1.4;
+        }
+        ul.log-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: var(--accent-blue);
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        /* Mini Kanban */
+        .mini-kanban {
+            display: flex;
+            gap: 1rem;
+            height: 100%;
+            align-items: stretch;
+            position: relative;
+        }
+        .kanban-col {
+            flex: 1;
+            background-color: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            border: 1px dashed rgba(255,255,255,0.1);
+        }
+        .kanban-col-title {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+        .nav-arrow {
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        /* Responsividade */
+        @media (max-width: 1024px) {
+            .dashboard-container { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { position: absolute; z-index: 1000; }
+            .sidebar.collapsed { transform: translateX(-100%); }
+            .dropdown-menu { width: 100%; right: 0; position: fixed; top: 70px; border-radius: 0; }
+            .submenu { position: static; width: 100%; box-shadow: none; background-color: #e9e9e9; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ícones SVG -->
+    <svg style="display: none;">
+        <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+        <symbol id="icon-star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+        <symbol id="icon-history" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></symbol>
+        <symbol id="icon-kanban" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7V7h2v10zm4-5h-2V7h2v5zm4 3h-2V7h2v8z"/></symbol>
+        <symbol id="icon-back" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></symbol>
+    </svg>
+
+    <!-- Menu Lateral -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-btn" id="toggleSidebar">
+                <svg viewBox="0 0 24 24"><use href="#icon-menu"></use></svg>
+            </button>
+            <div class="logo">Anjo<span>Nexus</span></div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="#" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-search"></use></svg>
+                <span class="nav-text">Busca</span>
+            </a>
+            <a href="#" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-star"></use></svg>
+                <span class="nav-text">Favoritos</span>
+            </a>
+            <a href="#" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-history"></use></svg>
+                <span class="nav-text">Histórico</span>
+            </a>
+            <a href="#" class="nav-item" style="background-color: rgba(255,255,255,0.05); border-left: 3px solid var(--accent-blue);">
+                <svg class="nav-icon" style="color: var(--accent-blue);"><use href="#icon-kanban"></use></svg>
+                <span class="nav-text" style="color: var(--accent-blue); font-weight: 600;">Kanban</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="selecao_perfis_anjonexus.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-back"></use></svg>
+                <span class="nav-text">Perfis</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-content">
+        <!-- Navbar Superior -->
+        <header class="top-navbar">
+            <div class="startup-info">
+                <div class="startup-avatar">
+                    <svg width="24" height="24"><use href="#icon-user"></use></svg>
+                </div>
+                <h1 class="startup-name">Startup X</h1>
+            </div>
+
+            <!-- Dropdown Roberto (Reaproveitado) -->
+            <div class="user-section" id="userMenuBtn">
+                <span class="user-name">Roberto</span>
+                <div class="avatar">
+                    <svg width="24" height="24"><use href="#icon-user"></use></svg>
+                </div>
+                
+                <div class="dropdown-menu" id="mainDropdown">
+                    <div class="dropdown-item">Meu Perfil</div>
+                    <div class="dropdown-item">Configurações</div>
+                    <div class="dropdown-item">Privacidade</div>
+                    
+                    <div class="submenu-container" id="manageProfilesBtn">
+                        <div class="dropdown-item">&lt; Gerenciar Perfis</div>
+                        <div class="submenu" id="profilesSubmenu">
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Ademar</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Pedro</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>João</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Lucas</div>
+                            <button class="btn-add-user">Adicionar usuário</button>
+                        </div>
+                    </div>
+                    <div class="dropdown-item" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 15px;">Logoff</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Grid do Dashboard -->
+        <div class="dashboard-container">
+            
+            <!-- Resumo de Oportunidades -->
+            <div class="card">
+                <h2>Resumo de oportunidades</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Estado</th>
+                                <th>Compatível</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Edital Y</td>
+                                <td><span class="status-badge status-aberto">Aberto</span></td>
+                                <td>
+                                    67%
+                                    <div class="score-bar"><div class="score-fill" style="width: 67%;"></div></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Edital Z</td>
+                                <td><span class="status-badge status-inscrito">Inscrito</span></td>
+                                <td>
+                                    89%
+                                    <div class="score-bar"><div class="score-fill" style="width: 89%;"></div></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Edital X</td>
+                                <td><span class="status-badge status-encerrado">Encerrado</span></td>
+                                <td>
+                                    23%
+                                    <div class="score-bar"><div class="score-fill" style="width: 23%; background-color: #666;"></div></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Prazos e Alertas -->
+            <div class="card">
+                <h2>Prazos e Alertas</h2>
+                <ul class="log-list">
+                    <li>Edital X Encerrado - 2d atrás;</li>
+                    <li>Minuta gerada - 40min atrás;</li>
+                    <li>Edital Z encerrará as inscrições em 4d;</li>
+                </ul>
+            </div>
+
+            <!-- Log de ações -->
+            <div class="card">
+                <h2>Log de ações</h2>
+                <ul class="log-list">
+                    <li>Kanban edital Y atualizado - 3min atrás;</li>
+                    <li>Minuta gerada - 40min atrás;</li>
+                    <li>Edital X atualizado - 3h atrás;</li>
+                </ul>
+            </div>
+
+            <!-- Mini Kanban -->
+            <div class="card">
+                <h2>Kanban</h2>
+                <div class="mini-kanban">
+                    <div class="kanban-col">
+                        <div class="kanban-col-title">Inscrito</div>
+                    </div>
+                    <div class="kanban-col">
+                        <div class="kanban-col-title">A fazer</div>
+                    </div>
+                    <div class="kanban-col">
+                        <div class="kanban-col-title">Elaboração</div>
+                    </div>
+                    <div class="nav-arrow">&#10095;</div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. Lógica do Toggle do Menu Lateral
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggleSidebar');
+
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+            });
+
+            // 2. Lógica do Menu Dropdown do Roberto (Mesma da tela anterior)
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const mainDropdown = document.getElementById('mainDropdown');
+            const manageProfilesBtn = document.getElementById('manageProfilesBtn');
+            const profilesSubmenu = document.getElementById('profilesSubmenu');
+
+            userMenuBtn.addEventListener('click', (e) => {
+                if(e.target.closest('.dropdown-menu')) return; 
+                mainDropdown.classList.toggle('active');
+                if(!mainDropdown.classList.contains('active')) {
+                    profilesSubmenu.classList.remove('active');
+                }
+            });
+
+            manageProfilesBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                profilesSubmenu.classList.toggle('active');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!userMenuBtn.contains(e.target)) {
+                    mainDropdown.classList.remove('active');
+                    profilesSubmenu.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
