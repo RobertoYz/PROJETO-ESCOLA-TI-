@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anjo Nexus - Radar de Editais de Inovação</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --text-light: #ffffff;
+            --text-muted: #a0a0a0;
+            --accent-blue: #1b36ff;
+            --accent-hover: #0d1ecc;
+            
+            /* Cores dos Cards */
+            --card-basic: #b9bec6;
+            --card-pro: #404f5e;
+            --card-ultra: #121417;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        body { background-color: var(--bg-dark); color: var(--text-light); overflow-x: hidden; }
+
+        /* Navegação */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 5%;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            background: rgba(5, 5, 5, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .logo { font-size: 1.5rem; font-weight: 600; }
+        .logo span { font-weight: 400; }
+
+        .nav-links { display: flex; list-style: none; gap: 2rem; }
+        .nav-links a { color: var(--text-light); text-decoration: none; font-size: 0.9rem; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--accent-blue); }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            color: var(--text-light);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover { background-color: var(--accent-hover); }
+
+        /* Hero Section */
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 5%;
+            margin-top: 60px;
+        }
+
+        .hero-content h1 { font-size: 4rem; font-weight: 400; margin-bottom: 1rem; }
+        .hero-content h1 span { font-weight: 700; }
+        .hero-content p { font-size: 1.2rem; margin-bottom: 2rem; color: var(--text-muted); }
+
+        /* Sobre Nós */
+        .about-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5rem 10%;
+            gap: 4rem;
+        }
+
+        .about-image-container { flex: 1; }
+        .rounded-image { width: 100%; border-radius: 40px; object-fit: cover; background-color: #333; height: 300px; } /* Placeholder visual */
+
+        .about-text { flex: 1; }
+        .about-text h2 { font-size: 2.5rem; font-weight: 400; }
+        .about-text h3 { font-size: 2.5rem; font-weight: 700; margin-bottom: 1.5rem; }
+        .about-text p { font-size: 1.1rem; line-height: 1.6; color: var(--text-muted); }
+
+        /* Planos */
+        .plans-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            padding: 5rem 10%;
+            min-height: 80vh;
+            align-items: center;
+        }
+
+        .plan-card {
+            height: 400px;
+            border-radius: 20px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+        }
+
+        .basic { background-color: var(--card-basic); color: #000; }
+        .pro { background-color: var(--card-pro); }
+        .ultra { background-color: var(--card-ultra); }
+        .plan-card h2 { font-size: 2rem; font-weight: 700; }
+
+        @media (max-width: 900px) {
+            .about-section { flex-direction: column; }
+            .plans-section { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+            .hero-content h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">Anjo<span>Nexus</span></div>
+        <ul class="nav-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#sobre">Sobre nós</a></li>
+            <li><a href="#planos">Planos</a></li>
+            <li><a href="login_anjonexus.html">Login</a></li>
+        </ul>
+        <button class="btn-primary" onclick="document.getElementById('planos').scrollIntoView({behavior: 'smooth'})">Comece já</button>
+    </nav>
+
+    <header id="home" class="hero-section">
+        <div class="hero-content">
+            <h1>O Radar Definitivo<br><span>para Editais de Inovação</span></h1>
+            <p>Multiplique a aprovação da sua carteira de clientes em editais de fomento.</p>
+            <button class="btn-primary" onclick="document.getElementById('planos').scrollIntoView({behavior: 'smooth'})">Comece já</button>
+        </div>
+    </header>
+
+    <section id="sobre" class="about-section">
+        <div class="about-image-container">
+            <div class="rounded-image" style="display: flex; align-items: center; justify-content: center; color: #666;">
+                [Espaço para a foto da reunião]
+            </div>
+        </div>
+        <div class="about-text">
+            <h2>Por que o AnjoNexus?</h2>
+            <h3>Escalabilidade e Inteligência para Consultorias</h3>
+            <p>O Anjo Nexus transforma a maneira como sua consultoria busca, analisa e aplica para oportunidades financeiras. Nós centralizamos o monitoramento de editais em portais como a Finep e automatizamos a parte mais demorada do processo.</p>
+        </div>
+    </section>
+
+    <section id="planos" class="plans-section">
+        <div class="plan-card basic">
+            <h2>Basic</h2>
+        </div>
+        <div class="plan-card pro">
+            <h2>Pro</h2>
+        </div>
+        <div class="plan-card ultra">
+            <h2>Ultra</h2>
+        </div>
+    </section>
+
+</body>
+</html>

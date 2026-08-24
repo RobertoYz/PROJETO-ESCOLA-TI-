@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anjo Nexus - Seleção de Perfis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --navbar-bg: #111111;
+            --text-light: #ffffff;
+            --text-muted: #a0a0a0;
+            --card-bg: #b9bec6;
+            --card-add-bg: #1c1c1c;
+            --accent-purple: #9b51e0; /* Cor do ícone de adicionar baseada na imagem */
+            --menu-bg: #f5f5f5;
+            --menu-text: #333333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); min-height: 100vh; overflow-x: hidden; }
+        
+        /* Navbar */
+        .navbar { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 1.5rem 5%; 
+            background-color: var(--navbar-bg);
+            border-bottom: 1px solid #222;
+        }
+        .logo { font-size: 1.5rem; font-weight: 600; }
+        .logo span { font-weight: 400; }
+        
+        /* User Profile & Dropdown */
+        .user-section { 
+            display: flex; 
+            align-items: center; 
+            gap: 1rem; 
+            position: relative;
+            cursor: pointer;
+        }
+        .user-name { font-weight: 400; font-size: 1rem; }
+        .avatar { 
+            width: 40px; 
+            height: 40px; 
+            background-color: #d9d9d9; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+        .avatar svg { width: 24px; height: 24px; fill: #666; }
+
+        /* Main Dropdown Menu */
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 10px;
+            background-color: var(--menu-bg);
+            color: var(--menu-text);
+            border-radius: 8px;
+            width: 220px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            z-index: 100;
+            padding: 0.5rem 0;
+        }
+        .dropdown-menu.active { display: flex; }
+        
+        .dropdown-item {
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .dropdown-item:hover { background-color: #e0e0e0; }
+        
+        /* Submenu Gerenciar Perfis */
+        .submenu-container { position: relative; }
+        .submenu {
+            position: absolute;
+            top: 0;
+            right: 100%; /* Opens to the left */
+            margin-right: 5px;
+            background-color: var(--menu-bg);
+            border-radius: 8px;
+            width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: none;
+            flex-direction: column;
+            padding: 0.5rem 0;
+        }
+        .submenu.active { display: flex; }
+        
+        .submenu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .submenu-item:hover { background-color: #e0e0e0; }
+        .submenu-item .small-avatar {
+            width: 24px; height: 24px; background-color: #ccc; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .submenu-item .small-avatar svg { width: 14px; height: 14px; fill: #fff; }
+        
+        .btn-add-user {
+            margin: 10px 15px 5px;
+            background-color: #b9bec6;
+            color: #333;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        /* Container Principal */
+        .main-content { padding: 3rem 5%; }
+        .greeting { font-size: 1.8rem; font-weight: 400; margin-bottom: 3rem; }
+        
+        /* Carrossel de Perfis */
+        .profiles-wrapper {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .profiles-container {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding-bottom: 1rem;
+            width: 100%;
+            /* Hide scrollbar */
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .profiles-container::-webkit-scrollbar { display: none; }
+
+        /* Cards das Startups */
+        .profile-card {
+            background-color: var(--card-bg);
+            min-width: 200px;
+            height: 260px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+            color: #ffffff;
+        }
+        .profile-card:hover { transform: translateY(-5px); }
+        
+        .profile-card .avatar-large {
+            width: 80px;
+            height: 80px;
+            background-color: #a0a0a0;
+            border-radius: 50%;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-card .avatar-large svg { width: 45px; height: 45px; fill: #e0e0e0; }
+        .profile-card .startup-name { font-weight: 700; font-size: 1.1rem; }
+
+        /* Card de Adicionar */
+        .card-add { background-color: var(--card-add-bg); border: 2px solid #222; }
+        .card-add .icon-plus {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--accent-purple);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: var(--accent-purple);
+            font-weight: 400;
+        }
+
+        /* Setas de navegação (Visíveis apenas se transbordar no desktop) */
+        .nav-arrow {
+            font-size: 3rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+            padding: 0 1rem;
+            display: none; /* Controlado via JS */
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .profile-card { min-width: 160px; height: 220px; }
+            .nav-arrow { display: none !important; } /* No mobile, usa o touch para rolar */
+            .dropdown-menu { width: 100%; right: 0; position: fixed; top: 70px; border-radius: 0; }
+            .submenu { position: static; width: 100%; box-shadow: none; background-color: #e9e9e9; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SVG Definitions for standard user icon -->
+    <svg style="display: none;">
+        <symbol id="icon-user" viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </symbol>
+    </svg>
+
+    <div class="navbar">
+        <div class="logo">Anjo<span>Nexus</span></div>
+        
+        <div class="user-section" id="userMenuBtn">
+            <span class="user-name">Roberto</span>
+            <div class="avatar">
+                <svg><use href="#icon-user"></use></svg>
+            </div>
+            
+            <!-- Dropdown Menu -->
+            <div class="dropdown-menu" id="mainDropdown">
+                <div class="dropdown-item">Meu Perfil</div>
+                <div class="dropdown-item">Configurações</div>
+                <div class="dropdown-item">Privacidade</div>
+                
+                <div class="submenu-container" id="manageProfilesBtn">
+                    <div class="dropdown-item">
+                        &lt; Gerenciar Perfis
+                    </div>
+                    <!-- Submenu lateral -->
+                    <div class="submenu" id="profilesSubmenu">
+                        <div class="submenu-item">
+                            <div class="small-avatar"><svg><use href="#icon-user"></use></svg></div>
+                            Ademar
+                        </div>
+                        <div class="submenu-item">
+                            <div class="small-avatar"><svg><use href="#icon-user"></use></svg></div>
+                            Pedro
+                        </div>
+                        <div class="submenu-item">
+                            <div class="small-avatar"><svg><use href="#icon-user"></use></svg></div>
+                            João
+                        </div>
+                        <div class="submenu-item">
+                            <div class="small-avatar"><svg><use href="#icon-user"></use></svg></div>
+                            Lucas
+                        </div>
+                        <button class="btn-add-user">Adicionar usuário</button>
+                    </div>
+                </div>
+                
+                <div class="dropdown-item" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 15px;">Logoff</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <h1 class="greeting">Bom dia, Roberto</h1>
+        
+        <div class="profiles-wrapper">
+            <!-- Seta Esquerda -->
+            <div class="nav-arrow" id="scrollLeft" style="display: none;">&#10094;</div>
+            
+            <div class="profiles-container" id="profilesContainer">
+                <div class="profile-card">
+                    <div class="avatar-large"><svg><use href="#icon-user"></use></svg></div>
+                    <div class="startup-name">Startup 1</div>
+                </div>
+                <div class="profile-card">
+                    <div class="avatar-large"><svg><use href="#icon-user"></use></svg></div>
+                    <div class="startup-name">Startup 2</div>
+                </div>
+                <div class="profile-card">
+                    <div class="avatar-large"><svg><use href="#icon-user"></use></svg></div>
+                    <div class="startup-name">Startup 3</div>
+                </div>
+                <div class="profile-card">
+                    <div class="avatar-large"><svg><use href="#icon-user"></use></svg></div>
+                    <div class="startup-name">Startup 4</div>
+                </div>
+                <!-- Card de Adicionar Nova Startup -->
+                <div class="profile-card card-add">
+                    <div class="icon-plus">+</div>
+                </div>
+            </div>
+            
+            <!-- Seta Direita -->
+            <div class="nav-arrow" id="scrollRight">&#10095;</div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Lógica do Menu Dropdown
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const mainDropdown = document.getElementById('mainDropdown');
+            const manageProfilesBtn = document.getElementById('manageProfilesBtn');
+            const profilesSubmenu = document.getElementById('profilesSubmenu');
+
+            // Abrir/Fechar Menu Principal
+            userMenuBtn.addEventListener('click', (e) => {
+                // Evita que o clique feche imediatamente ao clicar dentro do próprio menu
+                if(e.target.closest('.dropdown-menu')) return; 
+                mainDropdown.classList.toggle('active');
+                
+                // Se fechou o principal, fecha o submenu também
+                if(!mainDropdown.classList.contains('active')) {
+                    profilesSubmenu.classList.remove('active');
+                }
+            });
+
+            // Abrir/Fechar Submenu "Gerenciar Perfis"
+            manageProfilesBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Evita que feche o menu principal
+                
+                // No mobile, funciona como um toggle tipo "sanfona". No desktop, abre pro lado.
+                profilesSubmenu.classList.toggle('active');
+            });
+
+            // Fechar menus ao clicar fora
+            document.addEventListener('click', (e) => {
+                if (!userMenuBtn.contains(e.target)) {
+                    mainDropdown.classList.remove('active');
+                    profilesSubmenu.classList.remove('active');
+                }
+            });
+
+            // Lógica do Carrossel (Setas de Navegação)
+            const container = document.getElementById('profilesContainer');
+            const btnLeft = document.getElementById('scrollLeft');
+            const btnRight = document.getElementById('scrollRight');
+
+            // Valor de rolagem baseado na largura de um card + gap
+            const scrollAmount = 230; 
+
+            btnRight.addEventListener('click', () => {
+                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            });
+
+            btnLeft.addEventListener('click', () => {
+                container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            });
+
+            // Atualiza visibilidade das setas baseado na posição do scroll
+            const checkScroll = () => {
+                // Se não houver scroll possível (tela grande), esconde setas
+                if (container.scrollWidth <= container.clientWidth) {
+                    btnLeft.style.display = 'none';
+                    btnRight.style.display = 'none';
+                    return;
+                }
+
+                btnLeft.style.display = container.scrollLeft > 0 ? 'block' : 'none';
+                
+                // Math.ceil evita bugs de pixel fracionado no Chrome
+                const maxScrollLeft = container.scrollWidth - container.clientWidth;
+                btnRight.style.display = Math.ceil(container.scrollLeft) >= maxScrollLeft ? 'none' : 'block';
+            };
+
+            container.addEventListener('scroll', checkScroll);
+            window.addEventListener('resize', checkScroll);
+            
+            // Checagem inicial
+            setTimeout(checkScroll, 100); 
+        });
+    </script>
+</body>
+</html>
