@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anjo Nexus - Kanban</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Paleta Dark Mode */
+            --bg-dark: #050505;
+            --sidebar-bg: #111418;
+            --navbar-bg: #0d0f12;
+            --column-bg: #111111;
+            --card-bg: #1a1d21;
+            --card-hover: #23272c;
+            
+            /* Textos */
+            --text-light: #ffffff;
+            --text-muted: #a0a0a0;
+            --menu-bg: #f5f5f5;
+            --menu-text: #333333;
+            
+            /* Cores de Destaque */
+            --accent-blue: #1b36ff;
+            --accent-purple: #8b5cf6;
+            
+            /* Tags / Prioridades */
+            --tag-finep: #3b82f6;
+            --tag-fapesp: #10b981;
+            --tag-cnpq: #f59e0b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); display: flex; height: 100vh; overflow: hidden; }
+        svg { fill: currentColor; }
+
+        /* ================= SIDEBAR ================= */
+        .sidebar {
+            width: 250px; background-color: var(--sidebar-bg); height: 100vh;
+            display: flex; flex-direction: column; border-right: 1px solid #222;
+            transition: width 0.3s ease; position: relative; z-index: 100;
+        }
+        .sidebar.collapsed { width: 70px; }
+        
+        .sidebar-header { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+        .toggle-btn { background: none; border: none; color: var(--text-light); cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; align-self: flex-start; }
+        .toggle-btn:hover { background-color: rgba(255,255,255,0.1); }
+        
+        .logo { font-size: 1.5rem; font-weight: 600; transition: opacity 0.3s; }
+        .logo span { font-weight: 400; }
+        .sidebar.collapsed .logo { opacity: 0; pointer-events: none; height: 0; margin: 0; overflow: hidden; }
+
+        .nav-menu { flex: 1; display: flex; flex-direction: column; padding: 1rem 0; overflow: hidden; }
+        .nav-item {
+            padding: 1rem 1.5rem; color: var(--text-light); text-decoration: none;
+            font-size: 1rem; display: flex; align-items: center; gap: 15px; transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+        .nav-item:hover { background-color: rgba(255,255,255,0.05); }
+        .nav-item.active { background-color: rgba(255,255,255,0.05); border-left: 3px solid var(--accent-blue); color: var(--accent-blue); }
+        .nav-item.active .nav-text { font-weight: 600; }
+        .nav-icon { width: 20px; height: 20px; min-width: 20px; }
+        .nav-text { transition: opacity 0.3s; }
+        .sidebar.collapsed .nav-text { opacity: 0; pointer-events: none; width: 0; overflow: hidden; }
+
+        .sidebar-footer { padding: 1rem 0; border-top: 1px solid #222; }
+
+        /* ================= MAIN CONTENT ================= */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Topbar */
+        .top-navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 2rem; background-color: var(--navbar-bg); border-bottom: 1px solid #222;
+        }
+        .startup-info { display: flex; align-items: center; gap: 1rem; }
+        .startup-avatar { width: 45px; height: 45px; background-color: #d9d9d9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666; }
+        .startup-name { font-size: 1.2rem; font-weight: 600; }
+
+        /* Dropdown Roberto */
+        .user-section { display: flex; align-items: center; gap: 1rem; position: relative; cursor: pointer; }
+        .user-name { font-weight: 400; font-size: 1rem; }
+        .avatar { width: 40px; height: 40px; background-color: #d9d9d9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666; }
+        .dropdown-menu {
+            position: absolute; top: 100%; right: 0; margin-top: 10px;
+            background-color: var(--menu-bg); color: var(--menu-text);
+            border-radius: 8px; width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: none; flex-direction: column; z-index: 100; padding: 0.5rem 0;
+        }
+        .dropdown-menu.active { display: flex; }
+        .dropdown-item {
+            padding: 10px 20px; font-size: 0.95rem; cursor: pointer;
+            transition: background-color 0.2s; display: flex; align-items: center; justify-content: space-between;
+        }
+        .dropdown-item:hover { background-color: #e0e0e0; }
+        .submenu-container { position: relative; }
+        .submenu {
+            position: absolute; top: 0; right: 100%; margin-right: 5px;
+            background-color: var(--menu-bg); border-radius: 8px; width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: none; flex-direction: column; padding: 0.5rem 0;
+        }
+        .submenu.active { display: flex; }
+        .submenu-item { display: flex; align-items: center; gap: 10px; padding: 8px 15px; font-size: 0.9rem; cursor: pointer; }
+        .submenu-item:hover { background-color: #e0e0e0; }
+        .small-avatar { width: 24px; height: 24px; background-color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .btn-add-user { margin: 10px 15px 5px; background-color: #b9bec6; color: #333; border: none; padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+
+        /* ================= KANBAN BOARD ================= */
+        .kanban-container {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            align-items: flex-start;
+            height: calc(100vh - 77px);
+        }
+
+        /* Estilização da barra de rolagem horizontal */
+        .kanban-container::-webkit-scrollbar { height: 10px; }
+        .kanban-container::-webkit-scrollbar-track { background: var(--bg-dark); }
+        .kanban-container::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .kanban-container::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Colunas */
+        .kanban-column {
+            background-color: var(--column-bg);
+            border-radius: 16px;
+            min-width: 320px;
+            width: 320px;
+            max-height: 100%;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #222;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .kanban-column.drag-over {
+            border-color: var(--accent-blue);
+            background-color: #16181c;
+        }
+
+        .column-header {
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #222;
+        }
+
+        .column-title { font-size: 1.1rem; font-weight: 600; }
+        .column-count {
+            background-color: #333;
+            color: #ccc;
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        /* Área de Drop dos Cartões */
+        .column-body {
+            padding: 1rem;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 150px; /* Para garantir que sempre haja área de drop */
+        }
+
+        .column-body::-webkit-scrollbar { width: 6px; }
+        .column-body::-webkit-scrollbar-track { background: transparent; }
+        .column-body::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+
+        /* ================= CARDS DO KANBAN ================= */
+        .kanban-card {
+            background-color: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.2rem;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .kanban-card:hover { border-color: #555; }
+        .kanban-card:active { cursor: grabbing; }
+        
+        .kanban-card.dragging {
+            opacity: 0.4;
+            transform: scale(0.98);
+            box-shadow: none;
+            border-color: var(--accent-purple);
+        }
+
+        .card-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+        .tag { font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
+        .tag-finep { background-color: rgba(59, 130, 246, 0.15); color: var(--tag-finep); border: 1px solid rgba(59, 130, 246, 0.3); }
+        .tag-fapesp { background-color: rgba(16, 185, 129, 0.15); color: var(--tag-fapesp); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .tag-cnpq { background-color: rgba(245, 158, 11, 0.15); color: var(--tag-cnpq); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .card-title { font-size: 1rem; font-weight: 600; line-height: 1.3; color: #fff; }
+        
+        .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; padding-top: 0.8rem; font-size: 0.85rem; color: var(--text-muted); }
+        .card-budget { font-family: monospace; font-weight: 500; color: #ddd; }
+        
+        .match-score { display: flex; align-items: center; gap: 5px; font-weight: 600; }
+        .match-score.high { color: var(--success-color); }
+        .match-score.medium { color: var(--accent-purple); }
+
+    </style>
+</head>
+<body>
+
+    <!-- Ícones SVG -->
+    <svg style="display: none;">
+        <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+        <symbol id="icon-star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+        <symbol id="icon-history" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></symbol>
+        <symbol id="icon-kanban" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7V7h2v10zm4-5h-2V7h2v5zm4 3h-2V7h2v8z"/></symbol>
+        <symbol id="icon-back" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></symbol>
+        <symbol id="icon-clock" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></symbol>
+    </svg>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-btn" id="toggleSidebar">
+                <svg viewBox="0 0 24 24"><use href="#icon-menu"></use></svg>
+            </button>
+            <div class="logo">Anjo<span>Nexus</span></div>
+        </div>
+        <nav class="nav-menu">
+            <a href="busca_editais.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-search"></use></svg>
+                <span class="nav-text">Busca</span>
+            </a>
+            <a href="favoritos_editais.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-star"></use></svg>
+                <span class="nav-text">Favoritos</span>
+            </a>
+            <a href="#" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-history"></use></svg>
+                <span class="nav-text">Histórico</span>
+            </a>
+            <a href="#" class="nav-item active">
+                <svg class="nav-icon"><use href="#icon-kanban"></use></svg>
+                <span class="nav-text">Kanban</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="selecao_perfis_anjonexus.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-back"></use></svg>
+                <span class="nav-text">Perfis</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="top-navbar">
+            <div class="startup-info">
+                <div class="startup-avatar"><svg width="24" height="24"><use href="#icon-user"></use></svg></div>
+                <h1 class="startup-name">Startup X</h1>
+            </div>
+            
+            <!-- Dropdown Roberto -->
+            <div class="user-section" id="userMenuBtn">
+                <span class="user-name">Roberto</span>
+                <div class="avatar"><svg width="24" height="24"><use href="#icon-user"></use></svg></div>
+                
+                <div class="dropdown-menu" id="mainDropdown">
+                    <div class="dropdown-item">Meu Perfil</div>
+                    <div class="dropdown-item">Configurações</div>
+                    <div class="dropdown-item">Privacidade</div>
+                    
+                    <div class="submenu-container" id="manageProfilesBtn">
+                        <div class="dropdown-item">&lt; Gerenciar Perfis</div>
+                        <div class="submenu" id="profilesSubmenu">
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Ademar</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Pedro</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>João</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Lucas</div>
+                            <button class="btn-add-user">Adicionar usuário</button>
+                        </div>
+                    </div>
+                    <div class="dropdown-item" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 15px;">Logoff</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- KANBAN BOARD -->
+        <div class="kanban-container" id="kanbanBoard">
+            
+            <!-- Coluna 1: Backlog -->
+            <div class="kanban-column" id="col-backlog">
+                <div class="column-header">
+                    <h2 class="column-title">Backlog</h2>
+                    <span class="column-count">2</span>
+                </div>
+                <div class="column-body">
+                    <!-- Card 1 -->
+                    <div class="kanban-card" draggable="true">
+                        <div class="card-tags"><span class="tag tag-fapesp">FAPESP</span></div>
+                        <h3 class="card-title">Edital Z - Mulheres Tech</h3>
+                        <div class="card-footer">
+                            <span class="card-budget">R$ 500k</span>
+                            <span class="match-score medium">67% Match</span>
+                        </div>
+                    </div>
+                    <!-- Card 2 -->
+                    <div class="kanban-card" draggable="true">
+                        <div class="card-tags"><span class="tag tag-cnpq">CNPq</span></div>
+                        <h3 class="card-title">Edital X - Pesquisa DeepTech</h3>
+                        <div class="card-footer">
+                            <span class="card-budget">R$ 3.0M</span>
+                            <span class="match-score medium">55% Match</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna 2: A fazer -->
+            <div class="kanban-column" id="col-todo">
+                <div class="column-header">
+                    <h2 class="column-title">A fazer</h2>
+                    <span class="column-count">1</span>
+                </div>
+                <div class="column-body">
+                    <!-- Card 3 -->
+                    <div class="kanban-card" draggable="true">
+                        <div class="card-tags"><span class="tag tag-finep">FINEP</span></div>
+                        <h3 class="card-title">Edital Y - Inovação Aberta</h3>
+                        <div class="card-footer">
+                            <span class="card-budget">R$ 1.5M</span>
+                            <span class="match-score high">89% Match</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna 3: Em elaboração -->
+            <div class="kanban-column" id="col-doing">
+                <div class="column-header">
+                    <h2 class="column-title">Em elaboração</h2>
+                    <span class="column-count">0</span>
+                </div>
+                <div class="column-body"></div>
+            </div>
+
+            <!-- Coluna 4: Bloqueado -->
+            <div class="kanban-column" id="col-blocked">
+                <div class="column-header">
+                    <h2 class="column-title" style="color: var(--danger-color);">Bloqueado</h2>
+                    <span class="column-count">0</span>
+                </div>
+                <div class="column-body"></div>
+            </div>
+
+            <!-- Coluna 5: Pronto para Submissão -->
+            <div class="kanban-column" id="col-review">
+                <div class="column-header">
+                    <h2 class="column-title">Pronto para Submissão</h2>
+                    <span class="column-count">0</span>
+                </div>
+                <div class="column-body"></div>
+            </div>
+
+            <!-- Coluna 6: Submetido -->
+            <div class="kanban-column" id="col-done">
+                <div class="column-header">
+                    <h2 class="column-title" style="color: var(--success-color);">Submetido</h2>
+                    <span class="column-count">0</span>
+                </div>
+                <div class="column-body"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // ================= SIDEBAR & DROPDOWN (Igual às anteriores) =================
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggleSidebar');
+            toggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const mainDropdown = document.getElementById('mainDropdown');
+            const manageProfilesBtn = document.getElementById('manageProfilesBtn');
+            const profilesSubmenu = document.getElementById('profilesSubmenu');
+
+            userMenuBtn.addEventListener('click', (e) => {
+                if(e.target.closest('.dropdown-menu')) return; 
+                mainDropdown.classList.toggle('active');
+                if(!mainDropdown.classList.contains('active')) profilesSubmenu.classList.remove('active');
+            });
+
+            manageProfilesBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                profilesSubmenu.classList.toggle('active');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!userMenuBtn.contains(e.target)) {
+                    mainDropdown.classList.remove('active');
+                    profilesSubmenu.classList.remove('active');
+                }
+            });
+
+            // ================= LÓGICA DO DRAG AND DROP =================
+            const cards = document.querySelectorAll('.kanban-card');
+            const columns = document.querySelectorAll('.column-body');
+
+            // Atualiza os contadores numéricos do cabeçalho de cada coluna
+            function updateCounts() {
+                document.querySelectorAll('.kanban-column').forEach(col => {
+                    const countSpan = col.querySelector('.column-count');
+                    const numCards = col.querySelectorAll('.kanban-card').length;
+                    countSpan.textContent = numCards;
+                });
+            }
+
+            cards.forEach(card => {
+                card.addEventListener('dragstart', () => {
+                    card.classList.add('dragging');
+                });
+
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('dragging');
+                    updateCounts(); // Atualiza a contagem após soltar
+                });
+            });
+
+            columns.forEach(column => {
+                column.addEventListener('dragover', e => {
+                    e.preventDefault(); // Necessário para permitir o "drop"
+                    column.parentElement.classList.add('drag-over'); // Efeito visual na coluna
+
+                    // Função para permitir arrastar o card *entre* outros cards específicos
+                    const afterElement = getDragAfterElement(column, e.clientY);
+                    const draggable = document.querySelector('.dragging');
+                    
+                    if (afterElement == null) {
+                        column.appendChild(draggable);
+                    } else {
+                        column.insertBefore(draggable, afterElement);
+                    }
+                });
+
+                column.addEventListener('dragleave', () => {
+                    column.parentElement.classList.remove('drag-over');
+                });
+
+                column.addEventListener('drop', () => {
+                    column.parentElement.classList.remove('drag-over');
+                });
+            });
+
+            // Função matemática para descobrir exatamente onde o mouse está soltando o card (embaixo ou em cima de outro)
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.kanban-card:not(.dragging)')];
+
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            // Inicializa a contagem na primeira carga
+            updateCounts();
+            
+            // Suaviza o Scroll Horizontal do Kanban usando o Mouse Wheel (Shift + Scroll ou Scroll normal)
+            const kanbanBoard = document.getElementById('kanbanBoard');
+            kanbanBoard.addEventListener('wheel', (evt) => {
+                // Se o usuário não estiver rolando para cima/baixo fortemente, converte para rolagem horizontal
+                if (evt.deltaY !== 0) {
+                    evt.preventDefault();
+                    kanbanBoard.scrollLeft += evt.deltaY;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
