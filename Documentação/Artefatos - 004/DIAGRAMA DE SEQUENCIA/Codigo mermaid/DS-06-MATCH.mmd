@@ -1,0 +1,42 @@
+%% ────────────────────────────────────────────────────────────
+%% DS-06: MOTOR DE MATCH E COMPATIBILIDADE (UC-27, UC-30)
+%% Comparação de tags + geração de notificações
+%% ────────────────────────────────────────────────────────────
+sequenceDiagram
+    autonumber
+    participant Scheduler as Scheduler (Cron)
+    participant ServicoCompatibilidade as MatchEngineService
+    participant BD as Banco de Dados
+    participant WebSocket
+    participant Frontend
+
+    Note over Scheduler,Frontend: Cron executa após cada coleta de novos editais
+    Scheduler->>ServicoCompatibilidade: dispararNotificacoesMatch()
+
+    ServicoCompatibilidade->>BD: SELECT editais recentes (últimas 24h)
+    BD-->>ServicoCompatibilidade: Lista de novos editais
+
+    loop Para cada novo edital
+        ServicoCompatibilidade->>BD: SELECT startups com tags similares ao edital
+        BD-->>ServicoCompatibilidade: Lista de startups compatíveis
+
+        loop Para cada startup compatível
+            ServicoCompatibilidade->>ServicoCompatibilidade: calcularPontuacao(startup, edital)
+            Note right of ServicoCompatibilidade: Score = interseção de tags / total de tags do edital
+
+            alt Score >= threshold mínimo (ex: 60%)
+                ServicoCompatibilidade->>BD: INSERT match_scores {startup_id, edital_id, score}
+                ServicoCompatibilidade->>BD: INSERT notificacoes {tipo: match, usuario_id}
+                ServicoCompatibilidade->>WebSocket: Push {tipo: match, edital, score}
+                WebSocket-->>Frontend: Exibe notificação em tempo real
+            end
+        end
+    end
+
+    Note over Scheduler,Frontend: CONSULTA DE NOTIFICAÇÕES (UC-30)
+    Frontend->>BD: GET /api/notificacoes
+    BD-->>Frontend: Lista de notificações não lidas
+    Frontend-->>Frontend: Exibe badge contador
+
+    Frontend->>BD: PATCH /api/notificacoes/{id}/lida
+    BD-->>Frontend: 200 OK

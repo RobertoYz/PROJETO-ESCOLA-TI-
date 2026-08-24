@@ -1,0 +1,44 @@
+%% ────────────────────────────────────────────────────────────
+%% DS-07: PIPELINE KANBAN (UC-31 a UC-35)
+%% Criação de ticket, movimentação e upload de anexo
+%% ────────────────────────────────────────────────────────────
+sequenceDiagram
+    autonumber
+    actor Consultor
+    participant Frontend
+    participant KanbanController
+    participant BD as Banco de Dados
+    participant Storage as Armazenamento de Arquivos
+
+    Note over Consultor,Storage: VISUALIZAÇÃO DO KANBAN (UC-31)
+    Consultor->>Frontend: Acessa painel Kanban da Startup
+    Frontend->>KanbanController: GET /api/kanban/{startup_id}
+    KanbanController->>BD: SELECT kanban_boards JOIN kanban_columns JOIN kanban_tickets
+    BD-->>KanbanController: Board completo com colunas e tickets
+    KanbanController-->>Frontend: 200 OK {board}
+    Frontend-->>Consultor: Renderiza painel Kanban visual
+
+    Note over Consultor,Storage: CRIAÇÃO DE TICKET (UC-32)
+    Consultor->>Frontend: Clica "+" em uma coluna, preenche ticket
+    Frontend->>KanbanController: POST /api/kanban/tickets {titulo, coluna_id, edital_id, vencimento}
+    KanbanController->>BD: INSERT kanban_tickets
+    BD-->>KanbanController: Ticket criado {id}
+    KanbanController-->>Frontend: 201 Created {ticket}
+    Frontend-->>Consultor: Card aparece na coluna
+
+    Note over Consultor,Storage: MOVIMENTAÇÃO DE TICKET (UC-33)
+    Consultor->>Frontend: Arrasta card para outra coluna (drag & drop)
+    Frontend->>KanbanController: PATCH /api/kanban/tickets/{id}/mover {nova_coluna_id}
+    KanbanController->>BD: UPDATE kanban_tickets SET coluna_id = ?
+    BD-->>KanbanController: Atualizado
+    KanbanController-->>Frontend: 200 OK
+    Frontend-->>Consultor: Card posicionado na nova coluna
+
+    Note over Consultor,Storage: UPLOAD DE ANEXO (UC-35)
+    Consultor->>Frontend: Arrasta arquivo para o ticket
+    Frontend->>KanbanController: POST /api/kanban/tickets/{id}/anexos {arquivo}
+    KanbanController->>Storage: Salva arquivo em /storage/kanban/{ticket_id}/
+    Storage-->>KanbanController: Caminho do arquivo salvo
+    KanbanController->>BD: INSERT kanban_attachments {ticket_id, nome, caminho}
+    KanbanController-->>Frontend: 201 Created {anexo}
+    Frontend-->>Consultor: Exibe link do anexo no ticket
