@@ -1,0 +1,46 @@
+%% ────────────────────────────────────────────────────────────
+%% DS-03: CADASTRO E PERFIL DA STARTUP (UC-10, UC-11)
+%% Inclui busca automática via CNPJ
+%% ────────────────────────────────────────────────────────────
+sequenceDiagram
+    autonumber
+    actor ConsultorAdmin
+    participant Frontend
+    participant StartupController
+    participant ServicoRastreamentoCnpj as CnpjScraperService
+    participant ReceitaFederal as API Receita Federal
+    participant BD as Banco de Dados
+
+    ConsultorAdmin->>Frontend: Acessa "Cadastrar Startup"
+    Frontend->>StartupController: POST /api/startups/buscar-cnpj {cnpj}
+    StartupController->>ServicoRastreamentoCnpj: buscarDadosEmpresa(cnpj)
+    ServicoRastreamentoCnpj->>ReceitaFederal: GET https://receitaws.com.br/v1/cnpj/{cnpj}
+
+    alt CNPJ encontrado
+        ReceitaFederal-->>ServicoRastreamentoCnpj: {nome, cnae, porte, regime}
+        ServicoRastreamentoCnpj-->>StartupController: Dados formatados
+        StartupController-->>Frontend: 200 OK {dados pre-preenchidos}
+        Frontend-->>ConsultorAdmin: Exibe formulário pre-preenchido
+    else CNPJ não encontrado ou inválido
+        ReceitaFederal-->>ServicoRastreamentoCnpj: 404 / Erro
+        ServicoRastreamentoCnpj-->>StartupController: Null
+        StartupController-->>Frontend: 422 {erro: "CNPJ não encontrado"}
+        Frontend-->>ConsultorAdmin: Formulário em branco para preenchimento manual
+    end
+
+    ConsultorAdmin->>Frontend: Completa dados (TRL, pitch, tags)
+    Frontend->>StartupController: POST /api/startups {dados_completos}
+    StartupController->>BD: INSERT startups
+    StartupController->>BD: INSERT startup_tag (etiquetas selecionadas)
+    StartupController->>BD: INSERT startup_users {papel: admin}
+    StartupController-->>Frontend: 201 Created {startup_id}
+    Frontend-->>ConsultorAdmin: Redireciona para Dashboard da Startup
+
+    Note over ConsultorAdmin,BD: ADIÇÃO DE MEMBRO (UC-12)
+    ConsultorAdmin->>Frontend: Convida Consultor Padrão
+    Frontend->>StartupController: POST /api/startups/{id}/membros {email, papel}
+    StartupController->>BD: SELECT users WHERE email = ?
+    BD-->>StartupController: Usuário encontrado
+    StartupController->>BD: INSERT startup_users {papel: padrao}
+    StartupController-->>Frontend: 200 OK
+    Frontend-->>ConsultorAdmin: Membro adicionado com sucesso
