@@ -1,0 +1,39 @@
+%% ────────────────────────────────────────────────────────────
+%% DS-04: COLETA AUTOMÁTICA DE EDITAIS / WEB SCRAPING (UC-39)
+%% Fluxo do Job assíncrono com Roach PHP
+%% ────────────────────────────────────────────────────────────
+sequenceDiagram
+    autonumber
+    participant Scheduler as Scheduler (Cron)
+    participant PlatformController
+    participant FinepSpider as Spider (FINEP/FAPPR/FAPESC)
+    participant LimpaTextoTrait as LimpaTextoTrait
+    participant SalvarNoBancoProcessor as SalvarNoBancoProcessor
+    participant BD as Banco de Dados
+
+    Note over Scheduler,BD: DISPARO AUTOMÁTICO — Cron diário
+    Scheduler->>PlatformController: Executa rotina agendada
+    PlatformController->>FinepSpider: Roach::startSpider(FinepSpider)
+
+    loop Para cada edital na fonte
+        FinepSpider->>FinepSpider: parse(HTTP Response)
+        FinepSpider->>LimpaTextoTrait: limpaTexto(html_bruto)
+        LimpaTextoTrait-->>FinepSpider: Texto sanitizado
+        FinepSpider->>FinepSpider: Gera external_id (hash único)
+        FinepSpider->>SalvarNoBancoProcessor: yield item({titulo, link, fonte, ...})
+        SalvarNoBancoProcessor->>BD: Edital::updateOrCreate({external_id}, dados)
+        BD-->>SalvarNoBancoProcessor: Edital salvo/atualizado
+    end
+
+    Note over Scheduler,BD: DETALHAMENTO VIA COMMAND ARTISAN (UC-26 parcial)
+    Scheduler->>PlatformController: php artisan editais:detalhar
+    PlatformController->>BD: SELECT editais WHERE objetivo IS NULL
+    BD-->>PlatformController: Lista de editais pendentes
+
+    loop Para cada edital pendente
+        PlatformController->>FinepSpider: Requisição HTTP ao link do edital
+        FinepSpider-->>PlatformController: HTML/JSON da página
+        PlatformController->>BD: UPDATE editais SET objetivo, elegibilidade, prazo...
+    end
+
+    PlatformController-->>Scheduler: Rotina concluída
