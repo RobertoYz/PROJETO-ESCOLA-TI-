@@ -39,15 +39,6 @@
         .form-group input:focus { box-shadow: 0 0 0 2px var(--accent-blue); }
         .form-group input.error { border-color: var(--error-red); box-shadow: 0 0 0 2px rgba(255, 77, 77, 0.2); }
         
-        .radio-group { display: flex; gap: 2rem; margin-top: 0.5rem; }
-        .custom-radio { display: flex; align-items: center; cursor: pointer; font-size: 0.95rem; position: relative; padding-left: 28px; user-select: none; }
-        .custom-radio input { position: absolute; opacity: 0; cursor: pointer; }
-        .radio-mark { position: absolute; top: 50%; left: 0; transform: translateY(-50%); height: 18px; width: 18px; background-color: var(--input-bg); border: 2px solid #444; border-radius: 50%; transition: all 0.2s ease; }
-        .custom-radio:hover input ~ .radio-mark { border-color: var(--accent-blue); }
-        .custom-radio input:checked ~ .radio-mark { border-color: var(--accent-blue); }
-        .radio-mark:after { content: ""; position: absolute; display: none; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; border-radius: 50%; background: var(--accent-blue); }
-        .custom-radio input:checked ~ .radio-mark:after { display: block; }
-        
         .btn-primary { background-color: var(--accent-blue); color: var(--text-light); border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: background-color 0.3s; width: 100%; margin-top: 1rem; font-size: 1rem; }
         .btn-primary:hover { background-color: var(--accent-hover); }
         
@@ -68,8 +59,8 @@
             <h2>Crie sua conta</h2>
             <form id="registerForm">
                 <div class="form-group">
-                    <label>Nome Completo / Razão Social</label>
-                    <input type="text" id="nome" placeholder="Digite seu nome ou da empresa" required>
+                    <label>Nome Completo</label>
+                    <input type="text" id="nome" placeholder="Digite seu nome" required>
                 </div>
                 <div class="form-group">
                     <label>E-mail</label>
@@ -85,28 +76,9 @@
                         <input type="password" id="confirmar_senha" required>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Você é?</label>
-                    <div class="radio-group">
-                        <label class="custom-radio">
-                            <input type="radio" name="user_type" value="consultor" checked>
-                            <span class="radio-mark"></span>
-                            Consultor
-                        </label>
-                        <label class="custom-radio">
-                            <input type="radio" name="user_type" value="startup">
-                            <span class="radio-mark"></span>
-                            Startup
-                        </label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>CNPJ</label>
-                    <input type="text" id="cnpj" placeholder="00.000.000/0000-00" maxlength="18" required>
-                </div>
                 <button type="submit" class="btn-primary" id="btn-submit">Criar Conta</button>
                 <div class="form-footer">
-                    <p>Já possui uma conta? <a href="#">Faça login</a></p>
+                    <p>Já possui uma conta? <a href="login_anjonexus.html">Faça login</a></p>
                 </div>
             </form>
         </div>
@@ -114,20 +86,9 @@
 
     <script>
         const form = document.getElementById("registerForm");
-        const cnpjInput = document.getElementById("cnpj");
         const senha = document.getElementById("senha");
         const confirmarSenha = document.getElementById("confirmar_senha");
         const btnSubmit = document.getElementById("btn-submit");
-
-        cnpjInput.addEventListener("input", function(e) {
-            let value = e.target.value.replace(/\D/g, "");
-            if (value.length > 14) value = value.slice(0, 14);
-            if (value.length > 12) value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2}).*/, "$1.$2.$3/$4-$5");
-            else if (value.length > 8) value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{1,4}).*/, "$1.$2.$3/$4");
-            else if (value.length > 5) value = value.replace(/^(\d{2})(\d{3})(\d{1,3}).*/, "$1.$2.$3");
-            else if (value.length > 2) value = value.replace(/^(\d{2})(\d{1,3}).*/, "$1.$2");
-            e.target.value = value;
-        });
 
         form.addEventListener("submit", (e) => {
             e.preventDefault();
@@ -141,21 +102,14 @@
                 return;
             }
 
-            if (cnpjInput.value.length !== 18) {
-                cnpjInput.classList.add("error");
-                alert("Por favor, insira um CNPJ válido com 14 dígitos.");
-                return;
-            }
-
             const originalText = btnSubmit.innerText;
             btnSubmit.innerText = "Criando conta...";
             btnSubmit.style.opacity = "0.7";
             btnSubmit.style.cursor = "not-allowed";
 
             setTimeout(() => {
-                const userType = document.querySelector('input[name="user_type"]:checked').value;
-                alert(`Conta criada com sucesso!
-Tipo de usuário: ${userType.toUpperCase()}`);
+                alert("Conta criada com sucesso!");
+                window.location.href = 'login_anjonexus.html';
                 btnSubmit.innerText = originalText;
                 btnSubmit.style.opacity = "1";
                 btnSubmit.style.cursor = "pointer";
