@@ -1,0 +1,219 @@
+classDiagram
+    direction TB
+
+    %% ----------------------------------------------------
+    %% 1. CLASSES DE DOMÍNIO (MODELOS)
+    %% ----------------------------------------------------
+
+    class Usuario {
+        -BigInt id
+        -String nome
+        -String email
+        -String senha_hash
+        -Enum papel
+        -Timestamp criado_em
+        +login() void
+        +redefinirSenha() void
+        +temPermissao(String permissao) Boolean
+    }
+
+    class ConsultorAdmin {
+        %% papel = consultor_admin
+    }
+
+    class ConsultorPadrao {
+        %% papel = consultor_padrao
+    }
+
+    class ClienteStartup {
+        %% papel = startup - acesso somente leitura ao portal
+    }
+
+    class Assinatura {
+        -BigInt id
+        -BigInt usuario_id
+        -Enum nome_plano
+        -Enum status
+        -String mp_pagamento_id
+        -Date data_proximo_pagamento
+        +processarWebhook(Json payload) void
+        +cotaExcedida(String tipo_cota) Boolean
+    }
+
+    class Startup {
+        -BigInt id
+        -BigInt admin_id
+        -String cnpj
+        -String nome
+        -String cnae_primario
+        -String regime_tributario
+        -Decimal capital_social
+        -String porte
+        -Int nivel_trl
+        -Text pitch_padrao
+        +atualizarPerfil(Array dados) void
+        +calcularCompatibilidade(Edital edital) Float
+    }
+
+    class Etiqueta {
+        -BigInt id
+        -Enum categoria
+        -String nome
+    }
+
+    class Edital {
+        -BigInt id
+        -String titulo
+        -String url_fonte
+        -String caminho_arquivo_original
+        -Decimal orcamento_min
+        -Decimal orcamento_max
+        -DateTime prazo
+        -DateTime publicado_em
+        -Enum status
+        +extrairRequisitosViaOcr() void
+    }
+
+    class RequisitoEdital {
+        -BigInt id
+        -BigInt edital_id
+        -Text descricao
+        -Boolean e_obrigatorio
+    }
+
+    class PainelKanban {
+        -BigInt id
+        -BigInt startup_id
+        -String nome
+    }
+
+    class ColunaKanban {
+        -BigInt id
+        -BigInt painel_id
+        -String titulo
+        -Int ordem_index
+        +reordenar(Int novaOrdem) void
+    }
+
+    class TicketKanban {
+        -BigInt id
+        -BigInt coluna_id
+        -BigInt edital_id
+        -String titulo
+        -DateTime data_vencimento
+        +moverParaColuna(BigInt colunaId) void
+        +anexarArquivo(File arquivo) void
+    }
+
+    class AnexoKanban {
+        -BigInt id
+        -BigInt ticket_id
+        -String nome_arquivo
+        -String caminho_arquivo
+    }
+
+    class Minuta {
+        -BigInt id
+        -BigInt startup_id
+        -BigInt edital_id
+        -BigInt ticket_id
+        -Text prompt_ia_usado
+        -LongText conteudo_html
+        -Timestamp criado_em
+        -Timestamp atualizado_em
+        +exportarParaWord() File
+        +exportarParaPdf() File
+    }
+
+    class Notificacao {
+        -BigInt id
+        -BigInt usuario_id
+        -Enum tipo
+        -Text mensagem
+        -Boolean foi_lida
+        -Timestamp criado_em
+        +marcarComoLida() void
+    }
+
+    %% ----------------------------------------------------
+    %% HERANÇA (GENERALIZAÇÃO - baseada no Enum papel)
+    %% ----------------------------------------------------
+
+    Usuario <|-- ConsultorAdmin
+    Usuario <|-- ConsultorPadrao
+    Usuario <|-- ClienteStartup
+
+    %% ----------------------------------------------------
+    %% RELACIONAMENTOS DOS MODELOS (DOMÍNIO)
+    %% ----------------------------------------------------
+
+    Usuario "1" o-- "0..*" Assinatura : assina
+    Usuario "1" o-- "0..*" Startup : gerencia
+
+    Startup "1" *-- "0..*" Etiqueta : possui_preferencias
+    Edital "1" *-- "0..*" Etiqueta : classificado_por
+
+    Edital "1" *-- "0..*" RequisitoEdital : contem_requisitos
+    Startup "0..*" o-- "0..*" Edital : favorita
+
+    Startup "1" *-- "1" PainelKanban : controla_pipeline
+    PainelKanban "1" *-- "0..*" ColunaKanban : organiza
+    ColunaKanban "1" *-- "0..*" TicketKanban : contem
+    TicketKanban "1" o-- "0..1" Edital : referente_a
+    TicketKanban "1" *-- "0..*" AnexoKanban : possui_anexos
+    TicketKanban "1" o-- "0..1" Minuta : possui_rascunho
+
+    Usuario "1" *-- "0..*" Notificacao : recebe
+
+    %% ----------------------------------------------------
+    %% 2. CLASSES DE SERVIÇO E JOBS (ARQUITETURA)
+    %% ----------------------------------------------------
+
+    class ServicoAutenticacao {
+        +autenticarUsuario(email, senha) Token
+        +gerarLinkRecuperacao(email) Boolean
+    }
+
+    class ServicoRastreamentoCnpj {
+        +buscarDadosEmpresa(cnpj) Array
+    }
+
+    class JobColetaEdital {
+        +executarRotina() void
+        -limparDescricoes(htmlBruto) String
+        -evitarDuplicatas(uid) Boolean
+    }
+
+    class ServicoOcrPdf {
+        +extrairTextoDoPdf(caminho) String
+        +identificarTermosChave(texto) Array
+    }
+
+    class ServicoIaGemini {
+        +gerarProposta(pitch, textoEdital) String
+        +formatarParaHtml(respostaBruta) String
+    }
+
+    class ServicoCompatibilidade {
+        +calcularPontuacao(startup, edital) Float
+        +dispararNotificacoesMatch() void
+    }
+
+    class ServicoPagamento {
+        +processarDowngrade(usuario, novoPlano) Boolean
+        +excluirContaCascata(usuario) void
+    }
+
+    %% ----------------------------------------------------
+    %% RELAÇÕES DE DEPENDÊNCIA (SERVIÇOS → MODELOS)
+    %% ----------------------------------------------------
+
+    ServicoAutenticacao ..> Usuario : gerencia_autenticacao
+    ServicoPagamento ..> Assinatura : controla_cotas
+    ServicoRastreamentoCnpj ..> Startup : auto_preenche_UC11
+    JobColetaEdital ..> Edital : cria_via_scraping_UC39
+    ServicoOcrPdf ..> RequisitoEdital : gera_checklists_UC26
+    ServicoIaGemini ..> Minuta : redige_texto_UC21
+    ServicoCompatibilidade ..> Edital : compara_tags_UC27
+    ServicoCompatibilidade ..> Startup : compara_tags_UC27
+    ServicoCompatibilidade ..> Notificacao : dispara_alerta

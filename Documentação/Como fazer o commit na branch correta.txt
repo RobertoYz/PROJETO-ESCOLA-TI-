@@ -1,0 +1,45 @@
+1 - Abrir a pasta de dowloads:
+
+cd Downloads
+
+--------------------------------------------------------------------
+
+2 - Clonar o projeto:
+
+git clone https://github.com/RobertoYz/PROJETO-ESCOLA-TI-.git
+
+--------------------------------------------------------------------
+
+3 - Entrar na pasta do projeto:
+
+cd PROJETO-ESCOLA-TI-
+
+--------------------------------------------------------------------
+
+4 - Mover para a branch correta (USA O NOME DA SUA BRANCH!):
+
+git checkout EDTAN-16-Diagrama-de-Sequência
+
+--------------------------------------------------------------------
+
+5 - Coloque e modifique os arquivos que quiser na pasta
+
+--------------------------------------------------------------------
+
+6 - Volte ao cmd e prepare os arquivos adicionados:
+
+git add .
+
+--------------------------------------------------------------------
+
+7 - Faça a mensagem de commit com a chave gerada pelo Jira (COPIA A CHAVE DO COMMIT NO JIRA, ELA TEM QUE APARECER PELO MENOS 1 VEZ NA MENSAGEM DO COMMIT):
+
+git commit -m "EDTAN-X: Adiciona documentos de caso de uso e diagramas"
+
+
+--------------------------------------------------------------------
+
+8 - Só finalizar fazendo o push:
+
+git push
+
