@@ -1,0 +1,52 @@
+%% ────────────────────────────────────────────────────────────
+%% DS-08: GERAÇÃO DE MINUTA VIA IA GEMINI (UC-21)
+%% Caso mais complexo: streaming em tempo real via WebSocket
+%% ────────────────────────────────────────────────────────────
+sequenceDiagram
+    autonumber
+    actor Consultor
+    participant Frontend
+    participant MinutaController
+    participant ServicoIaGemini as GeminiAiService
+    participant GeminiAPI as Google Gemini API
+    participant WebSocket
+    participant BD as Banco de Dados
+
+    Consultor->>Frontend: Clica "Gerar Proposta com IA" no ticket
+    Frontend->>MinutaController: POST /api/minutas/gerar {ticket_id, startup_id, edital_id}
+
+    MinutaController->>BD: SELECT startups WHERE id = {startup_id}
+    BD-->>MinutaController: {pitch_padrao, cnae, trl, tags}
+
+    MinutaController->>BD: SELECT editais WHERE id = {edital_id}
+    BD-->>MinutaController: {titulo, objetivo, elegibilidade, requisitos}
+
+    MinutaController->>ServicoIaGemini: gerarProposta(pitch, texto_edital)
+    ServicoIaGemini->>ServicoIaGemini: Monta prompt estruturado
+
+    Note over ServicoIaGemini,WebSocket: STREAMING EM TEMPO REAL
+    ServicoIaGemini->>GeminiAPI: POST /v1/models/gemini-pro:streamGenerateContent
+    
+    loop Chunks de texto retornados pela API
+        GeminiAPI-->>ServicoIaGemini: chunk de texto gerado
+        ServicoIaGemini->>WebSocket: Push {tipo: stream_minuta, chunk}
+        WebSocket-->>Frontend: Exibe texto sendo digitado em tempo real
+    end
+
+    GeminiAPI-->>ServicoIaGemini: Stream finalizado
+    ServicoIaGemini->>ServicoIaGemini: formatarParaHtml(texto_completo)
+    ServicoIaGemini-->>MinutaController: HTML formatado
+
+    MinutaController->>BD: INSERT minutas {startup_id, edital_id, ticket_id, conteudo_html}
+    BD-->>MinutaController: {minuta_id}
+    MinutaController->>WebSocket: Push {tipo: minuta_salva, minuta_id}
+    WebSocket-->>Frontend: Habilita botões de exportação
+
+    Note over Consultor,BD: EXPORTAÇÃO DA MINUTA (UC-22)
+    Consultor->>Frontend: Clica "Exportar PDF" ou "Exportar Word"
+    Frontend->>MinutaController: GET /api/minutas/{id}/exportar?formato=pdf
+    MinutaController->>BD: SELECT minutas WHERE id = ?
+    BD-->>MinutaController: {conteudo_html}
+    MinutaController->>MinutaController: Converte HTML para PDF (Browsershot)
+    MinutaController-->>Frontend: Stream do arquivo PDF
+    Frontend-->>Consultor: Download do arquivo inicia

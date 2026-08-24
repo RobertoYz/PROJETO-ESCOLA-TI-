@@ -1,0 +1,41 @@
+%% ────────────────────────────────────────────────────────────
+%% DS-05: OCR E ANÁLISE DE PDF DO EDITAL (UC-26)
+%% Extração de requisitos via processamento assíncrono
+%% ────────────────────────────────────────────────────────────
+sequenceDiagram
+    autonumber
+    actor Consultor
+    participant Frontend
+    participant EditalController
+    participant FilaJobs as Fila de Jobs (Queue)
+    participant ServicoOcrPdf as OcrPdfService
+    participant BD as Banco de Dados
+    participant WebSocket
+
+    Consultor->>Frontend: Clica em "Analisar PDF" do edital
+    Frontend->>EditalController: POST /api/editais/{id}/analisar-pdf
+    EditalController->>BD: SELECT editais WHERE id = ?
+    BD-->>EditalController: Dados do edital (com caminho do PDF)
+
+    EditalController->>FilaJobs: dispatch(ProcessarPdfEditalJob, {edital_id})
+    EditalController-->>Frontend: 202 Accepted {mensagem: "Processando em background"}
+    Frontend-->>Consultor: Exibe spinner "Analisando documento..."
+
+    Note over FilaJobs,WebSocket: PROCESSAMENTO ASSÍNCRONO EM BACKGROUND
+    FilaJobs->>ServicoOcrPdf: extrairTextoDoPdf(caminho_arquivo)
+    ServicoOcrPdf-->>FilaJobs: Texto bruto extraído do PDF
+
+    FilaJobs->>ServicoOcrPdf: identificarTermosChave(texto_bruto)
+    ServicoOcrPdf-->>FilaJobs: Lista de requisitos identificados
+
+    loop Para cada requisito identificado
+        FilaJobs->>BD: INSERT edital_requisitos {edital_id, descricao, e_obrigatorio}
+    end
+
+    FilaJobs->>WebSocket: Push evento "pdf_processado" {edital_id}
+    WebSocket-->>Frontend: Notifica conclusão
+    Frontend->>EditalController: GET /api/editais/{id}/requisitos
+    EditalController->>BD: SELECT edital_requisitos WHERE edital_id = ?
+    BD-->>EditalController: Lista de requisitos
+    EditalController-->>Frontend: 200 OK {requisitos: [...]}
+    Frontend-->>Consultor: Exibe checklist de requisitos gerado
