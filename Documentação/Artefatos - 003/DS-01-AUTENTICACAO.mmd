@@ -1,0 +1,44 @@
+%% ────────────────────────────────────────────────────────────
+%% DS-01: AUTENTICAÇÃO E CONTROLE DE ACESSO (UC-01, UC-02)
+%% ────────────────────────────────────────────────────────────
+sequenceDiagram
+    autonumber
+    actor Usuario
+    participant Frontend
+    participant AuthController
+    participant ServicoAutenticacao as ServicoAuth
+    participant BD as Banco de Dados
+
+    Usuario->>Frontend: Preenche email e senha
+    Frontend->>AuthController: POST /api/login {email, senha}
+
+    AuthController->>ServicoAutenticacao: autenticarUsuario(email, senha)
+    ServicoAutenticacao->>BD: SELECT * FROM users WHERE email = ?
+    BD-->>ServicoAutenticacao: Registro do usuário
+
+    alt Credenciais válidas
+        ServicoAutenticacao->>BD: INSERT personal_access_tokens
+        ServicoAutenticacao-->>AuthController: Token JWT gerado
+        AuthController-->>Frontend: 200 OK {token, usuario, papel}
+        Frontend-->>Usuario: Redireciona para Dashboard conforme papel
+    else Credenciais inválidas
+        ServicoAutenticacao-->>AuthController: Falha na autenticação
+        AuthController-->>Frontend: 401 Unauthorized
+        Frontend-->>Usuario: Exibe mensagem de erro
+    end
+
+    Note over Usuario,BD: RECUPERAÇÃO DE SENHA (UC-02)
+    Usuario->>Frontend: Clica em "Esqueci minha senha"
+    Frontend->>AuthController: POST /api/recuperar-senha {email}
+    AuthController->>ServicoAutenticacao: gerarLinkRecuperacao(email)
+    ServicoAutenticacao->>BD: INSERT password_reset_tokens
+    ServicoAutenticacao-->>AuthController: Link enviado por email
+    AuthController-->>Frontend: 200 OK {mensagem: "Email enviado"}
+    Frontend-->>Usuario: Exibe confirmação
+
+    Note over Usuario,BD: LOGOUT (UC-03)
+    Usuario->>Frontend: Clica em "Sair"
+    Frontend->>AuthController: POST /api/logout {token}
+    AuthController->>BD: DELETE personal_access_tokens WHERE token = ?
+    AuthController-->>Frontend: 200 OK
+    Frontend-->>Usuario: Redireciona para tela de login
