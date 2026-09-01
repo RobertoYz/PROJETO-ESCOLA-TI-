@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar de Editais - Anjo Nexus</title>
+    
+    <!-- Tailwind CSS via CDN para estilização rápida -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Estilos customizados -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased">
+    
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-blue-600 text-white shadow-md">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                <h1 class="text-2xl font-bold">Radar de Editais</h1>
+                <nav>
+                    <ul class="flex space-x-4">
+                        <li><a href="#" class="hover:text-blue-200">Dashboard</a></li>
+                        <li><a href="#" class="hover:text-blue-200">Configurações</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4">Bem-vindo ao Radar de Editais!</h2>
+                <p class="text-gray-600 mb-6">O sistema está configurado e pronto para conexão.</p>
+                
+                <button id="btn-testar-api" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">
+                    Testar Conexão com a API Laravel
+                </button>
+                
+                <div id="api-response" class="mt-4 p-4 bg-slate-100 rounded hidden">
+                    <!-- A resposta aparecerá aqui -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-slate-800 text-white text-center py-4">
+            <p>&copy; 2026 Anjo Nexus. Todos os direitos reservados.</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+</body>
+</html>
