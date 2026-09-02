@@ -44,8 +44,13 @@ classDiagram
 
     class Edital {
         -BigInt id
-        -String chave_unica
+        -String external_id
         -String titulo
+        -String fonte
+        -Text objetivo
+        -String condicao_financiamento
+        -String operacao
+        -String publico
         -DateTime prazo
         -String url_fonte
         -String caminho_arquivo_original

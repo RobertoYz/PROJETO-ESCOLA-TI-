@@ -63,13 +63,19 @@ classDiagram
 
     class Edital {
         -BigInt id
+        -String external_id
         -String titulo
-        -String url_fonte
-        -String caminho_arquivo_original
+        -String fonte
+        -Text objetivo
+        -String condicao_financiamento
+        -String operacao
+        -String publico
         -Decimal orcamento_min
         -Decimal orcamento_max
         -DateTime prazo
         -DateTime publicado_em
+        -String url_fonte
+        -String caminho_arquivo_original
         -Enum status
         +extrairRequisitosViaOcr() void
     }
