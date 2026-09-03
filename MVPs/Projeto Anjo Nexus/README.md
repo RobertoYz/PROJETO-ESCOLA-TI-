@@ -35,38 +35,52 @@ O diretório `/back` já está configurado com bibliotecas vitais para a minera�
 
 ---
 
-## 🚀 Como Iniciar o Projeto Localmente
+## 🚀 Como Iniciar o Projeto Localmente (Back-end)
 
-Siga o passo a passo abaixo para rodar o projeto em ambiente de desenvolvimento.
+Siga o passo a passo exato abaixo para configurar o banco de dados MySQL via XAMPP e rodar a API em ambiente de desenvolvimento.
 
-### 1. Inicializando o Backend (Laravel)
-Abra um terminal, acesse a pasta `/back` e inicie o servidor embutido do Laravel:
+### Passo 1: Instalar Dependências
+Abra o terminal, acesse a pasta `/back` e instale os pacotes necessários:
 ```bash
 cd back
-
-# Instale as dependências (se ainda não estiverem instaladas)
 composer install
+```
 
-# Inicie o servidor REST API (por padrão na porta 8000)
+### Passo 2: Configurar o Arquivo de Ambiente (.env)
+O repositório não sobe o arquivo de ambiente por segurança. É necessário criá-lo e configurá-lo:
+1. Na pasta `back`, faça uma cópia do arquivo `.env.example` e renomeie essa cópia para `.env`.
+2. No terminal, gere a chave de criptografia da aplicação executando:
+   ```bash
+   php artisan key:generate
+   ```
+3. Abra o arquivo `.env` no seu editor de código e ative a exibição de erros alterando:
+   ```env
+   APP_DEBUG=true
+   ```
+4. No mesmo arquivo `.env`, configure as variáveis de banco de dados para usar o MySQL do XAMPP com as credenciais padrão:
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=anjo_nexus
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+
+### Passo 3: Criar o Banco de Dados
+1. Certifique-se de que os módulos **Apache** e **MySQL** estejam iniciados no painel de controle do XAMPP.
+2. Abra o navegador e acesse o phpMyAdmin (`http://localhost/phpmyadmin`).
+3. Crie um novo banco de dados com o nome exato que foi configurado no `.env`: **`anjo_nexus`**.
+
+### Passo 4: Construir as Tabelas
+Volte ao terminal, certifique-se de estar na pasta `/back` e execute as migrações para gerar as tabelas no banco de dados recém-criado:
+```bash
+php artisan migrate
+```
+
+### Passo 5: Iniciar o Servidor
+Com tudo pronto, inicie o servidor embutido do Laravel:
+```bash
 php artisan serve
 ```
-A API estará escutando em `http://localhost:8000`.
-
-### 2. Inicializando o Frontend (HTML)
-Como o frontend é puro (HTML/JS/CSS secos), ele não precisa de compilação ou processos "build". 
-Porém, para evitar erros de **CORS** (Cross-Origin Resource Sharing) no navegador ao fazer chamadas de API, **não** abra o arquivo clicando nele diretamente (`file:///...`). Você precisa rodar através de um servidor local.
-
-**Opções rápidas:**
-- **VS Code:** Instale a extensão "Live Server". Clique com o botão direito no arquivo `front/index.html` e escolha *Open with Live Server*.
-- **Via PHP:** Se você tiver o PHP instalado globalmente, abra outro terminal e use:
-  ```bash
-  cd front
-  php -S localhost:5500
-  ```
-- **Via Node (npx):** Se tiver NPM na máquina:
-  ```bash
-  cd front
-  npx serve .
-  ```
-
-O Frontend abrirá no navegador (geralmente em `http://localhost:5500` ou similar), pronto para conectar com a API do Backend.
+**Observação Importante sobre Acesso:** Para acessar a aplicação no navegador, utilize estritamente a URL e porta fornecidas pelo terminal (ex: `http://127.0.0.1:8000`). Digitar a URL concatenada ao localhost (como `localhost/127.0.0.1:8000`) causará um erro *403 Forbidden* de permissão de pasta no Apache.
