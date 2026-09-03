@@ -18,7 +18,13 @@ cd PROJETO-ESCOLA-TI-
 
 4 - Mover para a branch correta (USA O NOME DA SUA BRANCH!):
 
-git checkout EDTAN-16-Diagrama-de-Sequência
+git checkout EDTAN-x-Fazer-Descrição-Caso-de-Uso-e-Diagrama
+
+--------------------------------------------------------------------
+
+EXTRA: Caso a branch esteja desatualizada (outro merge foi feito antes dela), faça:
+
+git pull origin main (vai atualizar a sua branch com o que está na main)
 
 --------------------------------------------------------------------
 
@@ -36,6 +42,11 @@ git add .
 
 git commit -m "EDTAN-X: Adiciona documentos de caso de uso e diagramas"
 
+--------------------------------------------------------------------
+
+CASO erre na mensagem do commit, ANTES de fazer o push, faça:
+
+git commit --amend -m "TICKET-123: sua mensagem de commit aqui"
 
 --------------------------------------------------------------------
 
