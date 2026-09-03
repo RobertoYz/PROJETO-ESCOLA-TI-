@@ -6,7 +6,7 @@ Este repositório contém a aplicação "Radar de Editais", dividida fisicamente
 
 O projeto foi organizado em duas pastas principais para garantir independência tecnológica:
 
-- `/back` - Contém a API REST Stateless desenvolvida em Laravel 11. Responsável por todo o processamento de regras de negócio, acesso a banco de dados e execução de jobs assíncronos pesados (Scraping, OCR, IA).
+- `/back` - Contém a API REST Stateless desenvolvida em Laravel 12. Responsável por todo o processamento de regras de negócio, acesso a banco de dados e execução de jobs assíncronos pesados (Scraping, OCR, IA).
 - `/front` - Contém a interface com o usuário (Client-Side). Projetada para ser extremamente leve e "seca" (Vanilla HTML/CSS/JS), consumindo o back-end estritamente via requisições HTTP (API REST).
 
 ---
