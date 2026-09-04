@@ -1,0 +1,36 @@
+Atividade: criar e testar uma skill de code review
+Trabalho Prático 2, atividade 1 de 3. Vale 0,5 ponto. INDIVIDUAL!
+
+LEIA TODAS AS INSTRUÇÕES E PERGUNTAS ANTES DE INICIAR !!!
+
+Você deve pedir para a IA revisar o mesmo código três vezes seguidas. O código enviado, a pergunta digitada, o modelo e a temperatura precisam ser iguais nas três rodadas. A única coisa que muda é o texto do campo
+
+System Instructions:
+
+Skill deve ser para code review.
+
+Rodada 1. Cole a frase "Revise o código do usuário e diga se está bom".
+Rodada 2. Cole o texto de uma SKILL.md que você mesmo escreveu.
+Rodada 3. Cole um SKILL.md pronto, copiado de um catálogo público (skills.sh).
+
+Depois de rodar as três, leia as saídas e classifique cada problema que a IA apontou:
+Conte como real o problema que existe, com arquivo e linha indicados, e que dá para corrigir. 
+Conte como inexistente o problema que a IA apontou e não está no código, por exemplo quando ela diz que falta validar um campo que já é validado. 
+Conte como vago o comentário do tipo "poderia ser mais modular", que não diz onde nem o que mudar.
+
+Guarde os três resultados como comentários no seu PR.
+
+Tire um print de cada rodada (no AI Studio ou Groq Studio) antes de fechar a tela. Os prints precisam mostrar o campo System Instructions preenchido e o valor da temperatura. São três comentários com prints, um por rodada. Eles são a prova de que só a instrução mudou entre uma rodada e outra.
+
+O código revisado pode vir de qualquer repositório seu. Use de preferência o projeto da Escola de TI ou da AEP. A resposta é individual, então se seu grupo possui 6 membros, vão precisar de 6 PRs distintas.
+
+Seu repositório pode ser privado. Nesse caso convide pedrosatin como colaborador antes de enviar este formulário.
+
+O código a ser revisado PRECISA conter alguma Linguagem de programação, sendo proíbido PRs onde a maioria do código alterado é HTML e CSS.
+
+A PR PRECISA ter no mínimo 300 changes.
+
+Link do diff viewer: https://pedrosatin.github.io/pr-diff-extractor/
+Ex: https://github.com/superfolio-dev/website/pull/8
+
+Prazo: 23h59 do dia da aula. Você pode editar sua resposta depois de enviar. Os horários registrados na PR também serão levados em consideração.

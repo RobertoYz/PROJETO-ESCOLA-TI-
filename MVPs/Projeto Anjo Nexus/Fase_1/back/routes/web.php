@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Spiders\FinepSpider;
 use RoachPHP\Roach;
+use App\Http\Controllers\EditalController;
 
 Route::get('/teste-finep', function () {
     // Aumenta o tempo limite do PHP para 5 minutos (já que o Puppeteer é pesado)
@@ -19,3 +20,5 @@ Route::get('/teste-finep', function () {
     // Devolve para o Chrome em formato JSON puro
     return response()->json($dados);
 });
+
+Route::get('/debug-edital', function () { return response()->json(\App\Models\Edital::find(1)); });

@@ -3,53 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radar de Editais - Anjo Nexus</title>
-    
-    <!-- Tailwind CSS via CDN para estilização rápida -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Estilos customizados -->
-    <link rel="stylesheet" href="css/style.css">
+    <title>Anjo Nexus - Busca e Editais</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --sidebar-bg: #111418;
+            --navbar-bg: #0d0f12;
+            --card-bg: #1a1d21;
+            --card-hover: #23272c;
+            --text-light: #ffffff;
+            --text-muted: #a0a0a0;
+            --menu-bg: #f5f5f5;
+            --menu-text: #333333;
+            --accent-blue: #1b36ff;
+            --accent-purple: #8b5cf6;
+            --accent-purple-light: rgba(139, 92, 246, 0.15);
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); display: flex; height: 100vh; overflow: hidden; }
+        svg { fill: currentColor; }
+
+        /* SIDEBAR */
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); height: 100vh; display: flex; flex-direction: column; border-right: 1px solid #222; transition: width 0.3s ease; position: relative; }
+        .sidebar.collapsed { width: 70px; }
+        .sidebar-header { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+        .toggle-btn { background: none; border: none; color: var(--text-light); cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; align-self: flex-start; }
+        .toggle-btn:hover { background-color: rgba(255,255,255,0.1); }
+        .logo { font-size: 1.5rem; font-weight: 600; transition: opacity 0.3s; }
+        .logo span { font-weight: 400; }
+        .sidebar.collapsed .logo { opacity: 0; pointer-events: none; height: 0; margin: 0; overflow: hidden; }
+
+        .nav-menu { flex: 1; display: flex; flex-direction: column; padding: 1rem 0; overflow: hidden; }
+        .nav-item { padding: 1rem 1.5rem; color: var(--text-light); text-decoration: none; font-size: 1rem; display: flex; align-items: center; gap: 15px; transition: background-color 0.2s; white-space: nowrap; }
+        .nav-item:hover { background-color: rgba(255,255,255,0.05); }
+        .nav-item.active { background-color: rgba(255,255,255,0.05); border-left: 3px solid var(--accent-blue); color: var(--accent-blue); }
+        .nav-item.active .nav-text { font-weight: 600; }
+        .nav-icon { width: 20px; height: 20px; min-width: 20px; }
+        .nav-text { transition: opacity 0.3s; }
+        .sidebar.collapsed .nav-text { opacity: 0; pointer-events: none; width: 0; overflow: hidden; }
+        .sidebar-footer { padding: 1rem 0; border-top: 1px solid #222; }
+
+        /* MAIN CONTENT */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Topbar */
+        .top-navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--navbar-bg); border-bottom: 1px solid #222; }
+        .startup-info { display: flex; align-items: center; gap: 1rem; }
+        .startup-avatar { width: 45px; height: 45px; background-color: #d9d9d9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666; }
+        .startup-name { font-size: 1.2rem; font-weight: 600; }
+
+        /* Dropdown Roberto */
+        .user-section { display: flex; align-items: center; gap: 1rem; position: relative; cursor: pointer; }
+        .user-name { font-weight: 400; font-size: 1rem; }
+        .avatar { width: 40px; height: 40px; background-color: #d9d9d9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666; }
+        .dropdown-menu { position: absolute; top: 100%; right: 0; margin-top: 10px; background-color: var(--menu-bg); color: var(--menu-text); border-radius: 8px; width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: none; flex-direction: column; z-index: 100; padding: 0.5rem 0; }
+        .dropdown-menu.active { display: flex; }
+        .dropdown-item { padding: 10px 20px; font-size: 0.95rem; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; justify-content: space-between; }
+        .dropdown-item:hover { background-color: #e0e0e0; }
+        .submenu-container { position: relative; }
+        .submenu { position: absolute; top: 0; right: 100%; margin-right: 5px; background-color: var(--menu-bg); border-radius: 8px; width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: none; flex-direction: column; padding: 0.5rem 0; }
+        .submenu.active { display: flex; }
+        .submenu-item { display: flex; align-items: center; gap: 10px; padding: 8px 15px; font-size: 0.9rem; cursor: pointer; }
+        .submenu-item:hover { background-color: #e0e0e0; }
+        .small-avatar { width: 24px; height: 24px; background-color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .btn-add-user { margin: 10px 15px 5px; background-color: #b9bec6; color: #333; border: none; padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+
+        /* Grid */
+        .dashboard-container { padding: 2rem; display: grid; grid-template-columns: 2fr 1.2fr; gap: 2rem; height: calc(100vh - 77px); overflow: hidden; }
+        .card { background-color: var(--card-bg); border-radius: 16px; border: 1px solid #2a2a2a; display: flex; flex-direction: column; overflow: hidden; }
+        .card-header { padding: 1.5rem; border-bottom: 1px solid #2a2a2a; }
+        .card-title { font-size: 1.2rem; font-weight: 500; }
+        .card-body { padding: 0; overflow-y: auto; flex: 1; }
+
+        /* TABELA */
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 1rem 1.5rem; color: var(--text-muted); font-weight: 500; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid #2a2a2a; position: sticky; top: 0; background: var(--card-bg); z-index: 10; }
+        td { padding: 1rem 1.5rem; border-bottom: 1px solid #222; cursor: pointer; transition: 0.2s; }
+        tr:hover td { background-color: var(--card-hover); }
+        tr.selected td { background-color: var(--accent-purple-light); }
+        tr.selected td:first-child { box-shadow: inset 4px 0 0 var(--accent-purple); }
+        .edital-name { font-weight: 600; font-size: 1rem; color: #fff; }
+        .edital-org { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+        .budget { font-family: monospace; font-size: 0.95rem; }
+        .deadline { font-size: 0.9rem; }
+
+        /* Badges */
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; display: inline-block; }
+        .badge-aberto { background-color: rgba(16, 185, 129, 0.15); color: var(--success-color); }
+        .badge-inscrito { background-color: rgba(27, 54, 255, 0.15); color: var(--accent-blue); }
+        .badge-encerrado { background-color: rgba(239, 68, 68, 0.15); color: var(--danger-color); }
+        .match-high { color: var(--success-color); font-weight: 700; }
+        .match-medium { color: var(--warning-color); font-weight: 700; }
+        .match-low { color: var(--danger-color); font-weight: 700; }
+        .btn-icon { background: none; border: none; color: var(--text-muted); cursor: pointer; transition: 0.2s; padding: 5px; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-icon:hover { color: #f59e0b; transform: scale(1.1); }
+        .btn-icon.active { color: #f59e0b; }
+
+        /* PAINEL DE DETALHES */
+        .detail-panel { display: flex; flex-direction: column; }
+        .detail-header { padding: 1.5rem; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: flex-start; }
+        .detail-org-badge { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent-purple); font-weight: 700; margin-bottom: 5px; }
+        .detail-title { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }
+        .detail-content { padding: 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.5rem; }
+        
+        .info-group { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .info-box { background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid #222; }
+        .info-label { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-value { font-weight: 500; margin-top: 4px; }
+        
+        .objective-box {
+            background-color: var(--surface-hover);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+                .diagnosis-box { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-muted); border-bottom: 1px solid #2a2a2a; padding-bottom: 5px; }
+        
+        .doc-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+        .doc-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 0.9rem; padding: 10px 14px; border-radius: 6px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); }
+        .doc-item a { color: var(--accent-purple); text-decoration: none; font-weight: 500; }
+        .doc-item a:hover { text-decoration: underline; }
+        
+        .diag-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .diag-item { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; padding: 8px 12px; border-radius: 6px; background: rgba(0,0,0,0.2); }
+        .diag-success { border-left: 3px solid var(--success-color); }
+        .diag-warning { border-left: 3px solid var(--warning-color); }
+        .diag-danger { border-left: 3px solid var(--danger-color); }
+
+        .detail-footer { padding: 1.5rem; border-top: 1px solid #2a2a2a; display: flex; flex-direction: column; gap: 10px; }
+        .btn-primary { background-color: var(--accent-blue); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 1rem; text-align: center; }
+        .btn-primary:hover { background-color: #0d1ecc; }
+        .btn-outline { background: transparent; color: var(--text-light); border: 1px solid #444; padding: 12px; border-radius: 8px; font-weight: 500; cursor: pointer; transition: 0.2s; text-align: center; text-decoration: none; font-size: 0.95rem; }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); border-color: #666; }
+        
+        .match-bar-container { width: 100%; height: 8px; background: #333; border-radius: 4px; margin-top: 8px; overflow: hidden; }
+        .match-bar-fill { height: 100%; background: var(--accent-purple); transition: width 0.5s ease-in-out; }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans antialiased">
-    
-    <div id="app" class="min-h-screen flex flex-col">
-        <!-- Header -->
-        <header class="bg-blue-600 text-white shadow-md">
-            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-                <h1 class="text-2xl font-bold">Radar de Editais</h1>
-                <nav>
-                    <ul class="flex space-x-4">
-                        <li><a href="#" class="hover:text-blue-200">Dashboard</a></li>
-                        <li><a href="#" class="hover:text-blue-200">Configurações</a></li>
-                    </ul>
-                </nav>
+<body>
+    <svg style="display: none;">
+        <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+        <symbol id="icon-star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+        <symbol id="icon-star-filled" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="currentColor"/></symbol>
+        <symbol id="icon-history" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></symbol>
+        <symbol id="icon-kanban" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7V7h2v10zm4-5h-2V7h2v5zm4 3h-2V7h2v8z"/></symbol>
+        <symbol id="icon-back" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></symbol>
+    </svg>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-btn" id="toggleSidebar">
+                <svg viewBox="0 0 24 24"><use href="#icon-menu"></use></svg>
+            </button>
+            <div class="logo">Anjo<span>Nexus</span></div>
+        </div>
+        <nav class="nav-menu">
+            <a href="#" class="nav-item active"><svg class="nav-icon"><use href="#icon-search"></use></svg><span class="nav-text">Busca</span></a>
+            <a href="#" class="nav-item"><svg class="nav-icon"><use href="#icon-star"></use></svg><span class="nav-text">Favoritos</span></a>
+            <a href="#" class="nav-item"><svg class="nav-icon"><use href="#icon-history"></use></svg><span class="nav-text">Histórico</span></a>
+            <a href="#" class="nav-item"><svg class="nav-icon"><use href="#icon-kanban"></use></svg><span class="nav-text">Kanban</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="selecao_perfis_anjonexus.html" class="nav-item"><svg class="nav-icon"><use href="#icon-back"></use></svg><span class="nav-text">Perfis</span></a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-navbar">
+            <div class="startup-info">
+                <div class="startup-avatar"><svg width="24" height="24"><use href="#icon-user"></use></svg></div>
+                <h1 class="startup-name">Startup X</h1>
+            </div>
+            
+            <div class="user-section" id="userMenuBtn">
+                <span class="user-name">Roberto</span>
+                <div class="avatar"><svg width="24" height="24"><use href="#icon-user"></use></svg></div>
+                <div class="dropdown-menu" id="mainDropdown">
+                    <div class="dropdown-item">Meu Perfil</div>
+                    <div class="dropdown-item">Configurações</div>
+                    <div class="dropdown-item">Privacidade</div>
+                    <div class="submenu-container" id="manageProfilesBtn">
+                        <div class="dropdown-item">&lt; Gerenciar Perfis</div>
+                        <div class="submenu" id="profilesSubmenu">
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Ademar</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Pedro</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>João</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Lucas</div>
+                            <button class="btn-add-user">Adicionar usuário</button>
+                        </div>
+                    </div>
+                    <div class="dropdown-item" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 15px;">Logoff</div>
+                </div>
             </div>
         </header>
 
-        <!-- Main Content -->
-        <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-semibold mb-4">Bem-vindo ao Radar de Editais!</h2>
-                <p class="text-gray-600 mb-6">O sistema está configurado e pronto para conexão.</p>
-                
-                <button id="btn-testar-api" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">
-                    Testar Conexão com a API Laravel
-                </button>
-                
-                <div id="api-response" class="mt-4 p-4 bg-slate-100 rounded hidden">
-                    <!-- A resposta aparecerá aqui -->
+        <div class="dashboard-container">
+            <!-- TABELA -->
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Oportunidades encontradas</h2></div>
+                <div class="card-body">
+                    <table id="dataTable">
+                        <thead>
+                            <tr><th>Nome / Órgão</th><th>Orçamento</th><th>Prazo</th><th>Estado</th><th>Match</th><th></th></tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
                 </div>
             </div>
-        </main>
 
-        <!-- Footer -->
-        <footer class="bg-slate-800 text-white text-center py-4">
-            <p>&copy; 2026 Anjo Nexus. Todos os direitos reservados.</p>
-        </footer>
-    </div>
+            <!-- PAINEL -->
+            <div class="card detail-panel" id="detailPanel" style="display: none;">
+                <div class="detail-header">
+                    <div>
+                        <div class="detail-org-badge" id="detOrg">ÓRGÃO EMISSOR</div>
+                        <h2 class="detail-title" id="detName">Nome do Edital</h2>
+                    </div>
+                    <button id="btnFavDetail" class="btn-icon" style="transform: scale(1.4); margin-right: 10px; margin-top: 5px;" title="Favoritar Edital">
+                        <svg width="20" height="20"><use href="#icon-star"></use></svg>
+                    </button>
+                </div>
+                
+                <div class="detail-content">
+                    <div id="detObjetivo" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin: 0 0 20px 0; font-size: 0.95rem; line-height: 1.6; color: #e0e0e0; min-height: 150px; max-height: 400px; overflow-y: auto; flex-shrink: 0;"></div>
+                    <div>
+                        <h3 class="section-title">Parâmetros Principais</h3>
+                        <div class="info-group">
+                            <div class="info-box"><div class="info-label">Público-alvo / Porte</div><div class="info-value" id="detTarget">--</div></div>
+                            <div class="info-box"><div class="info-label">Abrangência</div><div class="info-value" id="detRegion">--</div></div>
+                            <div class="info-box"><div class="info-label">Nicho / Tema</div><div class="info-value" id="detNicho">--</div></div>
+                            <div class="info-box"><div class="info-label">Faturamento Exigido</div><div class="info-value" id="detFaturamento">--</div></div>
+                            <div class="info-box"><div class="info-label">TRL Exigido</div><div class="info-value" id="detTrl">--</div></div>
+                            <div class="info-box">
+                                <div class="info-label">Compatibilidade Total</div><div class="info-value" id="detMatchVal">0%</div>
+                                <div class="match-bar-container"><div class="match-bar-fill" id="detMatchBar" style="width: 0%;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="section-title">Cronograma</h3>
+                        <div class="info-group">
+                            <div class="info-box"><div class="info-label">Data de Abertura</div><div class="info-value" id="detOpen">--</div></div>
+                            <div class="info-box" style="border-color: rgba(239, 68, 68, 0.4);"><div class="info-label" style="color: #ef4444;">Submissão Final</div><div class="info-value" id="detClose">--</div></div>
+                            <div class="info-box"><div class="info-label">Previsão de Resultado</div><div class="info-value" id="detResult">--</div></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="section-title">Diagnóstico da IA</h3>
+                        <ul class="diag-list" id="detDiag"></ul>
+                    </div>
+                </div>
+                <div class="detail-footer">
+                    <button class="btn-primary">Gerar Minuta / Enviar ao Kanban</button>
+                    <a href="#" id="detUrl" target="_blank" class="btn-outline">Ir para a página do edital oficial</a>
+                </div>
+            </div>
+        </div>
+    </main>
 
-    <!-- Scripts -->
     <script src="js/app.js"></script>
 </body>
 </html>
