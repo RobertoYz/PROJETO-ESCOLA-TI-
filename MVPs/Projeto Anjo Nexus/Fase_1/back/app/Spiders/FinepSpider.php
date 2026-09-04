@@ -19,7 +19,7 @@ class FinepSpider extends BasicSpider
     public int $concurrency = 1;
 
     public array $itemProcessors = [
-        // \App\Spiders\Processors\SalvarNoBancoProcessor::class,
+        \App\Spiders\Processors\SalvarNoBancoProcessor::class,
     ];
 
     public function parse(Response $response): Generator
@@ -105,9 +105,16 @@ class FinepSpider extends BasicSpider
                 // Feedback em tempo real no terminal!
                 // dump("Mapeando edital: " . $titulo);
                 $slug = \Illuminate\Support\Str::slug($item['titulo'] ?? 'Sem Título', '-');
-                $linkCompleto = 'https://www.finep.gov.br/financiamento-via-credito#' . $slug;
+                $finepId = $item['id'] ?? null;
+                $linkCompleto = $finepId ? 'https://finep.gov.br/e/chamada-publica/222684/' . $finepId : 'https://www.finep.gov.br/financiamento-via-credito#' . $slug;
                 $objetivo = $this->limpaTexto($item['descricaoRawText'] ?? '');
                 $operacao = $this->limpaTexto($item['tipoDeOportunidade']['name'] ?? '');
+                
+                // Filtra para salvar APENAS Não Reembolsável
+                if (stripos($operacao, 'reembolsável') === false || stripos($operacao, 'Não') === false) {
+                    continue; // Ignora e não salva no banco
+                }
+
                 $condicao = $this->limpaTexto($item['tipoCooperacao']['key'] ?? '');
 
                 $publicoAlvo = $item['publicoAlvo'] ?? [];
@@ -124,6 +131,15 @@ class FinepSpider extends BasicSpider
                     'published_at'    => isset($item['dataDePublicacao'])
                         ? date('Y-m-d', strtotime($item['dataDePublicacao']))
                         : date('Y-m-d'),
+                    'open_date'       => isset($item['vigenciaInicio'])
+                        ? date('Y-m-d H:i:s', strtotime($item['vigenciaInicio']))
+                        : null,
+                    'deadline'        => isset($item['prazoProposto']) 
+                        ? date('Y-m-d H:i:s', strtotime($item['prazoProposto'])) 
+                        : null,
+                    'result_date'     => isset($item['vigenciaFim'])
+                        ? date('Y-m-d H:i:s', strtotime($item['vigenciaFim']))
+                        : null,
                     'source_url'      => $linkCompleto,
                     'fonte'           => 'FINEP',
                     'objetivo'        => $objetivo,
