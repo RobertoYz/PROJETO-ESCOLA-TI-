@@ -56,7 +56,13 @@ async function fetchEditais() {
     showLoadingState();
 
     try {
-        const response = await fetch('http://127.0.0.1:8000/api/editais');
+        const radarFilterEl = document.getElementById('radarFilter');
+        let url = 'http://127.0.0.1:8000/api/editais';
+        if (radarFilterEl && radarFilterEl.value) {
+            url += `?fonte=${radarFilterEl.value}`;
+        }
+
+        const response = await fetch(url);
 
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);
