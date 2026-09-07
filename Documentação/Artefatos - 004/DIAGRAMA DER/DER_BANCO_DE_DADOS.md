@@ -60,7 +60,13 @@ entity "startup_tag" {
 ' Entidades do Processo de Editais e Scraping
 entity "editais" {
   primary_key(id) : BIGINT
+  column(external_id) : VARCHAR(100)
   column(title) : VARCHAR(255)
+  column(fonte) : VARCHAR(100)
+  column(objetivo) : TEXT
+  column(condicao_financiamento) : VARCHAR(100)
+  column(operacao) : VARCHAR(100)
+  column(publico) : VARCHAR(255)
   column(source_url) : TEXT
   column(original_file_path) : TEXT
   column(min_budget) : DECIMAL(15,2)
