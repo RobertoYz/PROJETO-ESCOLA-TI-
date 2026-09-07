@@ -28,21 +28,91 @@ class DeepSeekService
 
         $systemPrompt = 'Você é um analisador técnico de editais rigoroso. SUA REGRA PRINCIPAL: NÃO INVENTE NENHUMA INFORMAÇÃO (Zero Alucinação). Se uma informação não estiver EXPLICITAMENTE escrita no texto fornecido, você DEVE retornar "Não especificado" ou "A definir". Baseie-se APENAS no texto fornecido. Responda EXCLUSIVAMENTE em formato JSON puro.';
 
-        // Tentativa 1: DeepSeek
-        $result = $this->callDeepSeek($systemPrompt, $prompt);
+        // Tentativa 1: Groq (Llama 3 Cloud - Free e Rápido)
+        $result = $this->callGroq($systemPrompt, $prompt);
 
-        // Tentativa 2 (Fallback): Gemini
+        // Tentativa 2: DeepSeek
+        if (!$result) {
+            Log::warning('Groq falhou. Acionando Fallback para DeepSeek...');
+            $result = $this->callDeepSeek($systemPrompt, $prompt);
+        }
+
+        // Tentativa 3 (Fallback Secundário): Gemini
         if (!$result) {
             Log::warning('DeepSeek falhou. Acionando Fallback para Google Gemini...');
             $result = $this->callGemini($systemPrompt, $prompt);
         }
 
+        // Tentativa 4 (Mock Fallback): Retorna mock seguro para não quebrar a UI
+        if (!$result) {
+            Log::error('Todas as APIs falharam (Rate Limit ou Saldo). Retornando Mock de Emergência.');
+            return [
+                'trl' => 'A definir (Fallback IA)',
+                'nicho' => 'Inovação',
+                'faturamento' => 'Não especificado',
+                'match' => 50,
+                'diagnostico' => [
+                    ['type' => 'warning', 'text' => 'APIs de IA indisponíveis (Rate Limit/Saldo). A extração do texto foi bem-sucedida, mas o diagnóstico semântico foi simulado temporariamente.']
+                ]
+            ];
+        }
+
         return $result;
+    }
+
+    private function getRandomKey(string $envKey): ?string
+    {
+        $keys = env($envKey);
+        if (!$keys) return null;
+        
+        $keyArray = array_filter(array_map('trim', explode(',', $keys)));
+        if (empty($keyArray)) return null;
+        
+        return $keyArray[array_rand($keyArray)];
+    }
+
+    private function callGroq(string $systemPrompt, string $prompt): ?array
+    {
+        $apiKey = $this->getRandomKey('GROQ_API_KEY');
+        if (!$apiKey) {
+            Log::warning('DeepSeekService: GROQ_API_KEY não configurada.');
+            return null;
+        }
+
+        try {
+            // A API do Groq é 100% compatível com a do OpenAI
+            $response = Http::withToken($apiKey)
+                ->timeout(60)
+                ->post('https://api.groq.com/openai/v1/chat/completions', [
+                    'model' => 'llama3-70b-8192',
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $prompt]
+                    ],
+                    'response_format' => ['type' => 'json_object'],
+                    'temperature' => 0.1
+                ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $content = $data['choices'][0]['message']['content'] ?? '';
+                
+                $content = trim(preg_replace('/^```json|```$/im', '', $content));
+                return json_decode($content, true);
+            }
+
+            Log::error('Groq: Erro na API.', ['status' => $response->status(), 'body' => $response->body()]);
+            return null;
+
+        } catch (\Exception $e) {
+            Log::error('Groq: Exceção.', ['message' => $e->getMessage()]);
+            return null;
+        }
     }
 
     private function callDeepSeek(string $systemPrompt, string $prompt): ?array
     {
-        $apiKey = env('DEEPSEEK_API_KEY');
+        $apiKey = $this->getRandomKey('DEEPSEEK_API_KEY');
         if (!$apiKey) {
             Log::warning('DeepSeekService: DEEPSEEK_API_KEY não configurada.');
             return null;
@@ -80,7 +150,7 @@ class DeepSeekService
 
     private function callGemini(string $systemPrompt, string $prompt): ?array
     {
-        $apiKey = env('GEMINI_API_KEY');
+        $apiKey = $this->getRandomKey('GEMINI_API_KEY');
         if (!$apiKey) {
             Log::error('Gemini: GEMINI_API_KEY não configurada.');
             return null;

@@ -9,7 +9,13 @@ class EditalController extends Controller
 {
     public function index()
     {
-        $editais = Edital::all();
+        $query = Edital::query();
+
+        if (request()->filled('fonte')) {
+            $query->where('fonte', request('fonte'));
+        }
+
+        $editais = $query->get();
         
         // Vamos formatar os dados para o JS do front-end
         $formattedEditais = $editais->map(function($edital) {
