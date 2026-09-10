@@ -36,7 +36,7 @@ class EditalController extends Controller
                 'match' => $edital->ai_match ?? 0,
                 'target' => $edital->publico ?? '--',
                 'region' => $edital->regiao ?? 'Nacional', 
-                'objetivo' => $edital->objetivo ?? 'Sem descrição',
+                'objetivo' => !empty($edital->objetivo) ? $edital->objetivo : (!empty($edital->conteudo_completo) ? mb_substr(strip_tags($edital->conteudo_completo), 0, 1500) . '...' : 'Sem descrição para exibir no resumo.'),
                 'documentos' => $edital->documentos ?? [],
                 'trl' => $edital->ai_trl ?? 'A definir',
                 'nicho' => $edital->ai_nicho ?? 'Analisando...',
