@@ -13,7 +13,7 @@ Route::get('/teste-finep', function () {
     $items = Roach::collectSpider(FinepSpider::class);
     
     // Extrai o array de dados de dentro dos objetos "Item" do Roach
-    $dados = array_map(function ($item) {
+    $dados = array_map(function (\RoachPHP\ItemPipeline\ItemInterface $item) {
         return $item->all();
     }, $items);
     
