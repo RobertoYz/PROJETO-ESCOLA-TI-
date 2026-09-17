@@ -15,6 +15,9 @@ class DeepSeekService
         $prompt .= "OBJETIVO/DESCRIÇÃO: $objetivo\n\n";
         $prompt .= "Extraia e retorne EXATAMENTE um JSON válido com a seguinte estrutura (não retorne nenhum texto além do JSON, sem formatação markdown, apenas o JSON puro):\n";
         $prompt .= "{\n";
+        $prompt .= '  "max_budget": "Valor total ou teto do orçamento (ex: \'R$ 1.000.000,00\'). Se não achar, retorne null",'."\n";
+        $prompt .= '  "deadline": "Data de encerramento das inscrições (formato numérico ou texto, ex: \'20/10/2026\'). Se não achar, retorne null",'."\n";
+        $prompt .= '  "publico": "Resumo objetivo de quem pode participar (ex: \'Startups e MEIs\'). Se não achar, retorne \'Não especificado\'",'."\n";
         $prompt .= '  "trl": "Nível de TRL exigido (ex: TRL 3 a 5). Se não encontrar expressamente no texto, retorne \'A definir\'",'."\n";
         $prompt .= '  "nicho": "A área de atuação ou nicho tecnológico (ex: Agronegócio, TI, Saúde). Se não for claro, retorne \'Inovação\'",'."\n";
         $prompt .= '  "faturamento": "Faturamento ou porte exigido (ex: Até R$ 16 milhões). Se a informação NÃO ESTIVER no texto, retorne EXATAMENTE \'Não especificado\'",'."\n";
@@ -84,12 +87,13 @@ class DeepSeekService
             $response = Http::withToken($apiKey)
                 ->timeout(60)
                 ->post('https://api.groq.com/openai/v1/chat/completions', [
-                    'model' => 'llama3-70b-8192',
+                    'model' => 'qwen/qwen3.6-27b',
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
                         ['role' => 'user', 'content' => $prompt]
                     ],
                     'response_format' => ['type' => 'json_object'],
+                    'max_tokens' => 800,
                     'temperature' => 0.1
                 ]);
 
@@ -161,7 +165,7 @@ class DeepSeekService
                 'Content-Type' => 'application/json'
             ])
             ->timeout(60)
-            ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={$apiKey}", [
+            ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={$apiKey}", [
                 'system_instruction' => [
                     'parts' => [
                         ['text' => $systemPrompt]

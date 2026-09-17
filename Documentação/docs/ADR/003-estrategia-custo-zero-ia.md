@@ -5,7 +5,7 @@ Aceito
 
 ## Contexto
 Em estágios iniciais (MVP) de uma startup, o custo operacional (Cloud e APIs de IA) pode ser um gargalo crítico. O processamento semântico de editais longos através de modelos de inteligência artificial (LLMs) como GPT-4, Claude ou similares, consome uma grande quantidade de *tokens*, o que resultaria em contas astronômicas rapidamente.
-Foi cogitado o uso de *proxies reversos* (gambiarras de scraping em chats gratuitos), mas eles são notórios por serem instáveis, lentos e frequentemente bloqueados por CAPTCHAs.
+Foi cogitado o uso de *proxies reversos* (scraping em chats gratuitos), mas eles são notórios por serem instáveis, lentos e frequentemente bloqueados por CAPTCHAs.
 
 ## Decisão
 Decidimos adotar uma **Arquitetura de Contingência e Rotação de Chaves** utilizando exclusivamente os *Free Tiers* (Níveis Gratuitos) de APIs oficiais, orquestrados pelo nosso sistema de Filas (Jobs).
