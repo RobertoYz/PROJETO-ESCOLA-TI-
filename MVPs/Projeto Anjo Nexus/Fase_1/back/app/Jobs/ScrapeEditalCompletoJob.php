@@ -38,6 +38,14 @@ class ScrapeEditalCompletoJob implements ShouldQueue
         }
 
         try {
+            // Se for FAPESC, o texto verdadeiro não está no HTML, mas sim num PDF anexado.
+            // O próprio AnalyzeEditalWithIA já faz esse parse de PDF e de regex HTML, então não sujamos o `conteudo_completo`.
+            if ($this->edital->fonte === 'FAPESC') {
+                Log::info("Edital ID {$this->edital->id} é FAPESC. Pulando Scrape HTML simples (delegado para o parse de PDF da IA).");
+                AnalyzeEditalWithIA::dispatch($this->edital);
+                return;
+            }
+
             // Passo 1: Acessar a página oficial do edital (Deep Scrape)
             $response = Http::get($this->edital->source_url);
 

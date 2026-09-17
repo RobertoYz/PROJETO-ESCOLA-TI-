@@ -10,6 +10,8 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\Edital;
 use App\Services\DeepSeekService;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\DomCrawler\Crawler;
+use Illuminate\Support\Str;
 
 class AnalyzeEditalWithIA implements ShouldQueue
 {
@@ -33,9 +35,15 @@ class AnalyzeEditalWithIA implements ShouldQueue
         Log::info("Iniciando processamento do edital {$this->edital->id}...");
 
         try {
-            // Se for FAPESC e ainda não tivermos o conteúdo completo, extrair do PDF
-            if ($this->edital->fonte === 'FAPESC' && empty($this->edital->conteudo_completo)) {
-                $this->extrairConteudoPdfFapesc();
+            // Se for FAPESC, tentar extrair dados triviais do HTML e o PDF
+            if ($this->edital->fonte === 'FAPESC') {
+                if (empty($this->edital->max_budget) || empty($this->edital->deadline) || empty($this->edital->publico)) {
+                    $this->extrairDadosHtmlFapesc();
+                }
+
+                if (empty($this->edital->conteudo_completo)) {
+                    $this->extrairConteudoPdfFapesc();
+                }
             }
 
             $titulo = $this->edital->title ?? '';
@@ -53,7 +61,10 @@ class AnalyzeEditalWithIA implements ShouldQueue
                     'ai_trl' => $resultado['trl'] ?? 'A definir',
                     'ai_nicho' => $resultado['nicho'] ?? 'Inovação',
                     'ai_faturamento' => $resultado['faturamento'] ?? 'Não especificado',
-                    'ai_diagnosis' => $resultado['diagnostico'] ?? []
+                    'ai_diagnosis' => $resultado['diagnostico'] ?? [],
+                    'max_budget' => $this->edital->max_budget ?? (isset($resultado['max_budget']) && $resultado['max_budget'] !== 'null' ? (float)str_replace(['.', ','], ['', '.'], preg_replace('/[^\d.,]/', '', $resultado['max_budget'])) : null),
+                    'deadline' => $this->edital->deadline ?? (isset($resultado['deadline']) && $resultado['deadline'] !== 'null' && $resultado['deadline'] !== 'A definir' ? date('Y-m-d', strtotime(str_replace('/', '-', $resultado['deadline']))) : null),
+                    'publico' => $this->edital->publico ?: ($resultado['publico'] ?? '')
                 ]);
                 Log::info("Edital {$this->edital->id} analisado com sucesso pela IA.");
             } else {
@@ -142,6 +153,74 @@ class AnalyzeEditalWithIA implements ShouldQueue
             if (file_exists($tempFile)) {
                 unlink($tempFile);
             }
+        }
+    }
+
+    /**
+     * Extrai dados básicos do HTML da FAPESC gratuitamente usando Crawler/Regex
+     */
+    private function extrairDadosHtmlFapesc(): void
+    {
+        $url = $this->edital->source_url;
+        if (!$url) return;
+
+        Log::info("FAPESC: Minerando página HTML (Custo Zero): {$url}");
+        
+        $html = @file_get_contents($url);
+        if (!$html) return;
+
+        try {
+            $crawler = new Crawler($html);
+            $valorTotal = null;
+            $prazoSubmissao = null;
+            $elegibilidade = '';
+
+            $crawler->filter('.elementor-text-editor p, .elementor-text-editor li, p, li, tr')->each(function (Crawler $node) use (&$valorTotal, &$prazoSubmissao, &$elegibilidade) {
+                $texto = trim($node->text());
+                $textoMinusculo = strtolower($texto);
+
+                // 1. Público-alvo / Elegibilidade
+                if (
+                    preg_match('/(?:público-alvo|proponentes|elegibilidade|quem pode participar|destinado a)[^\w]*(.*)/i', $texto) ||
+                    str_contains($textoMinusculo, 'empresas de micro') ||
+                    str_contains($textoMinusculo, 'startups catarinenses')
+                ) {
+                    if (strlen($texto) > 10 && strlen($texto) < 300 && !str_contains($elegibilidade, Str::limit($texto, 20))) {
+                        $elegibilidade .= "• " . $texto . "\n";
+                    }
+                }
+
+                // 2. Orçamento Global
+                if (preg_match('/(?:global|total|investimento|aporte|recursos|fomento)[^\d]{0,40}R\$\s*([0-9.,]+)/i', $texto, $matches)) {
+                    if (!$valorTotal && strlen($matches[1]) > 5) {
+                        $valorStr = str_replace(['.', ','], ['', '.'], trim($matches[1], '.'));
+                        if (is_numeric($valorStr)) {
+                            $valorTotal = (float) $valorStr;
+                        }
+                    }
+                }
+
+                // 3. Prazo de Submissão
+                // Pega a última data na frase (ex: "10/09/2026 a 20/10/2026", pega a última)
+                if (preg_match('/(?:submissão|inscriç|prazo)[^\d]{0,40}([0-9]{2}\/[0-9]{2}\/[0-9]{4})(?:.*a.*([0-9]{2}\/[0-9]{2}\/[0-9]{4}))?/i', $texto, $matches)) {
+                    if (!$prazoSubmissao) {
+                        try {
+                            $dataStr = !empty($matches[2]) ? $matches[2] : $matches[1];
+                            $prazoSubmissao = \Carbon\Carbon::createFromFormat('d/m/Y', $dataStr)->format('Y-m-d');
+                        } catch (\Exception $e) {}
+                    }
+                }
+            });
+
+            if ($valorTotal || $prazoSubmissao || $elegibilidade) {
+                $this->edital->max_budget = $valorTotal ?? $this->edital->max_budget;
+                $this->edital->deadline = $prazoSubmissao ?? $this->edital->deadline;
+                $this->edital->publico = !empty($elegibilidade) ? trim($elegibilidade) : $this->edital->publico;
+                $this->edital->save();
+                Log::info("FAPESC: Dados triviais (Orçamento/Prazo/Público) salvos com sucesso.");
+            }
+        } catch (\Exception $e) {
+            Log::warning("FAPESC: Erro ao tentar extrair dados do HTML: " . $e->getMessage());
         }
     }
 }
