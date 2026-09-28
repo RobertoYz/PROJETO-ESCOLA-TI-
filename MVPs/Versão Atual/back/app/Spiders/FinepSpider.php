@@ -88,10 +88,6 @@ class FinepSpider extends BaseSpider
                 $objetivo = $this->limparTexto($item['descricaoRawText'] ?? '');
                 $operacao = $this->limparTexto($item['tipoDeOportunidade']['name'] ?? '');
                 
-                // Filtra para salvar APENAS Não Reembolsável
-                if (stripos($operacao, 'reembolsável') === false || stripos($operacao, 'Não') === false) {
-                    continue;
-                }
 
                 $condicao = $this->limparTexto($item['tipoCooperacao']['key'] ?? '');
 
