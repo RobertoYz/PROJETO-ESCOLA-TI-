@@ -17,8 +17,10 @@ Route::get('/teste-finep', function () {
         return $item->all();
     }, $items);
     
-    // Devolve para o Chrome em formato JSON puro
-    return response()->json($dados);
+    return response()->json([
+        'total' => count($dados),
+        'itens' => $dados,
+    ]);
 });
 
 Route::get('/debug-edital', function () { return response()->json(\App\Models\Edital::find(1)); });
