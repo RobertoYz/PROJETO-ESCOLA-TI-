@@ -15,7 +15,7 @@ class FapespSpider extends BaseSpider
     public function parse(Response $response): \Generator
     {
         // 1. Navega na Árvore XML / DOM usando XPath para isolar cada item da lista
-        $itens = $response->crawler()->filterXPath('//ul[contains(@class, "list")]/li');
+        $itens = $response->filterXPath('//ul[contains(@class, "list")]/li');
 
         foreach ($itens as $node) {
             $liCrawler = new Crawler($node);
@@ -29,7 +29,7 @@ class FapespSpider extends BaseSpider
             $link = $linkNode->attr('href');
             $tituloCompleto = $this->limparTexto($linkNode->text());
 
-            // 3. Extrai nós de texto filhos via XPath em vez de explode de strings
+            // 3. Extrai nós de texto filhos via XPath
             $textoCompleto = $this->limparTexto($liCrawler->text());
             
             $codigoChamada = '';
