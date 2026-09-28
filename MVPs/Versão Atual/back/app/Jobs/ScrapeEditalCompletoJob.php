@@ -50,23 +50,9 @@ class ScrapeEditalCompletoJob implements ShouldQueue
             $response = Http::get($this->edital->source_url);
 
             if ($response->successful()) {
-                $html = $response->body();
-
-                // Lida com redirecionamento via meta refresh (muito usado pela FAPESP)
-                if (preg_match('/<meta[^>]+http-equiv=["\']refresh["\'][^>]+content=["\'][^;]+;\s*URL=[\'"]?([^\'">]+)[\'"]?["\']/i', $html, $matches)) {
-                    $redirectUrl = html_entity_decode($matches[1]);
-                    // Se o link for relativo, tenta montar a url completa
-                    if (!str_starts_with($redirectUrl, 'http')) {
-                        $parsedUrl = parse_url($this->edital->source_url);
-                        $redirectUrl = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . '/' . ltrim($redirectUrl, '/');
-                    }
-                    Log::info("Meta refresh detectado. Seguindo para: {$redirectUrl}");
-                    $response = Http::get($redirectUrl);
-                    $html = $response->body();
-                }
-
                 // Passo 2: Extrair apenas o texto puro, removendo HTML
                 // Usamos strip_tags para remover a formatação e preg_replace para limpar espaços duplos
+                $html = $response->body();
                 $textoPuro = strip_tags($html);
                 $textoLimpo = preg_replace('/\s+/', ' ', $textoPuro);
 
