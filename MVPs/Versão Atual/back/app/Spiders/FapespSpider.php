@@ -3,64 +3,52 @@
 namespace App\Spiders;
 
 use RoachPHP\Http\Response;
-use RoachPHP\Spider\BasicSpider;
 use Symfony\Component\DomCrawler\Crawler;
-use Carbon\Carbon;
 use Illuminate\Support\Str;
 
-class FapespSpider extends BasicSpider
+class FapespSpider extends BaseSpider
 {
     public array $startUrls = [
         'https://fapesp.br/2185/chamadas-de-propostas-2026'
     ];
 
-    public int $concurrency = 1;
-
-    public array $itemProcessors = [
-        \App\Spiders\Processors\SalvarNoBancoProcessor::class,
-    ];
-
     public function parse(Response $response): \Generator
     {
-        $itens = $response->filter('.page-body ul.list > li');
+        // 1. Navega na Árvore XML / DOM usando XPath para isolar cada item da lista
+        $itens = $response->crawler()->filterXPath('//ul[contains(@class, "list")]/li');
 
         foreach ($itens as $node) {
-            $liNode = new Crawler($node);
-            
-            $linkNode = $liNode->filter('p > a')->first();
-            if (!$linkNode->count()) continue;
+            $liCrawler = new Crawler($node);
+
+            // 2. Extrai o nó <a> via XPath
+            $linkNode = $liCrawler->filterXPath('//p/a')->first();
+            if (!$linkNode->count()) {
+                continue;
+            }
 
             $link = $linkNode->attr('href');
-            $tituloCompleto = trim($linkNode->text());
+            $tituloCompleto = $this->limparTexto($linkNode->text());
 
-            // Tratamento das tags <br>
-            $htmlInterno = $liNode->filter('p')->first()->html();
-            $textoComQuebras = strip_tags(str_replace(['<br>', '<br />', '<BR>', '<BR />'], "\n", $htmlInterno));
-            $linhas = explode("\n", $textoComQuebras);
-
+            // 3. Extrai nós de texto filhos via XPath em vez de explode de strings
+            $textoCompleto = $this->limparTexto($liCrawler->text());
+            
             $codigoChamada = '';
+            if (preg_match('/(Chamada FAPESP\s+[0-9\/\-]+)/i', $textoCompleto, $matchesCodigo)) {
+                $codigoChamada = $this->limparTexto($matchesCodigo[1]);
+            }
+
+            // 4. Extrai a data limite de submissão via helper BaseSpider parseDateBr
             $prazoSubmissao = null;
+            if (preg_match('/(?:Data limite|Prazo)[^:]*:\s*([0-9]{2}\/[0-9]{2}\/[0-9]{4})/i', $textoCompleto, $matchesData)) {
+                $prazoSubmissao = $this->parseDateBr($matchesData[1]);
+            } else {
+                $prazoSubmissao = $this->parseDateBr($textoCompleto);
+            }
+
+            // 5. Tenta isolar o objetivo
             $objetivoPrevia = '';
-
-            foreach ($linhas as $linha) {
-                $linhaLimpa = trim(preg_replace('/\s+/', ' ', $linha));
-                $linhaMinusculo = strtolower($linhaLimpa);
-
-                if (str_contains($linhaMinusculo, 'chamada fapesp')) {
-                    $codigoChamada = $linhaLimpa;
-                }
-
-                if (str_contains($linhaMinusculo, 'data limite') || str_contains($linhaMinusculo, 'prazo para recebimento')) {
-                    if (preg_match('/([0-9]{2}\/[0-9]{2}\/[0-9]{4})/', $linhaLimpa, $matches)) {
-                        try {
-                            $prazoSubmissao = Carbon::createFromFormat('d/m/Y', $matches[1])->format('Y-m-d');
-                        } catch (\Exception $e) {}
-                    }
-                }
-
-                if (str_contains($linhaMinusculo, 'apoiará') || str_contains($linhaMinusculo, 'destinará') || str_contains($linhaMinusculo, 'selecionadas')) {
-                    $objetivoPrevia = $linhaLimpa;
-                }
+            if (preg_match('/(apoiará|destinará|selecionadas)[^.]*\./i', $textoCompleto, $matchesObj)) {
+                $objetivoPrevia = $this->limparTexto($matchesObj[0]);
             }
 
             $tituloLimpo = $tituloCompleto;
@@ -74,7 +62,7 @@ class FapespSpider extends BasicSpider
             yield $this->item([
                 'external_id'            => $idFinalFapesp,
                 'title'                  => $codigoChamada ? "[{$codigoChamada}] {$tituloLimpo}" : $tituloLimpo,
-                'published_at'           => date('Y-m-d'), // A lista não costuma ter data de publicação visível de forma fácil
+                'published_at'           => date('Y-m-d'),
                 'source_url'             => $link,
                 'fonte'                  => 'FAPESP',
                 'objetivo'               => $objetivoPrevia, 
