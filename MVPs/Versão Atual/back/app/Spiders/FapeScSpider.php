@@ -14,7 +14,7 @@ class FapeScSpider extends BaseSpider
     public function parse(Response $response): \Generator
     {
         // 1. Filtra os cards da FAPESC usando XPath
-        $cards = $response->crawler()->filterXPath('//div[contains(@class, "upk-list-wrap")]//div[contains(@class, "upk-item")]');
+        $cards = $response->filterXPath('//div[contains(@class, "upk-list-wrap")]//div[contains(@class, "upk-item")]');
 
         foreach ($cards as $node) {
             $card = new Crawler($node);
