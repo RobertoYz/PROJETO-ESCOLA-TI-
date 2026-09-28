@@ -46,6 +46,11 @@ class AnalyzeEditalWithIA implements ShouldQueue
                 }
             }
 
+            // Extração Universal Custo Zero (Sem IA)
+            if (!empty($this->edital->conteudo_completo)) {
+                $this->extrairDadosCriticosSemIA();
+            }
+
             $titulo = $this->edital->title ?? '';
             $objetivo = $this->edital->conteudo_completo ?? $this->edital->objetivo ?? '';
             $publico = $this->edital->publico ?? '';
@@ -221,6 +226,97 @@ class AnalyzeEditalWithIA implements ShouldQueue
             }
         } catch (\Exception $e) {
             Log::warning("FAPESC: Erro ao tentar extrair dados do HTML: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Extrai dados críticos (Orçamento, Data, Faturamento) via Regex antes da IA.
+     * Tática de Custo Zero para garantir dados básicos caso a IA falhe.
+     */
+    private function extrairDadosCriticosSemIA(): void
+    {
+        // Limpa espaços em branco inquebráveis
+        $texto = str_replace(["\xA0", "\xC2\xA0", "&nbsp;"], ' ', $this->edital->conteudo_completo);
+        $atualizou = false;
+
+        // 1. Extração de Data Limite (Deadline)
+        if (empty($this->edital->deadline)) {
+            $dataEncontrada = null;
+
+            // Formato dd/mm/aaaa com contexto
+            if (preg_match_all('/(?:limite|prazo|encerramento|submissão|término|até)[^\d]{0,80}([0-9]{2}[\/\.][0-9]{2}[\/\.][0-9]{2,4})/iu', $texto, $matches)) {
+                $dataStr = str_replace('.', '/', end($matches[1]));
+                try {
+                    $formato = strlen($dataStr) == 8 ? 'd/m/y' : 'd/m/Y';
+                    $dataEncontrada = \Carbon\Carbon::createFromFormat($formato, $dataStr);
+                } catch (\Exception $e) {}
+            } 
+            // Formato por extenso com contexto
+            else if (preg_match_all('/(?:limite|prazo|encerramento|submissão|término|até)[^\d]{0,80}([0-9]{1,2})\s+de\s+([a-zçA-Z]+)\s+de\s+([0-9]{4})/iu', $texto, $matches)) {
+                $meses = [
+                    'janeiro' => 1, 'fevereiro' => 2, 'março' => 3, 'abril' => 4,
+                    'maio' => 5, 'junho' => 6, 'julho' => 7, 'agosto' => 8,
+                    'setembro' => 9, 'outubro' => 10, 'novembro' => 11, 'dezembro' => 12
+                ];
+                $mesNome = end($matches[2]);
+                $mes = $meses[strtolower($mesNome)] ?? null;
+                if ($mes) {
+                    try {
+                        $dia = end($matches[1]);
+                        $ano = end($matches[3]);
+                        $dataEncontrada = \Carbon\Carbon::createFromDate($ano, $mes, $dia);
+                    } catch (\Exception $e) {}
+                }
+            }
+
+            if ($dataEncontrada && $dataEncontrada->year >= 2024 && $dataEncontrada->year <= 2030) {
+                $this->edital->deadline = $dataEncontrada->format('Y-m-d');
+                $atualizou = true;
+            }
+        }
+
+        // 2. Extração de Orçamento Global (Max Budget)
+        if (empty($this->edital->max_budget)) {
+            if (preg_match_all('/(?:global|total|investimento|aporte|recursos|fomento|valor máximo|é de)[^\d]{0,40}R\$\s*([0-9.,]+)\s*(milh[õo]es|mil)?/iu', $texto, $matches)) {
+                $maiorValor = 0;
+                foreach ($matches[1] as $index => $valorBruto) {
+                    $valorStr = str_replace(['.', ','], ['', '.'], trim($valorBruto, '.'));
+                    if (is_numeric($valorStr)) {
+                        $valor = (float) $valorStr;
+                        $multiplicador = strtolower($matches[2][$index] ?? '');
+                        if (str_starts_with($multiplicador, 'milh')) {
+                            $valor *= 1000000;
+                        } else if ($multiplicador === 'mil') {
+                            $valor *= 1000;
+                        }
+                        if ($valor > $maiorValor) {
+                            $maiorValor = $valor;
+                        }
+                    }
+                }
+                if ($maiorValor > 0) {
+                    $this->edital->max_budget = $maiorValor;
+                    $atualizou = true;
+                }
+            }
+        }
+
+        // 3. Extração de Faturamento (ai_faturamento fallback)
+        if (empty($this->edital->ai_faturamento) || $this->edital->ai_faturamento === 'Não especificado') {
+            if (preg_match('/(?:receita operacional bruta|faturamento bruto|faturamento anual|faturamento de até)[^\d]{0,40}R\$\s*([0-9.,]+)\s*(milh[õo]es|mil)?/iu', $texto, $matches)) {
+                $multiplicador = strtolower($matches[2] ?? '');
+                $sufixo = $multiplicador ? ' ' . $matches[2] : '';
+                $this->edital->ai_faturamento = 'Até R$ ' . trim($matches[1]) . $sufixo;
+                $atualizou = true;
+            } else if (preg_match('/(?:startups|micro e pequenas empresas)/iu', $texto)) {
+                $this->edital->ai_faturamento = 'ME/EPP (Até R$ 4,8 Milhões)';
+                $atualizou = true;
+            }
+        }
+
+        if ($atualizou) {
+            $this->edital->save();
+            Log::info("Dados críticos extraídos via Regex (Custo Zero) para o edital {$this->edital->id}.");
         }
     }
 }
