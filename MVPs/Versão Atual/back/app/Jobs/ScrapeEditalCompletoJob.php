@@ -46,6 +46,7 @@ class ScrapeEditalCompletoJob implements ShouldQueue
 
                 $updateData = [
                     'conteudo_completo' => mb_substr($textoPdf, 0, 10000),
+                    'documentos'        => $dados['documentos'] ?? [],
                 ];
 
                 if (!empty($dados['deadline'])) {
@@ -70,6 +71,7 @@ class ScrapeEditalCompletoJob implements ShouldQueue
                 $html = $response->body();
                 $textoPuro = strip_tags($html);
                 $textoLimpo = preg_replace('/\s+/', ' ', $textoPuro);
+                $documentosExtraidos = $pdfService->extrairDocumentosExigidos($textoPuro);
 
                 // Procura links de PDF dentro da página HTML
                 if (preg_match('/href=["\']([^"\']+\.pdf)["\']/i', $html, $pdfMatches)) {
@@ -85,6 +87,9 @@ class ScrapeEditalCompletoJob implements ShouldQueue
                     $dadosPdf = $pdfService->extrairDadosEstruturados($textoPdf);
 
                     $textoLimpo = !empty($textoPdf) ? $textoPdf : $textoLimpo;
+                    if (!empty($dadosPdf['documentos'])) {
+                        $documentosExtraidos = $dadosPdf['documentos'];
+                    }
 
                     if (!empty($dadosPdf['deadline'])) {
                         $this->edital->deadline = $dadosPdf['deadline'];
@@ -95,7 +100,8 @@ class ScrapeEditalCompletoJob implements ShouldQueue
                 }
 
                 $this->edital->update([
-                    'conteudo_completo' => mb_substr($textoLimpo, 0, 10000)
+                    'conteudo_completo' => mb_substr($textoLimpo, 0, 10000),
+                    'documentos'        => $documentosExtraidos
                 ]);
 
                 Log::info("Página do Edital ID {$this->edital->id} raspada e processada com sucesso.");
