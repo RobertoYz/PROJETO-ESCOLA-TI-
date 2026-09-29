@@ -24,7 +24,6 @@ class PdfExtractorService
         }
 
         try {
-            // Se for uma URL HTTP/HTTPS, baixa o conteúdo em memória
             if (str_starts_with($pdfPathOrUrl, 'http://') || str_starts_with($pdfPathOrUrl, 'https://')) {
                 $content = @file_get_contents($pdfPathOrUrl);
                 if (!$content) {
@@ -66,12 +65,34 @@ class PdfExtractorService
     }
 
     /**
-     * Extrai a lista de documentos exigidos pelo edital de forma determinística.
+     * Extrai a lista de documentos e critérios de submissão/admissibilidade de forma determinística.
      */
     public function extrairDocumentosExigidos(string $texto): array
     {
         $documentos = [];
 
+        // 1. Busca específica pelas seções informadas (DA SUBMISSÃO DA PROPOSTA E DOCUMENTOS & DOS CRITÉRIOS DE ADMISSIBILIDADE)
+        if (preg_match('/(?:DA\s+SUBMISSÃO\s+DA[S]?\s+PROPOSTA[S]?\s+E\s+DOCUMENTOS|DOS?\s+DOCUMENTOS\s+EXIGIDOS)(.*?)(?=(?:DOS?\s+CRITÉRIOS|DA\s+AVALIAÇÃO|DO\s+CRONOGRAMA|\Z))/i', $texto, $matchesSubmissao)) {
+            $trechoSubmissao = trim($matchesSubmissao[1]);
+            if (!empty($trechoSubmissao)) {
+                $documentos[] = [
+                    'titulo' => 'Submissão e Documentos: ' . mb_substr($trechoSubmissao, 0, 140) . '...',
+                    'link'   => '#'
+                ];
+            }
+        }
+
+        if (preg_match('/(?:DOS?\s+CRITÉRIOS?\s+DE\s+ADMISSIBILIDADE|DA\s+ELEGIBILIDADE|DOS?\s+REQUISITOS?\s+DE\s+HABILITAÇÃO)(.*?)(?=(?:DA\s+SUBMISSÃO|DA\s+AVALIAÇÃO|DO\s+CRONOGRAMA|\Z))/i', $texto, $matchesAdmissibilidade)) {
+            $trechoAdmissibilidade = trim($matchesAdmissibilidade[1]);
+            if (!empty($trechoAdmissibilidade)) {
+                $documentos[] = [
+                    'titulo' => 'Admissibilidade: ' . mb_substr($trechoAdmissibilidade, 0, 140) . '...',
+                    'link'   => '#'
+                ];
+            }
+        }
+
+        // 2. Busca padrões de certidões e documentos jurídicos padrão
         $padroesDocumentos = [
             'Certidão Negativa de Débitos Federais (CND/PGFN)' => '/(?:CND|débitos federais|PGFN|receita federal)/i',
             'Certidão Negativa de Débitos Trabalhistas (CNDT)' => '/(?:CNDT|débitos trabalhistas|justiça do trabalho)/i',
@@ -93,13 +114,14 @@ class PdfExtractorService
             }
         }
 
-        // Se nenhum documento específico for detectado no texto, inclui checklist básico de habilitação
+        // Se nenhum documento for encontrado, aplica o checklist de habilitação padrão
         if (empty($documentos)) {
             $documentos = [
+                ['titulo' => 'Requisitos de Submissão e Documentos da Proposta', 'link' => '#'],
+                ['titulo' => 'Critérios de Admissibilidade do Proponente', 'link' => '#'],
                 ['titulo' => 'Certidão Negativa de Débitos Federais (CND)', 'link' => '#'],
                 ['titulo' => 'Certificado de Regularidade do FGTS', 'link' => '#'],
                 ['titulo' => 'Cartão CNPJ Atualizado', 'link' => '#'],
-                ['titulo' => 'Plano de Trabalho do Projeto', 'link' => '#'],
             ];
         }
 
