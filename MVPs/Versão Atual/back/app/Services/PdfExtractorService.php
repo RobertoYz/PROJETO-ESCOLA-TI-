@@ -54,13 +54,56 @@ class PdfExtractorService
         $deadline    = $this->extrairDataLimite($textoPdf);
         $budget      = $this->extrairOrcamentoMaximo($textoPdf);
         $faturamento = $this->extrairFaturamento($textoPdf);
+        $documentos  = $this->extrairDocumentosExigidos($textoPdf);
 
         return [
             'deadline'    => $deadline,
             'max_budget'  => $budget,
             'faturamento' => $faturamento,
+            'documentos'  => $documentos,
             'resumo'      => mb_substr($textoPdf, 0, 1200)
         ];
+    }
+
+    /**
+     * Extrai a lista de documentos exigidos pelo edital de forma determinística.
+     */
+    public function extrairDocumentosExigidos(string $texto): array
+    {
+        $documentos = [];
+
+        $padroesDocumentos = [
+            'Certidão Negativa de Débitos Federais (CND/PGFN)' => '/(?:CND|débitos federais|PGFN|receita federal)/i',
+            'Certidão Negativa de Débitos Trabalhistas (CNDT)' => '/(?:CNDT|débitos trabalhistas|justiça do trabalho)/i',
+            'Certificado de Regularidade do FGTS (CRF)' => '/(?:FGTS|regularidade do FGTS|CRF)/i',
+            'Cartão CNPJ / Comprovante de Inscrição' => '/(?:CNPJ|cadastro nacional da pessoa jurídica)/i',
+            'Contrato Social ou Estatuto Social Atualizado' => '/(?:contrato social|estatuto social|ato constitutivo)/i',
+            'Balanço Patrimonial e DRE (Últimos Exercícios)' => '/(?:balanço patrimonial|DRE|demonstração do resultado)/i',
+            'Plano de Trabalho / Projeto de Inovação' => '/(?:plano de trabalho|projeto de inovação|plano de negócios)/i',
+            'Orçamento Detalhado e Memória de Cálculo' => '/(?:orçamento detalhado|memória de cálculo|cronograma físico-financeiro)/i',
+            'Currículo Lattes / Equipe Técnica' => '/(?:currículo|lattes|equipe técnica|pesquisadores)/i',
+        ];
+
+        foreach ($padroesDocumentos as $nomeDoc => $regex) {
+            if (preg_match($regex, $texto)) {
+                $documentos[] = [
+                    'titulo' => $nomeDoc,
+                    'link'   => '#'
+                ];
+            }
+        }
+
+        // Se nenhum documento específico for detectado no texto, inclui checklist básico de habilitação
+        if (empty($documentos)) {
+            $documentos = [
+                ['titulo' => 'Certidão Negativa de Débitos Federais (CND)', 'link' => '#'],
+                ['titulo' => 'Certificado de Regularidade do FGTS', 'link' => '#'],
+                ['titulo' => 'Cartão CNPJ Atualizado', 'link' => '#'],
+                ['titulo' => 'Plano de Trabalho do Projeto', 'link' => '#'],
+            ];
+        }
+
+        return $documentos;
     }
 
     private function extrairDataLimite(string $texto): ?string
