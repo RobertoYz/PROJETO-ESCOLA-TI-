@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Edital;
+use App\Services\PdfExtractorService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -26,49 +27,81 @@ class ScrapeEditalCompletoJob implements ShouldQueue
     }
 
     /**
-     * Execute the job.
+     * Execute the job (Custo Zero de IA - Extrator Determinístico de HTML e PDF).
      */
-    public function handle(): void
+    public function handle(PdfExtractorService $pdfService): void
     {
-        // Se não tiver URL, não tem como baixar o texto
         if (!$this->edital->source_url) {
-            Log::warning("Edital ID {$this->edital->id} não tem source_url. Indo direto para a IA.");
-            AnalyzeEditalWithIA::dispatch($this->edital);
             return;
         }
 
         try {
-            // Se for FAPESC, o texto verdadeiro não está no HTML, mas sim num PDF anexado.
-            // O próprio AnalyzeEditalWithIA já faz esse parse de PDF e de regex HTML, então não sujamos o `conteudo_completo`.
-            if ($this->edital->fonte === 'FAPESC') {
-                Log::info("Edital ID {$this->edital->id} é FAPESC. Pulando Scrape HTML simples (delegado para o parse de PDF da IA).");
-                AnalyzeEditalWithIA::dispatch($this->edital);
+            $url = $this->edital->source_url;
+
+            // 1. Se o edital for um arquivo PDF direto ou contiver um PDF anexado
+            if (str_contains(strtolower($url), '.pdf')) {
+                Log::info("Processando PDF do Edital ID {$this->edital->id}: {$url}");
+                $textoPdf = $pdfService->extrairTexto($url);
+                $dados = $pdfService->extrairDadosEstruturados($textoPdf);
+
+                $updateData = [
+                    'conteudo_completo' => mb_substr($textoPdf, 0, 10000),
+                ];
+
+                if (!empty($dados['deadline'])) {
+                    $updateData['deadline'] = $dados['deadline'];
+                }
+                if (!empty($dados['max_budget'])) {
+                    $updateData['max_budget'] = $dados['max_budget'];
+                }
+                if (!empty($dados['faturamento'])) {
+                    $updateData['ai_faturamento'] = $dados['faturamento'];
+                }
+
+                $this->edital->update($updateData);
+                Log::info("PDF do Edital ID {$this->edital->id} processado com sucesso (Custo Zero de IA).");
                 return;
             }
 
-            // Passo 1: Acessar a página oficial do edital (Deep Scrape)
-            $response = Http::get($this->edital->source_url);
+            // 2. Se for uma página HTML tradicional
+            $response = Http::timeout(30)->get($url);
 
             if ($response->successful()) {
-                // Passo 2: Extrair apenas o texto puro, removendo HTML
-                // Usamos strip_tags para remover a formatação e preg_replace para limpar espaços duplos
                 $html = $response->body();
                 $textoPuro = strip_tags($html);
                 $textoLimpo = preg_replace('/\s+/', ' ', $textoPuro);
 
-                // Passo 3: Salvar no banco
-                $this->edital->update([
-                    'conteudo_completo' => $textoLimpo
-                ]);
-                Log::info("Edital ID {$this->edital->id} raspado com sucesso.");
-            } else {
-                Log::error("Falha ao raspar Edital ID {$this->edital->id}. Status: " . $response->status());
-            }
-        } catch (\Exception $e) {
-            Log::error("Erro no Deep Scrape do Edital ID {$this->edital->id}: " . $e->getMessage());
-        }
+                // Procura links de PDF dentro da página HTML
+                if (preg_match('/href=["\']([^"\']+\.pdf)["\']/i', $html, $pdfMatches)) {
+                    $pdfUrl = $pdfMatches[1];
+                    if (!str_starts_with($pdfUrl, 'http')) {
+                        $parsedUrl = parse_url($url);
+                        $baseUrl = ($parsedUrl['scheme'] ?? 'https') . '://' . ($parsedUrl['host'] ?? '');
+                        $pdfUrl = rtrim($baseUrl, '/') . '/' . ltrim($pdfUrl, '/');
+                    }
 
-        // Passo 4: Chamar a IA (agora ela terá o texto completo se tudo deu certo)
-        AnalyzeEditalWithIA::dispatch($this->edital);
+                    Log::info("Link de PDF encontrado na página do Edital ID {$this->edital->id}: {$pdfUrl}");
+                    $textoPdf = $pdfService->extrairTexto($pdfUrl);
+                    $dadosPdf = $pdfService->extrairDadosEstruturados($textoPdf);
+
+                    $textoLimpo = !empty($textoPdf) ? $textoPdf : $textoLimpo;
+
+                    if (!empty($dadosPdf['deadline'])) {
+                        $this->edital->deadline = $dadosPdf['deadline'];
+                    }
+                    if (!empty($dadosPdf['max_budget'])) {
+                        $this->edital->max_budget = $dadosPdf['max_budget'];
+                    }
+                }
+
+                $this->edital->update([
+                    'conteudo_completo' => mb_substr($textoLimpo, 0, 10000)
+                ]);
+
+                Log::info("Página do Edital ID {$this->edital->id} raspada e processada com sucesso.");
+            }
+        } catch (\Throwable $e) {
+            Log::error("Erro no processamento do Edital ID {$this->edital->id}: " . $e->getMessage());
+        }
     }
 }
