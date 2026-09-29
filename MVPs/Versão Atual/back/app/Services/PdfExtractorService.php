@@ -71,7 +71,23 @@ class PdfExtractorService
     {
         $documentos = [];
 
-        // 1. Busca específica pelas seções informadas (DA SUBMISSÃO DA PROPOSTA E DOCUMENTOS & DOS CRITÉRIOS DE ADMISSIBILIDADE)
+        // 1. Extração de itens em tópicos marcados como "A proposta deve incluir", "Documentos necessários", etc.
+        if (preg_match('/(?:A\s+proposta\s+deve\s+incluir|A\s+proposta\s+deve\s+conter|Documentos\s+necessários)[^:]*:\s*(.*?)(?=\n\n|\n[A-Z0-9\s]{4,}:|\Z)/is', $texto, $matchesIncluir)) {
+            $blocoItens = $matchesIncluir[1];
+            // Quebra por marcadores de tópicos (- ou • ou números)
+            $linhasItens = preg_split('/(?:\r?\n|;)\s*[-•*\d\.]+\s*/', $blocoItens);
+            foreach ($linhasItens as $itemStr) {
+                $itemLimpo = trim(preg_replace('/\s+/', ' ', $itemStr));
+                if (strlen($itemLimpo) > 5 && strlen($itemLimpo) < 200) {
+                    $documentos[] = [
+                        'titulo' => $itemLimpo,
+                        'link'   => '#'
+                    ];
+                }
+            }
+        }
+
+        // 2. Busca pelas seções principais (DA SUBMISSÃO DA PROPOSTA E DOCUMENTOS & DOS CRITÉRIOS DE ADMISSIBILIDADE)
         if (preg_match('/(?:DA\s+SUBMISSÃO\s+DA[S]?\s+PROPOSTA[S]?\s+E\s+DOCUMENTOS|DOS?\s+DOCUMENTOS\s+EXIGIDOS)(.*?)(?=(?:DOS?\s+CRITÉRIOS|DA\s+AVALIAÇÃO|DO\s+CRONOGRAMA|\Z))/i', $texto, $matchesSubmissao)) {
             $trechoSubmissao = trim($matchesSubmissao[1]);
             if (!empty($trechoSubmissao)) {
@@ -92,8 +108,14 @@ class PdfExtractorService
             }
         }
 
-        // 2. Busca padrões de certidões e documentos jurídicos padrão
+        // 3. Busca de declarações e documentos institucionais FINEP/FAPESC
         $padroesDocumentos = [
+            'Carta de Manifestação de Interesse da Cooperativa / Parceiro' => '/(?:Carta de Manifestação|manifestação de interesse)/i',
+            'Extrato CAF Pessoa Jurídica' => '/(?:Extrato CAF|CAF Pessoa Jurídica)/i',
+            'Comprovante de Parceria Prévia (Mínimo 1 Ano)' => '/(?:parceria prévia|comprovante de parceria)/i',
+            'Declaração de Ações Coletivas' => '/(?:Ações Coletivas|declaração de ações)/i',
+            'Declaração Ambiental e Regulatória' => '/(?:declaração ambiental|aspectos regulatórios)/i',
+            'Justificativa e Definição do Nível TRL' => '/(?:nível de maturidade tecnológica|justificativa do TRL)/i',
             'Certidão Negativa de Débitos Federais (CND/PGFN)' => '/(?:CND|débitos federais|PGFN|receita federal)/i',
             'Certidão Negativa de Débitos Trabalhistas (CNDT)' => '/(?:CNDT|débitos trabalhistas|justiça do trabalho)/i',
             'Certificado de Regularidade do FGTS (CRF)' => '/(?:FGTS|regularidade do FGTS|CRF)/i',
@@ -107,14 +129,24 @@ class PdfExtractorService
 
         foreach ($padroesDocumentos as $nomeDoc => $regex) {
             if (preg_match($regex, $texto)) {
-                $documentos[] = [
-                    'titulo' => $nomeDoc,
-                    'link'   => '#'
-                ];
+                // Evita duplicatas se já tiver sido adicionado
+                $jaExiste = false;
+                foreach ($documentos as $d) {
+                    if (stripos($d['titulo'], $nomeDoc) !== false) {
+                        $jaExiste = true;
+                        break;
+                    }
+                }
+                if (!$jaExiste) {
+                    $documentos[] = [
+                        'titulo' => $nomeDoc,
+                        'link'   => '#'
+                    ];
+                }
             }
         }
 
-        // Se nenhum documento for encontrado, aplica o checklist de habilitação padrão
+        // Se nenhum documento for encontrado, aplica checklist básico de habilitação
         if (empty($documentos)) {
             $documentos = [
                 ['titulo' => 'Requisitos de Submissão e Documentos da Proposta', 'link' => '#'],
