@@ -21,6 +21,11 @@ class AbacatePayService
 
     public function gerarCobranca($agencia, $usuario, $plano)
     {
+        // Se a chave não existir no ambiente de desenvolvimento, mockamos a URL
+        if (empty($this->apiKey)) {
+            return 'http://127.0.0.1:5500/MVPs/Vers%C3%A3o%20Atual/front/pagamento_mock.html?agencia=' . $agencia->id;
+        }
+
         //ID do produto Cadastrado no AbacatePay
         $idProdutoAbacatePay = 'prod_sWfDg0eZXTLbtZEHYpqnMLKP';
 
