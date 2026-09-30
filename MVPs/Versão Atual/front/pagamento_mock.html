@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento Seguro - Anjo Nexus</title>
+    <!-- Modern Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-bg: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #10b981; /* Verde PIX */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .checkout-container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .header-pix {
+            margin-bottom: 2rem;
+        }
+
+        .header-pix i {
+            font-size: 3rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .header-pix h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-pix p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .qr-placeholder {
+            background: white;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 2rem;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .qr-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            opacity: 0.9;
+        }
+
+        .pix-code {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            padding: 1rem;
+            border-radius: 12px;
+            font-family: monospace;
+            color: #cbd5e1;
+            margin-bottom: 1.5rem;
+            word-break: break-all;
+            font-size: 0.85rem;
+        }
+
+        .btn-simulate {
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent) 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1.1rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-simulate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-simulate:active {
+            transform: translateY(0);
+        }
+
+        .disclaimer {
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="checkout-container">
+        <div class="header-pix">
+            <i class="fa-brands fa-pix"></i>
+            <h1>Pagamento da Assinatura</h1>
+            <p>Plano Standart - Anjo Nexus</p>
+        </div>
+
+        <div class="qr-placeholder">
+            <!-- Um ícone de QR Code fictício -->
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=MockPixAnjoNexus" alt="QR Code PIX">
+        </div>
+
+        <div class="pix-code">
+            00020126580014br.gov.bcb.pix0136mock-abacatepay-123456520400005303986540510.005802BR5910Anjo Nexus6009Sao Paulo62070503***6304ABCD
+        </div>
+
+        <button class="btn-simulate" id="btnApprove">
+            <i class="fa-solid fa-check-circle"></i>
+            Simular Pagamento Aprovado
+        </button>
+
+        <p class="disclaimer">
+            Esta é uma tela fictícia do ambiente de desenvolvimento (Mock AbacatePay). 
+            Em produção, o cliente veria o checkout real.
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('btnApprove').addEventListener('click', function() {
+            const btn = this;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
+            btn.style.opacity = '0.8';
+            
+            // Simula um delay de validação da API
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Pagamento Confirmado!';
+                btn.style.background = '#059669'; // Verde mais escuro
+                
+                // Redireciona para o painel principal (editais)
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+            }, 1500);
+        });
+    </script>
+</body>
+</html>

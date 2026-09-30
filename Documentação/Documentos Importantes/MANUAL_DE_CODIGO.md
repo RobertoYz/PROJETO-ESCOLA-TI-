@@ -1248,122 +1248,147 @@ function limparErros() {
 
 ## 8. Autenticação (Login, Cadastro e Token)
 
-### Backend (`app/Http/Controllers/Auth/AuthController.php`):
+### 8.1. Backend — O Fluxo de Cadastro e Pagamento (AbacatePay)
+
+> 💡 **Como funciona o Cadastro de Consultorias?**
+> Diferente de um sistema comum, nosso cadastro envolve 4 etapas executadas de forma transacional:
+> 1. Validar os dados de entrada rigorosamente (`RegistroCadastroRequest`).
+> 2. Criar a Agência e vincular ao plano padrão (`RegistroService`).
+> 3. Criar o Usuário Administrador vinculado à agência (`RegistroService`).
+> 4. Gerar um link de cobrança PIX via API do AbacatePay (`AbacatePayService`).
+
+#### 8.1.1. Validação com FormRequest (`app/Http/Requests/RegistroCadastroRequest.php`):
 ```php
 <?php
+namespace App\Http\Requests;
+use Illuminate\Foundation\Http\FormRequest;
 
-namespace App\Http\Controllers\Auth;
-
-use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-
-class AuthController extends Controller
+class RegistroCadastroRequest extends FormRequest
 {
-    /** POST /api/auth/cadastro */
-    public function cadastro(Request $request): JsonResponse
+    public function authorize(): bool { return true; }
+
+    public function rules(): array
     {
-        $dados = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'email'                 => 'required|email|unique:users,email',
-            'password'              => 'required|string|min:8|confirmed',
-            // 'confirmed' exige um campo 'password_confirmation' igual ao 'password'
-        ]);
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
+            'nome_agencia' => ['required', 'string', 'max:255'],
+        ];
+    }
+}
+```
 
-        $user  = User::create([
-            'name'     => $dados['name'],
-            'email'    => $dados['email'],
-            'password' => Hash::make($dados['password']), // NUNCA salve senha em texto puro
-        ]);
+#### 8.1.2. Regra de Negócio e Transação (`app/Services/RegistroService.php`):
+> 💡 Usamos `DB::transaction()` porque se a geração do Link do AbacatePay falhar, o Laravel dá "rollback" (desfaz) a criação do Usuário e da Agência automaticamente, mantendo o banco limpo.
 
-        // Gera o Token de Acesso (string longa e aleatória)
-        $token = $user->createToken('radar-editais')->plainTextToken;
+```php
+<?php
+namespace App\Services;
+use Illuminate\Support\Facades\DB;
+use App\Models\{Agencia, User, Plano};
 
-        return response()->json([
-            'success' => true,
-            'data'    => ['token' => $token, 'user' => $user],
-            'message' => 'Cadastro realizado! Bem-vindo ao Radar.',
-        ], 201);
+class RegistroService {
+    // Injeção de dependência do serviço de pagamento
+    public function __construct(protected AbacatePayService $abacatePayService) {}
+
+    public function registrarNovaAgenciaEUsuario(array $dados) {
+        return DB::transaction(function () use ($dados) {
+            $planoPadrao = Plano::where('nome', 'Plano Standart')->first();
+            
+            $agencia = Agencia::create([
+                'nome' => $dados['nome_agencia'],
+                'plano_id' => $planoPadrao->id,
+                'status_pagamento' => 'pendente'
+            ]);
+
+            $user = User::create([
+                'name' => $dados['name'],
+                'email' => $dados['email'],
+                'password' => $dados['password'],
+                'agencia_id' => $agencia->id,
+                'perfil_acesso' => 'consultor_admin',
+            ]);
+
+            $linkCheckout = $this->abacatePayService->gerarCobranca($agencia, $user, $planoPadrao);
+
+            return ['agencia' => $agencia, 'usuario' => $user, 'checkout_url' => $linkCheckout];
+        });
+    }
+}
+```
+
+#### 8.1.3. Integração com Gateway (`app/Services/AbacatePayService.php`):
+```php
+<?php
+namespace App\Services;
+use Illuminate\Support\Facades\Http;
+use Exception;
+
+class AbacatePayService {
+    protected $apiKey;
+    protected $baseUrl = 'https://api.abacatepay.com/v2'; 
+
+    public function __construct() {
+        $this->apiKey = env('ABACATEPAY_API_KEY'); 
     }
 
-    /** POST /api/auth/login */
-    public function login(Request $request): JsonResponse
-    {
-        $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required|string',
-        ]);
-
-        $user = User::where('email', $request->email)->first();
-
-        // Hash::check() compara a senha digitada com o hash do banco
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'E-mail ou senha incorretos.',
-            ], 401);
+    public function gerarCobranca($agencia, $usuario, $plano) {
+        // Mock no ambiente local quando não há chave configurada
+        if (empty($this->apiKey)) {
+            return 'http://127.0.0.1:5500/MVPs/Vers%C3%A3o%20Atual/front/pagamento_mock.html?agencia=' . $agencia->id;
         }
 
-        // Apaga tokens antigos e cria um novo (garante apenas 1 sessão ativa)
-        $user->tokens()->delete();
-        $token = $user->createToken('radar-editais')->plainTextToken;
+        $response = Http::withToken($this->apiKey)
+            ->post("{$this->baseUrl}/checkouts/create", [
+                'items' => [['id' => 'prod_sWfDg0eZXTLbtZEHYpqnMLKP', 'quantity' => 1]],
+                'externalId' => 'agencia_' . $agencia->id,
+                'returnUrl' => 'http://localhost:3000/voltar',
+                'methods' => ['PIX']
+            ]);
+
+        if ($response->failed()) throw new Exception('Falha ao comunicar com AbacatePay.');
+        
+        return $response->json()['data']['url'];
+    }
+}
+```
+
+#### 8.1.4. Emissão do Token Sanctum (`app/Http/Controllers/AuthController.php`):
+O `AuthController` orquestra as validações e serviços, e finalmente gera o token JWT usando Laravel Sanctum.
+```php
+        $resultado = $this->registroService->registrarNovaAgenciaEUsuario($dadosSeguros);
+        $usuario = $resultado['usuario'];
+        $token = $usuario->createToken('token_de_acesso')->plainTextToken;
 
         return response()->json([
-            'success' => true,
-            'data'    => ['token' => $token, 'user' => $user],
-            'message' => 'Login realizado com sucesso!',
-        ], 200);
-    }
-
-    /** POST /api/auth/logout (rota protegida) */
-    public function logout(Request $request): JsonResponse
-    {
-        $request->user()->currentAccessToken()->delete(); // revoga o token atual
-        return response()->json(['success' => true, 'message' => 'Logout realizado.'], 200);
-    }
-}
+            'status' => 'sucesso',
+            'dados' => [
+                'token' => $token,
+                'link_pagamento' => $resultado['checkout_url']
+            ]
+        ], 201);
 ```
 
-### Frontend (`public/js/auth.js`):
+### 8.2. Frontend (`front/js/cadastro.js`):
+O JavaScript intercepta o formulário, aciona a API e, em caso de sucesso (Status 201), armazena as credenciais e redireciona o usuário para o funil de pagamento (AbacatePay ou tela mockada).
 ```javascript
-/** POST /api/auth/login */
-async function fazerLogin(evento) {
-    evento.preventDefault();
-    limparErros();
+const response = await fetch('http://localhost:8000/api/auth/registro', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+});
 
-    const email    = document.getElementById('input-email').value.trim();
-    const password = document.getElementById('input-password').value;
+const data = await response.json();
 
-    setarBotaoCarregando('btn-login', true);
-    const resultado = await apiRequest('/auth/login', 'POST', { email, password });
-    setarBotaoCarregando('btn-login', false);
-
-    if (resultado?.success) {
-        // Persiste o token e os dados do usuário no navegador
-        localStorage.setItem('auth_token', resultado.data.token);
-        localStorage.setItem('auth_user',  JSON.stringify(resultado.data.user));
-        window.location.href = '/pages/editais.html';
-    } else {
-        document.getElementById('erro-login').textContent = resultado?.message || 'Erro ao fazer login.';
-    }
-}
-
-/** POST /api/auth/logout */
-async function fazerLogout() {
-    await apiRequest('/auth/logout', 'POST');
-    localStorage.clear();
-    window.location.href = '/pages/login.html';
-}
-
-/** Retorna os dados do usuário logado (salvo no localStorage) */
-function getUsuarioLogado() {
-    const raw = localStorage.getItem('auth_user');
-    return raw ? JSON.parse(raw) : null;
+if (!response.ok) {
+    // Trata erro de validação (ex: Senha curta, E-mail repetido)
+} else {
+    // Salva token e redireciona para o link gerado pelo AbacatePay
+    localStorage.setItem('auth_token', data.dados.token);
+    window.location.href = data.dados.link_pagamento;
 }
 ```
-
 ---
 
 ## 9. Filtros, Busca e Paginação

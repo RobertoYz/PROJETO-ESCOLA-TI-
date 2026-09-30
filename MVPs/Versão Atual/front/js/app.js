@@ -210,19 +210,18 @@ function renderDocuments(documentos) {
         documentos.forEach(doc => {
             const div = document.createElement('div');
             div.className = 'doc-item';
+            div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; color: #e0e0e0;';
             div.innerHTML = `
-                <div class="doc-info">
-                    <svg width="20" height="20" style="fill: var(--accent-blue);"><use href="#icon-file"></use></svg>
-                    <span class="doc-title">${doc.titulo || 'Documento'}</span>
+                <div class="doc-info" style="display: flex; align-items: center; gap: 10px;">
+                    <span style="color: #10b981; font-weight: bold;">✔</span>
+                    <span class="doc-title">${doc.titulo || 'Documento Exigido'}</span>
                 </div>
-                <a href="${doc.link || '#'}" target="_blank" class="doc-action">
-                    <svg width="16" height="16"><use href="#icon-download"></use></svg>
-                </a>
+                ${doc.link && doc.link !== '#' ? `<a href="${doc.link}" target="_blank" style="color: var(--accent-purple); text-decoration: none; font-size: 0.8rem;">Ver anexo ↗</a>` : ''}
             `;
             docList.appendChild(div);
         });
     } else {
-        docList.innerHTML = '<div style="color: #666; font-size: 0.9rem;">Nenhum documento disponível</div>';
+        docList.innerHTML = '<div style="color: #888; font-size: 0.9rem; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 6px;">Nenhum documento específico exigido no resumo.</div>';
     }
 }
 
