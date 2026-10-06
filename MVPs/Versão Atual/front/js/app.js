@@ -47,6 +47,49 @@ function initUI() {
             if (selectedId) toggleFavorite(selectedId);
         });
     }
+
+    const btnSendToKanban = document.getElementById('btnSendToKanban');
+    if (btnSendToKanban) {
+        btnSendToKanban.addEventListener('click', async () => {
+            if (!selectedId) {
+                alert('Selecione um edital primeiro para enviar ao Kanban.');
+                return;
+            }
+
+            const originalText = btnSendToKanban.textContent;
+            btnSendToKanban.textContent = 'Enviando ao Kanban...';
+            btnSendToKanban.disabled = true;
+
+            try {
+                const res = await fetch('http://127.0.0.1:8000/api/kanban/cards', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        edital_id: selectedId,
+                        startup_name: 'Startup X'
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    if (confirm('Edital enviado com sucesso para a coluna Backlog do Kanban! Deseja abrir o quadro agora?')) {
+                        window.location.href = 'kanban.html';
+                    }
+                } else {
+                    alert('Falha ao enviar edital ao Kanban: ' + (data.mensagem || 'Erro desconhecido.'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de comunicação com a API ao enviar ao Kanban.');
+            } finally {
+                btnSendToKanban.textContent = originalText;
+                btnSendToKanban.disabled = false;
+            }
+        });
+    }
 }
 
 // ==========================================
