@@ -20,14 +20,14 @@ class PlanoSeeder extends Seeder
             [
                 'nome' => 'Plano Pro',
                 'preco' => 99.90,
-                'id_plataforma_pagamento' => 'prod_EXEMPLO2',
+                'id_plataforma_pagamento' => 'prod_pmXZSbe2pJT0wXhpQ5PHfTAM',
                 'limite_startups' => 10,
                 'limite_membros_equipe' => 5
             ],
             [
                 'nome' => 'Plano Enterprise',
                 'preco' => 299.90,
-                'id_plataforma_pagamento' => 'prod_EXEMPLO3',
+                'id_plataforma_pagamento' => 'prod_REyZTDE6CcKXGpaHencBhxNX',
                 'limite_startups' => 50,
                 'limite_membros_equipe' => 15
             ]
