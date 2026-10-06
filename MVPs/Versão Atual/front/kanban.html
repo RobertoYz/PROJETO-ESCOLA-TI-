@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anjo Nexus - Pipeline Kanban</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --sidebar-bg: #111418;
+            --navbar-bg: #0d0f12;
+            --column-bg: #111111;
+            --card-bg: #1a1d21;
+            --card-hover: #23272c;
+            --text-light: #ffffff;
+            --text-muted: #a0a0a0;
+            --menu-bg: #f5f5f5;
+            --menu-text: #333333;
+            --accent-blue: #1b36ff;
+            --accent-purple: #8b5cf6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --tag-finep: #3b82f6;
+            --tag-fapesp: #10b981;
+            --tag-fapesc: #8b5cf6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); display: flex; height: 100vh; overflow: hidden; }
+        svg { fill: currentColor; }
+
+        /* SIDEBAR */
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); height: 100vh; display: flex; flex-direction: column; border-right: 1px solid #222; transition: width 0.3s ease; position: relative; z-index: 100; }
+        .sidebar.collapsed { width: 70px; }
+        .sidebar-header { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+        .toggle-btn { background: none; border: none; color: var(--text-light); cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; align-self: flex-start; }
+        .toggle-btn:hover { background-color: rgba(255,255,255,0.1); }
+        .logo { font-size: 1.5rem; font-weight: 600; transition: opacity 0.3s; }
+        .logo span { font-weight: 400; }
+        .sidebar.collapsed .logo { opacity: 0; pointer-events: none; height: 0; margin: 0; overflow: hidden; }
+        .nav-menu { flex: 1; display: flex; flex-direction: column; padding: 1rem 0; overflow: hidden; }
+        .nav-item { padding: 1rem 1.5rem; color: var(--text-light); text-decoration: none; font-size: 1rem; display: flex; align-items: center; gap: 15px; transition: background-color 0.2s; white-space: nowrap; }
+        .nav-item:hover { background-color: rgba(255,255,255,0.05); }
+        .nav-item.active { background-color: rgba(255,255,255,0.05); border-left: 3px solid var(--accent-blue); color: var(--accent-blue); }
+        .nav-item.active .nav-text { font-weight: 600; }
+        .nav-icon { width: 20px; height: 20px; min-width: 20px; }
+        .nav-text { transition: opacity 0.3s; }
+        .sidebar.collapsed .nav-text { opacity: 0; pointer-events: none; width: 0; overflow: hidden; }
+        .sidebar-footer { padding: 1rem 0; border-top: 1px solid #222; }
+
+        /* MAIN CONTENT */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .top-navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--navbar-bg); border-bottom: 1px solid #222; }
+        .startup-info { display: flex; align-items: center; gap: 1rem; }
+        .startup-avatar { width: 45px; height: 45px; background-color: #d9d9d9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666; }
+        .startup-name { font-size: 1.2rem; font-weight: 600; }
+        .actions-section { display: flex; align-items: center; gap: 1rem; }
+        .btn-add-card { background: var(--accent-blue); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-add-card:hover { background: #0d1ecc; }
+
+        /* KANBAN BOARD CONTAINER */
+        .kanban-container { flex: 1; padding: 1.5rem 2rem; display: flex; gap: 1.5rem; overflow-x: auto; overflow-y: hidden; align-items: flex-start; height: calc(100vh - 77px); }
+        .kanban-container::-webkit-scrollbar { height: 8px; }
+        .kanban-container::-webkit-scrollbar-track { background: var(--bg-dark); }
+        .kanban-container::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .kanban-container::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* COLUNAS */
+        .kanban-column { background-color: var(--column-bg); border-radius: 14px; min-width: 320px; width: 320px; max-height: 100%; display: flex; flex-direction: column; border: 1px solid #222; transition: border-color 0.2s, background-color 0.2s; }
+        .kanban-column.drag-over { border-color: var(--accent-blue); background-color: #16181c; }
+        .column-header { padding: 1.1rem 1.2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #222; }
+        .column-title { font-size: 1rem; font-weight: 600; }
+        .column-count { background-color: #333; color: #ccc; font-size: 0.8rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
+        .column-body { padding: 1rem; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; min-height: 200px; }
+        .column-body::-webkit-scrollbar { width: 5px; }
+        .column-body::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+
+        /* CARDS */
+        .kanban-card { background-color: var(--card-bg); border: 1px solid #333; border-radius: 10px; padding: 1rem; cursor: grab; display: flex; flex-direction: column; gap: 0.7rem; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: transform 0.1s, box-shadow 0.1s, border-color 0.2s; position: relative; }
+        .kanban-card:hover { border-color: #555; background-color: var(--card-hover); }
+        .kanban-card:active { cursor: grabbing; }
+        .kanban-card.dragging { opacity: 0.4; transform: scale(0.98); box-shadow: none; border-color: var(--accent-purple); }
+        .card-top { display: flex; justify-content: space-between; align-items: center; }
+        .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tag { font-size: 0.7rem; font-weight: 600; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
+        .tag-finep { background-color: rgba(59, 130, 246, 0.15); color: var(--tag-finep); border: 1px solid rgba(59, 130, 246, 0.3); }
+        .tag-fapesp { background-color: rgba(16, 185, 129, 0.15); color: var(--tag-fapesp); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .tag-fapesc { background-color: rgba(139, 92, 246, 0.15); color: var(--tag-fapesc); border: 1px solid rgba(139, 92, 246, 0.3); }
+        .tag-manual { background-color: rgba(245, 158, 11, 0.15); color: var(--warning-color); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .btn-card-del { background: none; border: none; color: #666; cursor: pointer; font-size: 0.9rem; padding: 2px; transition: 0.2s; }
+        .btn-card-del:hover { color: var(--danger-color); transform: scale(1.1); }
+        .card-title { font-size: 0.95rem; font-weight: 600; line-height: 1.3; color: #fff; }
+        .card-desc { font-size: 0.8rem; color: #aaa; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #2a2a2a; padding-top: 0.6rem; font-size: 0.8rem; color: var(--text-muted); }
+        .card-budget { font-family: monospace; font-weight: 500; color: #ddd; }
+        .match-score { font-weight: 700; font-size: 0.8rem; }
+        .match-high { color: var(--success-color); }
+        .match-medium { color: var(--accent-purple); }
+        .match-low { color: var(--danger-color); }
+
+        /* MODAL DE CRIAÇÃO */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; }
+        .modal-card { background: var(--card-bg); border: 1px solid #333; border-radius: 12px; width: 90%; max-width: 480px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+        .modal-title { font-size: 1.2rem; font-weight: 600; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label { font-size: 0.85rem; color: var(--text-muted); }
+        .form-input, .form-textarea, .form-select { background: #111; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; font-size: 0.9rem; outline: none; }
+        .form-input:focus, .form-textarea:focus { border-color: var(--accent-blue); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+        .btn-cancel { background: transparent; border: 1px solid #444; color: #fff; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        .btn-save { background: var(--accent-blue); border: none; color: #fff; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <svg style="display: none;">
+        <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+        <symbol id="icon-star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+        <symbol id="icon-history" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></symbol>
+        <symbol id="icon-kanban" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7V7h2v10zm4-5h-2V7h2v5zm4 3h-2V7h2v8z"/></symbol>
+        <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+        <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></symbol>
+    </svg>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-btn" id="toggleSidebar">
+                <svg viewBox="0 0 24 24"><use href="#icon-menu"></use></svg>
+            </button>
+            <div class="logo">Anjo<span>Nexus</span></div>
+        </div>
+        <nav class="nav-menu">
+            <a href="index.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-search"></use></svg>
+                <span class="nav-text">Busca</span>
+            </a>
+            <a href="#" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-star"></use></svg>
+                <span class="nav-text">Favoritos</span>
+            </a>
+            <a href="#" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-history"></use></svg>
+                <span class="nav-text">Histórico</span>
+            </a>
+            <a href="kanban.html" class="nav-item active">
+                <svg class="nav-icon"><use href="#icon-kanban"></use></svg>
+                <span class="nav-text">Kanban</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-navbar">
+            <div class="startup-info">
+                <div class="startup-avatar"><svg width="24" height="24"><use href="#icon-user"></use></svg></div>
+                <h1 class="startup-name" id="boardTitle">Pipeline de Editais</h1>
+            </div>
+            <div class="actions-section">
+                <button class="btn-add-card" id="btnOpenModal">
+                    <svg width="18" height="18"><use href="#icon-plus"></use></svg>
+                    Novo Ticket
+                </button>
+            </div>
+        </header>
+
+        <!-- KANBAN BOARD CONTAINER -->
+        <div class="kanban-container" id="kanbanBoard">
+            <div style="color: #888; padding: 2rem;">Carregando quadro Kanban...</div>
+        </div>
+    </main>
+
+    <!-- MODAL DE NOVO CARD -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-card">
+            <h2 class="modal-title">Novo Ticket Kanban</h2>
+            <div class="form-group">
+                <label class="form-label">Título da Proposta / Edital</label>
+                <input type="text" id="inputCardTitle" class="form-input" placeholder="Ex: Proposta FINEP - Tecnova">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nome da Startup</label>
+                <input type="text" id="inputStartup" class="form-input" value="Startup X" placeholder="Nome da startup cliente">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Coluna Inicial</label>
+                <select id="selectColumn" class="form-select"></select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Descrição / Observações</label>
+                <textarea id="inputCardDesc" class="form-textarea" rows="3" placeholder="Anotações preliminares..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="btnCancelModal">Cancelar</button>
+                <button class="btn-save" id="btnSaveCard">Criar Card</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        let currentBoard = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initSidebar();
+            initModal();
+            fetchBoard();
+        });
+
+        function initSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggleSidebar');
+            if (toggleBtn) toggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+        }
+
+        async function fetchBoard() {
+            try {
+                const res = await fetch(`${API_BASE}/kanban`);
+                if (!res.ok) throw new Error('Erro ao carregar Kanban');
+                const result = await res.json();
+                currentBoard = result.data;
+                renderBoard(currentBoard);
+                populateModalColumns(currentBoard.columns);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('kanbanBoard').innerHTML = `<div style="color: #ef4444; padding: 2rem;">Falha ao comunicar com a API do Kanban. Certifique-se de que o backend está ativo.</div>`;
+            }
+        }
+
+        function renderBoard(board) {
+            const container = document.getElementById('kanbanBoard');
+            container.innerHTML = '';
+
+            if (board.title) {
+                document.getElementById('boardTitle').textContent = board.title;
+            }
+
+            board.columns.forEach(col => {
+                const colEl = document.createElement('div');
+                colEl.className = 'kanban-column';
+                colEl.dataset.colId = col.id;
+
+                const count = col.cards ? col.cards.length : 0;
+
+                colEl.innerHTML = `
+                    <div class="column-header">
+                        <h2 class="column-title">${col.title}</h2>
+                        <span class="column-count">${count}</span>
+                    </div>
+                    <div class="column-body" data-col-id="${col.id}"></div>
+                `;
+
+                const colBody = colEl.querySelector('.column-body');
+                if (col.cards && col.cards.length > 0) {
+                    col.cards.forEach(card => {
+                        colBody.appendChild(createCardElement(card));
+                    });
+                }
+
+                initColumnDragEvents(colBody);
+                container.appendChild(colEl);
+            });
+        }
+
+        function createCardElement(card) {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'kanban-card';
+            cardEl.draggable = true;
+            cardEl.dataset.cardId = card.id;
+            cardEl.dataset.position = card.position;
+
+            const edital = card.edital || {};
+            const meta = card.metadata || {};
+            const org = edital.fonte || meta.fonte || 'PROPOSTA';
+            const tagClass = getTagClass(org);
+            
+            const budgetVal = edital.max_budget || meta.max_budget;
+            const budgetFormatted = budgetVal ? 'R$ ' + Number(budgetVal).toLocaleString('pt-BR') : '--';
+            const matchVal = edital.ai_match || meta.ai_match || 0;
+            const matchColorClass = getMatchColorClass(matchVal);
+
+            cardEl.innerHTML = `
+                <div class="card-top">
+                    <div class="card-tags">
+                        <span class="tag ${tagClass}">${org}</span>
+                    </div>
+                    <button class="btn-card-del" title="Excluir card" onclick="handleDeleteCard(event, ${card.id})">
+                        <svg width="15" height="15"><use href="#icon-trash"></use></svg>
+                    </button>
+                </div>
+                <h3 class="card-title">${card.title}</h3>
+                ${card.description ? `<p class="card-desc">${card.description}</p>` : ''}
+                <div class="card-footer">
+                    <span class="card-budget">${budgetFormatted}</span>
+                    ${matchVal ? `<span class="match-score ${matchColorClass}">${matchVal}% Match</span>` : ''}
+                </div>
+            `;
+
+            initCardDragEvents(cardEl);
+            return cardEl;
+        }
+
+        function getTagClass(fonte) {
+            const f = (fonte || '').toUpperCase();
+            if (f.includes('FINEP')) return 'tag-finep';
+            if (f.includes('FAPESP')) return 'tag-fapesp';
+            if (f.includes('FAPESC')) return 'tag-fapesc';
+            return 'tag-manual';
+        }
+
+        function getMatchColorClass(val) {
+            if (val >= 80) return 'match-high';
+            if (val >= 50) return 'match-medium';
+            return 'match-low';
+        }
+
+        function initCardDragEvents(cardEl) {
+            cardEl.addEventListener('dragstart', () => {
+                cardEl.classList.add('dragging');
+            });
+
+            cardEl.addEventListener('dragend', () => {
+                cardEl.classList.remove('dragging');
+                updateCounters();
+            });
+        }
+
+        function initColumnDragEvents(colBody) {
+            colBody.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                colBody.parentElement.classList.add('drag-over');
+
+                const afterElement = getDragAfterElement(colBody, e.clientY);
+                const dragging = document.querySelector('.dragging');
+                if (!dragging) return;
+
+                if (afterElement == null) {
+                    colBody.appendChild(dragging);
+                } else {
+                    colBody.insertBefore(dragging, afterElement);
+                }
+            });
+
+            colBody.addEventListener('dragleave', () => {
+                colBody.parentElement.classList.remove('drag-over');
+            });
+
+            colBody.addEventListener('drop', async () => {
+                colBody.parentElement.classList.remove('drag-over');
+                const dragging = document.querySelector('.dragging');
+                if (!dragging) return;
+
+                const cardId = dragging.dataset.cardId;
+                const targetColId = colBody.dataset.colId;
+
+                // Calcula posições vizinhas para fractional indexing
+                const prevCard = dragging.previousElementSibling;
+                const nextCard = dragging.nextElementSibling;
+
+                const prevPos = prevCard ? parseFloat(prevCard.dataset.position) : null;
+                const nextPos = nextCard ? parseFloat(nextCard.dataset.position) : null;
+
+                try {
+                    const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/mover`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                            target_column_id: targetColId,
+                            prev_position: prevPos,
+                            next_position: nextPos
+                        })
+                    });
+
+                    if (res.ok) {
+                        const json = await res.json();
+                        dragging.dataset.position = json.data.position;
+                    } else {
+                        console.error('Falha ao mover card no backend');
+                        fetchBoard(); // Reverte
+                    }
+                } catch (e) {
+                    console.error(e);
+                    fetchBoard();
+                }
+
+                updateCounters();
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const elements = [...container.querySelectorAll('.kanban-card:not(.dragging)')];
+            return elements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function updateCounters() {
+            document.querySelectorAll('.kanban-column').forEach(col => {
+                const countBadge = col.querySelector('.column-count');
+                const num = col.querySelectorAll('.kanban-card').length;
+                if (countBadge) countBadge.textContent = num;
+            });
+        }
+
+        async function handleDeleteCard(event, cardId) {
+            event.stopPropagation();
+            if (!confirm('Deseja realmente remover este card do Kanban?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}`, {
+                    method: 'DELETE',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (res.ok) {
+                    const cardEl = document.querySelector(`[data-card-id="${cardId}"]`);
+                    if (cardEl) cardEl.remove();
+                    updateCounters();
+                } else {
+                    alert('Erro ao excluir card.');
+                }
+            } catch (e) {
+                alert('Erro de comunicação.');
+            }
+        }
+
+        /* MODAL */
+        function initModal() {
+            const modal = document.getElementById('modalOverlay');
+            const openBtn = document.getElementById('btnOpenModal');
+            const cancelBtn = document.getElementById('btnCancelModal');
+            const saveBtn = document.getElementById('btnSaveCard');
+
+            openBtn.addEventListener('click', () => modal.classList.add('active'));
+            cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('active');
+            });
+
+            saveBtn.addEventListener('click', async () => {
+                const title = document.getElementById('inputCardTitle').value.trim();
+                const startup = document.getElementById('inputStartup').value.trim();
+                const colId = document.getElementById('selectColumn').value;
+                const desc = document.getElementById('inputCardDesc').value.trim();
+
+                if (!title) {
+                    alert('Por favor, informe o título do ticket.');
+                    return;
+                }
+
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Salvando...';
+
+                try {
+                    const res = await fetch(`${API_BASE}/kanban/cards`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                            title: title,
+                            startup_name: startup,
+                            column_id: colId,
+                            description: desc
+                        })
+                    });
+
+                    if (res.ok) {
+                        modal.classList.remove('active');
+                        document.getElementById('inputCardTitle').value = '';
+                        document.getElementById('inputCardDesc').value = '';
+                        fetchBoard();
+                    } else {
+                        alert('Falha ao criar card no servidor.');
+                    }
+                } catch (e) {
+                    alert('Erro de comunicação com a API.');
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Criar Card';
+                }
+            });
+        }
+
+        function populateModalColumns(columns) {
+            const select = document.getElementById('selectColumn');
+            select.innerHTML = '';
+            columns.forEach(col => {
+                const opt = document.createElement('option');
+                opt.value = col.id;
+                opt.textContent = col.title;
+                select.appendChild(opt);
+            });
+        }
+    </script>
+</body>
+</html>
