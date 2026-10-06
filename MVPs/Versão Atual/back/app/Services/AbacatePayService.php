@@ -26,22 +26,27 @@ class AbacatePayService
             return 'http://127.0.0.1:5500/MVPs/Vers%C3%A3o%20Atual/front/pagamento_mock.html?agencia=' . $agencia->id;
         }
 
-        //ID do produto Cadastrado no AbacatePay
-        $idProdutoAbacatePay = 'prod_sWfDg0eZXTLbtZEHYpqnMLKP';
+        $idProdutoAbacatePay = $plano->id_plataforma_pagamento;
+
+        $payload = [
+            'items' => [
+                [
+                    'id' => $idProdutoAbacatePay,
+                    'quantity' => 1
+                ]
+            ],
+            'customer' => [
+                'name' => $usuario->name,
+                'email' => $usuario->email
+            ],
+            'externalId' => 'agencia_' . $agencia->id,
+            'returnUrl' => 'http://localhost:3000/voltar',
+            'completionUrl' => 'http://localhost:3000/sucesso',
+            'methods' => ['PIX']
+        ];
 
         $response = Http::withToken($this->apiKey)
-            ->post("{$this->baseUrl}/checkouts/create", [
-                'items' => [
-                    [
-                        'id' => $idProdutoAbacatePay,
-                        'quantity' => 1
-                    ]
-                ],
-                'externalId' => 'agencia_' . $agencia->id,
-                'returnUrl' => 'http://localhost:3000/voltar',
-                'completionUrl' => 'http://localhost:3000/sucesso',
-                'methods' => ['PIX'] //, 'CARD'
-            ]);
+            ->post("{$this->baseUrl}/checkouts/create", $payload);
 
         if ($response->failed()) {
             throw new Exception('Falha ao comunicar com o gateway de pagamento AbacatePay.');
