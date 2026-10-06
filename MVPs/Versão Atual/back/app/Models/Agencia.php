@@ -15,7 +15,6 @@ class Agencia extends Model
         'nome',
         'plano_id',
         'id_plataforma_pagamento',
-        'id_assinatura_mercado_pago',
         'status_pagamento'
     ];
 
