@@ -12,6 +12,7 @@ class Plano extends Model
     protected $fillable = [
         'nome',
         'preco',
+        'id_plataforma_pagamento',
         'id_plano_mercado_pago',
         'limite_startups',
         'limite_membros_equipe'
