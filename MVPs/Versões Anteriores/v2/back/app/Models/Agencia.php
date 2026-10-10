@@ -29,11 +29,4 @@ class Agencia extends Model
     {
         return $this->hasMany(User::class, 'agencia_id');
     }
-
-    //Relacionamento das agencias com startups
-    public function startups()
-    {
-        return $this->hasMany(Startup::class);
-    }
-
 }
