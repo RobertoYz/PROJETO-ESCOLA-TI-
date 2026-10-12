@@ -2134,4 +2134,33 @@ $schedule->command('editais:varrer --all')->dailyAt('03:00');
 
 ---
 
-## 15. Glossário Técnico para a Banca
+## 15. Módulo de IA: Geração de Minutas e Análise de Fit (EDTAN-122)
+
+> **💡 O que resolve?**
+> Transforma a complexidade da redação de propostas de inovação em um processo automatizado e defensivo. O sistema lê o edital (regras, orçamento, prazos), os dados da startup (CNPJ, porte, nicho, pitch) e a ideia do projeto do usuário, gerando uma **Minuta Técnica** estruturada conforme o modelo institucional da FINEP, FAPESC e SEIA (Anjo Inovador).
+
+### 15.1 Requisitos Funcionais Implementados
+- **RF-29 (Geração via IA):** Pipeline em cascata (Gemini -> DeepSeek -> Groq -> Fallback Seguro).
+- **RF-30 (Edição em Tela):** Editor interativo permitindo refinamentos com salvamento de novas versões auditadas.
+- **RF-31 (Cópia Rápida):** Botão para copiar todo o texto da proposta em 1 clique via `navigator.clipboard`.
+- **RF-32 & RF-32.1 (Exportação):** Geração de `.docx` (Microsoft Word) e `.pdf` (documento institucional).
+- **RF-33 (Histórico de Minutas):** Persistência de todas as versões em `minutas` com links relacionais.
+- **RF-34 (Auditoria):** Rastreabilidade de autor, data/hora, modelo de IA e status.
+- **RF-47 (Match Inteligente):** Algoritmo semântico de aderência entre startup e editais com justificativas técnicas.
+
+### 15.2 Arquitetura de Classes
+```
+app/
+├── Models/
+│   └── Minuta.php                 # Entidade persistida com versionamento
+├── Services/
+│   ├── MinutaAiService.php        # Prompt engineering, chamadas LLM e cálculo de Fit
+│   └── DocumentExportService.php  # Montador OpenXML (.docx) e formatador PDF
+└── Http/Controllers/
+    └── MinutaController.php      # Endpoints RESTful de geração, histórico e exportação
+```
+
+---
+
+## 16. Glossário Técnico para a Banca
+

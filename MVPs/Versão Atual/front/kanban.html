@@ -112,6 +112,34 @@
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
         .btn-cancel { background: transparent; border: 1px solid #444; color: #fff; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
         .btn-save { background: var(--accent-blue); border: none; color: #fff; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+
+        /* MODAL MÓDULO DE IA (MINUTA & PROPOSTA) */
+        .modal-minuta-card { background: var(--card-bg); border: 1px solid #333; border-radius: 14px; width: 95%; max-width: 950px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .modal-minuta-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; background: #111418; }
+        .modal-minuta-body { padding: 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.2rem; }
+        .minuta-tabs { display: flex; gap: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px; }
+        .minuta-tab-btn { background: none; border: none; color: #aaa; font-size: 0.95rem; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .minuta-tab-btn.active { background: rgba(27, 54, 255, 0.15); color: #4d65ff; border: 1px solid rgba(27, 54, 255, 0.3); }
+        .minuta-editor-area { width: 100%; min-height: 380px; background: #0c0d10; border: 1px solid #333; border-radius: 8px; color: #eee; font-family: 'Consolas', monospace; font-size: 0.9rem; line-height: 1.6; padding: 1rem; resize: vertical; outline: none; }
+        .minuta-editor-area:focus { border-color: var(--accent-blue); }
+        .btn-ai-sparkle { background: linear-gradient(135deg, #1b36ff, #8b5cf6); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
+        .btn-ai-sparkle:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-ai-secondary { background: #222; color: #fff; border: 1px solid #444; padding: 7px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .btn-ai-secondary:hover { background: #333; border-color: #666; }
+        .audit-info { font-size: 0.8rem; color: #888; display: flex; align-items: center; gap: 15px; }
+        .fit-card { background: #121418; border: 1px solid #292d34; border-radius: 8px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+        .fit-header { display: flex; justify-content: space-between; align-items: center; }
+        .fit-score { font-size: 1.1rem; font-weight: 700; }
+
+        /* MODAL DETALHES DO EDITAL */
+        .modal-detalhes-card { background: var(--card-bg); border: 1px solid #333; border-radius: 14px; width: 95%; max-width: 820px; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .modal-detalhes-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: flex-start; background: #111418; }
+        .modal-detalhes-body { padding: 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.2rem; }
+        .detalhes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .detalhes-box { background: rgba(255,255,255,0.03); border: 1px solid #282828; border-radius: 8px; padding: 10px 14px; }
+        .detalhes-box-label { font-size: 0.75rem; text-transform: uppercase; color: #888; font-weight: 600; letter-spacing: 0.5px; }
+        .detalhes-box-val { font-size: 0.95rem; font-weight: 500; color: #fff; margin-top: 4px; }
+        .detalhes-objetivo-box { background: rgba(255,255,255,0.02); border: 1px solid #282828; border-radius: 8px; padding: 14px; font-size: 0.9rem; line-height: 1.6; color: #ddd; max-height: 250px; overflow-y: auto; white-space: pre-line; }
     </style>
 </head>
 <body>
@@ -160,6 +188,10 @@
                 <h1 class="startup-name" id="boardTitle">Pipeline de Editais</h1>
             </div>
             <div class="actions-section">
+                <button class="btn-ai-sparkle" id="btnOpenAiModule">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                    Elaboração de Propostas & Fit
+                </button>
                 <button class="btn-add-card" id="btnOpenModal">
                     <svg width="18" height="18"><use href="#icon-plus"></use></svg>
                     Novo Ticket
@@ -199,6 +231,174 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL MÓDULO DE DOCUMENTOS E ENQUADRAMENTO -->
+    <div class="modal-overlay" id="modalMinutaOverlay">
+        <div class="modal-minuta-card">
+            <div class="modal-minuta-header">
+                <div>
+                    <h2 style="font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#3b82f6" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                        Elaboração de Propostas e Análise de Elegibilidade
+                    </h2>
+                    <span style="font-size: 0.8rem; color: #888;">Geração estruturada de minutas técnicas, índice de aderência e exportação oficial</span>
+                </div>
+                <button class="btn-cancel" id="btnCloseMinutaModal" style="padding: 4px 10px;">&times;</button>
+            </div>
+
+            <div class="modal-minuta-body">
+                <!-- ABAS DO MÓDULO -->
+                <div class="minuta-tabs">
+                    <button class="minuta-tab-btn active" id="tabMinutaBtn" onclick="switchMinutaTab('gerador')">Plano de Trabalho / Minuta</button>
+                    <button class="minuta-tab-btn" id="tabFitBtn" onclick="switchMinutaTab('fit')">Diagnóstico de Aderência</button>
+                    <button class="minuta-tab-btn" id="tabHistoricoBtn" onclick="switchMinutaTab('historico')">Histórico e Versões</button>
+                </div>
+
+                <!-- ABA 1: GERADOR E EDITOR DE MINUTA -->
+                <div id="tabContentGerador">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">1. Selecione a Startup Proponente:</label>
+                            <select id="selectMinutaStartup" class="form-select"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">2. Selecione o Edital Alvo:</label>
+                            <select id="selectMinutaEdital" class="form-select" onchange="handleTrocarEditalMinuta()"></select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label">3. Ideia / Escopo do Projeto da Empresa (O que será submetido):</label>
+                        <textarea id="inputMinutaIdeia" class="form-textarea" rows="3" placeholder="Descreva a solução tecnológica proposta, objetivos e diferencial que a empresa pretende implementar para resolver a dor do edital..."></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <button type="button" class="btn-ai-sparkle" id="btnGerarMinutaAction" onclick="handleGerarMinuta(event)">
+                            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                            Estruturar Minuta Técnica
+                        </button>
+                        <span id="aiGenerationStatus" style="font-size: 0.85rem; color: #aaa;"></span>
+                    </div>
+
+                    <!-- EDITOR DE MINUTA -->
+                    <div id="minutaEditorContainer" style="display: none; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 8px;">
+                            <div class="audit-info" id="minutaAuditHeader">
+                                <span>Versão: <strong id="lblMinutaVersao">v1</strong></span>
+                                <span>Responsável: <strong id="lblMinutaAutor">--</strong></span>
+                                <span>Motor de Análise: <strong id="lblMinutaModelo">--</strong></span>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn-ai-secondary" onclick="handleCopiarTextoMinuta()" title="Copiar texto integral">
+                                    📋 Copiar Texto
+                                </button>
+                                <button class="btn-ai-secondary" onclick="handleExportarWord()" title="Exportar no formato .docx">
+                                    📄 Word (.docx)
+                                </button>
+                                <button class="btn-ai-secondary" onclick="handleExportarPdf()" title="Exportar no formato .pdf">
+                                    📑 Imprimir / PDF
+                                </button>
+                                <button class="btn-save" onclick="handleSalvarEdicaoMinuta()" style="padding: 6px 14px; font-size: 0.85rem;">
+                                    💾 Salvar Versão
+                                </button>
+                            </div>
+                        </div>
+
+                        <textarea id="txtMinutaConteudo" class="minuta-editor-area" spellcheck="false" placeholder="Conteúdo da proposta técnica..."></textarea>
+                    </div>
+                </div>
+
+                <!-- ABA 2: DIAGNÓSTICO DE ADERÊNCIA / MATCH -->
+                <div id="tabContentFit" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label class="form-label" style="margin: 0;">Empresa Proponente:</label>
+                            <select id="selectFitStartup" class="form-select" style="min-width: 250px;" onchange="handleCarregarRankingFit()"></select>
+                        </div>
+                        <button class="btn-ai-secondary" onclick="handleCarregarRankingFit()">Atualizar Diagnóstico</button>
+                    </div>
+                    <div id="fitListContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="color: #888;">Selecione uma startup para calcular o ranking de compatibilidade com os editais ativos.</div>
+                    </div>
+                </div>
+
+                <!-- ABA 3: HISTÓRICO E VERSÕES VINCULADAS AO EDITAL -->
+                <div id="tabContentHistorico" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label class="form-label" style="margin: 0;">Filtrar por Edital:</label>
+                            <select id="selectHistoricoEdital" class="form-select" style="max-width: 420px;" onchange="fetchHistoricoMinutas()">
+                                <option value="atual">Edital Selecionado no Momento</option>
+                                <option value="todos">Todos os Editais</option>
+                            </select>
+                        </div>
+                        <button class="btn-ai-secondary" onclick="fetchHistoricoMinutas()">Atualizar Histórico</button>
+                    </div>
+                    <div id="historicoMinutasList" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="color: #888;">Carregando histórico...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALHES COMPLETOS DO EDITAL -->
+    <div class="modal-overlay" id="modalEditalDetalhesOverlay">
+        <div class="modal-detalhes-card">
+            <div class="modal-detalhes-header">
+                <div>
+                    <span id="detModalOrgTag" class="tag tag-finep" style="font-size: 0.8rem;">FINEP</span>
+                    <h2 id="detModalTitle" style="font-size: 1.15rem; font-weight: 600; margin-top: 6px; line-height: 1.3;">Nome do Edital</h2>
+                </div>
+                <button class="btn-cancel" id="btnCloseEditalDetalhesModal" style="padding: 4px 10px;">&times;</button>
+            </div>
+            <div class="modal-detalhes-body">
+                <!-- GRID DE DADOS CHAVE -->
+                <div class="detalhes-grid">
+                    <div class="detalhes-box">
+                        <div class="detalhes-box-label">Orçamento Máximo</div>
+                        <div class="detalhes-box-val" id="detModalBudget" style="color: #10b981;">--</div>
+                    </div>
+                    <div class="detalhes-box">
+                        <div class="detalhes-box-label">Prazo de Submissão</div>
+                        <div class="detalhes-box-val" id="detModalDeadline" style="color: #ef4444;">--</div>
+                    </div>
+                    <div class="detalhes-box">
+                        <div class="detalhes-box-label">Público-Alvo / Porte</div>
+                        <div class="detalhes-box-val" id="detModalTarget">--</div>
+                    </div>
+                    <div class="detalhes-box">
+                        <div class="detalhes-box-label">TRL / Nicho</div>
+                        <div class="detalhes-box-val" id="detModalNicho">--</div>
+                    </div>
+                </div>
+
+                <!-- OBJETIVO / CONTEÚDO EXTRAÍDO -->
+                <div>
+                    <label class="form-label" style="font-weight: 600; margin-bottom: 6px; display: block;">Objetivo e Diretrizes Oficiais do Edital:</label>
+                    <div class="detalhes-objetivo-box" id="detModalObjetivo">Carregando conteúdo...</div>
+                </div>
+
+                <!-- DOCUMENTOS EXIGIDOS -->
+                <div id="detModalDocsSection" style="display: none;">
+                    <label class="form-label" style="font-weight: 600; margin-bottom: 6px; display: block;">Documentos e Anexos Exigidos:</label>
+                    <div id="detModalDocsList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                </div>
+
+                <!-- BOTÕES DE AÇÃO -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #222; padding-top: 14px; margin-top: 5px;">
+                    <a href="#" id="detModalLinkOficial" target="_blank" class="btn-ai-secondary" style="text-decoration: none;">
+                        Abrir Edital Oficial ↗
+                    </a>
+                    <button class="btn-ai-sparkle" id="detModalBtnGerarMinuta">
+                        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                        Elaborar Proposta para Este Edital
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         const API_BASE = 'http://127.0.0.1:8000/api';
@@ -300,6 +500,12 @@
             `;
 
             initCardDragEvents(cardEl);
+
+            cardEl.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-card-del')) return;
+                abrirModalDetalhesEdital(card);
+            });
+
             return cardEl;
         }
 
@@ -499,6 +705,542 @@
                 select.appendChild(opt);
             });
         }
+
+        // =========================================================================
+        // MÓDULO 9: INTELIGÊNCIA ARTIFICIAL E GERAÇÃO DE MINUTAS (RF-29 A RF-47)
+        // =========================================================================
+        let currentMinutaData = null;
+        let cachedStartups = [];
+        let cachedEditais = [];
+
+        // Inicializa listeners do Módulo de IA
+        const btnOpenAiModule = document.getElementById('btnOpenAiModule');
+        const modalMinutaOverlay = document.getElementById('modalMinutaOverlay');
+        const btnCloseMinutaModal = document.getElementById('btnCloseMinutaModal');
+
+        if (btnOpenAiModule) {
+            btnOpenAiModule.addEventListener('click', () => {
+                modalMinutaOverlay.classList.add('active');
+                carregarStartupsEEditaisMinuta();
+            });
+        }
+
+        if (btnCloseMinutaModal) {
+            btnCloseMinutaModal.addEventListener('click', () => {
+                modalMinutaOverlay.classList.remove('active');
+            });
+        }
+
+        if (modalMinutaOverlay) {
+            modalMinutaOverlay.addEventListener('click', (e) => {
+                if (e.target === modalMinutaOverlay) modalMinutaOverlay.classList.remove('active');
+            });
+        }
+
+        // Listeners e controle do Modal de Detalhes do Edital
+        const modalEditalDetalhesOverlay = document.getElementById('modalEditalDetalhesOverlay');
+        const btnCloseEditalDetalhesModal = document.getElementById('btnCloseEditalDetalhesModal');
+
+        if (btnCloseEditalDetalhesModal) {
+            btnCloseEditalDetalhesModal.addEventListener('click', () => {
+                modalEditalDetalhesOverlay.classList.remove('active');
+            });
+        }
+
+        if (modalEditalDetalhesOverlay) {
+            modalEditalDetalhesOverlay.addEventListener('click', (e) => {
+                if (e.target === modalEditalDetalhesOverlay) modalEditalDetalhesOverlay.classList.remove('active');
+            });
+        }
+
+        function abrirModalDetalhesEdital(card) {
+            const edital = card.edital || card.metadata || {};
+            const org = edital.fonte || edital.org || 'EDITAL';
+            const titulo = edital.title || card.title || 'Edital de Inovação';
+            const orcamento = edital.max_budget ? 'R$ ' + Number(edital.max_budget).toLocaleString('pt-BR') : 'Conforme Edital';
+            const prazo = edital.deadline ? new Date(edital.deadline).toLocaleDateString('pt-BR') : 'Fluxo Contínuo / A Definir';
+            const publico = edital.publico || 'Startups, Micro e Pequenas Empresas';
+            const trlNicho = `${edital.ai_trl || 'Geral'} | ${edital.ai_nicho || edital.nicho || 'Inovação'}`;
+            const objetivo = edital.conteudo_completo || edital.objetivo || card.description || 'Diretrizes em conformidade com o regulamento oficial do edital.';
+            const link = edital.source_url || edital.url || '#';
+
+            document.getElementById('detModalOrgTag').textContent = org;
+            document.getElementById('detModalOrgTag').className = `tag ${getTagClass(org)}`;
+            document.getElementById('detModalTitle').textContent = titulo;
+            document.getElementById('detModalBudget').textContent = orcamento;
+            document.getElementById('detModalDeadline').textContent = prazo;
+            document.getElementById('detModalTarget').textContent = publico;
+            document.getElementById('detModalNicho').textContent = trlNicho;
+            document.getElementById('detModalObjetivo').textContent = objetivo;
+
+            const linkEl = document.getElementById('detModalLinkOficial');
+            if (link && link !== '#') {
+                linkEl.href = link;
+                linkEl.style.display = 'inline-flex';
+            } else {
+                linkEl.style.display = 'none';
+            }
+
+            // Documentos exigidos
+            const docsList = document.getElementById('detModalDocsList');
+            const docsSec = document.getElementById('detModalDocsSection');
+            const docs = edital.documentos_exigidos || edital.documentos || [];
+            if (docs && docs.length > 0) {
+                docsSec.style.display = 'block';
+                docsList.innerHTML = '';
+                docs.forEach(d => {
+                    const docItem = document.createElement('div');
+                    docItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; color: #e0e0e0;';
+                    
+                    const tituloDoc = typeof d === 'string' ? d : (d.titulo || d.nome || d.title || d.texto || 'Documento Exigido');
+                    const linkDoc = typeof d === 'object' && d.link && d.link !== '#' ? d.link : null;
+
+                    docItem.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="color: #10b981; font-weight: bold;">✔</span>
+                            <span>${tituloDoc}</span>
+                        </div>
+                        ${linkDoc ? `<a href="${linkDoc}" target="_blank" style="color: var(--accent-purple); text-decoration: none; font-size: 0.8rem; margin-left: 10px;">Ver anexo ↗</a>` : ''}
+                    `;
+                    docsList.appendChild(docItem);
+                });
+            } else {
+                docsSec.style.display = 'none';
+            }
+
+            // Ação de Gerar Minuta direto deste edital
+            const btnGerar = document.getElementById('detModalBtnGerarMinuta');
+            btnGerar.onclick = () => {
+                modalEditalDetalhesOverlay.classList.remove('active');
+                modalMinutaOverlay.classList.add('active');
+                switchMinutaTab('gerador');
+                carregarStartupsEEditaisMinuta().then(() => {
+                    if (edital && edital.id) {
+                        const selE = document.getElementById('selectMinutaEdital');
+                        if (selE) {
+                            selE.value = edital.id;
+                            handleTrocarEditalMinuta();
+                        }
+                    }
+                });
+            };
+
+            modalEditalDetalhesOverlay.classList.add('active');
+        }
+
+        function switchMinutaTab(tabName) {
+            document.querySelectorAll('.minuta-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tabContentGerador').style.display = 'none';
+            document.getElementById('tabContentFit').style.display = 'none';
+            document.getElementById('tabContentHistorico').style.display = 'none';
+
+            if (tabName === 'gerador') {
+                document.getElementById('tabMinutaBtn').classList.add('active');
+                document.getElementById('tabContentGerador').style.display = 'block';
+            } else if (tabName === 'fit') {
+                document.getElementById('tabFitBtn').classList.add('active');
+                document.getElementById('tabContentFit').style.display = 'block';
+                handleCarregarRankingFit();
+            } else if (tabName === 'historico') {
+                document.getElementById('tabHistoricoBtn').classList.add('active');
+                document.getElementById('tabContentHistorico').style.display = 'block';
+                fetchHistoricoMinutas();
+            }
+        }
+
+        async function carregarStartupsEEditaisMinuta() {
+            try {
+                // Carrega Startups
+                const resS = await fetch(`${API_BASE}/startups`);
+                if (resS.ok) {
+                    const jsonS = await resS.json();
+                    cachedStartups = jsonS.dados || [];
+                    
+                    const selectS = document.getElementById('selectMinutaStartup');
+                    const selectFit = document.getElementById('selectFitStartup');
+                    selectS.innerHTML = '';
+                    selectFit.innerHTML = '';
+
+                    cachedStartups.forEach(st => {
+                        const opt = document.createElement('option');
+                        opt.value = st.id;
+                        opt.textContent = `${st.nome_fantasia || st.razao_social} (${st.porte || 'Startup'})`;
+                        selectS.appendChild(opt);
+
+                        const opt2 = opt.cloneNode(true);
+                        selectFit.appendChild(opt2);
+                    });
+                }
+
+                // Carrega Editais
+                const resE = await fetch(`${API_BASE}/editais`);
+                if (resE.ok) {
+                    const jsonE = await resE.json();
+                    const list = Array.isArray(jsonE) ? jsonE : (jsonE.data || jsonE.dados || []);
+                    cachedEditais = list.slice(0, 60);
+                    
+                    const selectE = document.getElementById('selectMinutaEdital');
+                    selectE.innerHTML = '';
+
+                    cachedEditais.forEach(ed => {
+                        const opt = document.createElement('option');
+                        opt.value = ed.id;
+                        const titulo = ed.name || ed.title || 'Edital de Inovação';
+                        const fonte = ed.org || ed.fonte || 'EDITAL';
+                        opt.textContent = `[${fonte}] ${titulo.length > 80 ? titulo.substring(0, 80) + '...' : titulo}`;
+                        selectE.appendChild(opt);
+                    });
+                }
+
+                // Sincroniza minuta estritamente para o edital selecionado
+                await handleTrocarEditalMinuta();
+            } catch (e) {
+                console.error('Erro ao preencher seletores da IA:', e);
+            }
+        }
+
+        // Troca de edital no select: carrega a minuta específica daquele edital (se houver) ou limpa o editor
+        async function handleTrocarEditalMinuta() {
+            const editalId = document.getElementById('selectMinutaEdital').value;
+            const status = document.getElementById('aiGenerationStatus');
+            const editorContainer = document.getElementById('minutaEditorContainer');
+
+            if (!editalId) {
+                currentMinutaData = null;
+                editorContainer.style.display = 'none';
+                return;
+            }
+
+            status.textContent = 'Carregando proposta do edital...';
+
+            try {
+                const res = await fetch(`${API_BASE}/minutas?edital_id=${editalId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const lista = data.dados?.data || data.dados || [];
+                    if (lista.length > 0) {
+                        currentMinutaData = lista[0]; // Minuta mais recente deste edital
+                        renderizarEditorMinuta(currentMinutaData);
+                        status.textContent = `Proposta ativa vinculada a este edital (v${currentMinutaData.versao}).`;
+                    } else {
+                        // Não há minuta para este edital específico
+                        currentMinutaData = null;
+                        editorContainer.style.display = 'none';
+                        document.getElementById('txtMinutaConteudo').value = '';
+                        status.textContent = 'Nenhuma proposta elaborada para este edital. Clique em "Estruturar Minuta Técnica".';
+                    }
+                }
+            } catch (err) {
+                console.error('Erro ao buscar minuta do edital:', err);
+                status.textContent = '';
+            }
+        }
+
+        // RF-29: Gerar Minuta de Proposta com IA
+        async function handleGerarMinuta(evt) {
+            if (evt) evt.preventDefault();
+
+            const startupId = document.getElementById('selectMinutaStartup').value;
+            const editalId = document.getElementById('selectMinutaEdital').value;
+            const ideia = document.getElementById('inputMinutaIdeia').value.trim();
+
+            if (!startupId || !editalId) {
+                alert('Selecione uma startup e um edital.');
+                return;
+            }
+
+            if (!ideia || ideia.length < 15) {
+                alert('Por favor, informe a ideia ou escopo do projeto com pelo menos 15 caracteres.');
+                return;
+            }
+
+            const btn = document.getElementById('btnGerarMinutaAction');
+            const status = document.getElementById('aiGenerationStatus');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Elaborando Minuta Técnica...';
+            status.textContent = 'Processando diretrizes do edital e perfil da empresa...';
+
+            try {
+                const res = await fetch(`${API_BASE}/minutas/gerar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        startup_id: startupId,
+                        edital_id: editalId,
+                        ideia_projeto: ideia
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.sucesso) {
+                    currentMinutaData = data.dados;
+                    renderizarEditorMinuta(currentMinutaData);
+                    status.textContent = `Proposta estruturada e salva com sucesso para este edital!`;
+                } else {
+                    alert('Falha ao elaborar minuta: ' + (data.message || 'Erro desconhecido.'));
+                    status.textContent = 'Erro na geração.';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de comunicação ao acionar o serviço de inteligência.');
+                status.textContent = 'Falha de comunicação.';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2z"/></svg> Estruturar Minuta Técnica`;
+            }
+        }
+
+        // RF-30: Renderiza no editor interativo
+        function renderizarEditorMinuta(minuta) {
+            const container = document.getElementById('minutaEditorContainer');
+            container.style.display = 'flex';
+
+            document.getElementById('lblMinutaVersao').textContent = `v${minuta.versao}`;
+            document.getElementById('lblMinutaAutor').textContent = minuta.autor_nome || 'Consultor';
+            document.getElementById('lblMinutaModelo').textContent = minuta.modelo_ia_usado || 'Sistema';
+
+            document.getElementById('txtMinutaConteudo').value = minuta.conteudo_gerado;
+            
+            // Sincroniza o select do edital se a minuta tiver edital_id
+            if (minuta.edital_id) {
+                const selE = document.getElementById('selectMinutaEdital');
+                if (selE && selE.value != minuta.edital_id) {
+                    selE.value = minuta.edital_id;
+                }
+            }
+        }
+
+        // RF-30: Salvar alterações do editor gerando nova versão
+        async function handleSalvarEdicaoMinuta() {
+            if (!currentMinutaData) return;
+
+            const novoTexto = document.getElementById('txtMinutaConteudo').value;
+            if (!novoTexto.trim()) {
+                alert('O conteúdo da proposta não pode ficar vazio.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/minutas/${currentMinutaData.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        conteudo_gerado: novoTexto
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.sucesso) {
+                    currentMinutaData = data.dados;
+                    renderizarEditorMinuta(currentMinutaData);
+                    alert(data.mensagem);
+                } else {
+                    alert('Erro ao salvar revisão.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de comunicação.');
+            }
+        }
+
+        // RF-31: Cópia Rápida em 1 Clique
+        async function handleCopiarTextoMinuta() {
+            const texto = document.getElementById('txtMinutaConteudo').value;
+            if (!texto) {
+                alert('Nenhum texto disponível para cópia.');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(texto);
+                alert('Texto da proposta técnica copiado com sucesso para a Área de Transferência! (RF-31)');
+            } catch (err) {
+                const txtArea = document.getElementById('txtMinutaConteudo');
+                txtArea.select();
+                document.execCommand('copy');
+                alert('Texto copiado com sucesso!');
+            }
+        }
+
+        // RF-32: Exportar Word (.docx)
+        function handleExportarWord() {
+            if (!currentMinutaData) {
+                alert('Gere ou selecione uma minuta antes de exportar.');
+                return;
+            }
+            window.open(`${API_BASE}/minutas/${currentMinutaData.id}/exportar-docx`, '_blank');
+        }
+
+        // RF-32.1: Exportar / Visualizar PDF
+        function handleExportarPdf() {
+            if (!currentMinutaData) {
+                alert('Gere ou selecione uma minuta antes de exportar.');
+                return;
+            }
+            window.open(`${API_BASE}/minutas/${currentMinutaData.id}/exportar-pdf`, '_blank');
+        }
+
+        // RF-47: Match Inteligente de Editais
+        async function handleCarregarRankingFit() {
+            const selectFit = document.getElementById('selectFitStartup');
+            const startupId = selectFit.value;
+            const container = document.getElementById('fitListContainer');
+
+            if (!startupId) {
+                container.innerHTML = '<div style="color: #888;">Selecione uma startup válida.</div>';
+                return;
+            }
+
+            container.innerHTML = '<div style="color: #888;">Calculando aderência e pontuação semântica de fit...</div>';
+
+            try {
+                const res = await fetch(`${API_BASE}/ia/match-editais`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ startup_id: startupId })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.sucesso) {
+                    renderizarRankingFit(data.ranking);
+                } else {
+                    container.innerHTML = '<div style="color: #ef4444;">Falha ao calcular fit.</div>';
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div style="color: #ef4444;">Erro de comunicação ao calcular fit.</div>';
+            }
+        }
+
+        function renderizarRankingFit(ranking) {
+            const container = document.getElementById('fitListContainer');
+            container.innerHTML = '';
+
+            if (!ranking || ranking.length === 0) {
+                container.innerHTML = '<div style="color: #888;">Nenhum edital encontrado para comparação.</div>';
+                return;
+            }
+
+            ranking.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'fit-card';
+
+                const scoreColor = item.match_percentual >= 80 ? '#10b981' : (item.match_percentual >= 60 ? '#8b5cf6' : '#f59e0b');
+
+                card.innerHTML = `
+                    <div class="fit-header">
+                        <div>
+                            <span class="tag ${getTagClass(item.fonte)}">${item.fonte}</span>
+                            <strong style="margin-left: 8px; font-size: 0.95rem;">${item.titulo}</strong>
+                        </div>
+                        <span class="fit-score" style="color: ${scoreColor};">${item.match_percentual}% Fit</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #ccc; line-height: 1.4;">
+                        ${item.justificativa_fit}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #222; padding-top: 6px; font-size: 0.8rem; color: #888;">
+                        <span>Prazo: ${item.prazo} | Teto: R$ ${Number(item.orcamento_maximo || 0).toLocaleString('pt-BR')}</span>
+                        <button class="btn-ai-secondary" style="padding: 3px 8px; font-size: 0.75rem;" onclick="selecionarEditalParaMinuta(${item.edital_id})">
+                            Elaborar Proposta Deste Edital &rarr;
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function selecionarEditalParaMinuta(editalId) {
+            document.getElementById('selectMinutaEdital').value = editalId;
+            const startupId = document.getElementById('selectFitStartup').value;
+            if (startupId) document.getElementById('selectMinutaStartup').value = startupId;
+            switchMinutaTab('gerador');
+        }
+
+        // RF-33 & RF-34: Histórico e Auditoria Estritamente Vinculado ao Edital
+        async function fetchHistoricoMinutas() {
+            const container = document.getElementById('historicoMinutasList');
+            const selectFiltro = document.getElementById('selectHistoricoEdital');
+            const modoFiltro = selectFiltro ? selectFiltro.value : 'atual';
+            const editalAtualId = document.getElementById('selectMinutaEdital')?.value;
+
+            container.innerHTML = '<div style="color: #888;">Buscando histórico do edital...</div>';
+
+            try {
+                let url = `${API_BASE}/minutas`;
+                if (modoFiltro === 'atual' && editalAtualId) {
+                    url += `?edital_id=${editalAtualId}`;
+                }
+
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (res.ok && data.sucesso) {
+                    renderizarHistoricoMinutas(data.dados.data || data.dados);
+                } else {
+                    container.innerHTML = '<div style="color: #ef4444;">Erro ao carregar histórico deste edital.</div>';
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div style="color: #ef4444;">Erro de conexão com o histórico.</div>';
+            }
+        }
+
+        function renderizarHistoricoMinutas(minutas) {
+            const container = document.getElementById('historicoMinutasList');
+            container.innerHTML = '';
+
+            if (!minutas || minutas.length === 0) {
+                container.innerHTML = '<div style="color: #888;">Nenhuma minuta gerada até o momento.</div>';
+                return;
+            }
+
+            minutas.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'fit-card';
+
+                const dataFmt = new Date(m.created_at).toLocaleString('pt-BR');
+
+                item.innerHTML = `
+                    <div class="fit-header">
+                        <div>
+                            <span class="tag tag-finep">v${m.versao}</span>
+                            <strong style="margin-left: 6px; font-size: 0.95rem;">${m.titulo_projeto || 'Minuta de Inovação'}</strong>
+                        </div>
+                        <span style="font-size: 0.8rem; color: #888;">Status: ${m.status.toUpperCase()}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #aaa;">
+                        Startup: <strong>${m.startup?.nome_fantasia || m.startup?.razao_social || 'N/A'}</strong> | Edital: <strong>${m.edital?.title?.substring(0, 50) || 'N/A'}...</strong>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #777;">
+                        Auditado em <strong>${dataFmt}</strong> por <strong>${m.autor_nome || 'Consultor'}</strong> (${m.modelo_ia_usado || 'IA'})
+                    </div>
+                    <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px;">
+                        <button class="btn-ai-secondary" style="font-size: 0.8rem;" onclick="abrirMinutaDoHistorico(${m.id})">Visualizar &rarr;</button>
+                        <a href="${API_BASE}/minutas/${m.id}/exportar-docx" target="_blank" class="btn-ai-secondary" style="font-size: 0.8rem; text-decoration: none;">Word (.docx)</a>
+                        <a href="${API_BASE}/minutas/${m.id}/exportar-pdf" target="_blank" class="btn-ai-secondary" style="font-size: 0.8rem; text-decoration: none;">PDF</a>
+                    </div>
+                `;
+
+                container.appendChild(item);
+            });
+        }
+
+        async function abrirMinutaDoHistorico(id) {
+            try {
+                const res = await fetch(`${API_BASE}/minutas/${id}`);
+                const data = await res.json();
+                if (res.ok && data.sucesso) {
+                    currentMinutaData = data.dados;
+                    switchMinutaTab('gerador');
+                    renderizarEditorMinuta(currentMinutaData);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao carregar minuta do histórico.');
+            }
+        }
     </script>
+
 </body>
 </html>
