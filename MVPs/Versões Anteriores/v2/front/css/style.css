@@ -1,0 +1,4 @@
+/* Estilos base caso precise algo fora do Tailwind */
+body {
+    transition: background-color 0.3s ease;
+}
