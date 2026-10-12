@@ -6,9 +6,19 @@ use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\PagamentoController;
 use App\Http\Controllers\EditalController;
 use App\Http\Controllers\KanbanController;
+use App\Http\Controllers\MinutaController;
+use App\Models\Startup;
 
 // Rotas de Editais
 Route::get('/editais', [EditalController::class, 'index']);
+
+// Listagem de Startups para seleção
+Route::get('/startups', function () {
+    return response()->json([
+        'sucesso' => true,
+        'dados' => Startup::all()
+    ]);
+});
 
 // Rotas de Autenticação / Registro SaaS
 Route::post('/auth/registro', [AuthController::class, 'registrar']);
@@ -28,3 +38,16 @@ Route::prefix('kanban')->group(function () {
     Route::patch('/cards/{id}/mover', [KanbanController::class, 'moveCard']);
     Route::delete('/cards/{id}', [KanbanController::class, 'destroyCard']);
 });
+
+// Rotas do Módulo de IA e Minutas (RF-29 a RF-34 e RF-47)
+Route::prefix('minutas')->group(function () {
+    Route::post('/gerar', [MinutaController::class, 'gerar']);
+    Route::get('/', [MinutaController::class, 'index']);
+    Route::get('/{id}', [MinutaController::class, 'show']);
+    Route::put('/{id}', [MinutaController::class, 'update']);
+    Route::get('/{id}/exportar-docx', [MinutaController::class, 'exportarDocx']);
+    Route::get('/{id}/exportar-pdf', [MinutaController::class, 'exportarPdf']);
+});
+
+// RF-47: Match Inteligente de Editais
+Route::post('/ia/match-editais', [MinutaController::class, 'matchEditais']);
