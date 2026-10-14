@@ -7,6 +7,7 @@ use App\Http\Controllers\PagamentoController;
 use App\Http\Controllers\EditalController;
 use App\Http\Controllers\KanbanController;
 use App\Http\Controllers\MinutaController;
+use App\Http\Controllers\CnpjController;
 use App\Models\Startup;
 
 // Rotas de Editais
@@ -51,3 +52,9 @@ Route::prefix('minutas')->group(function () {
 
 // RF-47: Match Inteligente de Editais
 Route::post('/ia/match-editais', [MinutaController::class, 'matchEditais']);
+
+// Rotas de Consulta de Dados de CNPJ (EDTAN-134 / UC-10)
+Route::prefix('cnpj')->group(function () {
+    Route::get('/{cnpj}', [CnpjController::class, 'consultar']);
+    Route::post('/consultar', [CnpjController::class, 'consultarPost']);
+});
