@@ -21,9 +21,9 @@ class AbacatePayService
 
     public function gerarCobranca($agencia, $usuario, $plano)
     {
-        // Se a chave não existir no ambiente de desenvolvimento, mockamos a URL
+        // Se a chave não existir no ambiente de desenvolvimento, redireciona para o login
         if (empty($this->apiKey)) {
-            return 'http://127.0.0.1:5500/MVPs/Vers%C3%A3o%20Atual/front/pagamento_mock.html?agencia=' . $agencia->id;
+            return 'http://127.0.0.1:5500/Vers%C3%A3o%20Atual/front/paginas/login.html?agencia=' . $agencia->id;
         }
 
         $idProdutoAbacatePay = $plano->id_plataforma_pagamento;
@@ -40,8 +40,8 @@ class AbacatePayService
                 'email' => $usuario->email
             ],
             'externalId' => 'agencia_' . $agencia->id,
-            'returnUrl' => 'http://localhost:3000/voltar',
-            'completionUrl' => 'http://localhost:3000/sucesso',
+            'returnUrl' => 'http://127.0.0.1:5500/Vers%C3%A3o%20Atual/front/paginas/cadastro.html',
+            'completionUrl' => 'http://127.0.0.1:5500/Vers%C3%A3o%20Atual/front/paginas/login.html',
             'methods' => ['PIX']
         ];
 
