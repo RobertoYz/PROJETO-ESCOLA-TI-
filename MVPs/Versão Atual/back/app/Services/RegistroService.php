@@ -26,7 +26,7 @@ class RegistroService {
             $agencia = Agencia::create([
                 'nome' => $dados['nome_agencia'],
                 'plano_id' => $planoPadrao->id,
-                'status_pagamento' => 'ativo' // <-- Bypass temporário para testes locais
+                'status_pagamento' => 'pendente' // <-- Bypass temporário para testes locais
             ]);
 
             //Cria o User no banco

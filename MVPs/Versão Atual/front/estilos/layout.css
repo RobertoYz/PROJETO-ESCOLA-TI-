@@ -1,0 +1,201 @@
+/* ==========================================================================
+   ESTILOS GERAIS - WIREFRAME ESTRUTURAL
+   ========================================================================== */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: #fdfdfd;
+    color: #111111;
+}
+
+/* ==========================================================================
+   CONTAINERS PRINCIPAIS (CABEÇALHO E FORMULÁRIO)
+   ========================================================================== */
+
+.container-cabecalho {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    text-align: center;
+    gap: 8px;
+}
+
+.titulo-pagina {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.link-alternar {
+    font-size: 14px;
+    color: #0000ee;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.container-formulario {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 380px;
+    border: 1px solid #999999;
+    padding: 24px;
+    background-color: #ffffff;
+}
+
+/* ==========================================================================
+   FORMULÁRIOS E CAMPOS
+   ========================================================================== */
+
+.formulario {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 12px;
+}
+
+.grupo-campo {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 4px;
+}
+
+.rotulo-campo {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.campo-entrada {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #777777;
+    border-radius: 2px;
+    outline: none;
+}
+
+.campo-entrada:focus {
+    border-color: #000000;
+}
+
+.botao-acao {
+    width: 100%;
+    padding: 10px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #e0e0e0;
+    border: 1px solid #666666;
+    border-radius: 2px;
+    margin-top: 8px;
+}
+
+.botao-acao:hover {
+    background-color: #d0d0d0;
+}
+
+.botao-acao:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ==========================================================================
+   MENSAGENS DE ERRO
+   ========================================================================== */
+
+.texto-erro {
+    width: 100%;
+    padding: 8px 10px;
+    margin-top: 12px;
+    color: #b00020;
+    background-color: #fde8e8;
+    border: 1px solid #b00020;
+    font-size: 13px;
+    text-align: center;
+    border-radius: 2px;
+    word-break: break-word;
+}
+
+.texto-erro[hidden] {
+    display: none !important;
+}
+
+/* ==========================================================================
+   PÁGINA INICIAL / MENU PRINCIPAL
+   ========================================================================== */
+
+.container-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid #999999;
+    padding: 30px;
+    background-color: #ffffff;
+    gap: 16px;
+}
+
+.titulo-menu {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.botoes-navegacao {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+}
+
+.botao-navegacao {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    color: #000000;
+    background-color: #e8e8e8;
+    border: 1px solid #777777;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.botao-navegacao:hover {
+    background-color: #d8d8d8;
+}
+
+.botao-navegacao-sair {
+    background-color: #f5d5d5;
+    border-color: #a00;
+    color: #a00;
+}
+
+.botao-navegacao-sair:hover {
+    background-color: #e5b5b5;
+}
