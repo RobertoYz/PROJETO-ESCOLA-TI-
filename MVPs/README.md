@@ -1,86 +1,133 @@
-# Radar de Editais - Anjo Nexus
+# 🛠️ Guia Completo de Configuração e Execução — Anjo Nexus
 
-Este repositório contém a aplicação "Radar de Editais", dividida fisicamente em uma arquitetura **Monorepo**, separando claramente as responsabilidades entre Front-end e Back-end.
-
-## 🏗️ Estrutura do Projeto
-
-O projeto foi organizado em duas pastas principais para garantir independência tecnológica:
-
-- `/back` - Contém a API REST Stateless desenvolvida em Laravel 12. Responsável por todo o processamento de regras de negócio, acesso a banco de dados e execução de jobs assíncronos pesados (Scraping, OCR, IA).
-- `/front` - Contém a interface com o usuário (Client-Side). Projetada para ser extremamente leve e "seca" (Vanilla HTML/CSS/JS), consumindo o back-end estritamente via requisições HTTP (API REST).
+Este diretório contém a aplicação do **Anjo Nexus**, organizada fisicamente em uma arquitetura **Monorepo** que separa claramente as responsabilidades entre Back-end (`/back`) e Front-end (`/front`).
 
 ---
 
-## 🛠️ Recomendações e Justificativas de Tecnologias
+## ⚠️ AVISO IMPORTANTE: Arquivo `.env` e Chaves de API
 
-### Front-end (Vanilla HTML/CSS/JS)
-O objetivo do front-end é ser de fácil implementação, rápido e com o menor setup possível, garantindo estabilidade a longo prazo.
+Por motivos estritos de segurança da informação, **o arquivo `.env` original não é enviado ao GitHub**, pois contém chaves sensíveis de API (múltiplos tokens de Inteligência Artificial e chaves privadas do Gateway de Pagamento).
 
-1. **Design / Estilização:** 
-   - **Recomendação:** `Tailwind CSS (via CDN)`. 
-   - **Por quê?** O Tailwind permite estilizar páginas rapidamente direto no HTML sem precisar escrever dezenas de arquivos CSS ou configurar Node.js. Como o projeto exige um visual moderno, ele é mais versátil que o Bootstrap para construir Dashboards e painéis Kanban "bonitos" e responsivos rapidamente.
-2. **Requisições HTTP:** 
-   - **Recomendação:** `Fetch API nativa` ou `Axios` (via CDN).
-   - **Por quê?** O Fetch é nativo do navegador e elimina dependências. O Axios facilita o tratamento de erros e interceptores (ex: colocar token JWT em todas as chamadas automaticamente). Ambos atendem perfeitamente.
+> 💡 **Para Avaliadores e Colegas de Equipe:** O arquivo `.env` original, completo e já configurado para rodar o sistema de imediato **está à disposição mediante solicitação direta aos membros do grupo** (Ademar, Pedro ou Roberto).
 
-### Back-end (Bibliotecas do Laravel)
-O diretório `/back` já está configurado com bibliotecas vitais para a mineração de dados, devidamente justificadas para a banca do TCC:
+Caso deseje configurar o seu arquivo `.env` manualmente a partir do `.env.example`, você deverá preencher os seguintes blocos de variáveis:
 
-1. **Roach PHP (`roach-php/laravel`)**
-   - **Justificativa:** É a biblioteca padrão-ouro no ecossistema PHP para Web Scraping, inspirada no famoso *Scrapy* do Python. Diferente de usar funções soltas, o Roach cria `Spiders` estruturados com pipelines, suportando requisições concorrentes, proxies e tratamento automático de falhas. Perfeito para escalar a varredura de portais de governo.
-2. **PdfParser (`smalot/pdfparser`)**
-   - **Justificativa:** Ferramenta leve e nativa em PHP para extrair texto bruto de arquivos PDF estruturados. Ideal para uma leitura inicial (OCR básico) dos anexos de editais em formato digital nativo, extraindo termos importantes de forma ultra-rápida.
-3. **Browsershot (`spatie/browsershot`)**
-   - **Justificativa:** Baseado no Puppeteer (Google Chrome Headless). Necessário para contornar bloqueios de portais que renderizam o conteúdo em JavaScript (como SPA React/Vue) antes de raspar, e também essencial para gerar a exportação dos documentos finais (a Minuta/Proposta Kanban) convertendo o HTML do nosso sistema para um PDF altamente formatado.
+~~~env
+# 1. Configurações de Debug e Banco de Dados (XAMPP)
+APP_DEBUG=true
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=anjo_nexus
+DB_USERNAME=root
+DB_PASSWORD=
+
+# 2. Gateway de Pagamento e Webhook (AbacatePay API v2)
+ABACATEPAY_API_KEY=abc_dev_sua_chave_aqui
+ABACATEPAY_WEBHOOK_SECRET=senha_webhook_definida_no_painel
+
+# 3. Roteador Inteligente de IA (AI Router - Suporta múltiplas chaves separadas por vírgula para Round Robin)
+GROQ_API_KEY=gsk_chave1,gsk_chave2
+DEEPSEEK_API_KEY=sk_chave1,sk_chave2
+GEMINI_API_KEY=AIzaSy_chave1
+~~~
 
 ---
 
-## 🚀 Como Iniciar o Projeto Localmente (Back-end)
+## 🏗️ Estrutura e Justificativas Tecnológicas
 
-Siga o passo a passo exato abaixo para configurar o banco de dados MySQL via XAMPP e rodar a API em ambiente de desenvolvimento.
+### Front-end (`/front` — Vanilla HTML/CSS/JS Modular)
+Projetado sob princípios rígidos de *Clean Code* e separação de responsabilidades (HTML semântico puro, estilos isolados em `/estilos` e lógica modularizada com ES6 Modules em `/scripts`).
+1. **Zero Dependências Pesadas de Build:** Facilita a implementação e manutenção sem exigir compiladores complexos no lado do cliente.
+2. **Fetch API Modular (`api.js` e `servicoAutenticacao.js`):** Centraliza a comunicação HTTP com o Laravel e injeta automaticamente o token Bearer do *Laravel Sanctum* nas rotas protegidas.
 
-### Passo 1: Instalar Dependências
-Abra o terminal, acesse a pasta `/back` e instale os pacotes necessários:
-```bash
-cd back
+### Back-end (`/back` — Ecossistema Laravel 12)
+Configurado com bibliotecas específicas para mineração de dados, segurança SaaS e processamento assíncrono:
+1. **Roach PHP (`roach-php/laravel`):** Biblioteca padrão-ouro no PHP para Web Scraping (inspirada no *Scrapy* do Python). Cria *Spiders* estruturados com pipelines para varrer portais governamentais.
+2. **PdfParser (`smalot/pdfparser`):** Ferramenta nativa para extrair texto bruto de anexos de editais em PDF de forma rápida e sem depender de binários externos.
+3. **Browsershot (`spatie/browsershot`) & Puppeteer:** Baseado no Google Chrome Headless. Contorna portais que exigem renderização de JavaScript antes da raspagem e auxilia na exportação de documentos.
+4. **Laravel Sanctum:** Gerencia a autenticação por tokens de API para proteger as rotas do sistema.
+
+---
+
+## 🚀 Passo a Passo Completo: Como Iniciar o Projeto do Zero
+
+Certifique-se de ter instalados: **PHP 8.2+**, **Composer**, **Node.js/NPM**, **XAMPP** e **ngrok**.
+
+### Passo 1: Iniciar o XAMPP e Criar o Banco de Dados
+1. Abra o painel de controle do **XAMPP** e inicie os módulos **Apache** e **MySQL**.
+2. Acesse o phpMyAdmin no navegador: `http://localhost/phpmyadmin`.
+3. Crie um novo banco de dados chamado exatamente **`anjo_nexus`**.
+
+### Passo 2: Instalar as Dependências do Back-end
+Abra o terminal na raiz do projeto, navegue até a pasta `back` da versão atual e instale os pacotes do PHP e do Node (Puppeteer):
+
+~~~bash
+cd "MVPs/Versão Atual/back"
 composer install
-```
+npm install puppeteer
+~~~
 
-### Passo 2: Configurar o Arquivo de Ambiente (.env)
-O repositório não sobe o arquivo de ambiente por segurança. É necessário criá-lo e configurá-lo:
-1. Na pasta `back`, faça uma cópia do arquivo `.env.example` e renomeie essa cópia para `.env`.
-2. No terminal, gere a chave de criptografia da aplicação executando:
-   ```bash
-   php artisan key:generate
-   ```
-3. Abra o arquivo `.env` no seu editor de código e ative a exibição de erros alterando:
-   ```env
-   APP_DEBUG=true
-   ```
-4. No mesmo arquivo `.env`, configure as variáveis de banco de dados para usar o MySQL do XAMPP com as credenciais padrão:
-   ```env
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=anjo_nexus
-   DB_USERNAME=root
-   DB_PASSWORD=
-   ```
+### Passo 3: Configurar o `.env` e a Chave da Aplicação
+1. Coloque o arquivo `.env` (fornecido pela equipe ou copiado do `.env.example`) dentro da pasta `back/`.
+2. Gere a chave de criptografia do Laravel:
 
-### Passo 3: Criar o Banco de Dados
-1. Certifique-se de que os módulos **Apache** e **MySQL** estejam iniciados no painel de controle do XAMPP.
-2. Abra o navegador e acesse o phpMyAdmin (`http://localhost/phpmyadmin`).
-3. Crie um novo banco de dados com o nome exato que foi configurado no `.env`: **`anjo_nexus`**.
+~~~bash
+php artisan key:generate
+~~~
 
-### Passo 4: Construir as Tabelas
-Volte ao terminal, certifique-se de estar na pasta `/back` e execute as migrações para gerar as tabelas no banco de dados recém-criado:
-```bash
-php artisan migrate
-```
+### Passo 4: Criar as Tabelas e Rodar os Seeders
+Execute o comando abaixo para criar todas as tabelas do sistema e popular o banco com os planos iniciais de assinatura SaaS:
 
-### Passo 5: Iniciar o Servidor
-Com tudo pronto, inicie o servidor embutido do Laravel:
-```bash
-php artisan serve
-```
-**Observação Importante sobre Acesso:** Para acessar a aplicação no navegador, utilize estritamente a URL e porta fornecidas pelo terminal (ex: `http://127.0.0.1:8000`). Digitar a URL concatenada ao localhost (como `localhost/127.0.0.1:8000`) causará um erro *403 Forbidden* de permissão de pasta no Apache.
+~~~bash
+php artisan migrate:fresh --seed
+~~~
+
+### Passo 5: Iniciar o Servidor Laravel e a Fila de IA
+Você precisará manter **dois terminais abertos** na pasta `back/`:
+
+* **Terminal 1 — Servidor da API:**
+  ~~~bash
+  php artisan serve
+  ~~~
+  *(A API responderá exclusivamente em `http://127.0.0.1:8000`).*
+
+* **Terminal 2 — Queue Worker (Fila de IA em Segundo Plano):**
+  ~~~bash
+  php artisan queue:work
+  ~~~
+  *(Importante: Sempre que alterar o `.env`, reinicie a fila com `php artisan queue:restart` e rode `queue:work` novamente).*
+
+### Passo 6: Executar os Web Scrapers (Captura de Editais)
+Em um terminal na pasta `back/`, dispare o robô desejado para alimentar o banco de dados com editais reais:
+
+~~~bash
+# Extrator FAPESC
+php artisan spider:fapesc
+
+# Extrator FAPESP
+php artisan spider:fapesp
+
+# Extrator FINEP
+php artisan roach:run FinepSpider
+~~~
+
+### Passo 7: Iniciar o ngrok (Recebimento de Webhooks do AbacatePay)
+Para que o sistema receba a confirmação automática de pagamento do PIX no ambiente local:
+1. Baixe e instale o **ngrok** em sua máquina.
+2. Autentique o seu ngrok utilizando o token compartilhado da equipe (necessário apenas na primeira vez):
+   ~~~bash
+   ngrok config add-authtoken SEU_TOKEN_DO_NGROK_AQUI
+   ~~~
+3. Em um **novo terminal**, inicie o túnel apontando para o domínio estático padronizado do projeto na porta 8000:
+   ~~~bash
+   ngrok http --domain=esophagus-swifter-cultivate.ngrok-free.dev 8000
+   ~~~
+   *(Nota: Apenas um desenvolvedor da equipe deve manter o túnel ativo por vez durante os testes de pagamento).*
+
+### Passo 8: Iniciar o Front-end (Live Server)
+Como o Front-end utiliza módulos nativos do JavaScript (`type="module"`), ele deve ser executado através de um servidor HTTP local:
+1. Abra o projeto no **VS Code**.
+2. Certifique-se de ter a extensão **Live Server** instalada.
+3. Navegue até `front/paginas/cadastro.html` (ou `front/paginas/login.html`), clique com o botão direito sobre o arquivo e selecione **"Open with Live Server"**.
