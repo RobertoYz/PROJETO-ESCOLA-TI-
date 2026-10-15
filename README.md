@@ -1,103 +1,71 @@
-# Projeto Anjo Nexus - Escola de TI
+# 🚀 Projeto Anjo Nexus — Escola de TI
 
-Bem-vindo ao repositório do **Anjo Nexus**, uma plataforma de radar de editais de fomento à inovação. 
+Bem-vindo ao repositório oficial do **Anjo Nexus**, uma plataforma SaaS inteligente de radar de editais de fomento à inovação e gestão de captação de recursos para consultorias e startups.
 
-Este repositório contém documentações, artefatos de engenharia de software e os códigos-fonte da nossa Fase 1.
-
-## 🚀 Como Configurar o Ambiente (Backend)
-
-Nosso backend foi construído em **Laravel 12** e possui um módulo de Web Scraping poderoso para varrer editais e um **AI Router** integrado para análise semântica. Siga os passos abaixo para rodar o projeto na sua máquina:
-
-### 1. Pré-requisitos
-Certifique-se de ter instalado em sua máquina:
-- **PHP 8.2+**
-- **Composer**
-- **Node.js e NPM** (Obrigatório para o motor do Puppeteer em alguns spiders)
-- **MySQL ou SQLite** (Para o banco de dados)
-
-### 2. Passo a Passo da Instalação
-
-1. **Clone o repositório:**
-   ```bash
-   git clone https://github.com/RobertoYz/PROJETO-ESCOLA-TI-.git
-   cd PROJETO-ESCOLA-TI-
-   ```
-
-2. **Navegue até a pasta do Backend da Fase 1:**
-   ```bash
-   cd "MVPs/Projeto Anjo Nexus/Fase_1/back"
-   ```
-
-3. **Instale as dependências do PHP:**
-   Isso instalará o Laravel, o Roach PHP (para FINEP) e o `smalot/pdfparser` (usado para extrair texto de PDFs de editais sem depender de softwares externos).
-   ```bash
-   composer install
-   ```
-
-4. **Instale o Puppeteer localmente:**
-   Essencial para executar spiders que requerem renderização de JavaScript (ex: portal da FINEP).
-   ```bash
-   npm install puppeteer
-   ```
-
-5. **Configure o Arquivo de Ambiente e as Chaves de IA:**
-   Copie o arquivo de exemplo para criar o seu próprio `.env`:
-   ```bash
-   # No Windows (CMD/Powershell)
-   copy .env.example .env
-   
-   # No Linux/Mac
-   cp .env.example .env
-   ```
-
-   **Importante (AI Router):** O nosso sistema possui roteamento inteligente de IA (Groq -> DeepSeek -> Gemini). Para evitar limites de taxa (*Rate Limit*), você pode adicionar **várias chaves separadas por vírgula** no seu `.env`. O sistema fará um sorteio (*Round Robin*) a cada edital analisado:
-   ```env
-   GROQ_API_KEY=gsk_chave1,gsk_chave2
-   DEEPSEEK_API_KEY=sk_chave1,sk_chave2
-   GEMINI_API_KEY=AIzaSy_chave1
-   ```
-
-6. **Gere a Chave de Criptografia do Laravel:**
-   ```bash
-   php artisan key:generate
-   ```
-
-7. **Configure o Banco de Dados:**
-   Abra o seu arquivo `.env` e ajuste as credenciais do seu banco de dados local. Depois, crie as tabelas:
-   ```bash
-   php artisan migrate
-   ```
-
-### 3. Executando a Aplicação
-
-A arquitetura atual processa a raspagem de dados em tempo real, mas transfere a comunicação pesada com as Inteligências Artificiais para uma fila em segundo plano (*Background Jobs*). Você precisará de **dois terminais** abertos:
-
-**Terminal 1: Rodar o Queue Worker (Fila de IA)**
-Esse processo fica escutando a fila e analisando os PDFs conforme são baixados, utilizando as chaves de API sorteadas no seu `.env`.
-```bash
-php artisan queue:work
-```
-*(Nota: Sempre que alterar as chaves no `.env` ou alterar o código, reinicie o worker rodando `php artisan queue:restart` e depois `queue:work` novamente).*
-
-**Terminal 2: Disparar os Spiders (Robôs de Captura)**
-No outro terminal, você pode rodar os nossos robôs extratores de acordo com a fundação que deseja analisar:
-
-- **FAPESC (Extração via Regex e PDF Parser):**
-  ```bash
-  php artisan spider:fapesc
-  ```
-
-- **FAPESP:**
-  ```bash
-  php artisan spider:fapesp
-  ```
-
-- **FINEP (via Roach e API Liferay):**
-  ```bash
-  php artisan roach:run FinepSpider
-  ```
-
-O Frontend (na pasta `front/`) está desacoplado. Basta abrir o arquivo `index.html` ou utilizar uma extensão como o *Live Server* do VSCode para consumir a API RESTful do backend.
+Este repositório armazena as documentações, artefatos de Engenharia de Software (ADRs, diagramas, pesquisas) e o código-fonte em arquitetura Monorepo do projeto.
 
 ---
-*Para mais detalhes sobre as decisões técnicas, consulte os [Documentos de Arquitetura e ADRs](Documentação/docs/ADR/).*
+
+## 👥 Autores (Equipe de Desenvolvimento)
+
+Projeto desenvolvido pelos acadêmicos de Engenharia de Software:
+
+* **Ademar de Araújo Teisen** — RA: `23182969-2`
+* **Pedro Emanuel Ferreira de Andrade** — RA: `23167567-2`
+* **Roberto Yanez Sanz** — RA: `23079491-2`
+
+---
+
+## 💡 Sobre o Projeto
+
+O **Anjo Nexus** nasceu para resolver a fragmentação e a complexidade no processo de busca e submissão de projetos para editais de subvenção econômica e fomento à pesquisa no Brasil (como FINEP, FAPESC, FAPESP, entre outros). 
+
+A plataforma atua como um ecossistema completo para **Agências e Consultorias de Inovação**, automatizando desde a descoberta de oportunidades em portais governamentais até a gestão do portfólio de startups clientes e o acompanhamento das propostas.
+
+### 🎯 Funcionalidades Atuais e Visão de Futuro (Roadmap)
+
+* **Radar Automatizado de Editais (Web Scraping & OCR):** Robôs extratores (*Spiders*) que varrem portais de fomento, baixam os anexos e extraem o texto bruto dos PDFs automaticamente.
+* **Roteador Inteligente de IA (AI Router):** Processamento em fila (*Background Jobs*) que analisa semanticamente os editais utilizando múltiplos provedores de LLM (**Groq**, **DeepSeek** e **Google Gemini**) em esquema de rodízio (*Round Robin*) para evitar limites de requisição.
+* **Gestão Multi-tenant de Agências e Startups:** Ambiente seguro onde cada consultoria gerencia sua carteira de startups (com dados integrados à estrutura da Receita Federal/CNPJ, porte, regime tributário, nicho de atuação e *pitch*).
+* **Ecossistema SaaS e Pagamentos Reais (AbacatePay):** Fluxo automatizado de assinatura via PIX com controle de acesso por middleware e liberação instantânea da conta via **Webhooks** em tempo real.
+* **Pipeline Kanban de Captação:** Quadro visual interativo para gerenciar o funil de submissão de cada edital.
+* **Match Inteligente de Oportunidades *(Em evolução)*:** Cruzamento automatizado entre os requisitos técnicos/financeiros dos editais abertos e o perfil das startups cadastradas na agência.
+* **Geração Assistida de Minutas com IA *(Em evolução)*:** Redação automática de rascunhos de projetos e propostas técnicas cruzando o *pitch* da startup com as exigências específicas do edital selecionado.
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+### Back-end (`/back`)
+* **PHP 8.2+** & **Laravel 12** (API RESTful Stateless)
+* **Laravel Sanctum** (Autenticação segura via Bearer Token)
+* **Roach PHP** & **Puppeteer / Browsershot** (Web Scraping avançado e renderização Headless)
+* **Smalot PDF Parser** (Extração nativa de texto de editais em PDF)
+* **AbacatePay API v2** (Gateway de pagamentos PIX e Webhooks)
+* **AI Router** (Integração com APIs da Groq, DeepSeek e Gemini)
+
+### Front-end (`/front`)
+* **HTML5 Semântico, CSS3 e JavaScript Puro (ES6+ Modules)**
+* Arquitetura modular limpa (*Strict Separation of Concerns*), consumindo a API de forma desacoplada via `fetch`.
+
+### Banco de Dados e Infraestrutura
+* **MySQL / MariaDB** (Gerenciado localmente via XAMPP)
+* **ngrok** (Tunelamento com domínio estático para recebimento de Webhooks locais)
+
+---
+
+## 📥 Como Clonar o Repositório
+
+Para baixar o projeto na sua máquina local, abra o terminal e execute:
+
+~~~bash
+git clone https://github.com/RobertoYz/PROJETO-ESCOLA-TI-.git
+cd PROJETO-ESCOLA-TI-
+~~~
+
+### ▶️ Como Iniciar o Sistema?
+Após clonar o repositório, navegue até a pasta **`MVPs/`**. 
+
+👉 **O arquivo `README.md` localizado dentro da pasta [`MVPs/`](./MVPs/README.md) contém o guia completo, passo a passo, com todos os comandos necessários para configurar o banco de dados, as chaves de ambiente e iniciar o servidor.**
+
+---

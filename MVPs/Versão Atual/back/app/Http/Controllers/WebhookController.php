@@ -24,9 +24,9 @@ class WebhookController extends Controller
             $evento = $request->input('event');
             $data = $request->input('data', $request->all());
             
-            $externalId = $data['externalId'] ?? null;
-            $statusPagamento = $data['status'] ?? null;
-            $transacaoId = $data['id'] ?? $data['transaction_id'] ?? null;
+            $externalId = $request->input('data.checkout.externalId') ?? $request->input('data.externalId');
+            $statusPagamento = $request->input('data.checkout.status') ?? $request->input('data.status');
+            $transacaoId = $request->input('data.checkout.id') ?? $request->input('data.id');
 
             if (!$externalId) {
                 Log::warning('Webhook AbacatePay sem externalId', $request->all());

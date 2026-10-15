@@ -23,6 +23,7 @@ Route::get('/startups', function () {
 
 // Rotas de Autenticação / Registro SaaS
 Route::post('/auth/registro', [AuthController::class, 'registrar']);
+Route::post('/auth/login', [AuthController::class, 'login']);
 
 // Rota do Webhook do AbacatePay
 Route::post('/webhook/abacatepay', [WebhookController::class, 'abacatePayWebhook']);
