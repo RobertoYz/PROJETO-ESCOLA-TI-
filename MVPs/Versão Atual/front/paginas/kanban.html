@@ -1134,6 +1134,17 @@
 
         window.fetchBoard = fetchBoard;
         window.handleDeleteCard = handleDeleteCard;
+        window.switchMinutaTab = switchMinutaTab;
+        window.handleGerarMinuta = handleGerarMinuta;
+        window.handleCopiarTextoMinuta = handleCopiarTextoMinuta;
+        window.handleExportarWord = handleExportarWord;
+        window.handleExportarPdf = handleExportarPdf;
+        window.handleSalvarEdicaoMinuta = handleSalvarEdicaoMinuta;
+        window.handleCarregarRankingFit = handleCarregarRankingFit;
+        window.fetchHistoricoMinutas = fetchHistoricoMinutas;
+        window.selecionarEditalParaMinuta = selecionarEditalParaMinuta;
+        window.abrirMinutaDoHistorico = abrirMinutaDoHistorico;
+        window.handleTrocarEditalMinuta = handleTrocarEditalMinuta;
 
         async function fetchBoard() {
             try {
@@ -1577,27 +1588,40 @@
 
         async function carregarStartupsEEditaisMinuta() {
             try {
-                // Carrega Startups
-                const resS = await fetch(`${API_BASE}/startups`);
+                // Carrega Startups com autenticação e fallback
+                const resS = await fetch(`${API_BASE}/startups`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    }
+                });
+                
+                const selectS = document.getElementById('selectMinutaStartup');
+                const selectFit = document.getElementById('selectFitStartup');
+                selectS.innerHTML = '';
+                selectFit.innerHTML = '';
+
                 if (resS.ok) {
                     const jsonS = await resS.json();
-                    cachedStartups = jsonS.dados || [];
-
-                    const selectS = document.getElementById('selectMinutaStartup');
-                    const selectFit = document.getElementById('selectFitStartup');
-                    selectS.innerHTML = '';
-                    selectFit.innerHTML = '';
-
-                    cachedStartups.forEach(st => {
-                        const opt = document.createElement('option');
-                        opt.value = st.id;
-                        opt.textContent = `${st.nome_fantasia || st.razao_social} (${st.porte || 'Startup'})`;
-                        selectS.appendChild(opt);
-
-                        const opt2 = opt.cloneNode(true);
-                        selectFit.appendChild(opt2);
-                    });
+                    cachedStartups = jsonS.dados || jsonS || [];
                 }
+
+                // Fallback com a startup ativa caso a API esteja sem sessão
+                if (!cachedStartups || cachedStartups.length === 0) {
+                    const stAtiva = localStorage.getItem('startup_ativa_nome') || 'Startup Assessorada';
+                    const stId = localStorage.getItem('startup_ativa_id') || '1';
+                    cachedStartups = [{ id: stId, nome_fantasia: stAtiva, razao_social: stAtiva, porte: 'ME/EPP' }];
+                }
+
+                cachedStartups.forEach(st => {
+                    const opt = document.createElement('option');
+                    opt.value = st.id;
+                    opt.textContent = `${st.nome_fantasia || st.razao_social} (${st.porte || 'Startup'})`;
+                    selectS.appendChild(opt);
+
+                    const opt2 = opt.cloneNode(true);
+                    selectFit.appendChild(opt2);
+                });
 
                 // Carrega Editais
                 const resE = await fetch(`${API_BASE}/editais`);
