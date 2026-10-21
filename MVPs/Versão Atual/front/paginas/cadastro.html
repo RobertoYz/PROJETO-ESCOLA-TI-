@@ -1,48 +1,27 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro - Anjo Nexus</title>
     <link rel="stylesheet" href="../estilos/layout.css">
 </head>
-
 <body>
     <div id="container-cabecalho" class="container-cabecalho">
-        <h1 class="titulo-pagina">Cadastro</h1>
-        <a href="login.html" class="link-alternar">Já possui uma conta? Faça login</a>
+        <h1>Cadastro de Consultor</h1>
+        <a href="login.html">Já possui conta? Faça login</a>
     </div>
 
     <div id="container-formulario" class="container-formulario">
-        <form id="formulario-cadastro" class="formulario" novalidate>
-            <div class="grupo-campo">
-                <label for="campo-nome-agencia" class="rotulo-campo">Nome da Agência</label>
-                <input type="text" id="campo-nome-agencia" class="campo-entrada" placeholder="Nome da agência">
-            </div>
-
-            <div class="grupo-campo">
-                <label for="campo-nome-usuario" class="rotulo-campo">Nome do Usuário</label>
-                <input type="text" id="campo-nome-usuario" class="campo-entrada" placeholder="Nome do usuário">
-            </div>
-
-            <div class="grupo-campo">
-                <label for="campo-email" class="rotulo-campo">E-mail</label>
-                <input type="email" id="campo-email" class="campo-entrada" placeholder="E-mail profissional">
-            </div>
-
-            <div class="grupo-campo">
-                <label for="campo-senha" class="rotulo-campo">Senha</label>
-                <input type="password" id="campo-senha" class="campo-entrada" placeholder="Senha (mínimo 8 caracteres)">
-            </div>
-
-            <button type="submit" id="botao-confirmar" class="botao-acao">Cadastrar</button>
+        <form id="formulario-cadastro" novalidate>
+            <input type="text" id="campo-nome-usuario" placeholder="Nome completo" autocomplete="name">
+            <input type="email" id="campo-email" placeholder="E-mail" autocomplete="email">
+            <input type="password" id="campo-senha" placeholder="Senha (mínimo 8 caracteres)" autocomplete="new-password">
+            <div id="mensagem-erro" class="texto-erro" hidden></div>
+            <button type="submit" id="botao-confirmar">Continuar para Escolha de Plano</button>
         </form>
-
-        <div id="mensagem-erro" class="texto-erro" hidden></div>
     </div>
 
     <script type="module" src="../scripts/paginas/cadastro.js"></script>
 </body>
-
 </html>

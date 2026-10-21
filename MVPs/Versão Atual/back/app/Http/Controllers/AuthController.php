@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\RegistroCadastroRequest; 
 use App\Services\RegistroService;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -14,45 +13,29 @@ class AuthController extends Controller
 {
     protected $registroService;
 
-    //Constructor do Service
+    // Constructor do Service
     public function __construct(RegistroService $registroService)
     {
         $this->registroService = $registroService;
     }
 
-    public function registrar(RegistroCadastroRequest $request): JsonResponse
+    public function registrar(Request $request)
     {
-        $dadosSeguros = $request->validated();
+        $dadosValidados = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
+            'nome_agencia' => 'nullable|string|max:255',
+        ]);
 
-        try {
-            //Pega os dados já verificados e usa o Service para registrar no banco
-            $resultado = $this->registroService->registrarNovaAgenciaEUsuario($dadosSeguros);
+        $resultado = $this->registroService->registrarNovaAgenciaEUsuario($dadosValidados);
 
-            $usuario = $resultado['usuario'];
-            $token = $usuario->createToken('token_de_acesso')->plainTextToken;
-
-            //Código 201
-            return response()->json([
-                'status' => 'sucesso',
-                'mensagem' => 'Agência e Usuário criados com sucesso!',
-                'checkout_url' => $resultado['checkout_url'],
-                'dados' => [
-                    'agencia' => $resultado['agencia']->nome,
-                    'usuario_admin' => $resultado['usuario']->email,
-                    'token' => $token,
-                    'link_pagamento' => $resultado['checkout_url'],
-                    'checkout_url' => $resultado['checkout_url']
-                ]
-            ], 201);
-
-        // Código 500
-        } catch (Exception $e) {
-            return response()->json([
-                'status' => 'erro',
-                'mensagem' => 'Falha ao registrar conta no sistema.',
-                'detalhe' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'mensagem' => 'Cadastro inicial realizado. Selecione o seu plano.',
+            'token' => $resultado['token'],
+            'usuario' => $resultado['usuario'],
+            'agencia' => $resultado['agencia'],
+        ], 201);
     }
 
     public function login(Request $request): JsonResponse

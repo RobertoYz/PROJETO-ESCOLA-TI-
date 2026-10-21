@@ -8,18 +8,14 @@ use App\Http\Controllers\EditalController;
 use App\Http\Controllers\KanbanController;
 use App\Http\Controllers\MinutaController;
 use App\Http\Controllers\CnpjController;
-use App\Models\Startup;
+use App\Http\Controllers\PlanoController;
+use App\Http\Controllers\StartupController;
 
 // Rotas de Editais
 Route::get('/editais', [EditalController::class, 'index']);
 
-// Listagem de Startups para seleção
-Route::get('/startups', function () {
-    return response()->json([
-        'sucesso' => true,
-        'dados' => Startup::all()
-    ]);
-});
+// Listagem pública dos planos disponíveis
+Route::get('/planos', [PlanoController::class, 'listarPlanos']);
 
 // Rotas de Autenticação / Registro SaaS
 Route::post('/auth/registro', [AuthController::class, 'registrar']);
@@ -31,6 +27,10 @@ Route::post('/webhook/abacatepay', [WebhookController::class, 'abacatePayWebhook
 // Rotas protegidas (Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/pagamento/recuperar', [PagamentoController::class, 'recuperarLinkPagamento']);
+    Route::post('/planos/selecionar', [PlanoController::class, 'selecionarPlano']);
+    Route::get('/startups', [StartupController::class, 'index']);
+    Route::post('/startups', [StartupController::class, 'store']);
+    Route::get('/startups/{id}', [StartupController::class, 'show']);
 });
 
 // Rotas do Pipeline Kanban

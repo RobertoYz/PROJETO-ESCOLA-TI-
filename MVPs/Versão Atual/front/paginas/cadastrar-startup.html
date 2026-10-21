@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Startup - Anjo Nexus</title>
+    <link rel="stylesheet" href="../estilos/layout.css">
+</head>
+<body>
+    <div id="container-cabecalho" class="container-cabecalho">
+        <h1>Cadastro de Startup</h1>
+        <a href="selecionar-startup.html">Voltar para Seleção de Startups</a>
+    </div>
+
+    <div id="container-formulario" class="container-formulario">
+        <form id="formulario-cadastro-startup" novalidate>
+            <input type="text" id="campo-cnpj" placeholder="CNPJ (obrigatório)">
+            <input type="text" id="campo-razao-social" placeholder="Razão Social (obrigatório)">
+            <input type="text" id="campo-nome-fantasia" placeholder="Nome Fantasia">
+            <input type="date" id="campo-data-abertura" placeholder="Data de Abertura">
+            <input type="text" id="campo-cep" placeholder="CEP">
+            <input type="text" id="campo-logradouro" placeholder="Logradouro / Rua">
+            <input type="text" id="campo-numero" placeholder="Número">
+            <input type="text" id="campo-bairro" placeholder="Bairro">
+            <input type="text" id="campo-cidade" placeholder="Cidade">
+            <input type="text" id="campo-estado" placeholder="UF (ex: PR)" maxlength="2">
+            <input type="text" id="campo-porte" placeholder="Porte (ex: MEI, ME, EPP)">
+            <input type="text" id="campo-regime-tributario" placeholder="Regime Tributário (ex: Simples Nacional)">
+            <input type="text" id="campo-nicho-atuacao" placeholder="Nicho de Atuação (ex: Agronegócio, Saúde, TI)">
+            <textarea id="campo-pitch" placeholder="Pitch Institucional / Resumo dos Projetos da Startup"></textarea>
+
+            <div id="mensagem-erro" class="texto-erro" hidden></div>
+            <button type="submit" id="botao-confirmar">Finalizar Cadastro da Startup</button>
+        </form>
+    </div>
+
+    <script type="module" src="../scripts/paginas/cadastrarStartup.js"></script>
+</body>
+</html>
