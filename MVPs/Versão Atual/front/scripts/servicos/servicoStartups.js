@@ -13,3 +13,10 @@ export async function criarNovaStartup(dadosStartup) {
         body: JSON.stringify(dadosStartup)
     });
 }
+
+export async function consultarDadosCnpj(cnpj) {
+    const apenasDigitos = cnpj.replace(/\D/g, '');
+    return await requisicaoApi(`/cnpj/${apenasDigitos}`, {
+        method: 'GET'
+    });
+}
