@@ -11,31 +11,38 @@ class PlanoSeeder extends Seeder
     {
         $planos = [
             [
-                'nome' => 'Plano Standart',
+                'id' => 1,
+                'nome' => 'Standard',
                 'preco' => 0.00,
-                'id_plataforma_pagamento' => 'prod_sWfDg0eZXTLbtZEHYpqnMLKP', // ID real do AbacatePay para o ID 1
+                'id_plataforma_pagamento' => 'prod_sWfDg0eZXTLbtZEHYpqnMLKP', // ID real do AbacatePay
                 'limite_startups' => 2,
                 'limite_membros_equipe' => 1
             ],
             [
-                'nome' => 'Plano Pro',
+                'id' => 2,
+                'nome' => 'Pro',
                 'preco' => 99.90,
-                'id_plataforma_pagamento' => 'prod_pmXZSbe2pJT0wXhpQ5PHfTAM',
+                'id_plataforma_pagamento' => 'prod_sWfDg0eZXTLbtZEHYpqnMLKP',
                 'limite_startups' => 10,
                 'limite_membros_equipe' => 5
             ],
             [
-                'nome' => 'Plano Enterprise',
+                'id' => 3,
+                'nome' => 'Enterprise',
                 'preco' => 299.90,
-                'id_plataforma_pagamento' => 'prod_REyZTDE6CcKXGpaHencBhxNX',
+                'id_plataforma_pagamento' => 'prod_sWfDg0eZXTLbtZEHYpqnMLKP',
                 'limite_startups' => 50,
                 'limite_membros_equipe' => 15
             ]
         ];
 
-        // Um laço de repetição para salvar cada plano no DB
-        foreach ($planos as $plano) {
-            Plano::create($plano);
+        foreach ($planos as $dadosPlano) {
+            $id = $dadosPlano['id'];
+            unset($dadosPlano['id']);
+            Plano::updateOrCreate(
+                ['id' => $id],
+                $dadosPlano
+            );
         }
     }
 }
