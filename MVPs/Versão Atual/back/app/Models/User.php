@@ -19,12 +19,23 @@ class User extends Authenticatable
         'password',
         'agencia_id',     
         'perfil_acesso',
+        'role',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
+
+    public function setRoleAttribute($value)
+    {
+        $this->attributes['perfil_acesso'] = $value;
+    }
+
+    public function getRoleAttribute()
+    {
+        return $this->attributes['perfil_acesso'] ?? 'consultor_admin';
+    }
 
     protected function casts(): array
     {
@@ -35,7 +46,6 @@ class User extends Authenticatable
     }
 
     // Relacionamento entre um user que pertence a (belongsTo) uma agencia.
-    
     public function agencia(): BelongsTo
     {
         return $this->belongsTo(Agencia::class, 'agencia_id');

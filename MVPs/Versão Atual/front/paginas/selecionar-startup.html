@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selecionar Startup - Anjo Nexus</title>
+    <link rel="stylesheet" href="../estilos/layout.css">
+</head>
+<body>
+    <div id="container-cabecalho" class="container-cabecalho">
+        <h1>Selecione a Startup</h1>
+    </div>
+
+    <div id="container-formulario" class="container-selecao-startup">
+        <div class="barra-topo-startup">
+            <input type="text" id="campo-busca-startup" placeholder="Buscar startup pelo nome...">
+            <button type="button" id="botao-nova-startup">Criar Nova Startup</button>
+        </div>
+
+        <div id="mensagem-erro" class="texto-erro" hidden></div>
+
+        <div id="lista-startups" class="lista-startups"></div>
+    </div>
+
+    <script type="module" src="../scripts/paginas/selecionarStartup.js"></script>
+</body>
+</html>

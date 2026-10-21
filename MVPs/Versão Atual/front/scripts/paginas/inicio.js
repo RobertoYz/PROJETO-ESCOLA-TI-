@@ -1,32 +1,38 @@
-import { usuarioEstaAutenticado, removerToken } from '../servicos/servicoAutenticacao.js';
+import {
+    usuarioEstaAutenticado,
+    possuiStartupSelecionada,
+    obterStartupAtiva,
+    limparStartupAtiva,
+    removerToken
+} from '../servicos/servicoAutenticacao.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Validação da sessão/token na tela inicial
-    if (!usuarioEstaAutenticado()) {
-        window.location.href = 'login.html';
-        return;
-    }
+if (!usuarioEstaAutenticado()) {
+    window.location.href = 'login.html';
+} else if (!possuiStartupSelecionada()) {
+    window.location.href = 'selecionar-startup.html';
+}
 
-    const botaoEditais = document.getElementById('botao-editais');
-    const botaoKanban = document.getElementById('botao-kanban');
-    const botaoSair = document.getElementById('botao-sair');
+const startupAtiva = obterStartupAtiva();
+const elementoTextoStartup = document.getElementById('texto-startup-ativa');
 
-    if (botaoEditais) {
-        botaoEditais.addEventListener('click', () => {
-            window.location.href = 'RadarEditais.html';
-        });
-    }
+if (startupAtiva && elementoTextoStartup) {
+    elementoTextoStartup.textContent = `Perfil Ativo: ${startupAtiva.nome}`;
+}
 
-    if (botaoKanban) {
-        botaoKanban.addEventListener('click', () => {
-            window.location.href = 'kanban.html';
-        });
-    }
+document.getElementById('botao-radar-editais').addEventListener('click', () => {
+    window.location.href = 'RadarEditais.html';
+});
 
-    if (botaoSair) {
-        botaoSair.addEventListener('click', () => {
-            removerToken();
-            window.location.href = 'login.html';
-        });
-    }
+document.getElementById('botao-kanban').addEventListener('click', () => {
+    window.location.href = 'kanban.html';
+});
+
+document.getElementById('botao-trocar-startup').addEventListener('click', () => {
+    limparStartupAtiva();
+    window.location.href = 'selecionar-startup.html';
+});
+
+document.getElementById('botao-sair').addEventListener('click', () => {
+    removerToken();
+    window.location.href = 'login.html';
 });

@@ -1,80 +1,57 @@
-import { requisitarApi } from './api.js';
+import { requisicaoApi } from './api.js';
 
-const CHAVE_TOKEN_STORAGE = 'token_autenticacao';
-const CHAVE_USUARIO_STORAGE = 'usuario_autenticado';
+const CHAVE_TOKEN = 'token_autenticacao';
+const CHAVE_STARTUP_ID = 'startup_ativa_id';
+const CHAVE_STARTUP_NOME = 'startup_ativa_nome';
 
-/**
- * Envia os dados para o endpoint de cadastro/registro da agência e usuário
- * @param {object} dadosCadastro
- * @param {string} dadosCadastro.nomeAgencia
- * @param {string} dadosCadastro.nomeUsuario
- * @param {string} dadosCadastro.email
- * @param {string} dadosCadastro.senha
- * @returns {Promise<object>}
- */
-export async function cadastrarUsuario({ nomeAgencia, nomeUsuario, email, senha }) {
-    const payload = {
-        nome_agencia: nomeAgencia,
-        name: nomeUsuario,
-        email: email,
-        password: senha
-    };
-
-    return await requisitarApi('/auth/registro', {
+export async function cadastrarUsuario(dadosCadastro) {
+    return await requisicaoApi('/auth/registro', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(dadosCadastro)
     });
 }
 
-/**
- * Envia as credenciais para o endpoint de login
- * @param {string} email
- * @param {string} senha
- * @returns {Promise<object>}
- */
-export async function realizarLogin(email, senha) {
-    const payload = {
-        email: email,
-        password: senha
-    };
-
-    return await requisitarApi('/auth/login', {
+export async function realizarLogin(credenciais) {
+    return await requisicaoApi('/auth/login', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(credenciais)
     });
 }
 
-/**
- * Salva o token de autenticação no localStorage
- * @param {string} token
- */
 export function salvarToken(token) {
-    if (token) {
-        localStorage.setItem(CHAVE_TOKEN_STORAGE, token);
-    }
+    localStorage.setItem(CHAVE_TOKEN, token);
 }
 
-/**
- * Retorna o token de autenticação armazenado
- * @returns {string|null}
- */
 export function obterToken() {
-    return localStorage.getItem(CHAVE_TOKEN_STORAGE);
+    return localStorage.getItem(CHAVE_TOKEN);
 }
 
-/**
- * Remove o token e dados salvos no logout
- */
 export function removerToken() {
-    localStorage.removeItem(CHAVE_TOKEN_STORAGE);
-    localStorage.removeItem(CHAVE_USUARIO_STORAGE);
+    localStorage.removeItem(CHAVE_TOKEN);
+    limparStartupAtiva();
 }
 
-/**
- * Verifica se existe uma sessão com token
- * @returns {boolean}
- */
 export function usuarioEstaAutenticado() {
-    const token = obterToken();
-    return Boolean(token && token.trim() !== '');
+    return Boolean(obterToken());
+}
+
+export function salvarStartupAtiva(id, nome) {
+    localStorage.setItem(CHAVE_STARTUP_ID, String(id));
+    localStorage.setItem(CHAVE_STARTUP_NOME, nome);
+}
+
+export function obterStartupAtiva() {
+    const id = localStorage.getItem(CHAVE_STARTUP_ID);
+    const nome = localStorage.getItem(CHAVE_STARTUP_NOME);
+    if (!id) return null;
+    return { id, nome };
+}
+
+export function limparStartupAtiva() {
+    localStorage.removeItem(CHAVE_STARTUP_ID);
+    localStorage.removeItem(CHAVE_STARTUP_NOME);
+}
+
+export function possuiStartupSelecionada() {
+    return Boolean(localStorage.getItem(CHAVE_STARTUP_ID));
 }
