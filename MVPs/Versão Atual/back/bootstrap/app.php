@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'check.pagamento' => \App\Http\Middleware\CheckPagamentoAtivo::class,
+            'startup.ativa' => \App\Http\Middleware\VerificarStartupAtiva::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

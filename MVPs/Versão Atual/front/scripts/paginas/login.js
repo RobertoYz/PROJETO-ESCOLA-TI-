@@ -1,56 +1,38 @@
-import { realizarLogin, salvarToken } from '../servicos/servicoAutenticacao.js';
+import { realizarLogin, salvarToken, limparStartupAtiva } from '../servicos/servicoAutenticacao.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-    const formularioLogin = document.getElementById('formulario-login');
-    const campoEmail = document.getElementById('campo-email');
-    const campoSenha = document.getElementById('campo-senha');
-    const botaoConfirmar = document.getElementById('botao-confirmar');
-    const divMensagemErro = document.getElementById('mensagem-erro');
+const formulario = document.getElementById('formulario-login');
+const campoEmail = document.getElementById('campo-email');
+const campoSenha = document.getElementById('campo-senha');
+const divMensagemErro = document.getElementById('mensagem-erro');
+const botaoConfirmar = document.getElementById('botao-confirmar');
 
-    function exibirErro(mensagem) {
-        divMensagemErro.textContent = mensagem;
-        divMensagemErro.hidden = false;
+function exibirErro(mensagem) {
+    divMensagemErro.textContent = mensagem;
+    divMensagemErro.hidden = false;
+}
+
+formulario.addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    divMensagemErro.hidden = true;
+
+    const email = campoEmail.value.trim();
+    const senha = campoSenha.value;
+
+    if (!email || !senha) {
+        exibirErro('Informe seu e-mail e sua senha.');
+        return;
     }
 
-    function limparErro() {
-        divMensagemErro.textContent = '';
-        divMensagemErro.hidden = true;
+    botaoConfirmar.disabled = true;
+
+    try {
+        const resposta = await realizarLogin({ email, password: senha });
+        salvarToken(resposta.token);
+        limparStartupAtiva();
+        window.location.href = 'selecionar-startup.html';
+    } catch (erro) {
+        exibirErro(erro.message);
+    } finally {
+        botaoConfirmar.disabled = false;
     }
-
-    function definirCarregando(carregando) {
-        botaoConfirmar.disabled = carregando;
-        botaoConfirmar.textContent = carregando ? 'Entrando...' : 'Entrar';
-    }
-
-    formularioLogin.addEventListener('submit', async (evento) => {
-        evento.preventDefault();
-        limparErro();
-
-        const valorEmail = campoEmail.value.trim();
-        const valorSenha = campoSenha.value;
-
-        if (!valorEmail || !valorSenha) {
-            exibirErro('Por favor, informe seu e-mail e senha de acesso.');
-            return;
-        }
-
-        definirCarregando(true);
-
-        try {
-            const respostaApi = await realizarLogin(valorEmail, valorSenha);
-
-            if (respostaApi.token) {
-                salvarToken(respostaApi.token);
-            }
-
-            if (respostaApi.dados?.usuario) {
-                localStorage.setItem('usuario_autenticado', JSON.stringify(respostaApi.dados.usuario));
-            }
-
-            window.location.href = 'inicio.html';
-        } catch (erro) {
-            exibirErro(erro.message || 'Falha ao autenticar. Verifique seus dados de acesso.');
-            definirCarregando(false);
-        }
-    });
 });
