@@ -30,7 +30,7 @@ function renderizarLista(startups) {
 
         botaoStartup.addEventListener('click', () => {
             salvarStartupAtiva(startup.id, nomeExibicao);
-            window.location.href = 'inicio.html';
+            window.location.href = 'RadarEditais.html';
         });
 
         containerLista.appendChild(botaoStartup);

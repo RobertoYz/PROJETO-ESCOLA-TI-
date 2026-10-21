@@ -846,7 +846,7 @@
 
     <main class="main-content">
         <header class="top-navbar">
-            <div class="startup-info">
+            <div class="startup-info" id="container-seletor-global-kanban">
                 <div class="startup-avatar"><svg width="24" height="24">
                         <use href="#icon-user"></use>
                     </svg></div>
@@ -1108,13 +1108,21 @@
     </div>
 
 
-    <script>
+    <script type="module">
+        import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
+        import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
+
         const API_BASE = 'http://127.0.0.1:8000/api';
         let currentBoard = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            initSidebar();
+            inicializarSidebarGlobal('kanban');
             initModal();
+            inicializarSeletorGlobal('container-seletor-global-kanban', {
+                onTrocarStartup: (id, nome) => {
+                    fetchBoard();
+                }
+            });
             fetchBoard();
         });
 

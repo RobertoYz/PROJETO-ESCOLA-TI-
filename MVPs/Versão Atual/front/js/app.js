@@ -1,3 +1,7 @@
+import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
+import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
+import { obterStartupAtiva } from '../scripts/servicos/servicoAutenticacao.js';
+
 let mockEditais = [];
 let selectedId = null;
 
@@ -6,6 +10,12 @@ let selectedId = null;
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     initUI();
+    inicializarSidebarGlobal('radar');
+    inicializarSeletorGlobal('container-seletor-global', {
+        onTrocarStartup: (id, nome) => {
+            fetchEditais();
+        }
+    });
     fetchEditais();
 });
 
@@ -58,18 +68,20 @@ function initUI() {
 
             const originalText = btnSendToKanban.textContent;
             btnSendToKanban.textContent = 'Enviando ao Kanban...';
-            btnSendToKanban.disabled = true;
+            const startupAtiva = obterStartupAtiva();
+            const nomeStartup = startupAtiva ? startupAtiva.nome : 'Startup Assessorada';
 
             try {
                 const res = await fetch('http://127.0.0.1:8000/api/kanban/cards', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
                     },
                     body: JSON.stringify({
                         edital_id: selectedId,
-                        startup_name: 'Startup X'
+                        startup_name: nomeStartup
                     })
                 });
 
@@ -95,7 +107,7 @@ function initUI() {
 // ==========================================
 // SERVIÇOS DE API (Busca de Dados)
 // ==========================================
-async function fetchEditais() {
+export async function fetchEditais() {
     showLoadingState();
 
     try {
@@ -113,8 +125,7 @@ async function fetchEditais() {
 
         const data = await response.json();
 
-        // O PHP JsonResource / Collection as vezes devolve Objeto indexado quando filtramos.
-        // Transformamos sempre em Array para usar map/forEach sem erros.
+        // O PHP JsonResource / Collection às vezes devolve Objeto indexado quando filtramos.
         mockEditais = Array.isArray(data) ? data : Object.values(data);
 
         if (mockEditais.length > 0) {
@@ -129,6 +140,10 @@ async function fetchEditais() {
         showErrorState();
     }
 }
+
+// Expõe no escopo global para o onchange do select de filtro funcionar com ES modules
+window.fetchEditais = fetchEditais;
+window.toggleFavorite = toggleFavorite;
 
 // ==========================================
 // RENDERIZAÇÃO DA INTERFACE (Componentes)
