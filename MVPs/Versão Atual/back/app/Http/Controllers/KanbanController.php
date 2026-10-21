@@ -23,7 +23,11 @@ class KanbanController extends Controller
     {
         try {
             $agenciaId = $request->query('agencia_id');
-            $board = $this->kanbanService->getOrCreateBoard($agenciaId ? (int)$agenciaId : null);
+            $startupName = $request->query('startup_name');
+            $board = $this->kanbanService->getOrCreateBoard(
+                $agenciaId ? (int)$agenciaId : null,
+                $startupName ? trim($startupName) : null
+            );
 
             return response()->json([
                 'status' => 'sucesso',

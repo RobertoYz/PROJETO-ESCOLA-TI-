@@ -21,14 +21,25 @@ class KanbanService
      * Retorna o quadro padrão da agência com suas colunas e cartões (com dados do edital).
      * Se o quadro ou as colunas não existirem, cria a estrutura inicial padrão.
      */
-    public function getOrCreateBoard(?int $agenciaId = null): KanbanBoard
+    public function getOrCreateBoard(?int $agenciaId = null, ?string $startupName = null): KanbanBoard
     {
         $query = KanbanBoard::query();
         if ($agenciaId) {
             $query->where('agencia_id', $agenciaId);
         }
 
-        $board = $query->with(['columns.cards.edital'])->first();
+        $board = $query->with([
+            'columns.cards' => function ($q) use ($startupName) {
+                if (!empty($startupName)) {
+                    $q->where(function ($sub) use ($startupName) {
+                        $sub->where('startup_name', $startupName)
+                            ->orWhere('startup_name', 'like', "%{$startupName}%");
+                    });
+                }
+                $q->orderBy('position');
+            },
+            'columns.cards.edital'
+        ])->first();
 
         if (!$board) {
             $board = DB::transaction(function () use ($agenciaId) {
