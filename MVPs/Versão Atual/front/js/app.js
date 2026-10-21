@@ -8,7 +8,7 @@ let selectedId = null;
 // ==========================================
 // INICIALIZAÇÃO DA APLICAÇÃO
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
+function inicializarAplicacao() {
     initUI();
     inicializarSidebarGlobal('radar');
     inicializarSeletorGlobal('container-seletor-global', {
@@ -17,7 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     fetchEditais();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarAplicacao);
+} else {
+    inicializarAplicacao();
+}
 
 function initUI() {
     const sidebar = document.getElementById('sidebar');

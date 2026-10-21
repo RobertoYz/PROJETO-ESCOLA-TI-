@@ -2,8 +2,8 @@
  * Componente Seletor Global de Startup Ativa
  * Blindado com fallback automático para modo demonstração
  */
-import { obterStartupAtiva, salvarStartupAtiva } from './servicos/servicoAutenticacao.js';
-import { listarStartupsDaConsultoria } from './servicos/servicoStartups.js';
+import { obterStartupAtiva, salvarStartupAtiva } from '../servicos/servicoAutenticacao.js';
+import { listarStartupsDaConsultoria } from '../servicos/servicoStartups.js';
 
 export async function inicializarSeletorGlobal(containerId, options = {}) {
     const container = document.getElementById(containerId);
