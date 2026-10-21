@@ -1159,7 +1159,10 @@
             container.innerHTML = '';
 
             if (board.title) {
-                document.getElementById('boardTitle').textContent = board.title;
+                const boardTitleEl = document.getElementById('boardTitle');
+                if (boardTitleEl) {
+                    boardTitleEl.textContent = board.title;
+                }
             }
 
             board.columns.forEach(col => {
