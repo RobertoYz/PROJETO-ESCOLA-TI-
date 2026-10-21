@@ -1148,7 +1148,10 @@
 
         async function fetchBoard() {
             try {
-                const res = await fetch(`${API_BASE}/kanban`, {
+                const stAtiva = localStorage.getItem('startup_ativa_nome') || '';
+                const queryParam = stAtiva ? `?startup_name=${encodeURIComponent(stAtiva)}` : '';
+
+                const res = await fetch(`${API_BASE}/kanban${queryParam}`, {
                     headers: {
                         'Accept': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
