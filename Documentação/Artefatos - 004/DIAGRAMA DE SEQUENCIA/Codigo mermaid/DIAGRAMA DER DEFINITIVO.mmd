@@ -2,89 +2,102 @@ classDiagram
     direction TB
 
     %% ----------------------------------------------------
-    %% 1. CLASSES DE DOMÍNIO (MODELOS)
+    %% 1. CLASSES DE DOMÍNIO (MODELOS DO BANCO DE DADOS)
     %% ----------------------------------------------------
+
+    class Plano {
+        -BigInt id
+        -String nome
+        -Decimal preco
+        -Int limite_startups
+    }
+
+    class Agencia {
+        -BigInt id
+        -BigInt plano_id
+        -String nome
+        -String id_plataforma_pagamento
+        -Enum status_pagamento
+    }
 
     class Usuario {
         -BigInt id
-        -String nome
+        -BigInt agencia_id
+        -String name
         -String email
-        -String senha_hash
-        -Enum papel
+        -String password
+        -String perfil_acesso
         +login() void
         +redefinirSenha() void
         +temPermissao(String permissao) Boolean
     }
 
-    class Assinatura {
-        -BigInt id
-        -Enum nome_plano
-        -Enum status
-        -Date data_proximo_pagamento
-        +processarWebhook(Json payload) void
-        +cotaExcedida(String tipo_cota) Boolean
-    }
-
     class Startup {
         -BigInt id
-        -BigInt usuario_id
+        -BigInt agencia_id
         -String cnpj
-        -String nome
-        -String cnae_primario
-        -Int nivel_trl
-        -Text pitch_padrao
+        -String razao_social
+        -String nome_fantasia
+        -String porte
+        -String regime_tributario
+        -String nicho_atuacao
+        -Text pitch
         +atualizarPerfil(Array dados) void
-    }
-
-    class Etiqueta {
-        -BigInt id
-        -Enum categoria
-        -String nome
     }
 
     class Edital {
         -BigInt id
-        -String external_id
-        -String titulo
+        -String title
         -String fonte
         -Text objetivo
-        -String condicao_financiamento
-        -String operacao
-        -String publico
-        -DateTime prazo
-        -String url_fonte
-        -String caminho_arquivo_original
-        +extrairRequisitosViaOcr() void
+        -Decimal min_budget
+        -Decimal max_budget
+        -DateTime deadline
+        -Json documentos
+        -Json ai_diagnosis
+        +extrairRequisitosVetorialRegex() void
     }
 
-    class RequisitoEdital {
+    class KanbanBoard {
         -BigInt id
-        -Text descricao
-        -Boolean e_obrigatorio
+        -BigInt startup_id
+        -String title
     }
 
-    class ColunaKanban {
+    class KanbanColumn {
         -BigInt id
-        -String nome
-        -Int ordem
+        -BigInt board_id
+        -String title
+        -Int position
         +reordenar(Int novaOrdem) void
     }
 
-    class TicketKanban {
+    class KanbanCard {
         -BigInt id
-        -String titulo
-        -DateTime data_vencimento
-        -Enum status
+        -BigInt board_id
+        -BigInt column_id
+        -BigInt edital_id
+        -String title
+        -Double position
+        -Json metadata
         +moverParaColuna(BigInt colunaId) void
-        +anexarArquivo(File arquivo) void
     }
 
     class Minuta {
         -BigInt id
+        -BigInt startup_id
+        -BigInt edital_id
+        -BigInt user_id
+        -BigInt kanban_card_id
+        -BigInt parent_minuta_id
         -Int versao
-        -Text prompt_ia_usado
-        -LongText conteudo_html
-        -DateTime gerada_em
+        -String titulo_projeto
+        -Text ideia_projeto
+        -LongText conteudo_gerado
+        -Json secoes_estruturadas
+        -String status
+        -String modelo_ia_usado
+        -String autor_nome
         +exportarParaWord() File
         +exportarParaPdf() File
     }
@@ -98,30 +111,29 @@ classDiagram
     }
 
     %% ----------------------------------------------------
-    %% RELACIONAMENTOS DOS MODELOS (DOMÍNIO)
+    %% 2. RELACIONAMENTOS REAIS (DOMÍNIO / MULTI-TENANCY)
     %% ----------------------------------------------------
 
-    Usuario "1" o-- "*" Assinatura : assina
-    Usuario "1" o-- "*" Startup : gerencia
+    Plano "1" -- "*" Agencia : assina
+    Agencia "1" *-- "*" Usuario : possui_membros
+    Agencia "1" *-- "*" Startup : assessora_e_gerencia
 
-    Startup "*" -- "*" Etiqueta : classificada_por
-    Edital "*" -- "*" Etiqueta : requer_etiquetas
+    Startup "1" *-- "1" KanbanBoard : possui_pipeline
+    KanbanBoard "1" *-- "*" KanbanColumn : contem_etapas
+    KanbanColumn "1" *-- "*" KanbanCard : organiza
+    KanbanCard "*" -- "0..1" Edital : referente_a
 
-    Edital "1" *-- "*" RequisitoEdital : contem_regras
-    Startup "*" -- "*" Edital : favorita
-
-    Startup "1" *-- "*" ColunaKanban : possui_pipeline
-    ColunaKanban "1" *-- "*" TicketKanban : organiza
-    TicketKanban "*" -- "1" Edital : referente_a
-
-    TicketKanban "1" *-- "*" Minuta : historico_versoes
-    Minuta "*" -- "1" Edital : proposta_para
+    Startup "1" *-- "*" Minuta : proponente
+    Edital "1" *-- "*" Minuta : proposta_para
+    Usuario "1" *-- "*" Minuta : elaborada_por
+    KanbanCard "0..1" *-- "*" Minuta : vinculada_a
+    Minuta "1" *-- "*" Minuta : versao_anterior (parent_minuta_id)
 
     Usuario "1" *-- "*" Notificacao : recebe
     Notificacao "*" -- "1" Edital : sobre_edital
 
     %% ----------------------------------------------------
-    %% 2. CLASSES DE SERVIÇO E JOBS (ARQUITETURA)
+    %% 3. CLASSES DE SERVIÇO E JOBS (ARQUITETURA)
     %% ----------------------------------------------------
 
     class ServicoAutenticacao {
@@ -139,24 +151,28 @@ classDiagram
         -evitarDuplicatas(chave_unica) Boolean
     }
 
-    class ServicoOcrPdf {
+    class PdfExtractorService {
         +extrairTextoDoPdf(caminho) String
-        +identificarTermosChave(texto) Array
+        +parseDatasRegex(texto) Array
+        +parseOrcamentoRegex(texto) Decimal
     }
 
-    class ServicoIaGemini {
-        +gerarProposta(pitch, textoEdital) String
-        +formatarParaHtml(respostaBruta) String
+    class MinutaAiService {
+        +gerarMinuta(Startup, Edital, String ideia) Array
+        +calcularMatchEditais(Startup, Collection editais) Array
+        -callGemini(String prompt) Array
+        -callDeepSeek(String prompt) Array
+        -gerarMinutaFallback(Startup, Edital, String ideia) Array
     }
 
-    class ServicoCompatibilidade {
-        +calcularPontuacao(startup, edital) Float
-        +dispararNotificacoesMatch() void
+    class DocumentExportService {
+        +gerarDocx(Minuta minuta) String
+        +gerarPdf(Minuta minuta) String
     }
 
-    class ServicoPagamento {
-        +processarDowngrade(usuario, novoPlano) Boolean
-        +excluirContaCascata(usuario) void
+    class AbacatePayService {
+        +criarCobrancaPix(Agencia, Plano) Array
+        +processarWebhook(Array payload) Boolean
     }
 
     %% ----------------------------------------------------
@@ -166,11 +182,10 @@ classDiagram
     ServicoAutenticacao ..> Usuario : usa
     ServicoRastreamentoCnpj ..> Startup : usa
     JobColetaEdital ..> Edital : usa
-    ServicoOcrPdf ..> Edital : usa
-    ServicoIaGemini ..> Minuta : usa
-    ServicoIaGemini ..> Startup : usa
-    ServicoCompatibilidade ..> Startup : usa
-    ServicoCompatibilidade ..> Edital : usa
-    ServicoCompatibilidade ..> Notificacao : usa
-    ServicoPagamento ..> Usuario : usa
-    ServicoPagamento ..> Assinatura : usa
+    PdfExtractorService ..> Edital : usa
+    MinutaAiService ..> Minuta : cria
+    MinutaAiService ..> Startup : analisa
+    MinutaAiService ..> Edital : analisa
+    DocumentExportService ..> Minuta : exporta
+    AbacatePayService ..> Agencia : cobra
+    AbacatePayService ..> Plano : referencia
