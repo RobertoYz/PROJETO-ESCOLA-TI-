@@ -1132,17 +1132,25 @@
             if (toggleBtn) toggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
         }
 
+        window.fetchBoard = fetchBoard;
+        window.handleDeleteCard = handleDeleteCard;
+
         async function fetchBoard() {
             try {
-                const res = await fetch(`${API_BASE}/kanban`);
-                if (!res.ok) throw new Error('Erro ao carregar Kanban');
+                const res = await fetch(`${API_BASE}/kanban`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    }
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}: Erro ao carregar Kanban`);
                 const result = await res.json();
                 currentBoard = result.data;
                 renderBoard(currentBoard);
                 populateModalColumns(currentBoard.columns);
             } catch (err) {
-                console.error(err);
-                document.getElementById('kanbanBoard').innerHTML = `<div style="color: #ef4444; padding: 2rem;">Falha ao comunicar com a API do Kanban. Certifique-se de que o backend está ativo.</div>`;
+                console.error('Erro detalhado Kanban:', err);
+                document.getElementById('kanbanBoard').innerHTML = `<div style="color: #ef4444; padding: 2rem;">Falha ao comunicar com a API do Kanban (${err.message}). Certifique-se de que o backend está ativo na porta 8000.</div>`;
             }
         }
 
