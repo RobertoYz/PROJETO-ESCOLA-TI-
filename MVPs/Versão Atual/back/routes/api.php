@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/startups', [StartupController::class, 'index']);
     Route::post('/startups', [StartupController::class, 'store']);
     Route::get('/startups/{id}', [StartupController::class, 'show']);
+    Route::put('/startups/{id}', [StartupController::class, 'update']);
 });
 
 // Rotas do Pipeline Kanban
