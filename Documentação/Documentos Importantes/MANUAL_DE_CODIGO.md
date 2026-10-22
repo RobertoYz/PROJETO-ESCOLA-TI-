@@ -2162,5 +2162,36 @@ app/
 
 ---
 
-## 16. Glossário Técnico para a Banca
+## 16. Módulo Kanban B2B: Gestão de Cards, Anexos e Notas Customizadas (EDTAN-183 / EDTAN-175)
+
+> **💡 O que resolve?**
+> Conecta a identificação de editais ao ciclo real de assessoria e submissão. Cada oportunidade transformada em ticket no funil Kanban permite:
+> 1. Anexar arquivos comprobatórios (planilhas orçamentárias, CNDs, cartas de anuência, declarações).
+> 2. Salvar valores estimados do projeto (R$) e notas internas de pendências.
+> 3. Consultar em tempo real os arquivos com link de download direto e seguro.
+
+### 16.1 Arquitetura de Armazenamento e Rotas
+- **Persistência de Metadados:** Coluna `metadata` (JSON) na tabela `kanban_cards`, armazenando `valor_estimado`, `notas_internas` e a lista de `anexos`.
+- **Upload Seguro:** `POST /api/kanban/cards/{id}/dados-anexos` (validação de arquivo de até 10MB via `store('kanban_anexos', 'public')`).
+- **Exposição de Acesso:** Link simbólico `storage/app/public` conectado a `public/storage` via `php artisan storage:link`.
+
+### 16.2 Estrutura de Classes e Componentes
+```
+back/
+├── app/Http/Controllers/
+│   └── KanbanController.php          # Métodos moveCard, updateCard (anexos e notas) e destroyCard
+└── app/Models/
+    └── KanbanCard.php                # Entidade com casts para 'metadata' => 'array'
+
+front/
+├── paginas/
+│   └── kanban.html                   # Interface do pipeline com abas desacopladas e grid responsiva
+└── scripts/componentes/
+    ├── seletorGlobalStartup.js       # Sincronização multi-tenancy da startup ativa
+    └── sidebarGlobal.js              # Menu lateral unificado
+```
+
+---
+
+## 17. Glossário Técnico para a Banca
 

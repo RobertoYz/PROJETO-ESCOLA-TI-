@@ -39,6 +39,7 @@ Route::prefix('kanban')->group(function () {
     Route::get('/', [KanbanController::class, 'index']);
     Route::post('/cards', [KanbanController::class, 'storeCard']);
     Route::patch('/cards/{id}/mover', [KanbanController::class, 'moveCard']);
+    Route::post('/cards/{id}/dados-anexos', [KanbanController::class, 'updateCard']);
     Route::delete('/cards/{id}', [KanbanController::class, 'destroyCard']);
 });
 
