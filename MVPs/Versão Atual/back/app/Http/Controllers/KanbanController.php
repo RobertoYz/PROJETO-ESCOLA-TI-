@@ -135,4 +135,63 @@ class KanbanController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Atualiza dados de texto, anotações e anexos do Card.
+     */
+    public function updateCard(Request $request, int $id): JsonResponse
+    {
+        try {
+            $card = \App\Models\KanbanCard::findOrFail($id);
+
+            $dados = $request->validate([
+                'title' => 'nullable|string|max:255',
+                'description' => 'nullable|string',
+                'metadata' => 'nullable|array',
+                'arquivo' => 'nullable|file|max:10240' // até 10MB
+            ]);
+
+            if (isset($dados['title'])) $card->title = $dados['title'];
+            if (isset($dados['description'])) $card->description = $dados['description'];
+
+            $metaAtual = $card->metadata ?? [];
+
+            // Se enviou metadados de texto (anotações, valores, etc)
+            if (isset($dados['metadata'])) {
+                $metaAtual = array_merge($metaAtual, $dados['metadata']);
+            }
+
+            // Se fez upload de arquivo
+            if ($request->hasFile('arquivo')) {
+                $file = $request->file('arquivo');
+                $nomeOriginal = $file->getClientOriginalName();
+                $caminho = $file->store('kanban_anexos', 'public');
+
+                $anexosAtuais = $metaAtual['anexos'] ?? [];
+                $anexosAtuais[] = [
+                    'id' => uniqid(),
+                    'nome' => $nomeOriginal,
+                    'caminho' => '/storage/' . $caminho,
+                    'tamanho' => $file->getSize(),
+                    'enviado_em' => now()->toIso8601String()
+                ];
+                $metaAtual['anexos'] = $anexosAtuais;
+            }
+
+            $card->metadata = $metaAtual;
+            $card->save();
+
+            return response()->json([
+                'status' => 'sucesso',
+                'mensagem' => 'Card atualizado com sucesso!',
+                'data' => $card->load('edital')
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'erro',
+                'mensagem' => 'Falha ao atualizar card.',
+                'detalhe' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
