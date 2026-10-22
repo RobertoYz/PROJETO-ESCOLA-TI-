@@ -931,6 +931,7 @@
                         Aderência</button>
                     <button class="minuta-tab-btn" id="tabHistoricoBtn" onclick="switchMinutaTab('historico')">Histórico
                         e Versões</button>
+                    <button class="minuta-tab-btn" id="tabAnexosBtn" onclick="switchMinutaTab('anexos')">📁 Arquivos & Dados do Card</button>
                 </div>
 
                 <!-- ABA 1: GERADOR E EDITOR DE MINUTA -->
@@ -1036,6 +1037,58 @@
                     <div id="historicoMinutasList" style="display: flex; flex-direction: column; gap: 10px;">
                         <div style="color: #888;">Carregando histórico...</div>
                     </div>
+                <!-- ABA 4: ARQUIVOS, ANOTAÇÕES E DADOS DO CARD -->
+                <div id="tabContentAnexos" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <h3 style="font-size: 1rem; color: #fff; margin-bottom: 4px;">Documentação e Anotações da Proposta</h3>
+                            <span style="font-size: 0.8rem; color: #888;">Anexe planilhas de custos, certidões negativas (CNDs), declarações e anotações internas da submissão.</span>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem;">
+                        <!-- Anotações e Dados Customizados -->
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid #222; border-radius: 8px; padding: 1.2rem;">
+                            <h4 style="font-size: 0.9rem; color: #3b82f6; text-transform: uppercase; margin-bottom: 1rem;">Anotações Internas & Valores</h4>
+                            
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label class="form-label">Card / Edital Selecionado:</label>
+                                <select id="selectCardAnexo" class="form-select" onchange="carregarDadosCardSelecionado()"></select>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label class="form-label">Valor Estimado do Projeto (R$):</label>
+                                <input type="text" id="inputValorProjetoCard" class="form-input" placeholder="Ex: R$ 350.000,00" style="background: #111; border: 1px solid #333; padding: 8px 12px; border-radius: 6px; color: #fff; width: 100%;">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label class="form-label">Status da Documentação & Pendências:</label>
+                                <textarea id="txtNotasInternasCard" class="form-textarea" placeholder="Ex: CND federal regularizada. Aguardando carta de anuência da ICT parceira e validação do orçamento com o proponente..." style="background: #111; border: 1px solid #333; padding: 8px 12px; border-radius: 6px; color: #fff; width: 100%; min-height: 100px; resize: vertical;"></textarea>
+                            </div>
+
+                            <button type="button" class="btn-save" id="btnSalvarDadosCard" onclick="handleSalvarDadosCard()" style="padding: 8px 16px; font-size: 0.9rem; width: 100%;">
+                                💾 Salvar Informações do Card
+                            </button>
+                        </div>
+
+                        <!-- Upload e Lista de Arquivos Anexos -->
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid #222; border-radius: 8px; padding: 1.2rem; display: flex; flex-direction: column;">
+                            <h4 style="font-size: 0.9rem; color: #8b5cf6; text-transform: uppercase; margin-bottom: 1rem;">Anexos & Documentos do Projeto</h4>
+
+                            <div style="border: 2px dashed #444; border-radius: 8px; padding: 1.2rem; text-align: center; margin-bottom: 1rem; background: rgba(0,0,0,0.2);">
+                                <input type="file" id="inputUploadArquivoCard" style="display: none;" onchange="handleUploadArquivoCard(event)">
+                                <label for="inputUploadArquivoCard" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="#3b82f6"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                                    <span style="font-size: 0.85rem; color: #ddd; font-weight: 600;">Clique para anexar arquivo</span>
+                                    <span style="font-size: 0.75rem; color: #777;">PDF, DOCX, XLSX, PNG (Até 10MB)</span>
+                                </label>
+                            </div>
+
+                            <div id="listaAnexosCard" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 220px; flex: 1;">
+                                <div style="color: #666; font-size: 0.85rem; text-align: center; padding: 1rem;">Nenhum arquivo anexado a este card ainda.</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1095,13 +1148,18 @@
                         style="text-decoration: none;">
                         Abrir Edital Oficial ↗
                     </a>
-                    <button class="btn-ai-sparkle" id="detModalBtnGerarMinuta">
-                        <svg width="16" height="16" viewBox="0 0 24 24">
-                            <path fill="currentColor"
-                                d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
-                        </svg>
-                        Elaborar Proposta para Este Edital
-                    </button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-ai-secondary" id="detModalBtnAnexos" style="display: inline-flex; align-items: center; gap: 6px;">
+                            📁 Anexos & Dados do Card
+                        </button>
+                        <button class="btn-ai-sparkle" id="detModalBtnGerarMinuta">
+                            <svg width="16" height="16" viewBox="0 0 24 24">
+                                <path fill="currentColor"
+                                    d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                            </svg>
+                            Elaborar Proposta para Este Edital
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1566,6 +1624,19 @@
                 });
             };
 
+            // Ação de Abrir Anexos direto deste edital/card
+            const btnAnexos = document.getElementById('detModalBtnAnexos');
+            if (btnAnexos) {
+                btnAnexos.onclick = () => {
+                    modalEditalDetalhesOverlay.classList.remove('active');
+                    modalMinutaOverlay.classList.add('active');
+                    switchMinutaTab('anexos');
+                    if (card && card.id) {
+                        selecionarCardParaAnexos(card.id);
+                    }
+                };
+            }
+
             modalEditalDetalhesOverlay.classList.add('active');
         }
 
@@ -1574,6 +1645,8 @@
             document.getElementById('tabContentGerador').style.display = 'none';
             document.getElementById('tabContentFit').style.display = 'none';
             document.getElementById('tabContentHistorico').style.display = 'none';
+            const tabAnexosContent = document.getElementById('tabContentAnexos');
+            if (tabAnexosContent) tabAnexosContent.style.display = 'none';
 
             if (tabName === 'gerador') {
                 document.getElementById('tabMinutaBtn').classList.add('active');
@@ -1586,6 +1659,11 @@
                 document.getElementById('tabHistoricoBtn').classList.add('active');
                 document.getElementById('tabContentHistorico').style.display = 'block';
                 fetchHistoricoMinutas();
+            } else if (tabName === 'anexos') {
+                const tabAnexosBtn = document.getElementById('tabAnexosBtn');
+                if (tabAnexosBtn) tabAnexosBtn.classList.add('active');
+                if (tabAnexosContent) tabAnexosContent.style.display = 'block';
+                carregarOpcoesSelectCardsAnexo();
             }
         }
 
@@ -2008,6 +2086,237 @@
                 alert('Erro ao carregar minuta do histórico.');
             }
         }
+
+        // =========================================================================
+        // MÓDULO DE ANEXOS E DADOS DO CARD KANBAN
+        // =========================================================================
+        let todosCardsKanban = [];
+
+        function carregarOpcoesSelectCardsAnexo() {
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (!selectCard) return;
+
+            // Extrai todos os cards do quadro atual
+            todosCardsKanban = [];
+            if (currentBoard && currentBoard.columns) {
+                currentBoard.columns.forEach(col => {
+                    if (col.cards && col.cards.length > 0) {
+                        col.cards.forEach(c => todosCardsKanban.push(c));
+                    }
+                });
+            }
+
+            selectCard.innerHTML = '';
+            if (todosCardsKanban.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'Nenhum card cadastrado no Kanban';
+                selectCard.appendChild(opt);
+                limparCamposAnexos();
+                return;
+            }
+
+            todosCardsKanban.forEach(card => {
+                const opt = document.createElement('option');
+                opt.value = card.id;
+                opt.textContent = `${card.title} (ID #${card.id})`;
+                selectCard.appendChild(opt);
+            });
+
+            // Se ainda não selecionou nenhum, seleciona o primeiro
+            carregarDadosCardSelecionado();
+        }
+
+        function selecionarCardParaAnexos(cardId) {
+            carregarOpcoesSelectCardsAnexo();
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (selectCard) {
+                selectCard.value = cardId;
+                carregarDadosCardSelecionado();
+            }
+        }
+
+        function limparCamposAnexos() {
+            const inputValor = document.getElementById('inputValorProjetoCard');
+            const txtNotas = document.getElementById('txtNotasInternasCard');
+            const listaAnexos = document.getElementById('listaAnexosCard');
+            if (inputValor) inputValor.value = '';
+            if (txtNotas) txtNotas.value = '';
+            if (listaAnexos) listaAnexos.innerHTML = '<div style="color: #666; font-size: 0.85rem; text-align: center; padding: 1rem;">Nenhum card selecionado.</div>';
+        }
+
+        function carregarDadosCardSelecionado() {
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (!selectCard || !selectCard.value) {
+                limparCamposAnexos();
+                return;
+            }
+
+            const cardId = parseInt(selectCard.value);
+            const card = todosCardsKanban.find(c => c.id === cardId);
+            if (!card) return;
+
+            const meta = card.metadata || {};
+            const inputValor = document.getElementById('inputValorProjetoCard');
+            const txtNotas = document.getElementById('txtNotasInternasCard');
+
+            if (inputValor) inputValor.value = meta.valor_estimado || '';
+            if (txtNotas) txtNotas.value = meta.notas_internas || card.description || '';
+
+            renderizarListaAnexos(meta.anexos || []);
+        }
+
+        function renderizarListaAnexos(anexos) {
+            const container = document.getElementById('listaAnexosCard');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!anexos || anexos.length === 0) {
+                container.innerHTML = '<div style="color: #666; font-size: 0.85rem; text-align: center; padding: 1rem;">Nenhum arquivo anexado a este card ainda.</div>';
+                return;
+            }
+
+            anexos.forEach(arq => {
+                const item = document.createElement('div');
+                item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.04); border: 1px solid #333; padding: 8px 12px; border-radius: 6px;';
+
+                const tamanhoFmt = arq.tamanho ? `(${(arq.tamanho / 1024).toFixed(1)} KB)` : '';
+                const linkCompleto = arq.caminho.startsWith('http') ? arq.caminho : `http://127.0.0.1:8000${arq.caminho}`;
+
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+                        <span style="font-size: 1.1rem;">📄</span>
+                        <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <a href="${linkCompleto}" target="_blank" style="color: #3b82f6; text-decoration: none; font-size: 0.85rem; font-weight: 500;" title="${arq.nome}">
+                                ${arq.nome}
+                            </a>
+                            <span style="font-size: 0.75rem; color: #777; margin-left: 4px;">${tamanhoFmt}</span>
+                        </div>
+                    </div>
+                    <a href="${linkCompleto}" download target="_blank" style="color: #aaa; text-decoration: none; font-size: 0.8rem; padding: 2px 6px; border: 1px solid #444; border-radius: 4px; background: rgba(0,0,0,0.3);" title="Baixar">
+                        ⬇ Baixar
+                    </a>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        async function handleSalvarDadosCard() {
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (!selectCard || !selectCard.value) {
+                alert('Selecione um card para salvar os dados.');
+                return;
+            }
+
+            const cardId = selectCard.value;
+            const valor = document.getElementById('inputValorProjetoCard')?.value.trim();
+            const notas = document.getElementById('txtNotasInternasCard')?.value.trim();
+
+            const btn = document.getElementById('btnSalvarDadosCard');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Salvando...';
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/dados-anexos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    },
+                    body: JSON.stringify({
+                        metadata: {
+                            valor_estimado: valor,
+                            notas_internas: notas
+                        }
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.status === 'sucesso') {
+                    // Atualiza cache local
+                    const card = todosCardsKanban.find(c => c.id === parseInt(cardId));
+                    if (card) {
+                        card.metadata = card.metadata || {};
+                        card.metadata.valor_estimado = valor;
+                        card.metadata.notas_internas = notas;
+                    }
+                    alert('Dados do card salvos com sucesso!');
+                    fetchBoard();
+                } else {
+                    alert('Erro ao salvar informações do card: ' + (data.mensagem || 'Falha na requisição.'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de comunicação ao salvar dados do card.');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '💾 Salvar Informações do Card';
+                }
+            }
+        }
+
+        async function handleUploadArquivoCard(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (!selectCard || !selectCard.value) {
+                alert('Selecione um card no seletor antes de anexar arquivos.');
+                event.target.value = '';
+                return;
+            }
+
+            const cardId = selectCard.value;
+            const formData = new FormData();
+            formData.append('arquivo', file);
+
+            const container = document.getElementById('listaAnexosCard');
+            if (container) {
+                container.insertAdjacentHTML('afterbegin', `<div id="uploadingNotice" style="color: #3b82f6; font-size: 0.85rem; padding: 6px;">Enviando ${file.name}...</div>`);
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/dados-anexos`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (res.ok && data.status === 'sucesso') {
+                    // Atualiza cache local do card
+                    const card = todosCardsKanban.find(c => c.id === parseInt(cardId));
+                    if (card && data.card) {
+                        card.metadata = data.card.metadata;
+                        renderizarListaAnexos(card.metadata?.anexos || []);
+                    }
+                    alert(`Arquivo "${file.name}" anexado com sucesso!`);
+                    fetchBoard();
+                } else {
+                    alert('Falha no upload do arquivo: ' + (data.mensagem || 'Erro desconhecido'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de comunicação durante o upload do arquivo.');
+            } finally {
+                const notice = document.getElementById('uploadingNotice');
+                if (notice) notice.remove();
+                event.target.value = '';
+            }
+        }
+
+        // Exportação global para manipuladores inline
+        window.carregarDadosCardSelecionado = carregarDadosCardSelecionado;
+        window.handleSalvarDadosCard = handleSalvarDadosCard;
+        window.handleUploadArquivoCard = handleUploadArquivoCard;
+        window.selecionarCardParaAnexos = selecionarCardParaAnexos;
     </script>
 
 </body>
