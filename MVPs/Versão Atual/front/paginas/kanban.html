@@ -1921,12 +1921,26 @@
             container.innerHTML = '<div style="color: #888;">Buscando histórico do edital...</div>';
 
             try {
-                let url = `${API_BASE}/minutas`;
-                if (modoFiltro === 'atual' && editalAtualId) {
-                    url += `?edital_id=${editalAtualId}`;
+                const stAtivaId = localStorage.getItem('startup_ativa_id');
+                const params = new URLSearchParams();
+
+                if (stAtivaId) {
+                    params.append('startup_id', stAtivaId);
                 }
 
-                const res = await fetch(url);
+                if (modoFiltro === 'atual' && editalAtualId) {
+                    params.append('edital_id', editalAtualId);
+                }
+
+                const queryString = params.toString() ? `?${params.toString()}` : '';
+                const url = `${API_BASE}/minutas${queryString}`;
+
+                const res = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    }
+                });
                 const data = await res.json();
 
                 if (res.ok && data.sucesso) {
