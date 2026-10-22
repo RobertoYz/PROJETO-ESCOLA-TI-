@@ -504,18 +504,38 @@
         .form-input,
         .form-textarea,
         .form-select {
-            background: #111;
-            border: 1px solid #333;
+            background: #111418;
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: #fff;
-            padding: 10px;
-            border-radius: 6px;
+            padding: 10px 12px;
+            border-radius: 8px;
             font-size: 0.9rem;
             outline: none;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .form-select {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            cursor: pointer;
+            padding-right: 24px;
+        }
+
+        .form-select option {
+            background: #111418;
+            color: #fff;
+            padding: 8px;
+            white-space: normal;
+            word-wrap: break-word;
         }
 
         .form-input:focus,
-        .form-textarea:focus {
-            border-color: var(--accent-blue);
+        .form-textarea:focus,
+        .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
 
         .modal-actions {
@@ -599,15 +619,21 @@
             border-radius: 4px;
         }
 
+        .minuta-tabs-container {
+            background: #111418;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 10px 1.75rem;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
         .minuta-tabs {
             display: flex;
-            gap: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding-bottom: 8px;
-            margin-bottom: 8px;
+            gap: 10px;
             overflow-x: auto;
             scrollbar-width: none;
             white-space: nowrap;
+            align-items: center;
         }
 
         .minuta-tabs::-webkit-scrollbar {
@@ -616,31 +642,33 @@
 
         .minuta-tab-btn {
             background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             color: #94a3b8;
             font-size: 0.88rem;
             font-weight: 500;
-            padding: 8px 16px;
+            padding: 9px 18px;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
             flex-shrink: 0;
+            line-height: 1.2;
         }
 
         .minuta-tab-btn:hover {
             color: #fff;
             background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .minuta-tab-btn.active {
-            background: linear-gradient(135deg, rgba(27, 54, 255, 0.25), rgba(139, 92, 246, 0.2));
+            background: linear-gradient(135deg, rgba(27, 54, 255, 0.35), rgba(139, 92, 246, 0.25));
             color: #fff;
             font-weight: 600;
-            border: 1px solid rgba(99, 102, 241, 0.45);
+            border: 1px solid rgba(99, 102, 241, 0.55);
             box-shadow: 0 4px 15px rgba(27, 54, 255, 0.25);
         }
 
@@ -1042,8 +1070,8 @@
                 <button class="btn-cancel" id="btnCloseMinutaModal" style="padding: 4px 10px;">&times;</button>
             </div>
 
-            <div class="modal-minuta-body">
-                <!-- ABAS DO MÓDULO -->
+            <!-- BARRA DE ABAS FIXA (SEM CORTE DE SCROLL) -->
+            <div class="minuta-tabs-container">
                 <div class="minuta-tabs">
                     <button class="minuta-tab-btn active" id="tabMinutaBtn" onclick="switchMinutaTab('gerador')">Plano
                         de Trabalho / Minuta</button>
@@ -1053,7 +1081,9 @@
                         e Versões</button>
                     <button class="minuta-tab-btn" id="tabAnexosBtn" onclick="switchMinutaTab('anexos')">📁 Arquivos & Dados do Card</button>
                 </div>
+            </div>
 
+            <div class="modal-minuta-body">
                 <!-- ABA 1: GERADOR E EDITOR DE MINUTA -->
                 <div id="tabContentGerador">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -2303,7 +2333,10 @@
             todosCardsKanban.forEach(card => {
                 const opt = document.createElement('option');
                 opt.value = card.id;
-                opt.textContent = `${card.title} (ID #${card.id})`;
+                const fullTitle = card.title || 'Card sem título';
+                const shortTitle = fullTitle.length > 65 ? fullTitle.substring(0, 65) + '...' : fullTitle;
+                opt.textContent = `${shortTitle} (#${card.id})`;
+                opt.title = fullTitle;
                 selectCard.appendChild(opt);
             });
 
