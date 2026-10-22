@@ -97,7 +97,7 @@ A arquitetura do Anjo Nexus foi concebida sob o paradigma **API-First e Arquitet
 
 ## 3. Decisões Arquiteturais Fundamentais (Matriz de ADRs)
 
-A banca avaliadora valoriza intensamente a justificativa do **porquê** as decisões foram tomadas. A tabela abaixo resume os 12 Registros de Decisões Arquiteturais (ADRs):
+A banca avaliadora valoriza intensamente a justificativa do **porquê** as decisões foram tomadas. A tabela abaixo resume os 13 Registros de Decisões Arquiteturais (ADRs):
 
 | ADR | Decisão Tomada | Alternativa Rejeitada | Justificativa Acadêmica para a Banca |
 | :--- | :--- | :--- | :--- |
@@ -113,6 +113,7 @@ A banca avaliadora valoriza intensamente a justificativa do **porquê** as decis
 | **010** | Vanilla JS no Frontend (Fase 1) | Frameworks pesados (React, Angular, Vue) | Elimina pipeline complexo de build (`npm run build`), dependências frágeis e foca na validação da API REST. |
 | **011** | Arquitetura Híbrida de Scraping | Solução única genérica para todas as fontes | Respeita a heterogeneidade da web pública brasileira (Liferay na FINEP vs WordPress na FAPESC). |
 | **012** | Gerador Nativo OpenXML (.docx) e Minutas em 11 Seções | Pacotes PHP externos pesados (`phpoffice/phpword`)| Geração leve e independente via `ZipArchive` do PHP; alinhamento estrito ao modelo Anjo Inovador/FAPESC. |
+| **013** | Metadados JSON e Storage Link para Anexos do Kanban | Tabelas relacionais rígidas para cada tipo de anexo | Flexibilidade schema-less sem migrações frequentes; download direto sem bloqueio de permissão (EDTAN-183/EDTAN-175). |
 
 ---
 
@@ -168,6 +169,7 @@ erDiagram
         bigint edital_id FK
         string title
         integer position
+        json metadata
     }
 
     MINUTAS {
@@ -189,6 +191,8 @@ erDiagram
 ### 4.2 Destaques de Modelagem para Argumentação:
 - **Auto-Relacionamento em `minutas` (`parent_minuta_id`):** Implementa o padrão de **Versionamento Imutável**. Ao editar uma proposta, o sistema nunca sobrescreve o texto anterior; ele cria uma nova linha com `versao = versao + 1` e aponta para a matriz, assegurando auditoria completa (RF-33 e RF-34).
 - **Coluna JSON `secoes_estruturadas`:** Permite armazenar as 11 seções como entidades atômicas pesquisáveis (ex: buscar todas as propostas que citam *ODS 9* ou *TRL 7*), combinando a rigidez do modelo relacional com a flexibilidade NoSQL do formato JSON.
+- **Coluna JSON `metadata` em `kanban_cards` (ADR 013):** Permite armazenar dinamicamente listas de anexos submetidos (com nome original, tamanho, mime type e caminho no storage público), anotações operacionais internas da consultoria e valor do projeto orçado em R$, sem necessitar de migrações complexas de esquema relacional.
+- **Isolamento de Entidades por Startup (Multi-tenancy Lógico):** As tabelas `kanban_boards`, `minutas` e cruzamentos de aderência estão estritamente atreladas a `startup_id`. O frontend propaga o identificador da empresa selecionada em todas as requisições (`X-Startup-Id` / payload), garantindo que cada startup acesse exclusivamente o seu próprio pipeline de oportunidades e histórico de documentos.
 
 ---
 
@@ -235,6 +239,10 @@ O portal da FINEP utiliza o CMS corporativo Liferay com renderização assíncro
 - **Implementação:**
   - Drag and Drop nativo em HTML5 (`dragstart`, `dragover`, `drop`).
   - Sincronização em tempo real via endpoint `POST /api/kanban/cards/mover`, recalculando as posições ordinais no banco de dados para persistência consistente.
+- **Gestão Avançada de Cards e Documentos (ADR 013 / EDTAN-183 / EDTAN-175):**
+  - **Upload de Anexos:** Permite anexar arquivos complementares (PDF, DOCX, XLSX, imagens de até 10MB) por oportunidade. O upload é validado via `POST /api/kanban/cards/{id}/anexos` e gravado no disco público do Laravel (`storage/app/public/kanban_anexos`), gerando URLs acessíveis de download imediato via symlink (`php artisan storage:link`).
+  - **Dados Customizados & Anotações:** Permite ao consultor salvar o valor pleiteado do projeto (R$) e notas internas de pendências e prazos (`PUT /api/kanban/cards/{id}/dados`).
+  - **Interface Responsiva & Não-Bloqueante:** O modal de detalhamento do card divide-se em sub-abas dedicadas (*Minuta / Plano de Trabalho*, *Diagnóstico de Aderência*, *Histórico de Versões* e *Anexos & Dados do Card*), contando com layout estático que impede cortes de layout ou rolagem indesejada do cabeçalho.
 
 ---
 
@@ -293,6 +301,16 @@ A maioria dos projetos acadêmicos instala bibliotecas genéricas como `phpoffic
 
 ---
 
+### 5.8 Isolamento Multi-tenancy e Perfil da Startup (Autocadastro via CNPJ)
+- **Multi-tenancy Lógico no Frontend e Backend:**
+  - O sistema opera com suporte a múltiplos clientes corporativos (startups). A empresa selecionada é mantida no `localStorage` do navegador e disponibilizada de forma reativa e consistente em todas as telas (`seletorGlobalStartup.js`).
+  - Cada requisição de kanban (`/api/kanban`), minuta ou histórico injeta o cabeçalho `X-Startup-Id` ou parâmetro `startup_id`, garantindo que um consultor nunca visualize dados cruzados entre diferentes clientes.
+- **Autocadastro e Integração com Receita Federal via CNPJ:**
+  - No módulo **Perfil da Startup** (`cadastrarStartup.js`), o usuário informa o CNPJ e o sistema consulta automaticamente a API pública (ex: ReceitaWS / BrasilAPI), preenchendo Razão Social, Nome Fantasia, CNAE, Porte, Endereço e Situação Cadastral em tempo real.
+  - O consultor pode enriquecer a proposta de valor, diferencial competitivo, faturamento e tecnologias-chave, abastecendo o motor de IA para os futuros diagnósticos de aderência.
+
+---
+
 ## 6. Simulador de Perguntas & Respostas da Banca (Q&A de Arguição)
 
 ### P1: "Por que vocês não usaram um framework moderno no Frontend, como React ou Next.js?"
@@ -322,6 +340,18 @@ A maioria dos projetos acadêmicos instala bibliotecas genéricas como `phpoffic
 ### P5: "Como vocês geram o arquivo .docx sem instalar o pacote PHPWord?"
 > **Resposta Ideal:**  
 > *"Arquivos .docx são, por especificação da ISO/IEC 29500, arquivos ZIP contendo uma estrutura de documentos XML (OpenXML). Nossa classe `DocumentExportService` instancia a extensão nativa `ZipArchive` do PHP e monta diretamente o pacote com os arquivos `[Content_Types].xml`, `_rels/.rels` e `word/document.xml`. Essa abordagem consome uma fração mínima de memória RAM, elimina dezenas de dependências de terceiros e entrega um documento leve e 100% formatado para o usuário."*
+
+---
+
+### P6: "Como vocês gerenciam anexos de documentos e notas nos cards sem criar tabelas intermediárias complexas?"
+> **Resposta Ideal:**  
+> *"Formalizamos essa escolha na ADR 013. Ao invés de criarmos tabelas relacionais rígidas e acopladas para notas operacionais e listas de anexos que sofrem mutação constante na esteira ágil, utilizamos a coluna `json metadata` nativa em `kanban_cards`. Os arquivos físicos são validados e salvos no storage público do Laravel (`storage/app/public/kanban_anexos`) e expostos via link simbólico web (`storage:link`). Apenas a referência semântica (nome, caminho, tamanho e data) é mantida no JSON. Isso garante alta performance, consultas diretas e zero necessidade de migrações estruturais no banco para novos atributos operacionais."*
+
+---
+
+### P7: "Como a plataforma garante o isolamento de dados entre diferentes startups clientes (Multi-tenancy)?"
+> **Resposta Ideal:**  
+> *"Adotamos a arquitetura de Multi-tenancy Lógico via chave estrangeira `startup_id`. O frontend dispõe de um módulo unificado de contexto de startup (`seletorGlobalStartup.js`) que sincroniza a empresa ativa e valida a existência desse contexto no carregamento das views. Todas as chamadas ao Kanban, pipeline de oportunidades, histórico de minutas e cálculo de aderência passam obrigatoriamente pelo identificador da startup ativa. No backend, as consultas Eloquent filtram com cláusulas `where('startup_id', ...)` garantindo que um consultor ou empresa nunca acesse minutas ou cards de outros clientes."*
 
 ---
 
