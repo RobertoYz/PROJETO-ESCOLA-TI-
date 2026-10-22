@@ -1037,6 +1037,8 @@
                     <div id="historicoMinutasList" style="display: flex; flex-direction: column; gap: 10px;">
                         <div style="color: #888;">Carregando histórico...</div>
                     </div>
+                </div>
+
                 <!-- ABA 4: ARQUIVOS, ANOTAÇÕES E DADOS DO CARD -->
                 <div id="tabContentAnexos" style="display: none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -1229,6 +1231,7 @@
         function renderBoard(board) {
             const container = document.getElementById('kanbanBoard');
             container.innerHTML = '';
+            todosCardsKanban = [];
 
             if (board.title) {
                 const boardTitleEl = document.getElementById('boardTitle');
@@ -1255,6 +1258,7 @@
                 const colBody = colEl.querySelector('.column-body');
                 if (col.cards && col.cards.length > 0) {
                     col.cards.forEach(card => {
+                        todosCardsKanban.push(card);
                         colBody.appendChild(createCardElement(card));
                     });
                 }
@@ -1298,12 +1302,7 @@
                 </div>
             `;
 
-            initCardDragEvents(cardEl);
-
-            cardEl.addEventListener('click', (e) => {
-                if (e.target.closest('.btn-card-del')) return;
-                abrirModalDetalhesEdital(card);
-            });
+            initCardDragEvents(cardEl, card);
 
             return cardEl;
         }
@@ -1322,14 +1321,28 @@
             return 'match-low';
         }
 
-        function initCardDragEvents(cardEl) {
+        function initCardDragEvents(cardEl, cardObj) {
+            let wasDragged = false;
+
             cardEl.addEventListener('dragstart', () => {
+                wasDragged = true;
                 cardEl.classList.add('dragging');
             });
 
             cardEl.addEventListener('dragend', () => {
                 cardEl.classList.remove('dragging');
                 updateCounters();
+                setTimeout(() => { wasDragged = false; }, 100);
+            });
+
+            cardEl.addEventListener('click', (e) => {
+                if (wasDragged) return;
+                if (e.target.closest('.btn-card-del')) return;
+                const cardId = parseInt(cardEl.dataset.cardId);
+                const targetCard = cardObj || todosCardsKanban.find(c => c.id === cardId);
+                if (targetCard) {
+                    abrirModalDetalhesEdital(targetCard);
+                }
             });
         }
 
@@ -1553,91 +1566,138 @@
         }
 
         function abrirModalDetalhesEdital(card) {
-            const edital = card.edital || card.metadata || {};
-            const org = edital.fonte || edital.org || 'EDITAL';
-            const titulo = edital.title || card.title || 'Edital de Inovação';
-            const orcamento = edital.max_budget ? 'R$ ' + Number(edital.max_budget).toLocaleString('pt-BR') : 'Conforme Edital';
-            const prazo = edital.deadline ? new Date(edital.deadline).toLocaleDateString('pt-BR') : 'Fluxo Contínuo / A Definir';
-            const publico = edital.publico || 'Startups, Micro e Pequenas Empresas';
-            const trlNicho = `${edital.ai_trl || 'Geral'} | ${edital.ai_nicho || edital.nicho || 'Inovação'}`;
-            const objetivo = edital.conteudo_completo || edital.objetivo || card.description || 'Diretrizes em conformidade com o regulamento oficial do edital.';
-            const link = edital.source_url || edital.url || '#';
+            try {
+                if (!card) return;
+                const meta = card.metadata || {};
+                const edital = card.edital || meta.edital || meta || {};
+                const org = edital.fonte || meta.fonte || edital.org || 'EDITAL';
+                const titulo = edital.title || meta.title || card.title || 'Edital de Inovação';
+                
+                let orcamento = 'Conforme Edital';
+                const budgetVal = edital.max_budget || meta.max_budget;
+                if (budgetVal && !isNaN(Number(budgetVal))) {
+                    orcamento = 'R$ ' + Number(budgetVal).toLocaleString('pt-BR');
+                } else if (budgetVal) {
+                    orcamento = String(budgetVal);
+                }
 
-            document.getElementById('detModalOrgTag').textContent = org;
-            document.getElementById('detModalOrgTag').className = `tag ${getTagClass(org)}`;
-            document.getElementById('detModalTitle').textContent = titulo;
-            document.getElementById('detModalBudget').textContent = orcamento;
-            document.getElementById('detModalDeadline').textContent = prazo;
-            document.getElementById('detModalTarget').textContent = publico;
-            document.getElementById('detModalNicho').textContent = trlNicho;
-            document.getElementById('detModalObjetivo').textContent = objetivo;
+                let prazo = 'Fluxo Contínuo / A Definir';
+                const deadlineVal = edital.deadline || meta.deadline;
+                if (deadlineVal) {
+                    try {
+                        const d = new Date(deadlineVal);
+                        if (!isNaN(d.getTime())) prazo = d.toLocaleDateString('pt-BR');
+                    } catch (_) {}
+                }
 
-            const linkEl = document.getElementById('detModalLinkOficial');
-            if (link && link !== '#') {
-                linkEl.href = link;
-                linkEl.style.display = 'inline-flex';
-            } else {
-                linkEl.style.display = 'none';
-            }
+                const publico = edital.publico || meta.publico || 'Startups, Micro e Pequenas Empresas';
+                const trlNicho = `${edital.ai_trl || meta.ai_trl || 'Geral'} | ${edital.ai_nicho || meta.ai_nicho || edital.nicho || 'Inovação'}`;
+                const objetivo = edital.conteudo_completo || meta.conteudo_completo || edital.objetivo || meta.objetivo || card.description || 'Diretrizes em conformidade com o regulamento oficial do edital.';
+                const link = edital.source_url || meta.source_url || edital.url || meta.url || '#';
 
-            // Documentos exigidos
-            const docsList = document.getElementById('detModalDocsList');
-            const docsSec = document.getElementById('detModalDocsSection');
-            const docs = edital.documentos_exigidos || edital.documentos || [];
-            if (docs && docs.length > 0) {
-                docsSec.style.display = 'block';
-                docsList.innerHTML = '';
-                docs.forEach(d => {
-                    const docItem = document.createElement('div');
-                    docItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; color: #e0e0e0;';
+                const elOrg = document.getElementById('detModalOrgTag');
+                if (elOrg) {
+                    elOrg.textContent = org;
+                    elOrg.className = `tag ${getTagClass(org)}`;
+                }
+                const elTitle = document.getElementById('detModalTitle');
+                if (elTitle) elTitle.textContent = titulo;
+                const elBudget = document.getElementById('detModalBudget');
+                if (elBudget) elBudget.textContent = orcamento;
+                const elDeadline = document.getElementById('detModalDeadline');
+                if (elDeadline) elDeadline.textContent = prazo;
+                const elTarget = document.getElementById('detModalTarget');
+                if (elTarget) elTarget.textContent = publico;
+                const elNicho = document.getElementById('detModalNicho');
+                if (elNicho) elNicho.textContent = trlNicho;
+                const elObj = document.getElementById('detModalObjetivo');
+                if (elObj) elObj.textContent = objetivo;
 
-                    const tituloDoc = typeof d === 'string' ? d : (d.titulo || d.nome || d.title || d.texto || 'Documento Exigido');
-                    const linkDoc = typeof d === 'object' && d.link && d.link !== '#' ? d.link : null;
+                const linkEl = document.getElementById('detModalLinkOficial');
+                if (linkEl) {
+                    if (link && link !== '#') {
+                        linkEl.href = link;
+                        linkEl.style.display = 'inline-flex';
+                    } else {
+                        linkEl.style.display = 'none';
+                    }
+                }
 
-                    docItem.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="color: #10b981; font-weight: bold;">✔</span>
-                            <span>${tituloDoc}</span>
-                        </div>
-                        ${linkDoc ? `<a href="${linkDoc}" target="_blank" style="color: var(--accent-purple); text-decoration: none; font-size: 0.8rem; margin-left: 10px;">Ver anexo ↗</a>` : ''}
-                    `;
-                    docsList.appendChild(docItem);
-                });
-            } else {
-                docsSec.style.display = 'none';
-            }
+                // Documentos exigidos
+                const docsList = document.getElementById('detModalDocsList');
+                const docsSec = document.getElementById('detModalDocsSection');
+                const rawDocs = edital.documentos_exigidos || meta.documentos_exigidos || edital.documentos || meta.documentos || [];
+                const docs = Array.isArray(rawDocs) ? rawDocs : [];
+                
+                if (docsSec && docsList) {
+                    if (docs.length > 0) {
+                        docsSec.style.display = 'block';
+                        docsList.innerHTML = '';
+                        docs.forEach(d => {
+                            const docItem = document.createElement('div');
+                            docItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; color: #e0e0e0;';
 
-            // Ação de Gerar Minuta direto deste edital
-            const btnGerar = document.getElementById('detModalBtnGerarMinuta');
-            btnGerar.onclick = () => {
-                modalEditalDetalhesOverlay.classList.remove('active');
-                modalMinutaOverlay.classList.add('active');
-                switchMinutaTab('gerador');
-                carregarStartupsEEditaisMinuta().then(() => {
-                    if (edital && edital.id) {
-                        const selE = document.getElementById('selectMinutaEdital');
-                        if (selE) {
-                            selE.value = edital.id;
-                            handleTrocarEditalMinuta();
+                            const tituloDoc = typeof d === 'string' ? d : (d.titulo || d.nome || d.title || d.texto || 'Documento Exigido');
+                            const linkDoc = typeof d === 'object' && d.link && d.link !== '#' ? d.link : null;
+
+                            docItem.innerHTML = `
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="color: #10b981; font-weight: bold;">✔</span>
+                                    <span>${tituloDoc}</span>
+                                </div>
+                                ${linkDoc ? `<a href="${linkDoc}" target="_blank" style="color: var(--accent-purple); text-decoration: none; font-size: 0.8rem; margin-left: 10px;">Ver anexo ↗</a>` : ''}
+                            `;
+                            docsList.appendChild(docItem);
+                        });
+                    } else {
+                        docsSec.style.display = 'none';
+                    }
+                }
+
+                // Ação de Gerar Minuta direto deste edital
+                const btnGerar = document.getElementById('detModalBtnGerarMinuta');
+                if (btnGerar) {
+                    btnGerar.onclick = () => {
+                        modalEditalDetalhesOverlay.classList.remove('active');
+                        modalMinutaOverlay.classList.add('active');
+                        switchMinutaTab('gerador');
+                        carregarStartupsEEditaisMinuta().then(() => {
+                            if (edital && edital.id) {
+                                const selE = document.getElementById('selectMinutaEdital');
+                                if (selE) {
+                                    selE.value = edital.id;
+                                    handleTrocarEditalMinuta();
+                                }
+                            }
+                        });
+                    };
+                }
+
+                // Ação de Abrir Anexos direto deste edital/card
+                const btnAnexos = document.getElementById('detModalBtnAnexos');
+                if (btnAnexos) {
+                    btnAnexos.onclick = () => {
+                        modalEditalDetalhesOverlay.classList.remove('active');
+                        modalMinutaOverlay.classList.add('active');
+                        switchMinutaTab('anexos');
+                        if (card && card.id) {
+                            selecionarCardParaAnexos(card.id);
                         }
-                    }
-                });
-            };
+                    };
+                }
 
-            // Ação de Abrir Anexos direto deste edital/card
-            const btnAnexos = document.getElementById('detModalBtnAnexos');
-            if (btnAnexos) {
-                btnAnexos.onclick = () => {
-                    modalEditalDetalhesOverlay.classList.remove('active');
-                    modalMinutaOverlay.classList.add('active');
+                const overlay = document.getElementById('modalEditalDetalhesOverlay');
+                if (overlay) overlay.classList.add('active');
+            } catch (err) {
+                console.error('Erro ao abrir detalhes do edital:', err);
+                // Fallback seguro: abre direto o modal de anexos/minuta
+                const overlayMinuta = document.getElementById('modalMinutaOverlay');
+                if (overlayMinuta) {
+                    overlayMinuta.classList.add('active');
                     switchMinutaTab('anexos');
-                    if (card && card.id) {
-                        selecionarCardParaAnexos(card.id);
-                    }
-                };
+                    if (card && card.id) selecionarCardParaAnexos(card.id);
+                }
             }
-
-            modalEditalDetalhesOverlay.classList.add('active');
         }
 
         function switchMinutaTab(tabName) {
