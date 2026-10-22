@@ -14,6 +14,19 @@ export async function criarNovaStartup(dadosStartup) {
     });
 }
 
+export async function obterStartupPorId(id) {
+    return await requisicaoApi(`/startups/${id}`, {
+        method: 'GET'
+    });
+}
+
+export async function atualizarStartup(id, dados) {
+    return await requisicaoApi(`/startups/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(dados)
+    });
+}
+
 export async function consultarDadosCnpj(cnpj) {
     const apenasDigitos = cnpj.replace(/\D/g, '');
     return await requisicaoApi(`/cnpj/${apenasDigitos}`, {
