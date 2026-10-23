@@ -97,7 +97,7 @@ A arquitetura do Anjo Nexus foi concebida sob o paradigma **API-First e Arquitet
 
 ## 3. Decisões Arquiteturais Fundamentais (Matriz de ADRs)
 
-A banca avaliadora valoriza intensamente a justificativa do **porquê** as decisões foram tomadas. A tabela abaixo resume os 12 Registros de Decisões Arquiteturais (ADRs):
+A banca avaliadora valoriza intensamente a justificativa do **porquê** as decisões foram tomadas. A tabela abaixo resume os 13 Registros de Decisões Arquiteturais (ADRs):
 
 | ADR | Decisão Tomada | Alternativa Rejeitada | Justificativa Acadêmica para a Banca |
 | :--- | :--- | :--- | :--- |
@@ -113,6 +113,7 @@ A banca avaliadora valoriza intensamente a justificativa do **porquê** as decis
 | **010** | Vanilla JS no Frontend (Fase 1) | Frameworks pesados (React, Angular, Vue) | Elimina pipeline complexo de build (`npm run build`), dependências frágeis e foca na validação da API REST. |
 | **011** | Arquitetura Híbrida de Scraping | Solução única genérica para todas as fontes | Respeita a heterogeneidade da web pública brasileira (Liferay na FINEP vs WordPress na FAPESC). |
 | **012** | Gerador Nativo OpenXML (.docx) e Minutas em 11 Seções | Pacotes PHP externos pesados (`phpoffice/phpword`)| Geração leve e independente via `ZipArchive` do PHP; alinhamento estrito ao modelo Anjo Inovador/FAPESC. |
+| **013** | Gestão de Anexos e Metadados no Card em JSON | Tabela relacional rígida com colunas fixas | Flexibilidade schema-less para notas e múltiplos anexos até 10MB no Kanban. |
 
 ---
 
@@ -231,10 +232,13 @@ O portal da FINEP utiliza o CMS corporativo Liferay com renderização assíncro
 ---
 
 ### 5.4 Esteira Kanban e Gestão do Pipeline (`KanbanService.php` e `kanban.html`)
-- **Objetivo:** Permitir ao consultor acompanhar oportunidades em colunas de fluxo contínuo (*Backlog*, *Em Análise*, *Minuta em Elaboração*, *Submetido*, *Aprovado*).
+- **Objetivo:** Permitir ao consultor acompanhar oportunidades em colunas de fluxo contínuo (*Backlog/Triagem*, *Em Análise*, *Minuta em Elaboração*, *Submetido*, *Aprovado*).
 - **Implementação:**
-  - Drag and Drop nativo em HTML5 (`dragstart`, `dragover`, `drop`).
-  - Sincronização em tempo real via endpoint `POST /api/kanban/cards/mover`, recalculando as posições ordinais no banco de dados para persistência consistente.
+  - **Drag and Drop Nativo:** Eventos HTML5 (`dragstart`, `dragover`, `drop`) com cálculo dinâmico de ordenação e posições flutuantes (*midpoint ordering*).
+  - **Persistência RESTful:** Endpoint `PATCH /api/kanban/cards/{id}/mover`, recalculando as posições ordinais no banco de dados para persistência consistente.
+  - **Gestão de Anexos e Metadados (ADR 013 / EDTAN-183):** Endpoint `POST /api/kanban/cards/{id}/dados-anexos` para upload de arquivos de até 10MB (CNDs, planilhas orçamentárias, cartas de anuência) e salvamento de valor estimado do projeto (R$) e notas internas na coluna `metadata` (JSON) de `kanban_cards`.
+  - **Isolamento Multi-tenant (B2B):** Filtragem dinâmica do quadro por startup ativa selecionada no cabeçalho global (`seletorGlobalStartup.js`).
+  - **Exclusão e Ações Rápidas:** Remoção de cards via `DELETE /api/kanban/cards/{id}` e botão de acionamento direto para geração de minuta técnica com IA.
 
 ---
 
