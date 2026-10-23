@@ -2236,6 +2236,42 @@ npm run cap:open
 - **Emulador Android:** Mapeia `10.0.2.2:8000` para alcançar o backend Laravel no computador host.
 - **Dispositivo Físico:** Seletor de IP em tempo real integrado no próprio app (ícone de engrenagem no cabeçalho), permitindo conectar no IP local da máquina via Wi-Fi sem recompilar.
 
+### 17.4 Pipeline de Geração e Distribuição do APK / AAB em Produção
+
+Quando a aplicação passar para o ambiente de produção, a compilação e a distribuição do instalador móvel seguem o roteiro técnico abaixo:
+
+#### 1. Configuração de Domínio e Sincronização
+No cliente `mobile/www/js/api.js`, altera-se o endpoint padrão para a URL oficial em HTTPS com SSL:
+```javascript
+function getDefaultApiUrl() {
+  return 'https://api.anjonexus.com.br/api';
+}
+```
+Em seguida, propaga-se a alteração para a plataforma nativa:
+```bash
+cd "MVPs/Versão Atual/mobile"
+npm run cap:sync
+```
+
+#### 2. Assinatura Digital e Compilação do APK Release
+No Android Studio (`npm run cap:open`):
+1. Acesse o menu **Build** > **Generate Signed Bundle / APK...**.
+2. Selecione **APK** (para distribuição direta B2B) ou **Android App Bundle (.aab)** (para publicação na Google Play Store).
+3. Crie ou selecione o arquivo de chaves de assinatura segura (*Keystore* `.jks`).
+4. Escolha a variante **`release`** e marque as opções de assinatura **V1 (Jar Signature)** e **V2 (Full APK Signature)**.
+5. Clique em **Finish**. O APK assinado e minificado será gerado em:  
+   `MVPs/Versão Atual/mobile/android/app/release/app-release.apk`.
+
+*Ou alternativamente via Gradle CLI no terminal:*
+```bash
+cd "MVPs/Versão Atual/mobile/android"
+.\gradlew.bat assembleRelease
+```
+
+#### 3. Estratégia de Distribuição aos Usuários Finais (Defesa para a Banca)
+- **Canal Direto B2B (Sideloading no Portal Web):** O arquivo é renomeado para `anjonexus-radar-editais.apk`, publicado no diretório público do servidor web (ou anexado em uma *Release* do GitHub) e disponibilizado por meio de um botão `"Baixar App Android (.APK)"` na landing page do sistema SaaS. O cliente instala diretamente no celular sem fricção de conta Google.
+- **Canal Oficial (Google Play Console):** O arquivo `.aab` é submetido na esteira de produção do Google Play Console para distribuição global automatizada.
+
 ---
 
 ## 18. Glossário Técnico para a Banca
