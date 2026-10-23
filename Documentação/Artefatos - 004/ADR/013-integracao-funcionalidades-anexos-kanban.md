@@ -3,7 +3,7 @@
 ## Status
 Aceito
 
-## Contexto (Jira EDTAN-183 / EDTAN-175)
+## Contexto (Jira EDTAN-184 / EDTAN-183 / EDTAN-175)
 No ciclo operacional de assessoria e submissão de editais de inovação, o usuário necessita gerenciar cada oportunidade através do funil Kanban, mantendo anexos (planilhas orçamentárias, declarações, CNDs, cartas de anuência de ICTs) e notas de submissão associados ao card do edital.
 
 Surgiram as seguintes necessidades arquiteturais:

@@ -21,9 +21,9 @@ class AbacatePayService
 
     public function gerarCobranca($agencia, $usuario, $plano)
     {
-        // Se a chave não existir no ambiente de desenvolvimento, redireciona para o login
+        // Se a chave não existir no ambiente de desenvolvimento, redireciona para o login de forma relativa
         if (empty($this->apiKey)) {
-            return 'http://127.0.0.1:5500/Vers%C3%A3o%20Atual/front/paginas/login.html?agencia=' . $agencia->id;
+            return 'login.html?agencia=' . $agencia->id;
         }
 
         $idProdutoAbacatePay = $plano->id_plataforma_pagamento;

@@ -24,7 +24,9 @@
 12. [Filas e Jobs Assíncronos (Queues)](#12-filas-e-jobs-assíncronos-queues)
 13. [Testes Automatizados (PHPUnit)](#13-testes-automatizados-phpunit)
 14. [Web Scraping — Motor de Mineração de Editais](#14-web-scraping--motor-de-mineração-de-editais)
-15. [Glossário Técnico para a Banca](#15-glossário-técnico-para-a-banca)
+15. [Módulo de IA: Geração de Minutas e Análise de Fit (EDTAN-122)](#15-módulo-de-ia-geração-de-minutas-e-análise-de-fit-edtan-122)
+16. [Módulo Kanban B2B: Gestão de Cards, Anexos e Notas Customizadas (EDTAN-184 / EDTAN-183)](#16-módulo-kanban-b2b-gestão-de-cards-anexos-e-notas-customizadas-jira-edtan-184--edtan-183--edtan-175)
+17. [Glossário Técnico para a Banca](#17-glossário-técnico-para-a-banca)
 
 ---
 
@@ -2162,7 +2164,7 @@ app/
 
 ---
 
-## 16. Módulo Kanban B2B: Gestão de Cards, Anexos e Notas Customizadas (EDTAN-183 / EDTAN-175)
+## 16. Módulo Kanban B2B: Gestão de Cards, Anexos e Notas Customizadas (Jira EDTAN-184 / EDTAN-183 / EDTAN-175)
 
 > **💡 O que resolve?**
 > Conecta a identificação de editais ao ciclo real de assessoria e submissão. Cada oportunidade transformada em ticket no funil Kanban permite:
