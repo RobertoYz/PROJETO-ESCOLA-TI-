@@ -24,7 +24,10 @@
 12. [Filas e Jobs Assíncronos (Queues)](#12-filas-e-jobs-assíncronos-queues)
 13. [Testes Automatizados (PHPUnit)](#13-testes-automatizados-phpunit)
 14. [Web Scraping — Motor de Mineração de Editais](#14-web-scraping--motor-de-mineração-de-editais)
-15. [Glossário Técnico para a Banca](#15-glossário-técnico-para-a-banca)
+15. [Módulo de IA: Geração de Minutas e Análise de Fit (EDTAN-122)](#15-módulo-de-ia-geração-de-minutas-e-análise-de-fit-edtan-122)
+16. [Módulo Kanban B2B: Gestão de Cards, Anexos e Notas Customizadas (EDTAN-184 / EDTAN-183)](#16-módulo-kanban-b2b-gestão-de-cards-anexos-e-notas-customizadas-jira-edtan-184--edtan-183--edtan-175)
+17. [Módulo Mobile (Capacitor): Estrutura, Execução e Build Nativo (EDTAN-178)](#17-módulo-mobile-capacitor-estrutura-execução-e-build-nativo-edtan-178)
+18. [Glossário Técnico para a Banca](#18-glossário-técnico-para-a-banca)
 
 ---
 
@@ -2193,5 +2196,47 @@ front/
 
 ---
 
-## 17. Glossário Técnico para a Banca
+## 17. Módulo Mobile (Capacitor): Estrutura, Execução e Build Nativo (EDTAN-178)
+
+> **💡 O que resolve?**
+> Atende aos requisitos **RF-28** (App Mobile para Consulta de Editais e Acompanhamento de Propostas), **RF-47** (Central de Alertas e Notificações) e **RNF-06** (Ergonomia Mobile).
+> O aplicativo empacota a tecnologia web moderna (HTML5/CSS3/Vanilla JS) em um binário nativo Android através do **Capacitor 7**, garantindo performance nativa, Bottom Navigation Bar, Safe Areas e consumo desacoplado da API REST Laravel.
+
+### 17.1 Arquitetura de Pastas e Módulos
+```
+MVPs/Versão Atual/mobile/
+├── android/                   # Projeto Gradle Android nativo (Android Studio)
+├── www/                       # Single Page Application (SPA) mobile
+│   ├── index.html             # Shell da aplicação mobile com Bottom Navigation
+│   ├── css/mobile.css         # Estilização Dark Mode nativa, sheets e animações touch
+│   └── js/
+│       ├── api.js             # Resolução dinâmica de host (10.0.2.2 vs Localhost vs Wi-Fi)
+│       └── app.js             # Navegação de abas (Radar, Pipeline, Alertas, Perfil)
+├── capacitor.config.json      # Configuração do Capacitor (AppId, SplashScreen, StatusBar)
+├── package.json               # Dependências do Capacitor (@capacitor/core, @capacitor/android)
+└── README.md                  # Guia de execução e compilação
+```
+
+### 17.2 Comandos Operacionais
+```bash
+# Navegar até a pasta do módulo mobile
+cd "MVPs/Versão Atual/mobile"
+
+# Testar via navegador web
+npx serve www -p 3000
+
+# Sincronizar alterações da pasta www com a plataforma Android
+npm run cap:sync
+
+# Abrir o projeto no Android Studio para gerar APK / depurar no emulador
+npm run cap:open
+```
+
+### 17.3 Resolução de Rede no Mobile (Defesa para a Banca)
+- **Emulador Android:** Mapeia `10.0.2.2:8000` para alcançar o backend Laravel no computador host.
+- **Dispositivo Físico:** Seletor de IP em tempo real integrado no próprio app (ícone de engrenagem no cabeçalho), permitindo conectar no IP local da máquina via Wi-Fi sem recompilar.
+
+---
+
+## 18. Glossário Técnico para a Banca
 

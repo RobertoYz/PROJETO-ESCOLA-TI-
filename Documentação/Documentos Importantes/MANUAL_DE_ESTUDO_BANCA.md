@@ -97,7 +97,7 @@ A arquitetura do Anjo Nexus foi concebida sob o paradigma **API-First e Arquitet
 
 ## 3. Decisões Arquiteturais Fundamentais (Matriz de ADRs)
 
-A banca avaliadora valoriza intensamente a justificativa do **porquê** as decisões foram tomadas. A tabela abaixo resume os 12 Registros de Decisões Arquiteturais (ADRs):
+A banca avaliadora valoriza intensamente a justificativa do **porquê** as decisões foram tomadas. A tabela abaixo resume os 14 Registros de Decisões Arquiteturais (ADRs):
 
 | ADR | Decisão Tomada | Alternativa Rejeitada | Justificativa Acadêmica para a Banca |
 | :--- | :--- | :--- | :--- |
@@ -113,6 +113,8 @@ A banca avaliadora valoriza intensamente a justificativa do **porquê** as decis
 | **010** | Vanilla JS no Frontend (Fase 1) | Frameworks pesados (React, Angular, Vue) | Elimina pipeline complexo de build (`npm run build`), dependências frágeis e foca na validação da API REST. |
 | **011** | Arquitetura Híbrida de Scraping | Solução única genérica para todas as fontes | Respeita a heterogeneidade da web pública brasileira (Liferay na FINEP vs WordPress na FAPESC). |
 | **012** | Gerador Nativo OpenXML (.docx) e Minutas em 11 Seções | Pacotes PHP externos pesados (`phpoffice/phpword`)| Geração leve e independente via `ZipArchive` do PHP; alinhamento estrito ao modelo Anjo Inovador/FAPESC. |
+| **013** | Gestão de Anexos e Metadados no Card em JSON | Tabela relacional rígida com colunas fixas | Flexibilidade schema-less para notas e múltiplos anexos até 10MB no Kanban. |
+| **014** | Adoção do Capacitor para Canal Mobile Híbrido | Reescrita em React Native / Flutter | Reaproveitamento da base web, mitigação de overhead de build e comprovação do desacoplamento RESTful da API. |
 
 ---
 
