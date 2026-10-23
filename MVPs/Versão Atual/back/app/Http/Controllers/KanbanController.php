@@ -181,10 +181,13 @@ class KanbanController extends Controller
             $card->metadata = $metaAtual;
             $card->save();
 
+            $cardAtualizado = $card->load('edital');
+
             return response()->json([
                 'status' => 'sucesso',
                 'mensagem' => 'Card atualizado com sucesso!',
-                'data' => $card->load('edital')
+                'data' => $cardAtualizado,
+                'card' => $cardAtualizado
             ]);
         } catch (Exception $e) {
             return response()->json([
