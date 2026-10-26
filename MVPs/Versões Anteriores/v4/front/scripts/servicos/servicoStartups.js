@@ -1,0 +1,15 @@
+import { requisicaoApi } from './api.js';
+
+export async function listarStartupsDaConsultoria(termoBusca = '') {
+    const sufixo = termoBusca ? `?busca=${encodeURIComponent(termoBusca)}` : '';
+    return await requisicaoApi(`/startups${sufixo}`, {
+        method: 'GET'
+    });
+}
+
+export async function criarNovaStartup(dadosStartup) {
+    return await requisicaoApi('/startups', {
+        method: 'POST',
+        body: JSON.stringify(dadosStartup)
+    });
+}

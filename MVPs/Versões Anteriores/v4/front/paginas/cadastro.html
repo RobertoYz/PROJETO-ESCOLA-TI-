@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Anjo Nexus</title>
+    <link rel="stylesheet" href="../estilos/layout.css">
+</head>
+<body>
+    <div id="container-cabecalho" class="container-cabecalho">
+        <h1>Cadastro de Consultor</h1>
+        <a href="login.html">Já possui conta? Faça login</a>
+    </div>
+
+    <div id="container-formulario" class="container-formulario">
+        <form id="formulario-cadastro" novalidate>
+            <input type="text" id="campo-nome-usuario" placeholder="Nome completo" autocomplete="name">
+            <input type="email" id="campo-email" placeholder="E-mail" autocomplete="email">
+            <input type="password" id="campo-senha" placeholder="Senha (mínimo 8 caracteres)" autocomplete="new-password">
+            <div id="mensagem-erro" class="texto-erro" hidden></div>
+            <button type="submit" id="botao-confirmar">Continuar para Escolha de Plano</button>
+        </form>
+    </div>
+
+    <script type="module" src="../scripts/paginas/cadastro.js"></script>
+</body>
+</html>
