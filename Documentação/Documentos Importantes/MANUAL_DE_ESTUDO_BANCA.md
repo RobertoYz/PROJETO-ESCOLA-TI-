@@ -3,7 +3,7 @@
 
 > **Finalidade do Documento:**  
 > Este manual foi estruturado especificamente para a **defesa acadêmica perante a Banca Examinadora do TCC / Projeto Integrador**.  
-> Ele sintetiza todos os artefatos de engenharia de software (diagramas UML, casos de uso, requisitos, DER), os 12 Registros de Decisões Arquiteturais (ADRs), as escolhas de stack técnica, as justificativas acadêmicas de projeto e o passo a passo detalhado do código-fonte (Backend Laravel 12 e Frontend Vanilla JS desacoplado).
+> Ele sintetiza todos os artefatos de engenharia de software (diagramas UML, casos de uso, requisitos, DER), os 15 Registros de Decisões Arquiteturais (ADRs), as escolhas de stack técnica, as justificativas acadêmicas de projeto e o passo a passo detalhado do código-fonte (Backend Laravel 12, Frontend Vanilla JS e Mobile Capacitor 7).
 
 ---
 
@@ -20,6 +20,7 @@
    - 5.5. [Módulo de IA: Diagnóstico de Aderência (Match RF-47) e Minutas Técnicas (RF-29 a RF-34)](#55-módulo-de-ia-match-e-minutas)
    - 5.6. [Motor Nativo de Exportação OpenXML (.docx) e PDF](#56-motor-nativo-de-exportação-openxml-e-pdf)
    - 5.7. [Frontend Desacoplado: Vanilla JS e Design System](#57-frontend-desacoplado-vanilla-js)
+   - 5.8. [Deploy em Produção (HostGator/Apache) e Esteira CI/CD Mobile](#58-deploy-em-produção-hostgatorapache-e-esteira-cicd-mobile)
 6. [Simulador de Perguntas & Respostas da Banca (Q&A de Arguição)](#6-simulador-de-perguntas-e-respostas-da-banca)
 7. [Glossário e Nomenclatura para Argumentação](#7-glossário-técnico-para-a-banca)
 
@@ -97,7 +98,7 @@ A arquitetura do Anjo Nexus foi concebida sob o paradigma **API-First e Arquitet
 
 ## 3. Decisões Arquiteturais Fundamentais (Matriz de ADRs)
 
-A banca avaliadora valoriza intensamente a justificativa do **porquê** as decisões foram tomadas. A tabela abaixo resume os 14 Registros de Decisões Arquiteturais (ADRs):
+A banca avaliadora valoriza intensamente a justificativa do **porquê** as decisões foram tomadas. A tabela abaixo resume os 15 Registros de Decisões Arquiteturais (ADRs):
 
 | ADR | Decisão Tomada | Alternativa Rejeitada | Justificativa Acadêmica para a Banca |
 | :--- | :--- | :--- | :--- |
@@ -115,6 +116,7 @@ A banca avaliadora valoriza intensamente a justificativa do **porquê** as decis
 | **012** | Gerador Nativo OpenXML (.docx) e Minutas em 11 Seções | Pacotes PHP externos pesados (`phpoffice/phpword`)| Geração leve e independente via `ZipArchive` do PHP; alinhamento estrito ao modelo Anjo Inovador/FAPESC. |
 | **013** | Gestão de Anexos e Metadados no Card em JSON | Tabela relacional rígida com colunas fixas | Flexibilidade schema-less para notas e múltiplos anexos até 10MB no Kanban. |
 | **014** | Adoção do Capacitor para Canal Mobile Híbrido | Reescrita em React Native / Flutter | Reaproveitamento da base web, mitigação de overhead de build e comprovação do desacoplamento RESTful da API. |
+| **015** | Deploy Apache/cPanel Unificado + CI/CD no GitHub Actions | Deploy manual em VPS ou Docker pesado | Estabilidade em produção com custo zero de build, isolamento de assets estáticos vs rotas dinâmicas do Laravel e compilação do APK nativo sem ferir regras acadêmicas. |
 
 ---
 
@@ -295,6 +297,15 @@ A maioria dos projetos acadêmicos instala bibliotecas genéricas como `phpoffic
 
 ---
 
+### 5.8 Deploy em Produção (HostGator/Apache) e Esteira CI/CD Mobile
+- **Roteamento Unificado no Servidor:** Configuração via `.htaccess` permitindo a convivência transparente entre as páginas estáticas do frontend desacoplado e os endpoints RESTful (`/api/*`) processados pelo `public/index.php` do Laravel 12.
+- **Resolução de Autenticação na API:** Registro formal da rota nomeada `name('login')` no `routes/api.php`, assegurando que requisições desprovidas de Bearer Token recebam status JSON 401 Unauthorized e nunca disparem exceções internas (`RouteNotFoundException`).
+- **Automação Contínua dos Spiders:** Agendador Linux (Cron Job do cPanel) executando `php artisan schedule:run` a cada minuto, garantindo a captura periódica e autônoma dos editais da FINEP, FAPESP e FAPESC.
+- **Esteira de Compilação Nativa (GitHub Actions):** Workflow CI/CD (`build-apk.yml`) operando em container Ubuntu com Java 21 Zulu, Android SDK 35 e Gradle 8.11, compilando o projeto nativo do Capacitor 7 em um binário `.apk` de ~3.57 MB e publicando-o automaticamente.
+- **Distribuição Multiplataforma para a Banca:** Página pública de onboarding (`/paginas/baixar-app.html`) com QR Code dinâmico, acesso instantâneo como PWA e botão de download direto do `.apk` para smartphones Android.
+
+---
+
 ## 6. Simulador de Perguntas & Respostas da Banca (Q&A de Arguição)
 
 ### P1: "Por que vocês não usaram um framework moderno no Frontend, como React ou Next.js?"
@@ -327,6 +338,18 @@ A maioria dos projetos acadêmicos instala bibliotecas genéricas como `phpoffic
 
 ---
 
+### P6: "Como a aplicação foi colocada em produção e como os robôs (spiders) rodam sem intervenção humana?"
+> **Resposta Ideal:**  
+> *"Conforme documentado na nossa ADR 015, publicamos a aplicação em servidor Apache real sob o domínio anjonexus.intalenti.com.br. Integramos um arquivo .htaccess especializado que serve os arquivos estáticos do frontend desacoplado com compressão gzip e redireciona todas as rotas RESTful para o kernel do Laravel. Para a autonomia dos spiders, configuramos uma tarefa agendada (Cron Job) no Linux do servidor executando `php artisan schedule:run` a cada minuto, garantindo que os spiders de FAPESC, FAPESP e FINEP sejam disparados conforme o cronograma do sistema sem qualquer operador manual."*
+
+---
+
+### P7: "Como o aplicativo mobile Android foi construído? Essa esteira ou o Capacitor violam o regulamento acadêmico contra geradores de código?"
+> **Resposta Ideal:**  
+> *"Não viola de forma alguma. Todo o código do aplicativo — telas, componentes, lógica de negócio, chamadas RESTful e folhas de estilo — foi escrito manualmente pela equipe em Vanilla JS, HTML5 e CSS3 (ADR 014). O Capacitor 7 funciona estritamente como um runtime de empacotamento nativo (WebView nativa acelerada por hardware), e o Gradle com o GitHub Actions atuam como ferramentas profissionais de compilação (build tools / CI-CD) padrão da indústria. Não utilizamos nenhuma plataforma 'low-code' ou 'no-code'; toda a engenharia de software e autoria intelectual pertencem integralmente à equipe."*
+
+---
+
 ## 7. Glossário e Nomenclatura para Argumentação
 
 Para se expressar com excelência técnica durante a apresentação, utilize os termos abaixo:
@@ -340,3 +363,5 @@ Para se expressar com excelência técnica durante a apresentação, utilize os 
 - **XPath (XML Path Language):** Linguagem de consulta que permite navegar e selecionar nós específicos em documentos XML e HTML com alta precisão semântica.
 - **Fallback em Cascata:** Padrão de resiliência onde um sistema tenta uma operação primária e, em caso de erro, degrada suavemente para rotas secundárias pré-configuradas.
 - **OpenXML:** Padrão aberto baseado em XML e compactação ZIP utilizado pelo pacote Microsoft Office (.docx, .xlsx).
+- **CI/CD (Continuous Integration / Continuous Delivery):** Prática de automação em que alterações de código disparam testes e compilações automáticas em nuvem (ex: GitHub Actions compilando o APK Android nativo).
+
