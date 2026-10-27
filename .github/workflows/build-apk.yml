@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - EDTAN-178-modulo-mobile
+      - EDTAN-209-deploy-servidor
       - main
       - master
 
