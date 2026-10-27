@@ -44,12 +44,20 @@ jobs:
           SETTINGS_FILE=$(find . -path "*/mobile/android/settings.gradle" | head -n 1)
           ANDROID_DIR=$(dirname "$SETTINGS_FILE")
           cd "$ANDROID_DIR"
+          echo "Configurando local.properties..."
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "Aceitando licenças do Android SDK..."
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+          sed -i 's/\r$//' gradlew
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
 
       - name: 6. Publicar arquivo APK para Download
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: anjonexus-mobile-apk
-          path: "**/app-debug.apk"
+          path: |
+            **/app-debug.apk
+            **/build.log
           retention-days: 30
