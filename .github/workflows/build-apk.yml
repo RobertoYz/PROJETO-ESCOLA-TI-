@@ -33,22 +33,21 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: 4. Configurar Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: 5. Instalar dependências e Sincronizar Capacitor
+      - name: 4. Instalar dependências e Sincronizar Capacitor
         run: |
           cd "MVPs/Versão Atual/mobile"
           npm install
           npx cap sync android
 
-      - name: 6. Compilar APK com Gradle
+      - name: 5. Compilar APK com Gradle
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           cd "MVPs/Versão Atual/mobile/android"
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
-      - name: 7. Publicar arquivo APK para Download
+      - name: 6. Publicar arquivo APK para Download
         uses: actions/upload-artifact@v4
         with:
           name: anjonexus-mobile-apk
