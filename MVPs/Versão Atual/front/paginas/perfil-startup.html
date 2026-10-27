@@ -2,9 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Perfil da Startup - Anjo Nexus</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
     <style>
         :root {
             --bg-dark: #050505;
@@ -83,17 +84,7 @@
             margin-right: 8px;
         }
 
-        @media (max-width: 900px) {
-            .mobile-menu-trigger { display: inline-flex; }
-            body { height: auto; min-height: 100vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-            .sidebar { position: fixed; left: -260px; top: 0; bottom: 0; z-index: 1000; transition: left 0.3s ease; box-shadow: 4px 0 20px rgba(0, 0, 0, 0.8); }
-            .sidebar.mobile-open { left: 0; }
-            .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
-            .perfil-container { padding: 1rem; }
-            .card-perfil-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-            .btn-sync-cnpj { width: 100%; text-align: center; }
-            .top-navbar { padding: 0.75rem 1rem; }
-        }
+        /* Estilos responsivos centralizados em mobile-adaptive.css */
     </style>
 </head>
 <body>

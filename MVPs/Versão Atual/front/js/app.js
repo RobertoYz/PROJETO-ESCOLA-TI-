@@ -184,12 +184,22 @@ function renderTable() {
         const matchValue = edital.match || 0;
 
         tr.innerHTML = `
-            <td><div class="edital-name">${name}</div><div class="edital-org">${org}</div></td>
-            <td class="budget">${budget}</td>
-            <td class="deadline">${deadline}</td>
-            <td><span class="badge ${statusClass}">${status}</span></td>
-            <td class="${getMatchColorClass(matchValue)}">${matchValue}%</td>
-            <td>
+            <td class="cell-main">
+                <div class="card-mobile-top">
+                    <span class="badge ${statusClass}">${status}</span>
+                    <span class="match-pill ${getMatchColorClass(matchValue)}">⚡ ${matchValue}% Match</span>
+                    <button class="btn-icon btn-fav-card ${starActive}" onclick="toggleFavorite(${edital.id})" title="Favoritar">
+                        <svg width="20" height="20"><use href="${starIcon}"></use></svg>
+                    </button>
+                </div>
+                <div class="edital-name">${name}</div>
+                <div class="edital-org">${org}</div>
+            </td>
+            <td class="budget cell-budget"><span class="meta-label">Orçamento: </span><span class="meta-val">${budget}</span></td>
+            <td class="deadline cell-deadline"><span class="meta-label">Prazo: </span><span class="meta-val">${deadline}</span></td>
+            <td class="cell-status-desktop"><span class="badge ${statusClass}">${status}</span></td>
+            <td class="cell-match-desktop ${getMatchColorClass(matchValue)}">${matchValue}%</td>
+            <td class="cell-fav-desktop">
                 <button class="btn-icon ${starActive}" onclick="toggleFavorite(${edital.id})">
                     <svg width="20" height="20"><use href="${starIcon}"></use></svg>
                 </button>
