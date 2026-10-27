@@ -10,8 +10,11 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 20px;
+    justify-content: flex-start;
+    padding: max(24px, env(safe-area-inset-top, 24px)) 16px max(32px, env(safe-area-inset-bottom, 32px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
 .container-cabecalho {
@@ -155,4 +158,37 @@ button {
     text-align: center;
     padding: 20px;
     font-size: 15px;
+}
+
+/* Responsividade Mobile e Ajustes Capacitor */
+@media (max-width: 600px) {
+    .container-cabecalho h1 {
+        font-size: 1.55rem;
+    }
+    .container-formulario {
+        width: 100%;
+    }
+    input, select, textarea, button {
+        font-size: 16px !important;
+        padding: 12px;
+        border-radius: 8px;
+    }
+    .linha-dupla, .linha-tripla {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .linha-tripla input[style*="max-width: 65px"] {
+        max-width: 100% !important;
+    }
+    .linha-dupla input[style*="max-width: 90px"] {
+        max-width: 100% !important;
+    }
+}
+
+@media all and (display-mode: standalone) {
+    .banner-download-apk { display: none !important; }
+}
+
+body.is-capacitor .banner-download-apk {
+    display: none !important;
 }

@@ -151,8 +151,24 @@
         .match-bar-container { width: 100%; height: 8px; background: #333; border-radius: 4px; margin-top: 8px; overflow: hidden; }
         .match-bar-fill { height: 100%; background: var(--accent-purple); transition: width 0.5s ease-in-out; }
 
+        .mobile-menu-trigger {
+            display: none;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid #333;
+            color: #fff;
+            font-size: 1.25rem;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+        }
+
         /* Responsividade Mobile */
         @media (max-width: 900px) {
+            .mobile-menu-trigger { display: inline-flex; }
             body { height: auto; min-height: 100vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
             .sidebar { position: fixed; left: -260px; top: 0; bottom: 0; z-index: 1000; transition: left 0.3s ease; box-shadow: 4px 0 20px rgba(0,0,0,0.8); }
             .sidebar.mobile-open { left: 0; }
@@ -164,6 +180,8 @@
             .detail-panel { height: auto; }
             .info-group { grid-template-columns: 1fr; }
             .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            body.is-capacitor a[href="baixar-app.html"],
+            body.is-capacitor .banner-download-apk { display: none !important; }
         }
     </style>
 </head>
@@ -199,9 +217,12 @@
 
     <main class="main-content">
         <header class="top-navbar">
-            <div class="startup-info" id="container-seletor-global">
-                <div class="startup-avatar"><svg width="24" height="24"><use href="#icon-user"></use></svg></div>
-                <h1 class="startup-name">Carregando...</h1>
+            <div style="display: flex; align-items: center;">
+                <button id="btnMobileMenu" class="mobile-menu-trigger" aria-label="Abrir Menu">☰</button>
+                <div class="startup-info" id="container-seletor-global">
+                    <div class="startup-avatar"><svg width="24" height="24"><use href="#icon-user"></use></svg></div>
+                    <h1 class="startup-name">Carregando...</h1>
+                </div>
             </div>
             
             <div style="display: flex; align-items: center;">
