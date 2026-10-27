@@ -49,11 +49,24 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
         </div>
     `;
 
-    // Toggle expand/collapse
+    // Toggle expand/collapse e suporte a drawer no mobile
     const toggleBtn = document.getElementById('toggleSidebar');
     if (toggleBtn) {
         toggleBtn.addEventListener('click', () => {
-            sidebarEl.classList.toggle('collapsed');
+            if (window.innerWidth <= 900) {
+                sidebarEl.classList.toggle('mobile-open');
+            } else {
+                sidebarEl.classList.toggle('collapsed');
+            }
         });
     }
+
+    // Fechar ao tocar fora no mobile
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 900 && sidebarEl.classList.contains('mobile-open')) {
+            if (!sidebarEl.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
+                sidebarEl.classList.remove('mobile-open');
+            }
+        }
+    });
 }
