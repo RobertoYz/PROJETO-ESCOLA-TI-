@@ -46,11 +46,22 @@ jobs:
           cd "$ANDROID_DIR"
           echo "Configurando local.properties..."
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          echo "Aceitando licenças do Android SDK..."
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+          
+          # Executar Gradle e capturar saida
+          ./gradlew assembleDebug --no-daemon --stacktrace > build.log 2>&1 || BUILD_FAILED=1
+          
+          echo "### Resultado do Build Gradle" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 80 build.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$BUILD_FAILED" = "1" ]; then
+            echo "Gradle build falhou!"
+            cat build.log
+            exit 1
+          fi
 
       - name: 6. Publicar arquivo APK para Download
         if: always()
