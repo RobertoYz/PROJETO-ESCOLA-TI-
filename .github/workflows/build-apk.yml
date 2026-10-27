@@ -1,15 +1,12 @@
 name: Build Android APK (Capacitor)
 
 on:
-  workflow_dispatch: # Permite disparar manualmente pelo botão "Run workflow" no GitHub
+  workflow_dispatch:
   push:
     branches:
       - EDTAN-178-modulo-mobile
       - main
       - master
-    paths:
-      - 'MVPs/Versão Atual/mobile/**'
-      - '.github/workflows/build-apk.yml'
 
 jobs:
   build-apk:
@@ -24,8 +21,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          cache-dependency-path: 'MVPs/Versão Atual/mobile/package-lock.json'
 
       - name: 3. Configurar ambiente Java JDK 17
         uses: actions/setup-java@v4
@@ -35,15 +30,16 @@ jobs:
 
       - name: 4. Instalar dependências e Sincronizar Capacitor
         run: |
-          cd "MVPs/Versão Atual/mobile"
+          MOBILE_DIR=$(find . -type d -name "mobile" | head -n 1)
+          echo "Diretório mobile localizado em: $MOBILE_DIR"
+          cd "$MOBILE_DIR"
           npm install
-          npx cap sync android
+          npx @capacitor/cli sync android
 
       - name: 5. Compilar APK com Gradle
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
-          cd "MVPs/Versão Atual/mobile/android"
+          MOBILE_DIR=$(find . -type d -name "mobile" | head -n 1)
+          cd "$MOBILE_DIR/android"
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
@@ -51,5 +47,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: anjonexus-mobile-apk
-          path: MVPs/Versão Atual/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          path: "**/app-debug.apk"
           retention-days: 30
