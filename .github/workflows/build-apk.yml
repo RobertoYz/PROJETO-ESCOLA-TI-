@@ -32,7 +32,6 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
-          cache: 'gradle'
 
       - name: 4. Configurar Android SDK
         uses: android-actions/setup-android@v3
@@ -40,7 +39,7 @@ jobs:
       - name: 5. Instalar dependências e Sincronizar Capacitor
         run: |
           cd "MVPs/Versão Atual/mobile"
-          npm ci
+          npm install
           npx cap sync android
 
       - name: 6. Compilar APK com Gradle
