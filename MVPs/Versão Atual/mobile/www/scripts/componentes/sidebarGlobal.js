@@ -52,12 +52,35 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
         </div>
     `;
 
+    // Criar backdrop para mobile se não existir
+    let backdrop = document.getElementById('sidebarBackdrop');
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.id = 'sidebarBackdrop';
+        backdrop.className = 'sidebar-backdrop';
+        document.body.appendChild(backdrop);
+    }
+
+    const fecharMenuMobile = () => {
+        sidebarEl.classList.remove('mobile-open');
+        backdrop.classList.remove('active');
+    };
+
+    const abrirOuAlternarMenuMobile = () => {
+        const isOpen = sidebarEl.classList.toggle('mobile-open');
+        if (isOpen) {
+            backdrop.classList.add('active');
+        } else {
+            backdrop.classList.remove('active');
+        }
+    };
+
     // Toggle expand/collapse e suporte a drawer no mobile
     const toggleBtn = document.getElementById('toggleSidebar');
     if (toggleBtn) {
         toggleBtn.addEventListener('click', () => {
             if (window.innerWidth <= 900) {
-                sidebarEl.classList.toggle('mobile-open');
+                abrirOuAlternarMenuMobile();
             } else {
                 sidebarEl.classList.toggle('collapsed');
             }
@@ -68,15 +91,18 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
     if (btnMobileMenu) {
         btnMobileMenu.addEventListener('click', (e) => {
             e.stopPropagation();
-            sidebarEl.classList.toggle('mobile-open');
+            abrirOuAlternarMenuMobile();
         });
     }
+
+    // Fechar ao tocar no backdrop
+    backdrop.addEventListener('click', fecharMenuMobile);
 
     // Fechar ao tocar fora no mobile
     document.addEventListener('click', (e) => {
         if (window.innerWidth <= 900 && sidebarEl.classList.contains('mobile-open')) {
             if (!sidebarEl.contains(e.target) && e.target !== toggleBtn && (!btnMobileMenu || !btnMobileMenu.contains(e.target))) {
-                sidebarEl.classList.remove('mobile-open');
+                fecharMenuMobile();
             }
         }
     });

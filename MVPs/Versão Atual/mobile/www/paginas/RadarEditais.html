@@ -2,9 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Anjo Nexus - Radar de Editais</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
     <style>
         :root {
             --bg-dark: #050505;
@@ -166,23 +167,7 @@
             margin-right: 8px;
         }
 
-        /* Responsividade Mobile */
-        @media (max-width: 900px) {
-            .mobile-menu-trigger { display: inline-flex; }
-            body { height: auto; min-height: 100vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-            .sidebar { position: fixed; left: -260px; top: 0; bottom: 0; z-index: 1000; transition: left 0.3s ease; box-shadow: 4px 0 20px rgba(0,0,0,0.8); }
-            .sidebar.mobile-open { left: 0; }
-            .main-content { height: auto; overflow: visible; width: 100%; }
-            .top-navbar { padding: 0.75rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
-            .startup-name { font-size: 1rem; }
-            .dashboard-container { display: flex; flex-direction: column; height: auto; padding: 1rem; gap: 1.5rem; overflow: visible; }
-            .card { height: auto; min-height: 350px; }
-            .detail-panel { height: auto; }
-            .info-group { grid-template-columns: 1fr; }
-            .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-            body.is-capacitor a[href="baixar-app.html"],
-            body.is-capacitor .banner-download-apk { display: none !important; }
-        }
+        /* Estilos responsivos e cards mobile centralizados em mobile-adaptive.css */
     </style>
 </head>
 <body>
