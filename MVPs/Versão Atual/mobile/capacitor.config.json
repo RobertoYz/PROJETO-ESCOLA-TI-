@@ -4,7 +4,7 @@
   "webDir": "www",
   "bundledWebRuntime": false,
   "server": {
-    "url": "https://anjonexus.intalenti.com.br",
+    "androidScheme": "https",
     "cleartext": true
   },
   "plugins": {
