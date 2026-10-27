@@ -30,16 +30,20 @@ jobs:
 
       - name: 4. Instalar dependências e Sincronizar Capacitor
         run: |
-          MOBILE_DIR=$(find . -type d -name "mobile" | head -n 1)
-          echo "Diretório mobile localizado em: $MOBILE_DIR"
+          SETTINGS_FILE=$(find . -path "*/mobile/android/settings.gradle" | head -n 1)
+          ANDROID_DIR=$(dirname "$SETTINGS_FILE")
+          MOBILE_DIR=$(dirname "$ANDROID_DIR")
+          echo "Diretório Mobile: $MOBILE_DIR"
+          echo "Diretório Android: $ANDROID_DIR"
           cd "$MOBILE_DIR"
           npm install
           npx @capacitor/cli sync android
 
       - name: 5. Compilar APK com Gradle
         run: |
-          MOBILE_DIR=$(find . -type d -name "mobile" | head -n 1)
-          cd "$MOBILE_DIR/android"
+          SETTINGS_FILE=$(find . -path "*/mobile/android/settings.gradle" | head -n 1)
+          ANDROID_DIR=$(dirname "$SETTINGS_FILE")
+          cd "$ANDROID_DIR"
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
