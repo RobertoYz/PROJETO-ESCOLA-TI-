@@ -1,8 +1,5 @@
-const isLocalDev = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port !== '' && !window.Capacitor;
-
-const URL_BASE_API = isLocalDev
-    ? 'http://127.0.0.1:8000/api'
-    : 'https://anjonexus.intalenti.com.br/api';
+// Endereço oficial da API em nuvem (pode ser sobrescrito para testes via localStorage)
+const URL_BASE_API = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
 
 if (typeof window !== 'undefined') {
     const marcarCapacitor = () => {
