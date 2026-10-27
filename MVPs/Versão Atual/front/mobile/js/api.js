@@ -17,12 +17,12 @@ const MobileApi = (function() {
     }
     const isCapacitorAndroid = window.Capacitor && window.Capacitor.getPlatform() === 'android';
     if (isCapacitorAndroid) {
-      return 'http://anjonexus.intalenti.com.br/api';
+      return 'https://anjonexus.intalenti.com.br/api';
     }
     if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
       return 'http://127.0.0.1:8000/api';
     }
-    return 'http://anjonexus.intalenti.com.br/api';
+    return 'https://anjonexus.intalenti.com.br/api';
   }
 
   function getBaseUrl() {
