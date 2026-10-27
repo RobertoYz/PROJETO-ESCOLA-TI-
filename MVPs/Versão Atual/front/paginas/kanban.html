@@ -1367,9 +1367,7 @@
         import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
         import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
 
-        const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
-            ? 'http://127.0.0.1:8000/api'
-            : `${window.location.origin}/api`;
+        const API_BASE = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
         let currentBoard = null;
 
         document.addEventListener('DOMContentLoaded', () => {
