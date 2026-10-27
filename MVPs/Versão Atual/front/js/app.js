@@ -215,7 +215,14 @@ function selectEdital(id) {
 
     // Exibe painel lateral
     const detailPanel = document.getElementById('detailPanel');
-    if (detailPanel) detailPanel.style.display = 'flex';
+    if (detailPanel) {
+        detailPanel.style.display = 'flex';
+        if (window.innerWidth <= 900) {
+            setTimeout(() => {
+                detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
+        }
+    }
 
     // Preenche campos de texto simples
     updateElementText('detOrg', edital.org);

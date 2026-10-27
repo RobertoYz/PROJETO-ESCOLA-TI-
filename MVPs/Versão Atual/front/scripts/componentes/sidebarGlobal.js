@@ -64,10 +64,18 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
         });
     }
 
+    const btnMobileMenu = document.getElementById('btnMobileMenu');
+    if (btnMobileMenu) {
+        btnMobileMenu.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidebarEl.classList.toggle('mobile-open');
+        });
+    }
+
     // Fechar ao tocar fora no mobile
     document.addEventListener('click', (e) => {
         if (window.innerWidth <= 900 && sidebarEl.classList.contains('mobile-open')) {
-            if (!sidebarEl.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
+            if (!sidebarEl.contains(e.target) && e.target !== toggleBtn && (!btnMobileMenu || !btnMobileMenu.contains(e.target))) {
                 sidebarEl.classList.remove('mobile-open');
             }
         }

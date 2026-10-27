@@ -1,6 +1,21 @@
-const URL_BASE_API = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+const isLocalDev = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port !== '' && !window.Capacitor;
+
+const URL_BASE_API = isLocalDev
     ? 'http://127.0.0.1:8000/api'
-    : `${window.location.origin}/api`;
+    : 'https://anjonexus.intalenti.com.br/api';
+
+if (typeof window !== 'undefined') {
+    const marcarCapacitor = () => {
+        if (window.Capacitor || window.location.protocol === 'capacitor:' || window.navigator.userAgent.includes('wv')) {
+            document.body?.classList.add('is-capacitor');
+        }
+    };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', marcarCapacitor);
+    } else {
+        marcarCapacitor();
+    }
+}
 
 export async function requisicaoApi(endpoint, opcoes = {}) {
     const token = localStorage.getItem('token_autenticacao');
