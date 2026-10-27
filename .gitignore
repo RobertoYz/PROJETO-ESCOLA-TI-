@@ -10,6 +10,7 @@ Documentação/Documentos Importantes/PLANO_TRANSFORMAR_EM_APP_MOBILE.md
 # Builds Mobile / Android
 *.apk
 *.aab
-android/
+**/android/.gradle/
+**/android/app/build/
+**/android/build/
 .gradle/
-capacitor.config.json

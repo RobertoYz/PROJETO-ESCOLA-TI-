@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AnjoNexus Mobile</string>
+    <string name="title_activity_main">AnjoNexus Mobile</string>
+    <string name="package_name">br.gov.escola.anjonexus</string>
+    <string name="custom_url_scheme">br.gov.escola.anjonexus</string>
+</resources>
