@@ -458,19 +458,21 @@
         /* MODAL DE CRIAÇÃO */
         .modal-overlay {
             position: fixed;
+            inset: 0;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.7);
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 9999;
+            backdrop-filter: blur(6px);
         }
 
         .modal-overlay.active {
-            display: flex;
+            display: flex !important;
         }
 
         .modal-card {
@@ -572,6 +574,7 @@
             width: 95%;
             max-width: 1040px;
             max-height: 88vh;
+            margin: auto;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -1326,7 +1329,9 @@
         import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
         import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
 
-        const API_BASE = 'http://127.0.0.1:8000/api';
+        const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+            ? 'http://127.0.0.1:8000/api'
+            : `${window.location.origin}/api`;
         let currentBoard = null;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1882,52 +1887,84 @@
         }
 
         async function carregarStartupsEEditaisMinuta() {
+            const selectS = document.getElementById('selectMinutaStartup');
+            const selectFit = document.getElementById('selectFitStartup');
+            const selectE = document.getElementById('selectMinutaEdital');
+
+            // Feedback visual imediato enquanto os dados são carregados
+            if (selectS && selectS.options.length === 0) {
+                selectS.innerHTML = '<option value="">Carregando startups...</option>';
+            }
+            if (selectE && selectE.options.length === 0) {
+                selectE.innerHTML = '<option value="">Carregando editais disponíveis...</option>';
+            }
+
             try {
-                // Carrega Startups com autenticação e fallback
-                const resS = await fetch(`${API_BASE}/startups`, {
-                    headers: {
-                        'Accept': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                // 1. Carrega Startups com autenticação e fallback robusto
+                let listS = [];
+                try {
+                    const resS = await fetch(`${API_BASE}/startups`, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                        }
+                    });
+                    if (resS.ok) {
+                        const jsonS = await resS.json();
+                        listS = Array.isArray(jsonS) ? jsonS : (jsonS.dados || jsonS.data || []);
                     }
-                });
-                
-                const selectS = document.getElementById('selectMinutaStartup');
-                const selectFit = document.getElementById('selectFitStartup');
-                selectS.innerHTML = '';
-                selectFit.innerHTML = '';
-
-                if (resS.ok) {
-                    const jsonS = await resS.json();
-                    cachedStartups = jsonS.dados || jsonS || [];
+                } catch (eS) {
+                    console.warn('API de startups indisponível ou sem sessão, usando fallback local.', eS);
                 }
 
-                // Fallback com a startup ativa caso a API esteja sem sessão
-                if (!cachedStartups || cachedStartups.length === 0) {
-                    const stAtiva = localStorage.getItem('startup_ativa_nome') || 'Startup Assessorada';
+                // Fallback com a startup ativa em cache ou UNICESUMAR
+                if (!Array.isArray(listS) || listS.length === 0) {
+                    const stAtiva = localStorage.getItem('startup_ativa_nome') || 'UNICESUMAR';
                     const stId = localStorage.getItem('startup_ativa_id') || '1';
-                    cachedStartups = [{ id: stId, nome_fantasia: stAtiva, razao_social: stAtiva, porte: 'ME/EPP' }];
+                    listS = [{ id: stId, nome_fantasia: stAtiva, razao_social: stAtiva, porte: 'ME/EPP' }];
+                }
+                cachedStartups = listS;
+
+                if (selectS) {
+                    selectS.innerHTML = '';
+                    cachedStartups.forEach(st => {
+                        const opt = document.createElement('option');
+                        opt.value = st.id;
+                        opt.textContent = `${st.nome_fantasia || st.razao_social || 'Startup'} (${st.porte || 'Ativa'})`;
+                        selectS.appendChild(opt);
+                    });
                 }
 
-                cachedStartups.forEach(st => {
-                    const opt = document.createElement('option');
-                    opt.value = st.id;
-                    opt.textContent = `${st.nome_fantasia || st.razao_social} (${st.porte || 'Startup'})`;
-                    selectS.appendChild(opt);
+                if (selectFit) {
+                    selectFit.innerHTML = '';
+                    cachedStartups.forEach(st => {
+                        const opt = document.createElement('option');
+                        opt.value = st.id;
+                        opt.textContent = `${st.nome_fantasia || st.razao_social || 'Startup'} (${st.porte || 'Ativa'})`;
+                        selectFit.appendChild(opt);
+                    });
+                }
 
-                    const opt2 = opt.cloneNode(true);
-                    selectFit.appendChild(opt2);
-                });
+                // 2. Carrega Editais do banco
+                let listE = [];
+                try {
+                    const resE = await fetch(`${API_BASE}/editais`);
+                    if (resE.ok) {
+                        const jsonE = await resE.json();
+                        listE = Array.isArray(jsonE) ? jsonE : (jsonE.data || jsonE.dados || []);
+                    }
+                } catch (eE) {
+                    console.warn('API de editais demorou ou falhou, verificando cache:', eE);
+                }
 
-                // Carrega Editais
-                const resE = await fetch(`${API_BASE}/editais`);
-                if (resE.ok) {
-                    const jsonE = await resE.json();
-                    const list = Array.isArray(jsonE) ? jsonE : (jsonE.data || jsonE.dados || []);
-                    cachedEditais = list.slice(0, 60);
+                if (Array.isArray(listE) && listE.length > 0) {
+                    cachedEditais = listE.slice(0, 80);
+                } else if (!cachedEditais || cachedEditais.length === 0) {
+                    cachedEditais = [{ id: 1, name: 'EDITAL DE CHAMADA PÚBLICA FAPESC/SED N.º 54/2026', org: 'FAPESC' }];
+                }
 
-                    const selectE = document.getElementById('selectMinutaEdital');
+                if (selectE) {
                     selectE.innerHTML = '';
-
                     cachedEditais.forEach(ed => {
                         const opt = document.createElement('option');
                         opt.value = ed.id;
@@ -2398,7 +2435,7 @@
                 item.className = 'anexo-item-card';
 
                 const tamanhoFmt = arq.tamanho ? `(${(arq.tamanho / 1024).toFixed(1)} KB)` : '';
-                const linkCompleto = arq.caminho.startsWith('http') ? arq.caminho : `http://127.0.0.1:8000${arq.caminho}`;
+                const linkCompleto = arq.caminho.startsWith('http') ? arq.caminho : `${window.location.origin}${arq.caminho}`;
 
                 item.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">

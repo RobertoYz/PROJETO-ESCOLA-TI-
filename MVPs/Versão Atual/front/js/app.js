@@ -5,6 +5,10 @@ import { obterStartupAtiva } from '../scripts/servicos/servicoAutenticacao.js';
 let mockEditais = [];
 let selectedId = null;
 
+const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+    ? 'http://127.0.0.1:8000/api'
+    : `${window.location.origin}/api`;
+
 // ==========================================
 // INICIALIZAÇÃO DA APLICAÇÃO
 // ==========================================
@@ -78,7 +82,7 @@ function initUI() {
             const nomeStartup = startupAtiva ? startupAtiva.nome : 'Startup Assessorada';
 
             try {
-                const res = await fetch('http://127.0.0.1:8000/api/kanban/cards', {
+                const res = await fetch(`${API_BASE_URL}/kanban/cards`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -118,7 +122,7 @@ export async function fetchEditais() {
 
     try {
         const radarFilterEl = document.getElementById('radarFilter');
-        let url = 'http://127.0.0.1:8000/api/editais';
+        let url = `${API_BASE_URL}/editais`;
         if (radarFilterEl && radarFilterEl.value) {
             url += `?fonte=${radarFilterEl.value}`;
         }

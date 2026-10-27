@@ -1,0 +1,57 @@
+name: Build Android APK (Capacitor)
+
+on:
+  workflow_dispatch: # Permite disparar manualmente pelo botão "Run workflow" no GitHub
+  push:
+    branches:
+      - EDTAN-178-modulo-mobile
+      - main
+      - master
+    paths:
+      - 'MVPs/Versão Atual/mobile/**'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build-apk:
+    name: Compilar APK Android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Baixar código do repositório
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar ambiente Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'MVPs/Versão Atual/mobile/package-lock.json'
+
+      - name: 3. Configurar ambiente Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: 4. Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 5. Instalar dependências e Sincronizar Capacitor
+        run: |
+          cd "MVPs/Versão Atual/mobile"
+          npm ci
+          npx cap sync android
+
+      - name: 6. Compilar APK com Gradle
+        run: |
+          cd "MVPs/Versão Atual/mobile/android"
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: 7. Publicar arquivo APK para Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: anjonexus-mobile-apk
+          path: MVPs/Versão Atual/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30

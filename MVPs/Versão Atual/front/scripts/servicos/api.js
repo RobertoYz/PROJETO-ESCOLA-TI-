@@ -1,4 +1,6 @@
-const URL_BASE_API = 'http://127.0.0.1:8000/api';
+const URL_BASE_API = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+    ? 'http://127.0.0.1:8000/api'
+    : `${window.location.origin}/api`;
 
 export async function requisicaoApi(endpoint, opcoes = {}) {
     const token = localStorage.getItem('token_autenticacao');
