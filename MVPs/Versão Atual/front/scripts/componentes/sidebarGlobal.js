@@ -35,9 +35,12 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
                 <span class="nav-text">Perfil da Startup</span>
             </a>
 
-            <a href="baixar-app.html" class="nav-item ${paginaAtiva === 'mobile' ? 'active' : ''}" style="padding: 0.9rem 1.5rem; color: #a78bfa; text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; gap: 14px; transition: 0.2s;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
-                <span class="nav-text">📱 App Mobile</span>
+            <a href="baixar-app.html" class="nav-item ${paginaAtiva === 'mobile' ? 'active' : ''}" style="padding: 0.9rem 1.5rem; color: #a78bfa; text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between; transition: 0.2s;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+                    <span class="nav-text">📱 App Mobile</span>
+                </div>
+                <span class="nav-text" style="background: rgba(167, 139, 250, 0.2); color: #c4b5fd; font-size: 0.72rem; padding: 2px 7px; border-radius: 999px; font-weight: 600;">Baixar APK</span>
             </a>
         </nav>
 
