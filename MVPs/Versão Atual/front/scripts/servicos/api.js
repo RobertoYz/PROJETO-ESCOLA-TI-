@@ -1,4 +1,18 @@
-const URL_BASE_API = 'http://127.0.0.1:8000/api';
+// Endereço oficial da API em nuvem (pode ser sobrescrito para testes via localStorage)
+const URL_BASE_API = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
+
+if (typeof window !== 'undefined') {
+    const marcarCapacitor = () => {
+        if (window.Capacitor || window.location.protocol === 'capacitor:' || window.navigator.userAgent.includes('wv')) {
+            document.body?.classList.add('is-capacitor');
+        }
+    };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', marcarCapacitor);
+    } else {
+        marcarCapacitor();
+    }
+}
 
 export async function requisicaoApi(endpoint, opcoes = {}) {
     const token = localStorage.getItem('token_autenticacao');

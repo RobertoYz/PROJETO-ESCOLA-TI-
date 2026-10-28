@@ -5,6 +5,8 @@ import { obterStartupAtiva } from '../scripts/servicos/servicoAutenticacao.js';
 let mockEditais = [];
 let selectedId = null;
 
+const API_BASE_URL = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
+
 // ==========================================
 // INICIALIZAÇÃO DA APLICAÇÃO
 // ==========================================
@@ -78,7 +80,7 @@ function initUI() {
             const nomeStartup = startupAtiva ? startupAtiva.nome : 'Startup Assessorada';
 
             try {
-                const res = await fetch('http://127.0.0.1:8000/api/kanban/cards', {
+                const res = await fetch(`${API_BASE_URL}/kanban/cards`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -118,7 +120,7 @@ export async function fetchEditais() {
 
     try {
         const radarFilterEl = document.getElementById('radarFilter');
-        let url = 'http://127.0.0.1:8000/api/editais';
+        let url = `${API_BASE_URL}/editais`;
         if (radarFilterEl && radarFilterEl.value) {
             url += `?fonte=${radarFilterEl.value}`;
         }
@@ -136,7 +138,7 @@ export async function fetchEditais() {
 
         if (mockEditais.length > 0) {
             renderTable();
-            selectEdital(mockEditais[0].id);
+            if (window.innerWidth > 900) { selectEdital(mockEditais[0].id); }
         } else {
             showEmptyState();
         }
@@ -182,12 +184,22 @@ function renderTable() {
         const matchValue = edital.match || 0;
 
         tr.innerHTML = `
-            <td><div class="edital-name">${name}</div><div class="edital-org">${org}</div></td>
-            <td class="budget">${budget}</td>
-            <td class="deadline">${deadline}</td>
-            <td><span class="badge ${statusClass}">${status}</span></td>
-            <td class="${getMatchColorClass(matchValue)}">${matchValue}%</td>
-            <td>
+            <td class="cell-main">
+                <div class="card-mobile-top">
+                    <span class="badge ${statusClass}">${status}</span>
+                    <span class="match-pill ${getMatchColorClass(matchValue)}">⚡ ${matchValue}% Match</span>
+                    <button class="btn-icon btn-fav-card ${starActive}" onclick="toggleFavorite(${edital.id})" title="Favoritar">
+                        <svg width="20" height="20"><use href="${starIcon}"></use></svg>
+                    </button>
+                </div>
+                <div class="edital-name">${name}</div>
+                <div class="edital-org">${org}</div>
+            </td>
+            <td class="budget cell-budget"><span class="meta-label">Orçamento: </span><span class="meta-val">${budget}</span></td>
+            <td class="deadline cell-deadline"><span class="meta-label">Prazo: </span><span class="meta-val">${deadline}</span></td>
+            <td class="cell-status-desktop"><span class="badge ${statusClass}">${status}</span></td>
+            <td class="cell-match-desktop ${getMatchColorClass(matchValue)}">${matchValue}%</td>
+            <td class="cell-fav-desktop">
                 <button class="btn-icon ${starActive}" onclick="toggleFavorite(${edital.id})">
                     <svg width="20" height="20"><use href="${starIcon}"></use></svg>
                 </button>
@@ -211,7 +223,12 @@ function selectEdital(id) {
 
     // Exibe painel lateral
     const detailPanel = document.getElementById('detailPanel');
-    if (detailPanel) detailPanel.style.display = 'flex';
+    if (detailPanel) {
+        detailPanel.style.display = 'flex';
+        if (window.innerWidth <= 900) {
+            detailPanel.scrollTop = 0;
+        }
+    }
 
     // Preenche campos de texto simples
     updateElementText('detOrg', edital.org);
@@ -355,4 +372,20 @@ function showEmptyState() {
     if (tbody) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: #a0a0a0;">Nenhum edital encontrado.</td></tr>`;
     }
+}
+
+
+// Função para fechar painel de detalhes no mobile
+function fecharDetalhesMobile() {
+    const detailPanel = document.getElementById('detailPanel');
+    if (detailPanel) {
+        detailPanel.style.display = 'none';
+        document.querySelectorAll('#tableBody tr').forEach(row => row.classList.remove('selected'));
+    }
+}
+window.fecharDetalhesMobile = fecharDetalhesMobile;
+
+// Detecção Capacitor
+if (window.Capacitor || window.location.protocol === 'capacitor:' || (window.location.hostname === 'localhost' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent))) {
+    document.body.classList.add('is-capacitor');
 }
