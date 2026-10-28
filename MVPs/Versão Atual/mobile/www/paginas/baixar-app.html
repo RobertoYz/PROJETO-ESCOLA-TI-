@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnjoNexus Mobile — Download do Aplicativo e Acesso Web</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #07090e;
+            --card-bg: #11141a;
+            --card-hover: #171b23;
+            --accent-blue: #2563eb;
+            --accent-purple: #7c3aed;
+            --accent-gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --success: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Efeito de luz ambiente */
+        .glow-bg {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Top Bar */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #fff;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .brand-logo span {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+        }
+
+        /* Hero Card */
+        .hero-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .hero-card {
+                grid-template-columns: 1fr;
+                padding: 1.5rem;
+                text-align: center;
+            }
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            color: #c4b5fd;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .hero-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        /* Action Buttons */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 24px;
+            border-radius: 12px;
+            background: var(--accent-gradient);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+            transition: all 0.25s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.5);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 24px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* QR Code & Phone Box */
+        .qr-box {
+            background: #090c10;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .qr-image {
+            width: 170px;
+            height: 170px;
+            border-radius: 12px;
+            background: #fff;
+            padding: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .qr-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .qr-label strong {
+            color: #fff;
+        }
+
+        /* Grid de Funcionalidades */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .feature-icon {
+            font-size: 1.6rem;
+        }
+
+        .feature-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .feature-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Instruções de Instalação */
+        .guide-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.75rem;
+        }
+
+        .guide-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+
+        .step-num {
+            background: rgba(37, 99, 235, 0.2);
+            color: #60a5fa;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="glow-bg"></div>
+
+    <div class="container">
+        <!-- Barra de Navegação Superior -->
+        <header class="top-nav">
+            <a href="RadarEditais.html" class="brand-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+                Anjo<span>Nexus</span> Mobile
+            </a>
+            <a href="RadarEditais.html" class="nav-link">
+                ← Voltar para a Plataforma Web
+            </a>
+        </header>
+
+        <!-- Card Principal Hero -->
+        <section class="hero-card">
+            <div>
+                <span class="badge-pill">
+                    ✨ Aplicativo Oficial B2B • Capacitor 7
+                </span>
+                <h1 class="hero-title">
+                    Radar de Editais & Pipeline na palma da sua mão
+                </h1>
+                <p class="hero-subtitle">
+                    Acompanhe em tempo real oportunidades da FINEP, FAPESC e FAPESP, gerencie propostas no Kanban e receba alertas de prazos diretamente no seu celular.
+                </p>
+
+                <div class="btn-group">
+                    <!-- Opção 1: Web App Mobile Imediato -->
+                    <a href="login.html" class="btn-primary" id="btnTestarWebMobile">
+                        🚀 Abrir App no Celular Agora (Web / PWA)
+                    </a>
+
+                    <!-- Opção 2: Download do APK -->
+                    <a href="https://anjonexus.intalenti.com.br/downloads/anjonexus.apk" class="btn-secondary" id="btnDownloadApk" download="anjonexus.apk">
+                        📲 Baixar APK Android Direto (.apk)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Box do QR Code -->
+            <div class="qr-box">
+                <img id="qrCodeImg" class="qr-image" alt="QR Code para abrir o app no celular"
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://anjonexus.intalenti.com.br/paginas/login.html" />
+                <div class="qr-label">
+                    Aponte a <strong>câmera do seu celular</strong> para abrir e testar o app instantaneamente.
+                </div>
+            </div>
+        </section>
+
+        <!-- Três Destaques do Módulo Mobile -->
+        <section class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📡</div>
+                <div class="feature-title">Radar Inteligente (RF-28)</div>
+                <div class="feature-desc">Filtre centenas de editais abertos por agência de fomento, orçamento máximo e data limite de submissão.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Pipeline Kanban</div>
+                <div class="feature-desc">Acompanhe cards de submissão da sua startup em colunas dinâmicas otimizadas para toque na tela.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔔</div>
+                <div class="feature-title">Alertas & Notificações (RF-47)</div>
+                <div class="feature-desc">Receba avisos instantâneos sobre proximidade de prazos e editais recém-sincronizados pelos spiders.</div>
+            </div>
+        </section>
+
+        <!-- Instruções de Uso / Instalação -->
+        <section class="guide-section">
+            <h2 class="guide-title">
+                📱 Como testar e instalar no seu smartphone Android:
+            </h2>
+            <div class="steps-list">
+                <div class="step-item">
+                    <span class="step-num">1</span>
+                    <div>
+                        <strong>Modo Web / PWA (Mais rápido, sem instalar nada):</strong> Abra o link pelo Chrome do celular (ou escaneie o QR Code acima). Toque no menu dos 3 pontinhos do Chrome e escolha <em>"Adicionar à tela inicial"</em> ou <em>"Instalar aplicativo"</em>. Ele vira um app nativo no celular!
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">2</span>
+                    <div>
+                        <strong>Instalação do APK Nativo:</strong> Clique no botão <em>"Baixar APK Android"</em> diretamente pelo celular. Ao concluir o download, toque na notificação para instalar e confirme a permissão para <em>"Instalar fontes desconhecidas"</em> no Android.
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">3</span>
+                    <div>
+                        <strong>API em Tempo Real:</strong> O app já está configurado por padrão para conectar diretamente com o servidor de produção em nuvem. Se precisar alterar o IP ou testar localmente, clique no ícone de ⚙️ engrenagem no topo do app.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Atualiza a URL do QR Code dinamicamente com base no domínio atual
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileUrl = `${window.location.origin}/mobile/index.html`;
+            const qrImg = document.getElementById('qrCodeImg');
+            if (qrImg) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(mobileUrl)}`;
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -20,6 +20,9 @@ Route::get('/planos', [PlanoController::class, 'listarPlanos']);
 // Rotas de Autenticação / Registro SaaS
 Route::post('/auth/registro', [AuthController::class, 'registrar']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::get('/auth/login', function () {
+    return response()->json(['mensagem' => 'Não autenticado. Por favor, faça login.'], 401);
+})->name('login');
 
 // Rota do Webhook do AbacatePay
 Route::post('/webhook/abacatepay', [WebhookController::class, 'abacatePayWebhook']);
