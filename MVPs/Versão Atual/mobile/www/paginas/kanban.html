@@ -1356,6 +1356,7 @@
 
         const API_BASE = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
         let currentBoard = null;
+        let todosCardsKanban = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             inicializarSidebarGlobal('kanban');
@@ -2364,7 +2365,7 @@
         // =========================================================================
         // MÓDULO DE ANEXOS E DADOS DO CARD KANBAN
         // =========================================================================
-        let todosCardsKanban = [];
+        // (todosCardsKanban declarado no escopo principal do script)
 
         function carregarOpcoesSelectCardsAnexo() {
             const selectCard = document.getElementById('selectCardAnexo');
@@ -2570,8 +2571,9 @@
                 if (res.ok && data.status === 'sucesso') {
                     // Atualiza cache local do card
                     const card = todosCardsKanban.find(c => c.id === parseInt(cardId));
-                    if (card && data.card) {
-                        card.metadata = data.card.metadata;
+                    const cardAtualizado = data.card || data.data;
+                    if (card && cardAtualizado) {
+                        card.metadata = cardAtualizado.metadata;
                         renderizarListaAnexos(card.metadata?.anexos || []);
                     }
                     alert(`Arquivo "${file.name}" anexado com sucesso!`);
