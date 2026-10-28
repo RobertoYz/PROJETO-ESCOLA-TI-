@@ -2274,5 +2274,34 @@ cd "MVPs/Versão Atual/mobile/android"
 
 ---
 
+### 17.5 Folha de Estilos Adaptativa e Ergonomia Touch (`mobile-adaptive.css`)
+
+Para atender plenamente ao requisito **RNF-06** (Ergonomia e Usabilidade Mobile) e evitar que a aplicação híbrida pareça um site desktop esmagado, construímos a folha de estilos `front/estilos/mobile-adaptive.css`, ativada via media query `@media (max-width: 900px)`:
+
+#### 1. Resolução de Entalhes de Tela (Notch / Punch-Hole)
+- No cabeçalho `<head>` de todas as páginas, aplica-se:
+  `<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">`
+- No CSS, utiliza-se a variável de ambiente nativa com recuo de segurança:
+  ```css
+  .top-navbar {
+      padding-top: max(38px, calc(var(--safe-area-top) + 12px)) !important;
+  }
+  .sidebar {
+      padding-top: max(40px, calc(var(--safe-area-top) + 16px)) !important;
+  }
+  ```
+
+#### 2. Transformação de Tabelas em Cards Touch
+Em telas mobile, a tabela tradicional `#dataTable` converte suas linhas `<tr>` em cards verticais:
+- **Topo:** Badges de status (`.badge`), match pill (`.match-pill`) e botão de favoritar (`.btn-fav-card`).
+- **Centro:** Título em destaque (`.edital-name`) e Órgão (`.edital-org`).
+- **Rodapé:** Chips de orçamento (`.cell-budget`) e prazo (`.cell-deadline`).
+- Ao tocar no card, aciona `scrollIntoView({ behavior: 'smooth' })` abrindo os detalhes sem rolagem horizontal.
+
+#### 3. Máscara Escura Desfocada no Drawer (Backdrop Blur)
+Ao abrir a barra lateral no mobile (`#btnMobileMenu`), o componente `sidebarGlobal.js` injeta dinamicamente o elemento `<div class="sidebar-backdrop active">`, que aplica `backdrop-filter: blur(6px)` e `background: rgba(0, 0, 0, 0.75)`, permitindo fechar o menu com um único toque exterior.
+
+---
+
 ## 18. Glossário Técnico para a Banca
 
