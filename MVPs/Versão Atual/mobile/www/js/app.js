@@ -138,7 +138,7 @@ export async function fetchEditais() {
 
         if (mockEditais.length > 0) {
             renderTable();
-            selectEdital(mockEditais[0].id);
+            if (window.innerWidth > 900) { selectEdital(mockEditais[0].id); }
         } else {
             showEmptyState();
         }
@@ -226,9 +226,7 @@ function selectEdital(id) {
     if (detailPanel) {
         detailPanel.style.display = 'flex';
         if (window.innerWidth <= 900) {
-            setTimeout(() => {
-                detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 50);
+            detailPanel.scrollTop = 0;
         }
     }
 
@@ -383,7 +381,6 @@ function fecharDetalhesMobile() {
     if (detailPanel) {
         detailPanel.style.display = 'none';
         document.querySelectorAll('#tableBody tr').forEach(row => row.classList.remove('selected'));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 window.fecharDetalhesMobile = fecharDetalhesMobile;

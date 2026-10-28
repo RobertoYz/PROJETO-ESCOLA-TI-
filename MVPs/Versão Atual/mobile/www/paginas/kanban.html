@@ -1182,15 +1182,12 @@
 
                 <!-- ABA 2: DIAGNÓSTICO DE ADERÊNCIA / MATCH -->
                 <div id="tabContentFit" style="display: none;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <label class="form-label" style="margin: 0;">Empresa Proponente:</label>
-                            <select id="selectFitStartup" class="form-select" style="min-width: 250px;"
-                                onchange="handleCarregarRankingFit()"></select>
+                    <div class="fit-controls-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                            <label class="form-label" style="margin: 0; white-space: nowrap;">Empresa Proponente:</label>
+                            <select id="selectFitStartup" class="form-select" style="flex: 1; min-width: 0; width: 100%;" onchange="handleCarregarRankingFit()"></select>
                         </div>
-                        <button class="btn-ai-secondary" onclick="handleCarregarRankingFit()">Atualizar
-                            Diagnóstico</button>
+                        <button class="btn-ai-secondary" onclick="handleCarregarRankingFit()" style="white-space: nowrap;">Atualizar Diagnóstico</button>
                     </div>
                     <div id="fitListContainer" style="display: flex; flex-direction: column; gap: 10px;">
                         <div style="color: #888;">Selecione uma startup para calcular o ranking de compatibilidade com
@@ -1915,6 +1912,7 @@
                         modalEditalDetalhesOverlay.classList.remove('active');
                         modalMinutaOverlay.classList.add('active');
                         switchMinutaTab('anexos');
+                        carregarStartupsEEditaisMinuta();
                         if (card && card.id) {
                             selecionarCardParaAnexos(card.id);
                         }
@@ -1930,12 +1928,13 @@
                 if (overlayMinuta) {
                     overlayMinuta.classList.add('active');
                     switchMinutaTab('anexos');
+                    carregarStartupsEEditaisMinuta();
                     if (card && card.id) selecionarCardParaAnexos(card.id);
                 }
             }
         }
 
-        function switchMinutaTab(tabName) {
+        async function switchMinutaTab(tabName) {
             document.querySelectorAll('.minuta-tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('tabContentGerador').style.display = 'none';
             document.getElementById('tabContentFit').style.display = 'none';
@@ -1943,12 +1942,28 @@
             const tabAnexosContent = document.getElementById('tabContentAnexos');
             if (tabAnexosContent) tabAnexosContent.style.display = 'none';
 
+            // Garante que a lista de startups e editais esteja carregada
+            if (!cachedStartups || cachedStartups.length === 0) {
+                await carregarStartupsEEditaisMinuta();
+            }
+
             if (tabName === 'gerador') {
                 document.getElementById('tabMinutaBtn').classList.add('active');
                 document.getElementById('tabContentGerador').style.display = 'block';
             } else if (tabName === 'fit') {
                 document.getElementById('tabFitBtn').classList.add('active');
                 document.getElementById('tabContentFit').style.display = 'block';
+                
+                // Pré-seleciona a startup ativa no select de Fit
+                const selectFit = document.getElementById('selectFitStartup');
+                if (selectFit) {
+                    const stAtivaId = localStorage.getItem('startup_ativa_id');
+                    if (stAtivaId && Array.from(selectFit.options).some(o => String(o.value) === String(stAtivaId))) {
+                        selectFit.value = stAtivaId;
+                    } else if (selectFit.options.length > 0 && !selectFit.value) {
+                        selectFit.selectedIndex = 0;
+                    }
+                }
                 handleCarregarRankingFit();
             } else if (tabName === 'historico') {
                 document.getElementById('tabHistoricoBtn').classList.add('active');
@@ -2241,12 +2256,29 @@
 
         // RF-47: Match Inteligente de Editais
         async function handleCarregarRankingFit() {
-            const selectFit = document.getElementById('selectFitStartup');
-            const startupId = selectFit.value;
+            let selectFit = document.getElementById('selectFitStartup');
+            let startupId = selectFit ? selectFit.value : null;
+
+            // Se o select estiver vazio, carrega startups automaticamente
+            if (!startupId && (!cachedStartups || cachedStartups.length === 0)) {
+                await carregarStartupsEEditaisMinuta();
+                selectFit = document.getElementById('selectFitStartup');
+                if (selectFit) {
+                    const stAtivaId = localStorage.getItem('startup_ativa_id');
+                    if (stAtivaId && Array.from(selectFit.options).some(o => String(o.value) === String(stAtivaId))) {
+                        selectFit.value = stAtivaId;
+                    } else if (selectFit.options.length > 0) {
+                        selectFit.selectedIndex = 0;
+                    }
+                    startupId = selectFit ? selectFit.value : null;
+                }
+            }
+
             const container = document.getElementById('fitListContainer');
+            if (!container) return;
 
             if (!startupId) {
-                container.innerHTML = '<div style="color: #888;">Selecione uma startup válida.</div>';
+                container.innerHTML = '<div style="color: #888; padding: 1rem; text-align: center;">Selecione uma startup para calcular a aderência.</div>';
                 return;
             }
 
