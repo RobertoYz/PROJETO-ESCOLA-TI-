@@ -41,7 +41,7 @@ async function carregarPlanosNaTela() {
                 try {
                     const resposta = await confirmarSelecaoPlano(plano.id);
                     const urlPagamento = resposta.checkout_url || (resposta.data && resposta.data.checkout_url);
-                    if (urlPagamento) {
+                    if (urlPagamento && (urlPagamento.startsWith('https://') || urlPagamento.startsWith('http://')) && !urlPagamento.includes('5500')) {
                         window.location.href = urlPagamento;
                     } else {
                         window.location.href = 'login.html';

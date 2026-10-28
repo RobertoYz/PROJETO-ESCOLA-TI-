@@ -72,7 +72,10 @@ Este documento organiza **todos os Requisitos Funcionais (RF-01 a RF-46)** e **R
 ### Módulo 6: Gestão da Carteira de Clientes & Pipeline
 * RF-23 (Carteira de Startups Clientes): O sistema deve permitir que a conta de consultoria cadastre, edite e gerencie múltiplos perfis de startups, seguindo a regra estrita de 1 consultor para N startups. O próprio consultor será o responsável por realizar a conexão e o vínculo dessas empresas no sistema.
 * RF-24 (Matriz de Match e Elegibilidade Automatizada): O sistema deve cruzar os critérios do edital com o perfil da startup, apontando inconsistências. Como a empresa já estará previamente selecionada no momento da busca de editais, o Score de Elegibilidade (%) será exibido ao clicar em um botão dentro do resumo do edital.
-* RF-25 (Pipeline Kanban por Empresa): O sistema deve disponibilizar um painel Kanban focado e estruturado por Empresa. Caso existam múltiplas inscrições em editais diferentes sendo realizadas para uma mesma empresa (geração de minutas), essas inscrições deverão aparecer no mesmo Kanban daquela empresa, tramitando em etapas/cards diferentes (Coleta, Elaboração, Submetido, etc).
+* RF-25 🟢 (Pipeline Kanban B2B por Empresa e Multi-tenancy): O sistema deve disponibilizar um painel Kanban focado e estruturado por Empresa/Startup ativa, sincronizado e filtrado dinamicamente via seletor global. Caso existam múltiplas inscrições em editais diferentes sendo realizadas para uma mesma empresa (geração de minutas), essas oportunidades deverão tramitar no mesmo Kanban daquela empresa em etapas/colunas configuradas (Coleta/Triagem, Elaboração, Submetido, Aprovado, etc).
+* RF-25.1 🟢 (Gestão de Anexos do Card - EDTAN-183 / ADR 013): O sistema deve permitir o upload e download direto de múltiplos arquivos comprobatórios (planilhas orçamentárias, CNDs, declarações e cartas de anuência de até 10MB nos formatos PDF, DOCX, XLSX, PNG) vinculados ao card através do armazenamento público seguro e metadados flexíveis.
+* RF-25.2 🟢 (Metadados Customizados de Submissão): O sistema deve permitir o registro e persistência do Valor Estimado do Projeto (R$) e Notas Internas de Acompanhamento diretamente no ticket do Kanban.
+* RF-25.3 🟢 (Ações Rápidas, Exclusão e Integração Radar-Minuta): O sistema deve permitir a exclusão de cards do quadro (DELETE), a criação direta de cards a partir de editais selecionados no Radar ("Enviar ao Kanban") e o acionamento direto do gerador de propostas com IA a partir do card.
 
 ---
 
@@ -112,7 +115,7 @@ Este documento organiza **todos os Requisitos Funcionais (RF-01 a RF-46)** e **R
 
 ### Módulo 12: Comunicação em Tempo Real (WebSockets)
 * RF-44 (Streaming de Minutas via WebSocket): O sistema deve transmitir a minuta de proposta gerada pela IA em tempo real para a interface (efeito de digitação ao vivo).
-* RF-45 (Sincronização do Kanban em Tempo Real): O sistema deve atualizar a posição dos cards e o status das propostas no painel Kanban instantaneamente para todos logados.
+* RF-45 (Sincronização do Kanban em Tempo Real): O sistema deve atualizar a posição dos cards e o status das propostas no painel Kanban instantaneamente para todos logados via WebSockets (Fase 4 / Reverb / Pusher). Na versão atual operacional (Fase 2/3), a persistência e ordenação de posições é realizada via chamadas RESTful imediatas (PATCH /api/kanban/cards/{id}/mover) com atualização otimista na interface.
 
 ---
 

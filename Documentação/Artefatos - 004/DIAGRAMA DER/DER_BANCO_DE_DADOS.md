@@ -108,26 +108,23 @@ entity "kanban_columns" {
   column(order_index) : INT
 }
 
-entity "kanban_tickets" {
+entity "kanban_cards" {
   primary_key(id) : BIGINT
+  foreign_key(board_id) : BIGINT
   foreign_key(column_id) : BIGINT
   foreign_key(edital_id) : BIGINT [NULL]
   column(title) : VARCHAR(255)
-  column(due_date) : DATETIME
-}
-
-entity "kanban_attachments" {
-  primary_key(id) : BIGINT
-  foreign_key(ticket_id) : BIGINT
-  column(file_name) : VARCHAR(255)
-  column(file_path) : TEXT
+  column(position) : DOUBLE
+  column(metadata) : JSON [anexos, valor_estimado, notas]
+  column(created_at) : TIMESTAMP
+  column(updated_at) : TIMESTAMP
 }
 
 entity "minutas" {
   primary_key(id) : BIGINT
   foreign_key(startup_id) : BIGINT
   foreign_key(edital_id) : BIGINT
-  foreign_key(ticket_id) : BIGINT
+  foreign_key(kanban_card_id) : BIGINT [NULL]
   column(ai_prompt_used) : TEXT
   column(html_content) : LONGTEXT
   column(created_at) : TIMESTAMP
@@ -161,13 +158,12 @@ editais ||--o{ startup_edital_favorito : "1:N"
 
 startups ||--|| kanban_boards : "1:1"
 kanban_boards ||--o{ kanban_columns : "1:N"
-kanban_columns ||--o{ kanban_tickets : "1:N"
-editais |o--o{ kanban_tickets : "0:N (Referência opcional)"
-kanban_tickets ||--o{ kanban_attachments : "1:N"
+kanban_columns ||--o{ kanban_cards : "1:N"
+editais |o--o{ kanban_cards : "0:N (Referência opcional)"
 
 startups ||--o{ minutas : "1:N"
 editais ||--o{ minutas : "1:N"
-kanban_tickets |o--o| minutas : "0:1"
+kanban_cards |o--o{ minutas : "0:N"
 
 users ||--o{ notificacoes : "1:N"
 
