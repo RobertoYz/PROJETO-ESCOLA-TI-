@@ -2301,6 +2301,15 @@ Em telas mobile, a tabela tradicional `#dataTable` converte suas linhas `<tr>` e
 #### 3. Máscara Escura Desfocada no Drawer (Backdrop Blur)
 Ao abrir a barra lateral no mobile (`#btnMobileMenu`), o componente `sidebarGlobal.js` injeta dinamicamente o elemento `<div class="sidebar-backdrop active">`, que aplica `backdrop-filter: blur(6px)` e `background: rgba(0, 0, 0, 0.75)`, permitindo fechar o menu com um único toque exterior.
 
+#### 4. Controles Touch de Navegação entre Colunas no Kanban
+Como a API tradicional de Drag-and-Drop do HTML5 (`dragstart`, `dragover`) não opera em telas touch sem emulação, cada card no mobile recebe uma barra de ação com botões de avanço e recuo (`◀ Anterior` e `Avançar ▶`). Ao tocar, o método `handleMoverCardMobile()` calcula a coluna adjacente e dispara `PATCH /kanban/cards/{id}/mover`, atualizando o fluxo visual imediatamente.
+
+#### 5. Modais Adaptativos e Prevenção de Teclado Virtual
+Todos os modais (`.modal-card`, `.modal-minuta-card`, `.modal-detalhes-card`) utilizam `max-height: 94dvh` e alinhamento ergonômico no mobile. As barras de ferramentas e formulários inline adaptam-se para colunas verticais ou grades 2x2, permitindo visualização completa mesmo com teclado virtual aberto.
+
+#### 6. Botão de Retorno no Painel de Detalhes do Radar
+No Radar de Editais mobile, ao selecionar um edital, o painel inferior inclui o botão `← Voltar para lista de editais` (`fecharDetalhesMobile()`), permitindo alternar facilmente entre a listagem de cards e os parâmetros aprofundados do edital.
+
 ---
 
 ## 18. Glossário Técnico para a Banca
