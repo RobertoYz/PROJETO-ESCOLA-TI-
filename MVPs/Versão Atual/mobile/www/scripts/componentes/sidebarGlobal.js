@@ -87,7 +87,12 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
         });
     }
 
-    const btnMobileMenu = document.getElementById('btnMobileMenu');
+    // Detecção de ambiente Capacitor nativo
+    if (window.Capacitor || window.location.protocol === 'capacitor:' || (window.location.hostname === 'localhost' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent))) {
+        document.body.classList.add('is-capacitor');
+    }
+
+    const btnMobileMenu = document.getElementById('btnMobileMenu') || document.getElementById('mobileMenuBtn');
     if (btnMobileMenu) {
         btnMobileMenu.addEventListener('click', (e) => {
             e.stopPropagation();

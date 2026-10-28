@@ -375,3 +375,20 @@ function showEmptyState() {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: #a0a0a0;">Nenhum edital encontrado.</td></tr>`;
     }
 }
+
+
+// Função para fechar painel de detalhes no mobile
+function fecharDetalhesMobile() {
+    const detailPanel = document.getElementById('detailPanel');
+    if (detailPanel) {
+        detailPanel.style.display = 'none';
+        document.querySelectorAll('#tableBody tr').forEach(row => row.classList.remove('selected'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+window.fecharDetalhesMobile = fecharDetalhesMobile;
+
+// Detecção Capacitor
+if (window.Capacitor || window.location.protocol === 'capacitor:' || (window.location.hostname === 'localhost' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent))) {
+    document.body.classList.add('is-capacitor');
+}

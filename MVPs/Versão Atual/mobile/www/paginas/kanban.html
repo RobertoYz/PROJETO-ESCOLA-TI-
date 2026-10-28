@@ -1468,6 +1468,13 @@
             const matchVal = edital.ai_match || meta.ai_match || 0;
             const matchColorClass = getMatchColorClass(matchVal);
 
+            let currentColumnIndex = -1;
+            if (currentBoard && Array.isArray(currentBoard.columns)) {
+                currentColumnIndex = currentBoard.columns.findIndex(col => String(col.id) === String(card.column_id));
+            }
+            const canMoveLeft = currentColumnIndex > 0;
+            const canMoveRight = currentBoard && Array.isArray(currentBoard.columns) && currentColumnIndex !== -1 && currentColumnIndex < currentBoard.columns.length - 1;
+
             cardEl.innerHTML = `
                 <div class="card-top">
                     <div class="card-tags">
@@ -1482,6 +1489,14 @@
                 <div class="card-footer">
                     <span class="card-budget">${budgetFormatted}</span>
                     ${matchVal ? `<span class="match-score ${matchColorClass}">${matchVal}% Match</span>` : ''}
+                </div>
+                <div class="card-mobile-actions">
+                    <button class="btn-card-move" ${canMoveLeft ? '' : 'disabled'} onclick="handleMoverCardMobile(event, ${card.id}, -1)">
+                        ◀ Anterior
+                    </button>
+                    <button class="btn-card-move" ${canMoveRight ? '' : 'disabled'} onclick="handleMoverCardMobile(event, ${card.id}, 1)">
+                        Avançar ▶
+                    </button>
                 </div>
             `;
 
@@ -1611,6 +1626,43 @@
                 if (countBadge) countBadge.textContent = num;
             });
         }
+
+
+        async function handleMoverCardMobile(event, cardId, direction) {
+            if (event) event.stopPropagation();
+
+            const card = todosCardsKanban.find(c => String(c.id) === String(cardId));
+            if (!card || !currentBoard || !Array.isArray(currentBoard.columns)) return;
+
+            const currentIndex = currentBoard.columns.findIndex(col => String(col.id) === String(card.column_id));
+            if (currentIndex === -1) return;
+
+            const targetIndex = currentIndex + direction;
+            if (targetIndex < 0 || targetIndex >= currentBoard.columns.length) return;
+
+            const targetCol = currentBoard.columns[targetIndex];
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/mover`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        target_column_id: targetCol.id,
+                        prev_position: null,
+                        next_position: null
+                    })
+                });
+
+                if (res.ok) {
+                    await fetchBoard();
+                } else {
+                    console.error('Falha ao mover card no backend');
+                }
+            } catch (err) {
+                console.error('Erro de rede ao mover card', err);
+            }
+        }
+        window.handleMoverCardMobile = handleMoverCardMobile;
 
         async function handleDeleteCard(event, cardId) {
             event.stopPropagation();
