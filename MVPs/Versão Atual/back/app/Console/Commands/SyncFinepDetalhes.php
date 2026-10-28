@@ -64,10 +64,27 @@ class SyncFinepDetalhes extends Command
                             // Se o link for só um ícone, tenta pegar o texto do elemento pai ou da linha
                             if (empty($texto)) {
                                 try {
-                                    $texto = trim($node->closest('tr')->filter('td')->eq(1)->text());
-                                } catch (\Exception $e) {
+                                    $closestTr = $node->closest('tr');
+                                    if ($closestTr) {
+                                        $tds = $closestTr->filter('td');
+                                        if ($tds->count() > 1) {
+                                            $texto = trim($tds->eq(1)->text());
+                                        }
+                                    }
+                                    if (empty($texto)) {
+                                        $titleAttr = $node->attr('title');
+                                        if ($titleAttr) {
+                                            $texto = trim($titleAttr);
+                                        }
+                                    }
+                                } catch (\Throwable $e) {
                                     $texto = 'Anexo';
                                 }
+                            }
+
+                            if (empty($texto)) {
+                                $ext = strtoupper(pathinfo(parse_url($href, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION) ?: 'DOC');
+                                $texto = 'Anexo (' . $ext . ')';
                             }
                             
                             // Evita duplicados exatos
@@ -109,8 +126,8 @@ class SyncFinepDetalhes extends Command
 
                     $edital->update($updateData);
                 }
-            } catch (\Exception $e) {
-                // Ignora erro de um edital especifico e continua
+            } catch (\Throwable $e) {
+                // Ignora erro de um edital especifico e continua sem derrubar o comando
             }
             
             $bar->advance();
