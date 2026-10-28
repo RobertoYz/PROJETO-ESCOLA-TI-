@@ -364,18 +364,17 @@ public function processItem(ItemInterface $item): ItemInterface
 }
 ```
 
-#### 5.2.5 Como Funciona a Autonomia dos Spiders em Produção
-No servidor de produção (HostGator / Apache), o agendador do Laravel (`app/Console/Kernel.php`) define o cronograma de disparo dos comandos Artisan:
-```php
-Schedule::command('app:scrape-finep')->dailyAt('02:00');
-Schedule::command('app:scrape-fapesc')->dailyAt('03:00');
-Schedule::command('app:scrape-fapesp')->dailyAt('04:00');
-```
-O agendador do Linux (Cron Job do cPanel) roda a cada minuto:
+#### 5.2.5 Como os Spiders São Disparados
+A sincronização é feita pelo comando Artisan real do projeto (`app/Console/Commands/SyncAllEditais.php`):
 ```bash
-* * * * * cd /home/usuario/public_html && php artisan schedule:run >> /dev/null 2>&1
+php artisan editais:sync                 # roda todas as fontes
+php artisan editais:sync --fonte=FINEP   # roda só uma fonte (FINEP, FAPESP ou FAPESC)
 ```
-Dessa forma, o sistema opera de maneira 100% autônoma, sem necessidade de operador humano.
+Em produção, a execução periódica é feita por um Cron Job do cPanel chamando esse comando:
+```bash
+0 3 * * * cd /caminho/do/back && php artisan editais:sync >> /dev/null 2>&1
+```
+> **Nota de honestidade técnica:** o agendador interno do Laravel (`routes/console.php`) ainda não registra esse comando. A periodicidade depende do Cron configurado no servidor. Se a banca perguntar, a evolução natural é registrar `Schedule::command('editais:sync')->dailyAt('03:00');` em `routes/console.php` e manter no Cron apenas `php artisan schedule:run` a cada minuto.
 
 ---
 
@@ -650,7 +649,7 @@ jobs:
 
 ### P9: "Como vocês evitam que a raspagem contínua sobrecarregue os portais públicos ou seja considerada um ataque DDoS?"
 > **Resposta Ideal:**  
-> *"Adotamos princípios rígidos de Web Scraping Ético na nossa classe `BaseSpider`. Primeiro, a concorrência é fixada estritamente em 1 (`public int $concurrency = 1`), o que significa que o robô nunca dispara requisições paralelas contra o mesmo servidor. Segundo, incluímos cabeçalhos com User-Agent corporativo e timeouts controlados de 30 segundos. Terceiro, o agendamento em produção roda de madrugada (entre 02:00 e 04:00 da manhã), período de menor tráfego nos portais governamentais."*
+> *"Adotamos princípios rígidos de Web Scraping Ético na nossa classe `BaseSpider`. Primeiro, a concorrência é fixada estritamente em 1 (`public int $concurrency = 1`), o que significa que o robô nunca dispara requisições paralelas contra o mesmo servidor. Segundo, incluímos cabeçalhos com User-Agent corporativo e timeouts controlados de 30 segundos. Terceiro, a sincronização (`php artisan editais:sync`) é disparada por Cron em horário de baixo tráfego, e não continuamente."*
 
 ---
 
