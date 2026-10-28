@@ -235,10 +235,13 @@ O portal da FINEP utiliza o CMS corporativo Liferay com renderização assíncro
 ---
 
 ### 5.4 Esteira Kanban e Gestão do Pipeline (`KanbanService.php` e `kanban.html`)
-- **Objetivo:** Permitir ao consultor acompanhar oportunidades em colunas de fluxo contínuo (*Backlog*, *Em Análise*, *Minuta em Elaboração*, *Submetido*, *Aprovado*).
+- **Objetivo:** Permitir ao consultor acompanhar oportunidades em colunas de fluxo contínuo (*Backlog/Triagem*, *Em Análise*, *Minuta em Elaboração*, *Submetido*, *Aprovado*).
 - **Implementação:**
-  - Drag and Drop nativo em HTML5 (`dragstart`, `dragover`, `drop`).
-  - Sincronização em tempo real via endpoint `POST /api/kanban/cards/mover`, recalculando as posições ordinais no banco de dados para persistência consistente.
+  - **Drag and Drop Nativo:** Eventos HTML5 (`dragstart`, `dragover`, `drop`) com cálculo dinâmico de ordenação e posições flutuantes (*midpoint ordering*).
+  - **Persistência RESTful:** Endpoint `PATCH /api/kanban/cards/{id}/mover`, recalculando as posições ordinais no banco de dados para persistência consistente.
+  - **Gestão de Anexos e Metadados (ADR 013 / EDTAN-183):** Endpoint `POST /api/kanban/cards/{id}/dados-anexos` para upload de arquivos de até 10MB (CNDs, planilhas orçamentárias, cartas de anuência) e salvamento de valor estimado do projeto (R$) e notas internas na coluna `metadata` (JSON) de `kanban_cards`.
+  - **Isolamento Multi-tenant (B2B):** Filtragem dinâmica do quadro por startup ativa selecionada no cabeçalho global (`seletorGlobalStartup.js`).
+  - **Exclusão e Ações Rápidas:** Remoção de cards via `DELETE /api/kanban/cards/{id}` e botão de acionamento direto para geração de minuta técnica com IA.
 
 ---
 

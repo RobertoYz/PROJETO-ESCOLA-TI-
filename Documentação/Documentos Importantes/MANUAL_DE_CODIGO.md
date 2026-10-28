@@ -2165,7 +2165,7 @@ app/
 
 ---
 
-## 16. Módulo Kanban B2B: Gestão de Cards, Anexos e Notas Customizadas (EDTAN-183 / EDTAN-175)
+## 16. Módulo Kanban B2B: Gestão de Cards, Anexos e Notas Customizadas (Jira EDTAN-184 / EDTAN-183 / EDTAN-175)
 
 > **💡 O que resolve?**
 > Conecta a identificação de editais ao ciclo real de assessoria e submissão. Cada oportunidade transformada em ticket no funil Kanban permite:
