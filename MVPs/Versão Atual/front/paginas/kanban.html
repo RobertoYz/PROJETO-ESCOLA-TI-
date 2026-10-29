@@ -3,9 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Anjo Nexus - Pipeline Kanban</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
     <style>
         :root {
             --bg-dark: #050505;
@@ -458,19 +459,21 @@
         /* MODAL DE CRIAÇÃO */
         .modal-overlay {
             position: fixed;
+            inset: 0;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.7);
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 9999;
+            backdrop-filter: blur(6px);
         }
 
         .modal-overlay.active {
-            display: flex;
+            display: flex !important;
         }
 
         .modal-card {
@@ -572,6 +575,7 @@
             width: 95%;
             max-width: 1040px;
             max-height: 88vh;
+            margin: auto;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -912,6 +916,23 @@
             overflow-y: auto;
             white-space: pre-line;
         }
+
+        .mobile-menu-trigger {
+            display: none;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #333;
+            color: #fff;
+            font-size: 1.25rem;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+        }
+
+        /* Estilos responsivos centralizados em mobile-adaptive.css */
     </style>
 </head>
 
@@ -994,13 +1015,20 @@
 
     <main class="main-content">
         <header class="top-navbar">
-            <div class="startup-info" id="container-seletor-global-kanban">
-                <div class="startup-avatar"><svg width="24" height="24">
-                        <use href="#icon-user"></use>
-                    </svg></div>
-                <h1 class="startup-name" id="boardTitle">Pipeline de Editais</h1>
+            <div style="display: flex; align-items: center;">
+                <button id="btnMobileMenu" class="mobile-menu-trigger" aria-label="Abrir Menu">☰</button>
+                <div class="startup-info" id="container-seletor-global-kanban">
+                    <div class="startup-avatar"><svg width="24" height="24">
+                            <use href="#icon-user"></use>
+                        </svg></div>
+                    <h1 class="startup-name" id="boardTitle">Pipeline de Editais</h1>
+                </div>
             </div>
             <div class="actions-section">
+                <a href="baixar-app.html" title="Baixar App Android (.apk) ou Acessar no Celular" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.35); color: #818cf8; text-decoration: none; padding: 7px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; transition: 0.2s;">
+                    <span>📱</span>
+                    <span>Baixar App</span>
+                </a>
                 <button class="btn-ai-sparkle" id="btnOpenAiModule">
                     <svg width="18" height="18" viewBox="0 0 24 24">
                         <path fill="currentColor"
@@ -1154,15 +1182,12 @@
 
                 <!-- ABA 2: DIAGNÓSTICO DE ADERÊNCIA / MATCH -->
                 <div id="tabContentFit" style="display: none;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <label class="form-label" style="margin: 0;">Empresa Proponente:</label>
-                            <select id="selectFitStartup" class="form-select" style="min-width: 250px;"
-                                onchange="handleCarregarRankingFit()"></select>
+                    <div class="fit-controls-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                            <label class="form-label" style="margin: 0; white-space: nowrap;">Empresa Proponente:</label>
+                            <select id="selectFitStartup" class="form-select" style="flex: 1; min-width: 0; width: 100%;" onchange="handleCarregarRankingFit()"></select>
                         </div>
-                        <button class="btn-ai-secondary" onclick="handleCarregarRankingFit()">Atualizar
-                            Diagnóstico</button>
+                        <button class="btn-ai-secondary" onclick="handleCarregarRankingFit()" style="white-space: nowrap;">Atualizar Diagnóstico</button>
                     </div>
                     <div id="fitListContainer" style="display: flex; flex-direction: column; gap: 10px;">
                         <div style="color: #888;">Selecione uma startup para calcular o ranking de compatibilidade com
@@ -1326,7 +1351,7 @@
         import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
         import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
 
-        const API_BASE = 'http://127.0.0.1:8000/api';
+        const API_BASE = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
         let currentBoard = null;
         let todosCardsKanban = [];
 
@@ -1440,6 +1465,13 @@
             const matchVal = edital.ai_match || meta.ai_match || 0;
             const matchColorClass = getMatchColorClass(matchVal);
 
+            let currentColumnIndex = -1;
+            if (currentBoard && Array.isArray(currentBoard.columns)) {
+                currentColumnIndex = currentBoard.columns.findIndex(col => String(col.id) === String(card.column_id));
+            }
+            const canMoveLeft = currentColumnIndex > 0;
+            const canMoveRight = currentBoard && Array.isArray(currentBoard.columns) && currentColumnIndex !== -1 && currentColumnIndex < currentBoard.columns.length - 1;
+
             cardEl.innerHTML = `
                 <div class="card-top">
                     <div class="card-tags">
@@ -1454,6 +1486,14 @@
                 <div class="card-footer">
                     <span class="card-budget">${budgetFormatted}</span>
                     ${matchVal ? `<span class="match-score ${matchColorClass}">${matchVal}% Match</span>` : ''}
+                </div>
+                <div class="card-mobile-actions">
+                    <button class="btn-card-move" ${canMoveLeft ? '' : 'disabled'} onclick="handleMoverCardMobile(event, ${card.id}, -1)">
+                        ◀ Anterior
+                    </button>
+                    <button class="btn-card-move" ${canMoveRight ? '' : 'disabled'} onclick="handleMoverCardMobile(event, ${card.id}, 1)">
+                        Avançar ▶
+                    </button>
                 </div>
             `;
 
@@ -1583,6 +1623,43 @@
                 if (countBadge) countBadge.textContent = num;
             });
         }
+
+
+        async function handleMoverCardMobile(event, cardId, direction) {
+            if (event) event.stopPropagation();
+
+            const card = todosCardsKanban.find(c => String(c.id) === String(cardId));
+            if (!card || !currentBoard || !Array.isArray(currentBoard.columns)) return;
+
+            const currentIndex = currentBoard.columns.findIndex(col => String(col.id) === String(card.column_id));
+            if (currentIndex === -1) return;
+
+            const targetIndex = currentIndex + direction;
+            if (targetIndex < 0 || targetIndex >= currentBoard.columns.length) return;
+
+            const targetCol = currentBoard.columns[targetIndex];
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/mover`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        target_column_id: targetCol.id,
+                        prev_position: null,
+                        next_position: null
+                    })
+                });
+
+                if (res.ok) {
+                    await fetchBoard();
+                } else {
+                    console.error('Falha ao mover card no backend');
+                }
+            } catch (err) {
+                console.error('Erro de rede ao mover card', err);
+            }
+        }
+        window.handleMoverCardMobile = handleMoverCardMobile;
 
         async function handleDeleteCard(event, cardId) {
             event.stopPropagation();
@@ -1835,6 +1912,7 @@
                         modalEditalDetalhesOverlay.classList.remove('active');
                         modalMinutaOverlay.classList.add('active');
                         switchMinutaTab('anexos');
+                        carregarStartupsEEditaisMinuta();
                         if (card && card.id) {
                             selecionarCardParaAnexos(card.id);
                         }
@@ -1850,12 +1928,13 @@
                 if (overlayMinuta) {
                     overlayMinuta.classList.add('active');
                     switchMinutaTab('anexos');
+                    carregarStartupsEEditaisMinuta();
                     if (card && card.id) selecionarCardParaAnexos(card.id);
                 }
             }
         }
 
-        function switchMinutaTab(tabName) {
+        async function switchMinutaTab(tabName) {
             document.querySelectorAll('.minuta-tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('tabContentGerador').style.display = 'none';
             document.getElementById('tabContentFit').style.display = 'none';
@@ -1863,12 +1942,28 @@
             const tabAnexosContent = document.getElementById('tabContentAnexos');
             if (tabAnexosContent) tabAnexosContent.style.display = 'none';
 
+            // Garante que a lista de startups e editais esteja carregada
+            if (!cachedStartups || cachedStartups.length === 0) {
+                await carregarStartupsEEditaisMinuta();
+            }
+
             if (tabName === 'gerador') {
                 document.getElementById('tabMinutaBtn').classList.add('active');
                 document.getElementById('tabContentGerador').style.display = 'block';
             } else if (tabName === 'fit') {
                 document.getElementById('tabFitBtn').classList.add('active');
                 document.getElementById('tabContentFit').style.display = 'block';
+                
+                // Pré-seleciona a startup ativa no select de Fit
+                const selectFit = document.getElementById('selectFitStartup');
+                if (selectFit) {
+                    const stAtivaId = localStorage.getItem('startup_ativa_id');
+                    if (stAtivaId && Array.from(selectFit.options).some(o => String(o.value) === String(stAtivaId))) {
+                        selectFit.value = stAtivaId;
+                    } else if (selectFit.options.length > 0 && !selectFit.value) {
+                        selectFit.selectedIndex = 0;
+                    }
+                }
                 handleCarregarRankingFit();
             } else if (tabName === 'historico') {
                 document.getElementById('tabHistoricoBtn').classList.add('active');
@@ -1883,52 +1978,84 @@
         }
 
         async function carregarStartupsEEditaisMinuta() {
+            const selectS = document.getElementById('selectMinutaStartup');
+            const selectFit = document.getElementById('selectFitStartup');
+            const selectE = document.getElementById('selectMinutaEdital');
+
+            // Feedback visual imediato enquanto os dados são carregados
+            if (selectS && selectS.options.length === 0) {
+                selectS.innerHTML = '<option value="">Carregando startups...</option>';
+            }
+            if (selectE && selectE.options.length === 0) {
+                selectE.innerHTML = '<option value="">Carregando editais disponíveis...</option>';
+            }
+
             try {
-                // Carrega Startups com autenticação e fallback
-                const resS = await fetch(`${API_BASE}/startups`, {
-                    headers: {
-                        'Accept': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                // 1. Carrega Startups com autenticação e fallback robusto
+                let listS = [];
+                try {
+                    const resS = await fetch(`${API_BASE}/startups`, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                        }
+                    });
+                    if (resS.ok) {
+                        const jsonS = await resS.json();
+                        listS = Array.isArray(jsonS) ? jsonS : (jsonS.dados || jsonS.data || []);
                     }
-                });
-                
-                const selectS = document.getElementById('selectMinutaStartup');
-                const selectFit = document.getElementById('selectFitStartup');
-                selectS.innerHTML = '';
-                selectFit.innerHTML = '';
-
-                if (resS.ok) {
-                    const jsonS = await resS.json();
-                    cachedStartups = jsonS.dados || jsonS || [];
+                } catch (eS) {
+                    console.warn('API de startups indisponível ou sem sessão, usando fallback local.', eS);
                 }
 
-                // Fallback com a startup ativa caso a API esteja sem sessão
-                if (!cachedStartups || cachedStartups.length === 0) {
-                    const stAtiva = localStorage.getItem('startup_ativa_nome') || 'Startup Assessorada';
+                // Fallback com a startup ativa em cache ou UNICESUMAR
+                if (!Array.isArray(listS) || listS.length === 0) {
+                    const stAtiva = localStorage.getItem('startup_ativa_nome') || 'UNICESUMAR';
                     const stId = localStorage.getItem('startup_ativa_id') || '1';
-                    cachedStartups = [{ id: stId, nome_fantasia: stAtiva, razao_social: stAtiva, porte: 'ME/EPP' }];
+                    listS = [{ id: stId, nome_fantasia: stAtiva, razao_social: stAtiva, porte: 'ME/EPP' }];
+                }
+                cachedStartups = listS;
+
+                if (selectS) {
+                    selectS.innerHTML = '';
+                    cachedStartups.forEach(st => {
+                        const opt = document.createElement('option');
+                        opt.value = st.id;
+                        opt.textContent = `${st.nome_fantasia || st.razao_social || 'Startup'} (${st.porte || 'Ativa'})`;
+                        selectS.appendChild(opt);
+                    });
                 }
 
-                cachedStartups.forEach(st => {
-                    const opt = document.createElement('option');
-                    opt.value = st.id;
-                    opt.textContent = `${st.nome_fantasia || st.razao_social} (${st.porte || 'Startup'})`;
-                    selectS.appendChild(opt);
+                if (selectFit) {
+                    selectFit.innerHTML = '';
+                    cachedStartups.forEach(st => {
+                        const opt = document.createElement('option');
+                        opt.value = st.id;
+                        opt.textContent = `${st.nome_fantasia || st.razao_social || 'Startup'} (${st.porte || 'Ativa'})`;
+                        selectFit.appendChild(opt);
+                    });
+                }
 
-                    const opt2 = opt.cloneNode(true);
-                    selectFit.appendChild(opt2);
-                });
+                // 2. Carrega Editais do banco
+                let listE = [];
+                try {
+                    const resE = await fetch(`${API_BASE}/editais`);
+                    if (resE.ok) {
+                        const jsonE = await resE.json();
+                        listE = Array.isArray(jsonE) ? jsonE : (jsonE.data || jsonE.dados || []);
+                    }
+                } catch (eE) {
+                    console.warn('API de editais demorou ou falhou, verificando cache:', eE);
+                }
 
-                // Carrega Editais
-                const resE = await fetch(`${API_BASE}/editais`);
-                if (resE.ok) {
-                    const jsonE = await resE.json();
-                    const list = Array.isArray(jsonE) ? jsonE : (jsonE.data || jsonE.dados || []);
-                    cachedEditais = list.slice(0, 60);
+                if (Array.isArray(listE) && listE.length > 0) {
+                    cachedEditais = listE.slice(0, 80);
+                } else if (!cachedEditais || cachedEditais.length === 0) {
+                    cachedEditais = [{ id: 1, name: 'EDITAL DE CHAMADA PÚBLICA FAPESC/SED N.º 54/2026', org: 'FAPESC' }];
+                }
 
-                    const selectE = document.getElementById('selectMinutaEdital');
+                if (selectE) {
                     selectE.innerHTML = '';
-
                     cachedEditais.forEach(ed => {
                         const opt = document.createElement('option');
                         opt.value = ed.id;
@@ -2129,12 +2256,29 @@
 
         // RF-47: Match Inteligente de Editais
         async function handleCarregarRankingFit() {
-            const selectFit = document.getElementById('selectFitStartup');
-            const startupId = selectFit.value;
+            let selectFit = document.getElementById('selectFitStartup');
+            let startupId = selectFit ? selectFit.value : null;
+
+            // Se o select estiver vazio, carrega startups automaticamente
+            if (!startupId && (!cachedStartups || cachedStartups.length === 0)) {
+                await carregarStartupsEEditaisMinuta();
+                selectFit = document.getElementById('selectFitStartup');
+                if (selectFit) {
+                    const stAtivaId = localStorage.getItem('startup_ativa_id');
+                    if (stAtivaId && Array.from(selectFit.options).some(o => String(o.value) === String(stAtivaId))) {
+                        selectFit.value = stAtivaId;
+                    } else if (selectFit.options.length > 0) {
+                        selectFit.selectedIndex = 0;
+                    }
+                    startupId = selectFit ? selectFit.value : null;
+                }
+            }
+
             const container = document.getElementById('fitListContainer');
+            if (!container) return;
 
             if (!startupId) {
-                container.innerHTML = '<div style="color: #888;">Selecione uma startup válida.</div>';
+                container.innerHTML = '<div style="color: #888; padding: 1rem; text-align: center;">Selecione uma startup para calcular a aderência.</div>';
                 return;
             }
 
@@ -2399,7 +2543,7 @@
                 item.className = 'anexo-item-card';
 
                 const tamanhoFmt = arq.tamanho ? `(${(arq.tamanho / 1024).toFixed(1)} KB)` : '';
-                const linkCompleto = arq.caminho.startsWith('http') ? arq.caminho : `http://127.0.0.1:8000${arq.caminho}`;
+                const linkCompleto = arq.caminho.startsWith('http') ? arq.caminho : `${window.location.origin}${arq.caminho}`;
 
                 item.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">

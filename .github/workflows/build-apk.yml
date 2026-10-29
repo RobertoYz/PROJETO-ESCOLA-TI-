@@ -1,0 +1,93 @@
+name: Build Android APK (Capacitor)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - EDTAN-178-modulo-mobile
+      - EDTAN-209-deploy-servidor
+      - EDTAN-210-debug-correcoes-mobile
+      - 'EDTAN-*'
+      - main
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Compilar APK Android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Baixar código do repositório
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar ambiente Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 3. Configurar ambiente Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: 4. Instalar dependências e Sincronizar Capacitor
+        run: |
+          SETTINGS_FILE=$(find . -path "*/mobile/android/settings.gradle" | head -n 1)
+          ANDROID_DIR=$(dirname "$SETTINGS_FILE")
+          MOBILE_DIR=$(dirname "$ANDROID_DIR")
+          FRONT_DIR="$(dirname "$MOBILE_DIR")/front"
+          echo "Diretório Mobile: $MOBILE_DIR"
+          echo "Diretório Android: $ANDROID_DIR"
+          echo "Diretório Front: $FRONT_DIR"
+          if [ -d "$FRONT_DIR" ]; then
+            echo "Sincronizando front para www..."
+            cp -r "$FRONT_DIR"/* "$MOBILE_DIR/www/"
+          fi
+          cd "$MOBILE_DIR"
+          npm install
+          npx @capacitor/cli sync android
+
+      - name: 5. Compilar APK com Gradle
+        run: |
+          SETTINGS_FILE=$(find . -path "*/mobile/android/settings.gradle" | head -n 1)
+          ANDROID_DIR=$(dirname "$SETTINGS_FILE")
+          cd "$ANDROID_DIR"
+          echo "Configurando local.properties..."
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          sed -i 's/\r$//' gradlew
+          chmod +x gradlew
+          
+          # Executar Gradle
+          ./gradlew assembleDebug --no-daemon --stacktrace > build.log 2>&1 || BUILD_FAILED=1
+          
+          echo "=== ULTIMAS LINHAS DO GRADLE ==="
+          tail -n 60 build.log
+          
+          # Salvar log no git para diagnostico rapido
+          cd "$GITHUB_WORKSPACE"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B debug-build-log
+          cp "$ANDROID_DIR/build.log" ./build.log
+          git add ./build.log
+          git commit -m "chore: save build.log [skip ci]" || true
+          git push -f origin debug-build-log || true
+          
+          if [ "$BUILD_FAILED" = "1" ]; then
+            echo "Gradle build falhou!"
+            exit 1
+          fi
+
+      - name: 6. Publicar arquivo APK para Download
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anjonexus-mobile-apk
+          path: |
+            **/app-debug.apk
+            **/build.log
+          retention-days: 30
