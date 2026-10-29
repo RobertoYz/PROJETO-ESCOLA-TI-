@@ -1,158 +1,434 @@
+/* ==========================================================================
+   ANJONEXUS — DESIGN SYSTEM GLOBAL UNIFICADO (DARK MODE PREMIUM)
+   Compatível 100% com Web Desktop, Tablet e Mobile / Capacitor Nativo
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    --bg-dark: #07090e;
+    --bg-card: #0f1422;
+    --bg-card-hover: #161d31;
+    --bg-input: #111827;
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-focus: #6366f1;
+    
+    --color-primary: #6366f1;
+    --color-primary-hover: #4f46e5;
+    --color-accent: #8b5cf6;
+    --color-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #3b82f6 100%);
+    --color-gradient-btn: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-subtle: #64748b;
+    
+    --success: #10b981;
+    --success-bg: rgba(16, 185, 129, 0.12);
+    --danger: #ef4444;
+    --danger-bg: rgba(239, 68, 68, 0.12);
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-full: 9999px;
+    
+    --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+    --shadow-btn: 0 4px 20px rgba(99, 102, 241, 0.35);
+    --shadow-btn-hover: 0 6px 25px rgba(99, 102, 241, 0.55);
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    min-height: 100%;
 }
 
 body {
     min-height: 100vh;
+    background-color: var(--bg-dark);
+    background-image: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.10) 0%, transparent 45%);
+    background-attachment: fixed;
+    color: var(--text-main);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 20px;
+    justify-content: flex-start;
+    padding: max(32px, env(safe-area-inset-top, 32px)) 16px max(40px, env(safe-area-inset-bottom, 32px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
+/* ==========================================================================
+   CABEÇALHO E BRANDING
+   ========================================================================== */
 .container-cabecalho {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
     text-align: center;
     gap: 8px;
+    width: 100%;
+    max-width: 440px;
+}
+
+.container-cabecalho h1 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: var(--color-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+}
+
+.container-cabecalho p {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
 }
 
 .container-cabecalho a {
-    color: #0000ee;
-    text-decoration: underline;
-    font-size: 14px;
+    color: #a5b4fc;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: color 0.2s;
+    margin-top: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
+.container-cabecalho a:hover {
+    color: #c7d2fe;
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   CONTAINER CARD COM GLASSMORPHISM
+   ========================================================================== */
 .container-formulario {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     width: 100%;
-    max-width: 420px;
+    max-width: 440px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 32px 28px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
+/* Formulários */
 form {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     width: 100%;
-    gap: 12px;
+    gap: 16px;
 }
 
-input, select, textarea, button {
+/* Inputs e Campos */
+input, select, textarea {
     width: 100%;
-    padding: 10px;
-    font-size: 14px;
+    padding: 13px 16px;
+    font-size: 0.95rem;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+input::placeholder, textarea::placeholder {
+    color: var(--text-subtle);
+    font-size: 0.9rem;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--border-focus);
+    background-color: #172033;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22);
+}
+
+input:disabled, textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #0b0f19;
 }
 
 textarea {
-    min-height: 90px;
+    min-height: 100px;
     resize: vertical;
+    line-height: 1.5;
 }
 
-button {
-    cursor: pointer;
-}
-
-.texto-erro {
-    color: #b00020;
-    font-size: 14px;
-    text-align: center;
-    margin-top: 4px;
-    margin-bottom: 4px;
+/* Botões de Ação Primária */
+button, input[type="submit"] {
     width: 100%;
+    padding: 14px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    background: var(--color-gradient-btn);
+    color: #ffffff;
+    box-shadow: var(--shadow-btn);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-btn-hover);
+    filter: brightness(1.08);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+    box-shadow: none;
+}
+
+/* Mensagens de Alerta e Erro */
+.texto-erro {
+    background-color: var(--danger-bg);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-align: left;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.texto-erro::before {
+    content: "⚠️";
+    font-size: 0.95rem;
 }
 
 .texto-erro[hidden], [hidden] {
     display: none !important;
 }
 
-/* Blocos de Seleção de Planos */
-.container-planos {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    width: 100%;
-    max-width: 800px;
-}
-
-.bloco-plano {
-    border: 1px solid #000;
-    padding: 24px;
-    width: 220px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    text-align: center;
-}
-
-/* Seleção de Startups (Estilo Perfis Netflix) */
+/* ==========================================================================
+   SELEÇÃO DE STARTUPS (CARD HUB ESTILO NETFLIX / SAAS)
+   ========================================================================== */
 .container-selecao-startup {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     width: 100%;
-    max-width: 520px;
+    max-width: 580px;
     gap: 20px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
 }
 
 .barra-topo-startup {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     width: 100%;
-    gap: 10px;
+    gap: 12px;
 }
 
 .barra-topo-startup input {
     flex: 2;
+    background-color: var(--bg-card);
 }
 
 .barra-topo-startup button {
     flex: 1;
     white-space: nowrap;
+    padding: 13px 18px;
+    font-size: 0.9rem;
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.barra-topo-startup button:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
 }
 
 .lista-startups {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     width: 100%;
-    gap: 10px;
+    gap: 12px;
 }
 
 .botao-item-startup {
     width: 100%;
-    padding: 16px;
-    border: 1px solid #000;
-    background-color: #ffffff;
-    text-align: center;
-    font-size: 16px;
+    padding: 18px 22px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    text-align: left;
+    font-size: 1.05rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.botao-item-startup::before {
+    content: "🏢";
+    margin-right: 14px;
+    font-size: 1.3rem;
+}
+
+.botao-item-startup::after {
+    content: "→";
+    color: var(--color-primary);
+    font-size: 1.2rem;
+    transition: transform 0.2s;
 }
 
 .botao-item-startup:hover {
-    background-color: #d9d9d9;
+    background-color: var(--bg-card-hover);
+    border-color: var(--border-focus);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
+}
+
+.botao-item-startup:hover::after {
+    transform: translateX(4px);
 }
 
 .texto-sem-startup {
     text-align: center;
-    padding: 20px;
-    font-size: 15px;
+    padding: 36px 20px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    width: 100%;
+}
+
+/* ==========================================================================
+   PLANOS DE ASSINATURA B2B
+   ========================================================================== */
+.container-planos {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 900px;
+}
+
+.bloco-plano {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 30px 24px;
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    text-align: center;
+    box-shadow: var(--shadow-card);
+    transition: all 0.25s ease;
+}
+
+.bloco-plano:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 32px rgba(99, 102, 241, 0.2);
+}
+
+/* ==========================================================================
+   BANNER DE DOWNLOAD APK & PWA
+   ========================================================================== */
+.banner-download-apk {
+    margin-top: 1.75rem;
+    text-align: center;
+    max-width: 440px;
+    width: 100%;
+}
+
+.banner-download-apk > div {
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px dashed rgba(99, 102, 241, 0.35);
+    border-radius: var(--radius-md);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* Quando rodando como App Mobile Nativo / Capacitor */
+@media (max-width: 600px) {
+    body {
+        padding: max(20px, env(safe-area-inset-top, 20px)) 16px max(30px, env(safe-area-inset-bottom, 20px));
+    }
+    .container-cabecalho h1 {
+        font-size: 1.6rem;
+    }
+    .container-formulario {
+        padding: 24px 20px;
+    }
+    input, select, textarea, button {
+        font-size: 16px !important;
+        padding: 14px 16px;
+    }
+    .barra-topo-startup {
+        flex-direction: column;
+    }
+    .barra-topo-startup button {
+        width: 100%;
+    }
+}
+
+@media all and (display-mode: standalone) {
+    .banner-download-apk { display: none !important; }
+}
+
+body.is-capacitor .banner-download-apk {
+    display: none !important;
 }

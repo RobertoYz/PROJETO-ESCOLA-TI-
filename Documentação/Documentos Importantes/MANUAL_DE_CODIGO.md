@@ -26,7 +26,8 @@
 14. [Web Scraping — Motor de Mineração de Editais](#14-web-scraping--motor-de-mineração-de-editais)
 15. [Módulo de IA: Geração de Minutas e Análise de Fit (EDTAN-122)](#15-módulo-de-ia-geração-de-minutas-e-análise-de-fit-edtan-122)
 16. [Módulo Kanban B2B: Gestão de Cards, Anexos e Notas Customizadas (EDTAN-184 / EDTAN-183)](#16-módulo-kanban-b2b-gestão-de-cards-anexos-e-notas-customizadas-jira-edtan-184--edtan-183--edtan-175)
-17. [Glossário Técnico para a Banca](#17-glossário-técnico-para-a-banca)
+17. [Módulo Mobile (Capacitor): Estrutura, Execução e Build Nativo (EDTAN-178)](#17-módulo-mobile-capacitor-estrutura-execução-e-build-nativo-edtan-178)
+18. [Glossário Técnico para a Banca](#18-glossário-técnico-para-a-banca)
 
 ---
 
@@ -2195,5 +2196,121 @@ front/
 
 ---
 
-## 17. Glossário Técnico para a Banca
+## 17. Módulo Mobile (Capacitor): Estrutura, Execução e Build Nativo (EDTAN-178)
+
+> **💡 O que resolve?**
+> Atende aos requisitos **RF-28** (App Mobile para Consulta de Editais e Acompanhamento de Propostas), **RF-47** (Central de Alertas e Notificações) e **RNF-06** (Ergonomia Mobile).
+> O aplicativo empacota a tecnologia web moderna (HTML5/CSS3/Vanilla JS) em um binário nativo Android através do **Capacitor 7**, garantindo performance nativa, Bottom Navigation Bar, Safe Areas e consumo desacoplado da API REST Laravel.
+
+### 17.1 Arquitetura de Pastas e Módulos
+```
+MVPs/Versão Atual/mobile/
+├── android/                   # Projeto Gradle Android nativo (Android Studio)
+├── www/                       # Single Page Application (SPA) mobile
+│   ├── index.html             # Shell da aplicação mobile com Bottom Navigation
+│   ├── css/mobile.css         # Estilização Dark Mode nativa, sheets e animações touch
+│   └── js/
+│       ├── api.js             # Resolução dinâmica de host (10.0.2.2 vs Localhost vs Wi-Fi)
+│       └── app.js             # Navegação de abas (Radar, Pipeline, Alertas, Perfil)
+├── capacitor.config.json      # Configuração do Capacitor (AppId, SplashScreen, StatusBar)
+├── package.json               # Dependências do Capacitor (@capacitor/core, @capacitor/android)
+└── README.md                  # Guia de execução e compilação
+```
+
+### 17.2 Comandos Operacionais
+```bash
+# Navegar até a pasta do módulo mobile
+cd "MVPs/Versão Atual/mobile"
+
+# Testar via navegador web
+npx serve www -p 3000
+
+# Sincronizar alterações da pasta www com a plataforma Android
+npm run cap:sync
+
+# Abrir o projeto no Android Studio para gerar APK / depurar no emulador
+npm run cap:open
+```
+
+### 17.3 Resolução de Rede no Mobile (Defesa para a Banca)
+- **Emulador Android:** Mapeia `10.0.2.2:8000` para alcançar o backend Laravel no computador host.
+- **Dispositivo Físico:** Seletor de IP em tempo real integrado no próprio app (ícone de engrenagem no cabeçalho), permitindo conectar no IP local da máquina via Wi-Fi sem recompilar.
+
+### 17.4 Pipeline de Geração e Distribuição do APK / AAB em Produção
+
+Quando a aplicação passar para o ambiente de produção, a compilação e a distribuição do instalador móvel seguem o roteiro técnico abaixo:
+
+#### 1. Configuração de Domínio e Sincronização
+No cliente `mobile/www/js/api.js`, altera-se o endpoint padrão para a URL oficial em HTTPS com SSL:
+```javascript
+function getDefaultApiUrl() {
+  return 'https://api.anjonexus.com.br/api';
+}
+```
+Em seguida, propaga-se a alteração para a plataforma nativa:
+```bash
+cd "MVPs/Versão Atual/mobile"
+npm run cap:sync
+```
+
+#### 2. Assinatura Digital e Compilação do APK Release
+No Android Studio (`npm run cap:open`):
+1. Acesse o menu **Build** > **Generate Signed Bundle / APK...**.
+2. Selecione **APK** (para distribuição direta B2B) ou **Android App Bundle (.aab)** (para publicação na Google Play Store).
+3. Crie ou selecione o arquivo de chaves de assinatura segura (*Keystore* `.jks`).
+4. Escolha a variante **`release`** e marque as opções de assinatura **V1 (Jar Signature)** e **V2 (Full APK Signature)**.
+5. Clique em **Finish**. O APK assinado e minificado será gerado em:  
+   `MVPs/Versão Atual/mobile/android/app/release/app-release.apk`.
+
+*Ou alternativamente via Gradle CLI no terminal:*
+```bash
+cd "MVPs/Versão Atual/mobile/android"
+.\gradlew.bat assembleRelease
+```
+
+#### 3. Estratégia de Distribuição aos Usuários Finais (Defesa para a Banca)
+- **Canal Direto B2B (Sideloading no Portal Web):** O arquivo é renomeado para `anjonexus-radar-editais.apk`, publicado no diretório público do servidor web (ou anexado em uma *Release* do GitHub) e disponibilizado por meio de um botão `"Baixar App Android (.APK)"` na landing page do sistema SaaS. O cliente instala diretamente no celular sem fricção de conta Google.
+- **Canal Oficial (Google Play Console):** O arquivo `.aab` é submetido na esteira de produção do Google Play Console para distribuição global automatizada.
+
+---
+
+### 17.5 Folha de Estilos Adaptativa e Ergonomia Touch (`mobile-adaptive.css`)
+
+Para atender plenamente ao requisito **RNF-06** (Ergonomia e Usabilidade Mobile) e evitar que a aplicação híbrida pareça um site desktop esmagado, construímos a folha de estilos `front/estilos/mobile-adaptive.css`, ativada via media query `@media (max-width: 900px)`:
+
+#### 1. Resolução de Entalhes de Tela (Notch / Punch-Hole)
+- No cabeçalho `<head>` de todas as páginas, aplica-se:
+  `<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">`
+- No CSS, utiliza-se a variável de ambiente nativa com recuo de segurança:
+  ```css
+  .top-navbar {
+      padding-top: max(38px, calc(var(--safe-area-top) + 12px)) !important;
+  }
+  .sidebar {
+      padding-top: max(40px, calc(var(--safe-area-top) + 16px)) !important;
+  }
+  ```
+
+#### 2. Transformação de Tabelas em Cards Touch
+Em telas mobile, a tabela tradicional `#dataTable` converte suas linhas `<tr>` em cards verticais:
+- **Topo:** Badges de status (`.badge`), match pill (`.match-pill`) e botão de favoritar (`.btn-fav-card`).
+- **Centro:** Título em destaque (`.edital-name`) e Órgão (`.edital-org`).
+- **Rodapé:** Chips de orçamento (`.cell-budget`) e prazo (`.cell-deadline`).
+- Ao tocar no card, aciona `scrollIntoView({ behavior: 'smooth' })` abrindo os detalhes sem rolagem horizontal.
+
+#### 3. Máscara Escura Desfocada no Drawer (Backdrop Blur)
+Ao abrir a barra lateral no mobile (`#btnMobileMenu`), o componente `sidebarGlobal.js` injeta dinamicamente o elemento `<div class="sidebar-backdrop active">`, que aplica `backdrop-filter: blur(6px)` e `background: rgba(0, 0, 0, 0.75)`, permitindo fechar o menu com um único toque exterior.
+
+#### 4. Controles Touch de Navegação entre Colunas no Kanban
+Como a API tradicional de Drag-and-Drop do HTML5 (`dragstart`, `dragover`) não opera em telas touch sem emulação, cada card no mobile recebe uma barra de ação com botões de avanço e recuo (`◀ Anterior` e `Avançar ▶`). Ao tocar, o método `handleMoverCardMobile()` calcula a coluna adjacente e dispara `PATCH /kanban/cards/{id}/mover`, atualizando o fluxo visual imediatamente.
+
+#### 5. Modais Adaptativos e Prevenção de Teclado Virtual
+Todos os modais (`.modal-card`, `.modal-minuta-card`, `.modal-detalhes-card`) utilizam `max-height: 94dvh` e alinhamento ergonômico no mobile. As barras de ferramentas e formulários inline adaptam-se para colunas verticais ou grades 2x2, permitindo visualização completa mesmo com teclado virtual aberto.
+
+#### 6. Botão de Retorno no Painel de Detalhes do Radar
+No Radar de Editais mobile, ao selecionar um edital, o painel inferior inclui o botão `← Voltar para lista de editais` (`fecharDetalhesMobile()`), permitindo alternar facilmente entre a listagem de cards e os parâmetros aprofundados do edital.
+
+---
+
+## 18. Glossário Técnico para a Banca
 

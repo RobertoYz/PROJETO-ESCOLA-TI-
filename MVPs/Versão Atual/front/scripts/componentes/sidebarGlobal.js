@@ -34,6 +34,14 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
                 <span class="nav-text">Perfil da Startup</span>
             </a>
+
+            <a href="baixar-app.html" class="nav-item ${paginaAtiva === 'mobile' ? 'active' : ''}" style="padding: 0.9rem 1.5rem; color: #a78bfa; text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between; transition: 0.2s;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+                    <span class="nav-text">📱 App Mobile</span>
+                </div>
+                <span class="nav-text" style="background: rgba(167, 139, 250, 0.2); color: #c4b5fd; font-size: 0.72rem; padding: 2px 7px; border-radius: 999px; font-weight: 600;">Baixar APK</span>
+            </a>
         </nav>
 
         <div class="sidebar-footer" style="padding: 1rem 0; border-top: 1px solid #222;">
@@ -44,11 +52,63 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
         </div>
     `;
 
-    // Toggle expand/collapse
+    // Criar backdrop para mobile se não existir
+    let backdrop = document.getElementById('sidebarBackdrop');
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.id = 'sidebarBackdrop';
+        backdrop.className = 'sidebar-backdrop';
+        document.body.appendChild(backdrop);
+    }
+
+    const fecharMenuMobile = () => {
+        sidebarEl.classList.remove('mobile-open');
+        backdrop.classList.remove('active');
+    };
+
+    const abrirOuAlternarMenuMobile = () => {
+        const isOpen = sidebarEl.classList.toggle('mobile-open');
+        if (isOpen) {
+            backdrop.classList.add('active');
+        } else {
+            backdrop.classList.remove('active');
+        }
+    };
+
+    // Toggle expand/collapse e suporte a drawer no mobile
     const toggleBtn = document.getElementById('toggleSidebar');
     if (toggleBtn) {
         toggleBtn.addEventListener('click', () => {
-            sidebarEl.classList.toggle('collapsed');
+            if (window.innerWidth <= 900) {
+                abrirOuAlternarMenuMobile();
+            } else {
+                sidebarEl.classList.toggle('collapsed');
+            }
         });
     }
+
+    // Detecção de ambiente Capacitor nativo
+    if (window.Capacitor || window.location.protocol === 'capacitor:' || (window.location.hostname === 'localhost' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent))) {
+        document.body.classList.add('is-capacitor');
+    }
+
+    const btnMobileMenu = document.getElementById('btnMobileMenu') || document.getElementById('mobileMenuBtn');
+    if (btnMobileMenu) {
+        btnMobileMenu.addEventListener('click', (e) => {
+            e.stopPropagation();
+            abrirOuAlternarMenuMobile();
+        });
+    }
+
+    // Fechar ao tocar no backdrop
+    backdrop.addEventListener('click', fecharMenuMobile);
+
+    // Fechar ao tocar fora no mobile
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 900 && sidebarEl.classList.contains('mobile-open')) {
+            if (!sidebarEl.contains(e.target) && e.target !== toggleBtn && (!btnMobileMenu || !btnMobileMenu.contains(e.target))) {
+                fecharMenuMobile();
+            }
+        }
+    });
 }

@@ -1,0 +1,2687 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Anjo Nexus - Pipeline Kanban</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --sidebar-bg: #111418;
+            --navbar-bg: #0d0f12;
+            --column-bg: #111111;
+            --card-bg: #1a1d21;
+            --card-hover: #23272c;
+            --text-light: #ffffff;
+            --text-muted: #a0a0a0;
+            --menu-bg: #f5f5f5;
+            --menu-text: #333333;
+            --accent-blue: #1b36ff;
+            --accent-purple: #8b5cf6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --tag-finep: #3b82f6;
+            --tag-fapesp: #10b981;
+            --tag-fapesc: #8b5cf6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        svg {
+            fill: currentColor;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #222;
+            transition: width 0.3s ease;
+            position: relative;
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            align-self: flex-start;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            transition: opacity 0.3s;
+        }
+
+        .logo span {
+            font-weight: 400;
+        }
+
+        .sidebar.collapsed .logo {
+            opacity: 0;
+            pointer-events: none;
+            height: 0;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .nav-menu {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 0;
+            overflow: hidden;
+        }
+
+        .nav-item {
+            padding: 1rem 1.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .nav-item.active .nav-text {
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+        }
+
+        .nav-text {
+            transition: opacity 0.3s;
+        }
+
+        .sidebar.collapsed .nav-text {
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+            overflow: hidden;
+        }
+
+        .sidebar-footer {
+            padding: 1rem 0;
+            border-top: 1px solid #222;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--navbar-bg);
+            border-bottom: 1px solid #222;
+        }
+
+        .startup-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .startup-avatar {
+            width: 45px;
+            height: 45px;
+            background-color: #d9d9d9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+
+        .startup-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .actions-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn-add-card {
+            background: var(--accent-blue);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .btn-add-card:hover {
+            background: #0d1ecc;
+        }
+
+        /* KANBAN BOARD CONTAINER */
+        .kanban-container {
+            flex: 1;
+            padding: 1.5rem 2rem;
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            align-items: flex-start;
+            height: calc(100vh - 77px);
+        }
+
+        .kanban-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .kanban-container::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        .kanban-container::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 10px;
+        }
+
+        .kanban-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* COLUNAS */
+        .kanban-column {
+            background-color: var(--column-bg);
+            border-radius: 14px;
+            min-width: 320px;
+            width: 320px;
+            max-height: 100%;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #222;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .kanban-column.drag-over {
+            border-color: var(--accent-blue);
+            background-color: #16181c;
+        }
+
+        .column-header {
+            padding: 1.1rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #222;
+        }
+
+        .column-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .column-count {
+            background-color: #333;
+            color: #ccc;
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .column-body {
+            padding: 1rem;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 200px;
+        }
+
+        .column-body::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .column-body::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 10px;
+        }
+
+        /* CARDS */
+        .kanban-card {
+            background-color: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 1rem;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s, box-shadow 0.1s, border-color 0.2s;
+            position: relative;
+        }
+
+        .kanban-card:hover {
+            border-color: #555;
+            background-color: var(--card-hover);
+        }
+
+        .kanban-card:active {
+            cursor: grabbing;
+        }
+
+        .kanban-card.dragging {
+            opacity: 0.4;
+            transform: scale(0.98);
+            box-shadow: none;
+            border-color: var(--accent-purple);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .tag-finep {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: var(--tag-finep);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .tag-fapesp {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--tag-fapesp);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .tag-fapesc {
+            background-color: rgba(139, 92, 246, 0.15);
+            color: var(--tag-fapesc);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .tag-manual {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning-color);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-card-del {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 2px;
+            transition: 0.2s;
+        }
+
+        .btn-card-del:hover {
+            color: var(--danger-color);
+            transform: scale(1.1);
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.3;
+            color: #fff;
+        }
+
+        .card-desc {
+            font-size: 0.8rem;
+            color: #aaa;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #2a2a2a;
+            padding-top: 0.6rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .card-budget {
+            font-family: monospace;
+            font-weight: 500;
+            color: #ddd;
+        }
+
+        .match-score {
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .match-high {
+            color: var(--success-color);
+        }
+
+        .match-medium {
+            color: var(--accent-purple);
+        }
+
+        .match-low {
+            color: var(--danger-color);
+        }
+
+        /* MODAL DE CRIAÇÃO */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(6px);
+        }
+
+        .modal-overlay.active {
+            display: flex !important;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 480px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            background: #111418;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .form-select {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            cursor: pointer;
+            padding-right: 24px;
+        }
+
+        .form-select option {
+            background: #111418;
+            color: #fff;
+            padding: 8px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-save {
+            background: var(--accent-blue);
+            border: none;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* MODAL MÓDULO DE IA (MINUTA & PROPOSTA) */
+        .modal-minuta-card {
+            background: linear-gradient(145deg, #12151b 0%, #0c0e12 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            width: 95%;
+            max-width: 1040px;
+            max-height: 88vh;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(27, 54, 255, 0.12);
+            backdrop-filter: blur(12px);
+            animation: modalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.97) translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-minuta-header {
+            padding: 1.25rem 1.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(17, 20, 24, 0.85);
+        }
+
+        .modal-minuta-body {
+            padding: 1.5rem 1.75rem;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            scrollbar-width: thin;
+            scrollbar-color: #333 transparent;
+        }
+
+        .modal-minuta-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-minuta-body::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        .minuta-tabs-container {
+            background: #111418;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 10px 1.75rem;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        .minuta-tabs {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            white-space: nowrap;
+            align-items: center;
+        }
+
+        .minuta-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .minuta-tab-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+            font-size: 0.88rem;
+            font-weight: 500;
+            padding: 9px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex-shrink: 0;
+            line-height: 1.2;
+        }
+
+        .minuta-tab-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .minuta-tab-btn.active {
+            background: linear-gradient(135deg, rgba(27, 54, 255, 0.35), rgba(139, 92, 246, 0.25));
+            color: #fff;
+            font-weight: 600;
+            border: 1px solid rgba(99, 102, 241, 0.55);
+            box-shadow: 0 4px 15px rgba(27, 54, 255, 0.25);
+        }
+
+        /* Grid Responsiva para a Aba de Anexos */
+        .anexos-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 1.25rem;
+            width: 100%;
+        }
+
+        @media (max-width: 820px) {
+            .anexos-grid {
+                grid-template-columns: 1fr;
+            }
+            .modal-minuta-card {
+                width: 98%;
+                max-height: 94vh;
+                border-radius: 12px;
+            }
+            .modal-minuta-body {
+                padding: 1rem;
+            }
+        }
+
+        .anexos-panel {
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .anexos-panel-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .upload-dropzone {
+            border: 2px dashed rgba(59, 130, 246, 0.35);
+            border-radius: 10px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            background: rgba(59, 130, 246, 0.03);
+            transition: all 0.2s;
+        }
+
+        .upload-dropzone:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .anexo-item-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            padding: 10px 14px;
+            border-radius: 8px;
+            transition: all 0.15s;
+        }
+
+        .anexo-item-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .minuta-editor-area {
+            width: 100%;
+            min-height: 380px;
+            background: #090b0e;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #e2e8f0;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            padding: 1.2rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .minuta-editor-area:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(27, 54, 255, 0.2);
+        }
+
+        .btn-ai-sparkle {
+            background: linear-gradient(135deg, #1b36ff, #8b5cf6);
+            color: #fff;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.35);
+        }
+
+        .btn-ai-sparkle:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
+        }
+
+        .btn-ai-secondary {
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+
+        .btn-ai-secondary:hover {
+            background: #333;
+            border-color: #666;
+        }
+
+        .audit-info {
+            font-size: 0.8rem;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .fit-card {
+            background: #121418;
+            border: 1px solid #292d34;
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .fit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .fit-score {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        /* MODAL DETALHES DO EDITAL */
+        .modal-detalhes-card {
+            background: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 14px;
+            width: 95%;
+            max-width: 820px;
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-detalhes-header {
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: #111418;
+        }
+
+        .modal-detalhes-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .detalhes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .detalhes-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #282828;
+            border-radius: 8px;
+            padding: 10px 14px;
+        }
+
+        .detalhes-box-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #888;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .detalhes-box-val {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #fff;
+            margin-top: 4px;
+        }
+
+        .detalhes-objetivo-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #282828;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #ddd;
+            max-height: 250px;
+            overflow-y: auto;
+            white-space: pre-line;
+        }
+
+        .mobile-menu-trigger {
+            display: none;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #333;
+            color: #fff;
+            font-size: 1.25rem;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+        }
+
+        /* Estilos responsivos centralizados em mobile-adaptive.css */
+    </style>
+</head>
+
+<body>
+    <svg style="display: none;">
+        <symbol id="icon-menu" viewBox="0 0 24 24">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+        </symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24">
+            <path
+                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+        </symbol>
+        <symbol id="icon-star" viewBox="0 0 24 24">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+        </symbol>
+        <symbol id="icon-history" viewBox="0 0 24 24">
+            <path
+                d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" />
+        </symbol>
+        <symbol id="icon-kanban" viewBox="0 0 24 24">
+            <path
+                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7V7h2v10zm4-5h-2V7h2v5zm4 3h-2V7h2v8z" />
+        </symbol>
+        <symbol id="icon-plus" viewBox="0 0 24 24">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+        </symbol>
+        <symbol id="icon-trash" viewBox="0 0 24 24">
+            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+        </symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24">
+            <path
+                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+        </symbol>
+        <symbol id="icon-back" viewBox="0 0 24 24">
+            <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
+        </symbol>
+    </svg>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-btn" id="toggleSidebar">
+                <svg viewBox="0 0 24 24">
+                    <use href="#icon-menu"></use>
+                </svg>
+            </button>
+            <div class="logo">Anjo<span>Nexus</span></div>
+        </div>
+        <nav class="nav-menu">
+            <a href="RadarEditais.html" class="nav-item">
+                <svg class="nav-icon">
+                    <use href="#icon-search"></use>
+                </svg>
+                <span class="nav-text">Busca</span>
+            </a>
+            <a href="#" class="nav-item">
+                <svg class="nav-icon">
+                    <use href="#icon-star"></use>
+                </svg>
+                <span class="nav-text">Favoritos</span>
+            </a>
+            <a href="#" class="nav-item">
+                <svg class="nav-icon">
+                    <use href="#icon-history"></use>
+                </svg>
+                <span class="nav-text">Histórico</span>
+            </a>
+            <a href="kanban.html" class="nav-item active">
+                <svg class="nav-icon">
+                    <use href="#icon-kanban"></use>
+                </svg>
+                <span class="nav-text">Kanban</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="inicio.html" class="nav-item"><svg class="nav-icon">
+                    <use href="#icon-back"></use>
+                </svg><span class="nav-text">Menu Inicial</span></a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-navbar">
+            <div style="display: flex; align-items: center;">
+                <button id="btnMobileMenu" class="mobile-menu-trigger" aria-label="Abrir Menu">☰</button>
+                <div class="startup-info" id="container-seletor-global-kanban">
+                    <div class="startup-avatar"><svg width="24" height="24">
+                            <use href="#icon-user"></use>
+                        </svg></div>
+                    <h1 class="startup-name" id="boardTitle">Pipeline de Editais</h1>
+                </div>
+            </div>
+            <div class="actions-section">
+                <a href="baixar-app.html" title="Baixar App Android (.apk) ou Acessar no Celular" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.35); color: #818cf8; text-decoration: none; padding: 7px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; transition: 0.2s;">
+                    <span>📱</span>
+                    <span>Baixar App</span>
+                </a>
+                <button class="btn-ai-sparkle" id="btnOpenAiModule">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                    </svg>
+                    Elaboração de Propostas & Fit
+                </button>
+                <button class="btn-add-card" id="btnOpenModal">
+                    <svg width="18" height="18">
+                        <use href="#icon-plus"></use>
+                    </svg>
+                    Novo Ticket
+                </button>
+            </div>
+        </header>
+
+        <!-- KANBAN BOARD CONTAINER -->
+        <div class="kanban-container" id="kanbanBoard">
+            <div style="color: #888; padding: 2rem;">Carregando quadro Kanban...</div>
+        </div>
+    </main>
+
+    <!-- MODAL DE NOVO CARD -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-card">
+            <h2 class="modal-title">Novo Ticket Kanban</h2>
+            <div class="form-group">
+                <label class="form-label">Título da Proposta / Edital</label>
+                <input type="text" id="inputCardTitle" class="form-input" placeholder="Ex: Proposta FINEP - Tecnova">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nome da Startup</label>
+                <input type="text" id="inputStartup" class="form-input" value="Startup X"
+                    placeholder="Nome da startup cliente">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Coluna Inicial</label>
+                <select id="selectColumn" class="form-select"></select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Descrição / Observações</label>
+                <textarea id="inputCardDesc" class="form-textarea" rows="3"
+                    placeholder="Anotações preliminares..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="btnCancelModal">Cancelar</button>
+                <button class="btn-save" id="btnSaveCard">Criar Card</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MÓDULO DE DOCUMENTOS E ENQUADRAMENTO -->
+    <div class="modal-overlay" id="modalMinutaOverlay">
+        <div class="modal-minuta-card">
+            <div class="modal-minuta-header">
+                <div>
+                    <h2 style="font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="#3b82f6"
+                                d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                        </svg>
+                        Elaboração de Propostas e Análise de Elegibilidade
+                    </h2>
+                    <span style="font-size: 0.8rem; color: #888;">Geração estruturada de minutas técnicas, índice de
+                        aderência e exportação oficial</span>
+                </div>
+                <button class="btn-cancel" id="btnCloseMinutaModal" style="padding: 4px 10px;">&times;</button>
+            </div>
+
+            <!-- BARRA DE ABAS FIXA (SEM CORTE DE SCROLL) -->
+            <div class="minuta-tabs-container">
+                <div class="minuta-tabs">
+                    <button class="minuta-tab-btn active" id="tabMinutaBtn" onclick="switchMinutaTab('gerador')">Plano
+                        de Trabalho / Minuta</button>
+                    <button class="minuta-tab-btn" id="tabFitBtn" onclick="switchMinutaTab('fit')">Diagnóstico de
+                        Aderência</button>
+                    <button class="minuta-tab-btn" id="tabHistoricoBtn" onclick="switchMinutaTab('historico')">Histórico
+                        e Versões</button>
+                    <button class="minuta-tab-btn" id="tabAnexosBtn" onclick="switchMinutaTab('anexos')">📁 Arquivos & Dados do Card</button>
+                </div>
+            </div>
+
+            <div class="modal-minuta-body">
+                <!-- ABA 1: GERADOR E EDITOR DE MINUTA -->
+                <div id="tabContentGerador">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">1. Selecione a Startup Proponente:</label>
+                            <select id="selectMinutaStartup" class="form-select"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">2. Selecione o Edital Alvo:</label>
+                            <select id="selectMinutaEdital" class="form-select"
+                                onchange="handleTrocarEditalMinuta()"></select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label">3. Ideia / Escopo do Projeto da Empresa (O que será
+                            submetido):</label>
+                        <textarea id="inputMinutaIdeia" class="form-textarea" rows="3"
+                            placeholder="Descreva a solução tecnológica proposta, objetivos e diferencial que a empresa pretende implementar para resolver a dor do edital..."></textarea>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <button type="button" class="btn-ai-sparkle" id="btnGerarMinutaAction"
+                            onclick="handleGerarMinuta(event)">
+                            <svg width="16" height="16" viewBox="0 0 24 24">
+                                <path fill="currentColor"
+                                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2z" />
+                            </svg>
+                            Estruturar Minuta Técnica
+                        </button>
+                        <span id="aiGenerationStatus" style="font-size: 0.85rem; color: #aaa;"></span>
+                    </div>
+
+                    <!-- EDITOR DE MINUTA -->
+                    <div id="minutaEditorContainer" style="display: none; flex-direction: column; gap: 10px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 8px;">
+                            <div class="audit-info" id="minutaAuditHeader">
+                                <span>Versão: <strong id="lblMinutaVersao">v1</strong></span>
+                                <span>Responsável: <strong id="lblMinutaAutor">--</strong></span>
+                                <span>Motor de Análise: <strong id="lblMinutaModelo">--</strong></span>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn-ai-secondary" onclick="handleCopiarTextoMinuta()"
+                                    title="Copiar texto integral">
+                                    📋 Copiar Texto
+                                </button>
+                                <button class="btn-ai-secondary" onclick="handleExportarWord()"
+                                    title="Exportar no formato .docx">
+                                    📄 Word (.docx)
+                                </button>
+                                <button class="btn-ai-secondary" onclick="handleExportarPdf()"
+                                    title="Exportar no formato .pdf">
+                                    📑 Imprimir / PDF
+                                </button>
+                                <button class="btn-save" onclick="handleSalvarEdicaoMinuta()"
+                                    style="padding: 6px 14px; font-size: 0.85rem;">
+                                    💾 Salvar Versão
+                                </button>
+                            </div>
+                        </div>
+
+                        <textarea id="txtMinutaConteudo" class="minuta-editor-area" spellcheck="false"
+                            placeholder="Conteúdo da proposta técnica..."></textarea>
+                    </div>
+                </div>
+
+                <!-- ABA 2: DIAGNÓSTICO DE ADERÊNCIA / MATCH -->
+                <div id="tabContentFit" style="display: none;">
+                    <div class="fit-controls-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                            <label class="form-label" style="margin: 0; white-space: nowrap;">Empresa Proponente:</label>
+                            <select id="selectFitStartup" class="form-select" style="flex: 1; min-width: 0; width: 100%;" onchange="handleCarregarRankingFit()"></select>
+                        </div>
+                        <button class="btn-ai-secondary" onclick="handleCarregarRankingFit()" style="white-space: nowrap;">Atualizar Diagnóstico</button>
+                    </div>
+                    <div id="fitListContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="color: #888;">Selecione uma startup para calcular o ranking de compatibilidade com
+                            os editais ativos.</div>
+                    </div>
+                </div>
+
+                <!-- ABA 3: HISTÓRICO E VERSÕES VINCULADAS AO EDITAL -->
+                <div id="tabContentHistorico" style="display: none;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label class="form-label" style="margin: 0;">Filtrar por Edital:</label>
+                            <select id="selectHistoricoEdital" class="form-select" style="max-width: 420px;"
+                                onchange="fetchHistoricoMinutas()">
+                                <option value="atual">Edital Selecionado no Momento</option>
+                                <option value="todos">Todos os Editais</option>
+                            </select>
+                        </div>
+                        <button class="btn-ai-secondary" onclick="fetchHistoricoMinutas()">Atualizar Histórico</button>
+                    </div>
+                    <div id="historicoMinutasList" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="color: #888;">Carregando histórico...</div>
+                    </div>
+                </div>
+
+                <!-- ABA 4: ARQUIVOS, ANOTAÇÕES E DADOS DO CARD -->
+                <div id="tabContentAnexos" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                        <div>
+                            <h3 style="font-size: 1.05rem; font-weight: 600; color: #fff; margin-bottom: 4px;">Documentação e Anotações da Proposta</h3>
+                            <span style="font-size: 0.82rem; color: #94a3b8;">Anexe planilhas de custos, certidões negativas (CNDs), declarações e anotações internas da submissão.</span>
+                        </div>
+                    </div>
+
+                    <div class="anexos-grid">
+                        <!-- Anotações e Dados Customizados -->
+                        <div class="anexos-panel">
+                            <h4 class="anexos-panel-title" style="color: #60a5fa;">
+                                📝 Anotações Internas & Valores
+                            </h4>
+                            
+                            <div class="form-group" style="margin-bottom: 14px;">
+                                <label class="form-label">Card / Edital Selecionado:</label>
+                                <select id="selectCardAnexo" class="form-select" onchange="carregarDadosCardSelecionado()"></select>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 14px;">
+                                <label class="form-label">Valor Estimado do Projeto (R$):</label>
+                                <input type="text" id="inputValorProjetoCard" class="form-input" placeholder="Ex: R$ 350.000,00" style="width: 100%;">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 16px;">
+                                <label class="form-label">Status da Documentação & Pendências:</label>
+                                <textarea id="txtNotasInternasCard" class="form-textarea" placeholder="Ex: CND federal regularizada. Aguardando carta de anuência da ICT parceira e validação do orçamento com o proponente..." style="width: 100%; min-height: 120px; resize: vertical;"></textarea>
+                            </div>
+
+                            <button type="button" class="btn-save" id="btnSalvarDadosCard" onclick="handleSalvarDadosCard()" style="padding: 10px 16px; font-size: 0.9rem; width: 100%; justify-content: center; display: inline-flex; align-items: center; gap: 8px;">
+                                💾 Salvar Informações do Card
+                            </button>
+                        </div>
+
+                        <!-- Upload e Lista de Arquivos Anexos -->
+                        <div class="anexos-panel">
+                            <h4 class="anexos-panel-title" style="color: #c084fc;">
+                                📁 Anexos & Documentos do Projeto
+                            </h4>
+
+                            <div class="upload-dropzone">
+                                <input type="file" id="inputUploadArquivoCard" style="display: none;" onchange="handleUploadArquivoCard(event)">
+                                <label for="inputUploadArquivoCard" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#3b82f6"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                                    <span style="font-size: 0.88rem; color: #f1f5f9; font-weight: 600;">Clique para anexar arquivo</span>
+                                    <span style="font-size: 0.75rem; color: #94a3b8;">PDF, DOCX, XLSX, PNG (Até 10MB)</span>
+                                </label>
+                            </div>
+
+                            <div id="listaAnexosCard" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 240px; flex: 1; padding-right: 4px;">
+                                <div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 1.5rem;">Nenhum arquivo anexado a este card ainda.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALHES COMPLETOS DO EDITAL -->
+    <div class="modal-overlay" id="modalEditalDetalhesOverlay">
+        <div class="modal-detalhes-card">
+            <div class="modal-detalhes-header">
+                <div>
+                    <span id="detModalOrgTag" class="tag tag-finep" style="font-size: 0.8rem;">FINEP</span>
+                    <h2 id="detModalTitle"
+                        style="font-size: 1.15rem; font-weight: 600; margin-top: 6px; line-height: 1.3;">Nome do Edital
+                    </h2>
+                </div>
+                <button class="btn-cancel" id="btnCloseEditalDetalhesModal" style="padding: 4px 10px;">&times;</button>
+            </div>
+            <div class="modal-detalhes-body">
+                <!-- GRID DE DADOS CHAVE -->
+                <div class="detalhes-grid">
+                    <div class="detalhes-box">
+                        <div class="detalhes-box-label">Orçamento Máximo</div>
+                        <div class="detalhes-box-val" id="detModalBudget" style="color: #10b981;">--</div>
+                    </div>
+                    <div class="detalhes-box">
+                        <div class="detalhes-box-label">Prazo de Submissão</div>
+                        <div class="detalhes-box-val" id="detModalDeadline" style="color: #ef4444;">--</div>
+                    </div>
+                    <div class="detalhes-box">
+                        <div class="detalhes-box-label">Público-Alvo / Porte</div>
+                        <div class="detalhes-box-val" id="detModalTarget">--</div>
+                    </div>
+                    <div class="detalhes-box">
+                        <div class="detalhes-box-label">TRL / Nicho</div>
+                        <div class="detalhes-box-val" id="detModalNicho">--</div>
+                    </div>
+                </div>
+
+                <!-- OBJETIVO / CONTEÚDO EXTRAÍDO -->
+                <div>
+                    <label class="form-label" style="font-weight: 600; margin-bottom: 6px; display: block;">Objetivo e
+                        Diretrizes Oficiais do Edital:</label>
+                    <div class="detalhes-objetivo-box" id="detModalObjetivo">Carregando conteúdo...</div>
+                </div>
+
+                <!-- DOCUMENTOS EXIGIDOS -->
+                <div id="detModalDocsSection" style="display: none;">
+                    <label class="form-label" style="font-weight: 600; margin-bottom: 6px; display: block;">Documentos e
+                        Anexos Exigidos:</label>
+                    <div id="detModalDocsList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                </div>
+
+                <!-- BOTÕES DE AÇÃO -->
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #222; padding-top: 14px; margin-top: 5px;">
+                    <a href="#" id="detModalLinkOficial" target="_blank" class="btn-ai-secondary"
+                        style="text-decoration: none;">
+                        Abrir Edital Oficial ↗
+                    </a>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-ai-secondary" id="detModalBtnAnexos" style="display: inline-flex; align-items: center; gap: 6px;">
+                            📁 Anexos & Dados do Card
+                        </button>
+                        <button class="btn-ai-sparkle" id="detModalBtnGerarMinuta">
+                            <svg width="16" height="16" viewBox="0 0 24 24">
+                                <path fill="currentColor"
+                                    d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                            </svg>
+                            Elaborar Proposta para Este Edital
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
+        import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
+
+        const API_BASE = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
+        let currentBoard = null;
+        let todosCardsKanban = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            inicializarSidebarGlobal('kanban');
+            initModal();
+            inicializarSeletorGlobal('container-seletor-global-kanban', {
+                onTrocarStartup: (id, nome) => {
+                    fetchBoard();
+                }
+            });
+            fetchBoard();
+        });
+
+        function initSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggleSidebar');
+            if (toggleBtn) toggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+        }
+
+        window.fetchBoard = fetchBoard;
+        window.handleDeleteCard = handleDeleteCard;
+        window.switchMinutaTab = switchMinutaTab;
+        window.handleGerarMinuta = handleGerarMinuta;
+        window.handleCopiarTextoMinuta = handleCopiarTextoMinuta;
+        window.handleExportarWord = handleExportarWord;
+        window.handleExportarPdf = handleExportarPdf;
+        window.handleSalvarEdicaoMinuta = handleSalvarEdicaoMinuta;
+        window.handleCarregarRankingFit = handleCarregarRankingFit;
+        window.fetchHistoricoMinutas = fetchHistoricoMinutas;
+        window.selecionarEditalParaMinuta = selecionarEditalParaMinuta;
+        window.abrirMinutaDoHistorico = abrirMinutaDoHistorico;
+        window.handleTrocarEditalMinuta = handleTrocarEditalMinuta;
+
+        async function fetchBoard() {
+            try {
+                const stAtiva = localStorage.getItem('startup_ativa_nome') || '';
+                const queryParam = stAtiva ? `?startup_name=${encodeURIComponent(stAtiva)}` : '';
+
+                const res = await fetch(`${API_BASE}/kanban${queryParam}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    }
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}: Erro ao carregar Kanban`);
+                const result = await res.json();
+                currentBoard = result.data;
+                renderBoard(currentBoard);
+                populateModalColumns(currentBoard.columns);
+            } catch (err) {
+                console.error('Erro detalhado Kanban:', err);
+                document.getElementById('kanbanBoard').innerHTML = `<div style="color: #ef4444; padding: 2rem;">Falha ao comunicar com a API do Kanban (${err.message}). Certifique-se de que o backend está ativo na porta 8000.</div>`;
+            }
+        }
+
+        function renderBoard(board) {
+            const container = document.getElementById('kanbanBoard');
+            container.innerHTML = '';
+            todosCardsKanban = [];
+
+            if (board.title) {
+                const boardTitleEl = document.getElementById('boardTitle');
+                if (boardTitleEl) {
+                    boardTitleEl.textContent = board.title;
+                }
+            }
+
+            board.columns.forEach(col => {
+                const colEl = document.createElement('div');
+                colEl.className = 'kanban-column';
+                colEl.dataset.colId = col.id;
+
+                const count = col.cards ? col.cards.length : 0;
+
+                colEl.innerHTML = `
+                    <div class="column-header">
+                        <h2 class="column-title">${col.title}</h2>
+                        <span class="column-count">${count}</span>
+                    </div>
+                    <div class="column-body" data-col-id="${col.id}"></div>
+                `;
+
+                const colBody = colEl.querySelector('.column-body');
+                if (col.cards && col.cards.length > 0) {
+                    col.cards.forEach(card => {
+                        todosCardsKanban.push(card);
+                        colBody.appendChild(createCardElement(card));
+                    });
+                }
+
+                initColumnDragEvents(colBody);
+                container.appendChild(colEl);
+            });
+        }
+
+        function createCardElement(card) {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'kanban-card';
+            cardEl.draggable = true;
+            cardEl.dataset.cardId = card.id;
+            cardEl.dataset.position = card.position;
+
+            const edital = card.edital || {};
+            const meta = card.metadata || {};
+            const org = edital.fonte || meta.fonte || 'PROPOSTA';
+            const tagClass = getTagClass(org);
+
+            const budgetVal = edital.max_budget || meta.max_budget;
+            const budgetFormatted = budgetVal ? 'R$ ' + Number(budgetVal).toLocaleString('pt-BR') : '--';
+            const matchVal = edital.ai_match || meta.ai_match || 0;
+            const matchColorClass = getMatchColorClass(matchVal);
+
+            let currentColumnIndex = -1;
+            if (currentBoard && Array.isArray(currentBoard.columns)) {
+                currentColumnIndex = currentBoard.columns.findIndex(col => String(col.id) === String(card.column_id));
+            }
+            const canMoveLeft = currentColumnIndex > 0;
+            const canMoveRight = currentBoard && Array.isArray(currentBoard.columns) && currentColumnIndex !== -1 && currentColumnIndex < currentBoard.columns.length - 1;
+
+            cardEl.innerHTML = `
+                <div class="card-top">
+                    <div class="card-tags">
+                        <span class="tag ${tagClass}">${org}</span>
+                    </div>
+                    <button class="btn-card-del" title="Excluir card" onclick="handleDeleteCard(event, ${card.id})">
+                        <svg width="15" height="15"><use href="#icon-trash"></use></svg>
+                    </button>
+                </div>
+                <h3 class="card-title">${card.title}</h3>
+                ${card.description ? `<p class="card-desc">${card.description}</p>` : ''}
+                <div class="card-footer">
+                    <span class="card-budget">${budgetFormatted}</span>
+                    ${matchVal ? `<span class="match-score ${matchColorClass}">${matchVal}% Match</span>` : ''}
+                </div>
+                <div class="card-mobile-actions">
+                    <button class="btn-card-move" ${canMoveLeft ? '' : 'disabled'} onclick="handleMoverCardMobile(event, ${card.id}, -1)">
+                        ◀ Anterior
+                    </button>
+                    <button class="btn-card-move" ${canMoveRight ? '' : 'disabled'} onclick="handleMoverCardMobile(event, ${card.id}, 1)">
+                        Avançar ▶
+                    </button>
+                </div>
+            `;
+
+            initCardDragEvents(cardEl, card);
+
+            return cardEl;
+        }
+
+        function getTagClass(fonte) {
+            const f = (fonte || '').toUpperCase();
+            if (f.includes('FINEP')) return 'tag-finep';
+            if (f.includes('FAPESP')) return 'tag-fapesp';
+            if (f.includes('FAPESC')) return 'tag-fapesc';
+            return 'tag-manual';
+        }
+
+        function getMatchColorClass(val) {
+            if (val >= 80) return 'match-high';
+            if (val >= 50) return 'match-medium';
+            return 'match-low';
+        }
+
+        function initCardDragEvents(cardEl, cardObj) {
+            let wasDragged = false;
+
+            cardEl.addEventListener('dragstart', () => {
+                wasDragged = true;
+                cardEl.classList.add('dragging');
+            });
+
+            cardEl.addEventListener('dragend', () => {
+                cardEl.classList.remove('dragging');
+                updateCounters();
+                setTimeout(() => { wasDragged = false; }, 100);
+            });
+
+            cardEl.addEventListener('click', (e) => {
+                if (wasDragged) return;
+                if (e.target.closest('.btn-card-del')) return;
+                const cardId = parseInt(cardEl.dataset.cardId);
+                const targetCard = cardObj || todosCardsKanban.find(c => c.id === cardId);
+                if (targetCard) {
+                    abrirModalDetalhesEdital(targetCard);
+                }
+            });
+        }
+
+        function initColumnDragEvents(colBody) {
+            colBody.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                colBody.parentElement.classList.add('drag-over');
+
+                const afterElement = getDragAfterElement(colBody, e.clientY);
+                const dragging = document.querySelector('.dragging');
+                if (!dragging) return;
+
+                if (afterElement == null) {
+                    colBody.appendChild(dragging);
+                } else {
+                    colBody.insertBefore(dragging, afterElement);
+                }
+            });
+
+            colBody.addEventListener('dragleave', () => {
+                colBody.parentElement.classList.remove('drag-over');
+            });
+
+            colBody.addEventListener('drop', async () => {
+                colBody.parentElement.classList.remove('drag-over');
+                const dragging = document.querySelector('.dragging');
+                if (!dragging) return;
+
+                const cardId = dragging.dataset.cardId;
+                const targetColId = colBody.dataset.colId;
+
+                // Calcula posições vizinhas para fractional indexing
+                const prevCard = dragging.previousElementSibling;
+                const nextCard = dragging.nextElementSibling;
+
+                const prevPos = prevCard ? parseFloat(prevCard.dataset.position) : null;
+                const nextPos = nextCard ? parseFloat(nextCard.dataset.position) : null;
+
+                try {
+                    const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/mover`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                            target_column_id: targetColId,
+                            prev_position: prevPos,
+                            next_position: nextPos
+                        })
+                    });
+
+                    if (res.ok) {
+                        const json = await res.json();
+                        dragging.dataset.position = json.data.position;
+                    } else {
+                        console.error('Falha ao mover card no backend');
+                        fetchBoard(); // Reverte
+                    }
+                } catch (e) {
+                    console.error(e);
+                    fetchBoard();
+                }
+
+                updateCounters();
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const elements = [...container.querySelectorAll('.kanban-card:not(.dragging)')];
+            return elements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function updateCounters() {
+            document.querySelectorAll('.kanban-column').forEach(col => {
+                const countBadge = col.querySelector('.column-count');
+                const num = col.querySelectorAll('.kanban-card').length;
+                if (countBadge) countBadge.textContent = num;
+            });
+        }
+
+
+        async function handleMoverCardMobile(event, cardId, direction) {
+            if (event) event.stopPropagation();
+
+            const card = todosCardsKanban.find(c => String(c.id) === String(cardId));
+            if (!card || !currentBoard || !Array.isArray(currentBoard.columns)) return;
+
+            const currentIndex = currentBoard.columns.findIndex(col => String(col.id) === String(card.column_id));
+            if (currentIndex === -1) return;
+
+            const targetIndex = currentIndex + direction;
+            if (targetIndex < 0 || targetIndex >= currentBoard.columns.length) return;
+
+            const targetCol = currentBoard.columns[targetIndex];
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/mover`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        target_column_id: targetCol.id,
+                        prev_position: null,
+                        next_position: null
+                    })
+                });
+
+                if (res.ok) {
+                    await fetchBoard();
+                } else {
+                    console.error('Falha ao mover card no backend');
+                }
+            } catch (err) {
+                console.error('Erro de rede ao mover card', err);
+            }
+        }
+        window.handleMoverCardMobile = handleMoverCardMobile;
+
+        async function handleDeleteCard(event, cardId) {
+            event.stopPropagation();
+            if (!confirm('Deseja realmente remover este card do Kanban?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}`, {
+                    method: 'DELETE',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (res.ok) {
+                    const cardEl = document.querySelector(`[data-card-id="${cardId}"]`);
+                    if (cardEl) cardEl.remove();
+                    updateCounters();
+                } else {
+                    alert('Erro ao excluir card.');
+                }
+            } catch (e) {
+                alert('Erro de comunicação.');
+            }
+        }
+
+        /* MODAL */
+        function initModal() {
+            const modal = document.getElementById('modalOverlay');
+            const openBtn = document.getElementById('btnOpenModal');
+            const cancelBtn = document.getElementById('btnCancelModal');
+            const saveBtn = document.getElementById('btnSaveCard');
+
+            openBtn.addEventListener('click', () => modal.classList.add('active'));
+            cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('active');
+            });
+
+            saveBtn.addEventListener('click', async () => {
+                const title = document.getElementById('inputCardTitle').value.trim();
+                const startup = document.getElementById('inputStartup').value.trim();
+                const colId = document.getElementById('selectColumn').value;
+                const desc = document.getElementById('inputCardDesc').value.trim();
+
+                if (!title) {
+                    alert('Por favor, informe o título do ticket.');
+                    return;
+                }
+
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Salvando...';
+
+                try {
+                    const res = await fetch(`${API_BASE}/kanban/cards`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                            title: title,
+                            startup_name: startup,
+                            column_id: colId,
+                            description: desc
+                        })
+                    });
+
+                    if (res.ok) {
+                        modal.classList.remove('active');
+                        document.getElementById('inputCardTitle').value = '';
+                        document.getElementById('inputCardDesc').value = '';
+                        fetchBoard();
+                    } else {
+                        alert('Falha ao criar card no servidor.');
+                    }
+                } catch (e) {
+                    alert('Erro de comunicação com a API.');
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Criar Card';
+                }
+            });
+        }
+
+        function populateModalColumns(columns) {
+            const select = document.getElementById('selectColumn');
+            select.innerHTML = '';
+            columns.forEach(col => {
+                const opt = document.createElement('option');
+                opt.value = col.id;
+                opt.textContent = col.title;
+                select.appendChild(opt);
+            });
+        }
+
+        // =========================================================================
+        // MÓDULO 9: INTELIGÊNCIA ARTIFICIAL E GERAÇÃO DE MINUTAS (RF-29 A RF-47)
+        // =========================================================================
+        let currentMinutaData = null;
+        let cachedStartups = [];
+        let cachedEditais = [];
+
+        // Inicializa listeners do Módulo de IA
+        const btnOpenAiModule = document.getElementById('btnOpenAiModule');
+        const modalMinutaOverlay = document.getElementById('modalMinutaOverlay');
+        const btnCloseMinutaModal = document.getElementById('btnCloseMinutaModal');
+
+        if (btnOpenAiModule) {
+            btnOpenAiModule.addEventListener('click', () => {
+                modalMinutaOverlay.classList.add('active');
+                carregarStartupsEEditaisMinuta();
+            });
+        }
+
+        if (btnCloseMinutaModal) {
+            btnCloseMinutaModal.addEventListener('click', () => {
+                modalMinutaOverlay.classList.remove('active');
+            });
+        }
+
+        if (modalMinutaOverlay) {
+            modalMinutaOverlay.addEventListener('click', (e) => {
+                if (e.target === modalMinutaOverlay) modalMinutaOverlay.classList.remove('active');
+            });
+        }
+
+        // Listeners e controle do Modal de Detalhes do Edital
+        const modalEditalDetalhesOverlay = document.getElementById('modalEditalDetalhesOverlay');
+        const btnCloseEditalDetalhesModal = document.getElementById('btnCloseEditalDetalhesModal');
+
+        if (btnCloseEditalDetalhesModal) {
+            btnCloseEditalDetalhesModal.addEventListener('click', () => {
+                modalEditalDetalhesOverlay.classList.remove('active');
+            });
+        }
+
+        if (modalEditalDetalhesOverlay) {
+            modalEditalDetalhesOverlay.addEventListener('click', (e) => {
+                if (e.target === modalEditalDetalhesOverlay) modalEditalDetalhesOverlay.classList.remove('active');
+            });
+        }
+
+        function abrirModalDetalhesEdital(card) {
+            try {
+                if (!card) return;
+                const meta = card.metadata || {};
+                const edital = card.edital || meta.edital || meta || {};
+                const org = edital.fonte || meta.fonte || edital.org || 'EDITAL';
+                const titulo = edital.title || meta.title || card.title || 'Edital de Inovação';
+                
+                let orcamento = 'Conforme Edital';
+                const budgetVal = edital.max_budget || meta.max_budget;
+                if (budgetVal && !isNaN(Number(budgetVal))) {
+                    orcamento = 'R$ ' + Number(budgetVal).toLocaleString('pt-BR');
+                } else if (budgetVal) {
+                    orcamento = String(budgetVal);
+                }
+
+                let prazo = 'Fluxo Contínuo / A Definir';
+                const deadlineVal = edital.deadline || meta.deadline;
+                if (deadlineVal) {
+                    try {
+                        const d = new Date(deadlineVal);
+                        if (!isNaN(d.getTime())) prazo = d.toLocaleDateString('pt-BR');
+                    } catch (_) {}
+                }
+
+                const publico = edital.publico || meta.publico || 'Startups, Micro e Pequenas Empresas';
+                const trlNicho = `${edital.ai_trl || meta.ai_trl || 'Geral'} | ${edital.ai_nicho || meta.ai_nicho || edital.nicho || 'Inovação'}`;
+                const objetivo = edital.conteudo_completo || meta.conteudo_completo || edital.objetivo || meta.objetivo || card.description || 'Diretrizes em conformidade com o regulamento oficial do edital.';
+                const link = edital.source_url || meta.source_url || edital.url || meta.url || '#';
+
+                const elOrg = document.getElementById('detModalOrgTag');
+                if (elOrg) {
+                    elOrg.textContent = org;
+                    elOrg.className = `tag ${getTagClass(org)}`;
+                }
+                const elTitle = document.getElementById('detModalTitle');
+                if (elTitle) elTitle.textContent = titulo;
+                const elBudget = document.getElementById('detModalBudget');
+                if (elBudget) elBudget.textContent = orcamento;
+                const elDeadline = document.getElementById('detModalDeadline');
+                if (elDeadline) elDeadline.textContent = prazo;
+                const elTarget = document.getElementById('detModalTarget');
+                if (elTarget) elTarget.textContent = publico;
+                const elNicho = document.getElementById('detModalNicho');
+                if (elNicho) elNicho.textContent = trlNicho;
+                const elObj = document.getElementById('detModalObjetivo');
+                if (elObj) elObj.textContent = objetivo;
+
+                const linkEl = document.getElementById('detModalLinkOficial');
+                if (linkEl) {
+                    if (link && link !== '#') {
+                        linkEl.href = link;
+                        linkEl.style.display = 'inline-flex';
+                    } else {
+                        linkEl.style.display = 'none';
+                    }
+                }
+
+                // Documentos exigidos
+                const docsList = document.getElementById('detModalDocsList');
+                const docsSec = document.getElementById('detModalDocsSection');
+                const rawDocs = edital.documentos_exigidos || meta.documentos_exigidos || edital.documentos || meta.documentos || [];
+                const docs = Array.isArray(rawDocs) ? rawDocs : [];
+                
+                if (docsSec && docsList) {
+                    if (docs.length > 0) {
+                        docsSec.style.display = 'block';
+                        docsList.innerHTML = '';
+                        docs.forEach(d => {
+                            const docItem = document.createElement('div');
+                            docItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; color: #e0e0e0;';
+
+                            const tituloDoc = typeof d === 'string' ? d : (d.titulo || d.nome || d.title || d.texto || 'Documento Exigido');
+                            const linkDoc = typeof d === 'object' && d.link && d.link !== '#' ? d.link : null;
+
+                            docItem.innerHTML = `
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="color: #10b981; font-weight: bold;">✔</span>
+                                    <span>${tituloDoc}</span>
+                                </div>
+                                ${linkDoc ? `<a href="${linkDoc}" target="_blank" style="color: var(--accent-purple); text-decoration: none; font-size: 0.8rem; margin-left: 10px;">Ver anexo ↗</a>` : ''}
+                            `;
+                            docsList.appendChild(docItem);
+                        });
+                    } else {
+                        docsSec.style.display = 'none';
+                    }
+                }
+
+                // Ação de Gerar Minuta direto deste edital
+                const btnGerar = document.getElementById('detModalBtnGerarMinuta');
+                if (btnGerar) {
+                    btnGerar.onclick = () => {
+                        modalEditalDetalhesOverlay.classList.remove('active');
+                        modalMinutaOverlay.classList.add('active');
+                        switchMinutaTab('gerador');
+                        carregarStartupsEEditaisMinuta().then(() => {
+                            if (edital && edital.id) {
+                                const selE = document.getElementById('selectMinutaEdital');
+                                if (selE) {
+                                    selE.value = edital.id;
+                                    handleTrocarEditalMinuta();
+                                }
+                            }
+                        });
+                    };
+                }
+
+                // Ação de Abrir Anexos direto deste edital/card
+                const btnAnexos = document.getElementById('detModalBtnAnexos');
+                if (btnAnexos) {
+                    btnAnexos.onclick = () => {
+                        modalEditalDetalhesOverlay.classList.remove('active');
+                        modalMinutaOverlay.classList.add('active');
+                        switchMinutaTab('anexos');
+                        carregarStartupsEEditaisMinuta();
+                        if (card && card.id) {
+                            selecionarCardParaAnexos(card.id);
+                        }
+                    };
+                }
+
+                const overlay = document.getElementById('modalEditalDetalhesOverlay');
+                if (overlay) overlay.classList.add('active');
+            } catch (err) {
+                console.error('Erro ao abrir detalhes do edital:', err);
+                // Fallback seguro: abre direto o modal de anexos/minuta
+                const overlayMinuta = document.getElementById('modalMinutaOverlay');
+                if (overlayMinuta) {
+                    overlayMinuta.classList.add('active');
+                    switchMinutaTab('anexos');
+                    carregarStartupsEEditaisMinuta();
+                    if (card && card.id) selecionarCardParaAnexos(card.id);
+                }
+            }
+        }
+
+        async function switchMinutaTab(tabName) {
+            document.querySelectorAll('.minuta-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tabContentGerador').style.display = 'none';
+            document.getElementById('tabContentFit').style.display = 'none';
+            document.getElementById('tabContentHistorico').style.display = 'none';
+            const tabAnexosContent = document.getElementById('tabContentAnexos');
+            if (tabAnexosContent) tabAnexosContent.style.display = 'none';
+
+            // Garante que a lista de startups e editais esteja carregada
+            if (!cachedStartups || cachedStartups.length === 0) {
+                await carregarStartupsEEditaisMinuta();
+            }
+
+            if (tabName === 'gerador') {
+                document.getElementById('tabMinutaBtn').classList.add('active');
+                document.getElementById('tabContentGerador').style.display = 'block';
+            } else if (tabName === 'fit') {
+                document.getElementById('tabFitBtn').classList.add('active');
+                document.getElementById('tabContentFit').style.display = 'block';
+                
+                // Pré-seleciona a startup ativa no select de Fit
+                const selectFit = document.getElementById('selectFitStartup');
+                if (selectFit) {
+                    const stAtivaId = localStorage.getItem('startup_ativa_id');
+                    if (stAtivaId && Array.from(selectFit.options).some(o => String(o.value) === String(stAtivaId))) {
+                        selectFit.value = stAtivaId;
+                    } else if (selectFit.options.length > 0 && !selectFit.value) {
+                        selectFit.selectedIndex = 0;
+                    }
+                }
+                handleCarregarRankingFit();
+            } else if (tabName === 'historico') {
+                document.getElementById('tabHistoricoBtn').classList.add('active');
+                document.getElementById('tabContentHistorico').style.display = 'block';
+                fetchHistoricoMinutas();
+            } else if (tabName === 'anexos') {
+                const tabAnexosBtn = document.getElementById('tabAnexosBtn');
+                if (tabAnexosBtn) tabAnexosBtn.classList.add('active');
+                if (tabAnexosContent) tabAnexosContent.style.display = 'block';
+                carregarOpcoesSelectCardsAnexo();
+            }
+        }
+
+        async function carregarStartupsEEditaisMinuta() {
+            const selectS = document.getElementById('selectMinutaStartup');
+            const selectFit = document.getElementById('selectFitStartup');
+            const selectE = document.getElementById('selectMinutaEdital');
+
+            // Feedback visual imediato enquanto os dados são carregados
+            if (selectS && selectS.options.length === 0) {
+                selectS.innerHTML = '<option value="">Carregando startups...</option>';
+            }
+            if (selectE && selectE.options.length === 0) {
+                selectE.innerHTML = '<option value="">Carregando editais disponíveis...</option>';
+            }
+
+            try {
+                // 1. Carrega Startups com autenticação e fallback robusto
+                let listS = [];
+                try {
+                    const resS = await fetch(`${API_BASE}/startups`, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                        }
+                    });
+                    if (resS.ok) {
+                        const jsonS = await resS.json();
+                        listS = Array.isArray(jsonS) ? jsonS : (jsonS.dados || jsonS.data || []);
+                    }
+                } catch (eS) {
+                    console.warn('API de startups indisponível ou sem sessão, usando fallback local.', eS);
+                }
+
+                // Fallback com a startup ativa em cache ou UNICESUMAR
+                if (!Array.isArray(listS) || listS.length === 0) {
+                    const stAtiva = localStorage.getItem('startup_ativa_nome') || 'UNICESUMAR';
+                    const stId = localStorage.getItem('startup_ativa_id') || '1';
+                    listS = [{ id: stId, nome_fantasia: stAtiva, razao_social: stAtiva, porte: 'ME/EPP' }];
+                }
+                cachedStartups = listS;
+
+                if (selectS) {
+                    selectS.innerHTML = '';
+                    cachedStartups.forEach(st => {
+                        const opt = document.createElement('option');
+                        opt.value = st.id;
+                        opt.textContent = `${st.nome_fantasia || st.razao_social || 'Startup'} (${st.porte || 'Ativa'})`;
+                        selectS.appendChild(opt);
+                    });
+                }
+
+                if (selectFit) {
+                    selectFit.innerHTML = '';
+                    cachedStartups.forEach(st => {
+                        const opt = document.createElement('option');
+                        opt.value = st.id;
+                        opt.textContent = `${st.nome_fantasia || st.razao_social || 'Startup'} (${st.porte || 'Ativa'})`;
+                        selectFit.appendChild(opt);
+                    });
+                }
+
+                // 2. Carrega Editais do banco
+                let listE = [];
+                try {
+                    const resE = await fetch(`${API_BASE}/editais`);
+                    if (resE.ok) {
+                        const jsonE = await resE.json();
+                        listE = Array.isArray(jsonE) ? jsonE : (jsonE.data || jsonE.dados || []);
+                    }
+                } catch (eE) {
+                    console.warn('API de editais demorou ou falhou, verificando cache:', eE);
+                }
+
+                if (Array.isArray(listE) && listE.length > 0) {
+                    cachedEditais = listE.slice(0, 80);
+                } else if (!cachedEditais || cachedEditais.length === 0) {
+                    cachedEditais = [{ id: 1, name: 'EDITAL DE CHAMADA PÚBLICA FAPESC/SED N.º 54/2026', org: 'FAPESC' }];
+                }
+
+                if (selectE) {
+                    selectE.innerHTML = '';
+                    cachedEditais.forEach(ed => {
+                        const opt = document.createElement('option');
+                        opt.value = ed.id;
+                        const titulo = ed.name || ed.title || 'Edital de Inovação';
+                        const fonte = ed.org || ed.fonte || 'EDITAL';
+                        opt.textContent = `[${fonte}] ${titulo.length > 80 ? titulo.substring(0, 80) + '...' : titulo}`;
+                        selectE.appendChild(opt);
+                    });
+                }
+
+                // Sincroniza minuta estritamente para o edital selecionado
+                await handleTrocarEditalMinuta();
+            } catch (e) {
+                console.error('Erro ao preencher seletores da IA:', e);
+            }
+        }
+
+        // Troca de edital no select: carrega a minuta específica daquele edital (se houver) ou limpa o editor
+        async function handleTrocarEditalMinuta() {
+            const editalId = document.getElementById('selectMinutaEdital').value;
+            const status = document.getElementById('aiGenerationStatus');
+            const editorContainer = document.getElementById('minutaEditorContainer');
+
+            if (!editalId) {
+                currentMinutaData = null;
+                editorContainer.style.display = 'none';
+                return;
+            }
+
+            status.textContent = 'Carregando proposta do edital...';
+
+            try {
+                const res = await fetch(`${API_BASE}/minutas?edital_id=${editalId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const lista = data.dados?.data || data.dados || [];
+                    if (lista.length > 0) {
+                        currentMinutaData = lista[0]; // Minuta mais recente deste edital
+                        renderizarEditorMinuta(currentMinutaData);
+                        status.textContent = `Proposta ativa vinculada a este edital (v${currentMinutaData.versao}).`;
+                    } else {
+                        // Não há minuta para este edital específico
+                        currentMinutaData = null;
+                        editorContainer.style.display = 'none';
+                        document.getElementById('txtMinutaConteudo').value = '';
+                        status.textContent = 'Nenhuma proposta elaborada para este edital. Clique em "Estruturar Minuta Técnica".';
+                    }
+                }
+            } catch (err) {
+                console.error('Erro ao buscar minuta do edital:', err);
+                status.textContent = '';
+            }
+        }
+
+        // RF-29: Gerar Minuta de Proposta com IA
+        async function handleGerarMinuta(evt) {
+            if (evt) evt.preventDefault();
+
+            const startupId = document.getElementById('selectMinutaStartup').value;
+            const editalId = document.getElementById('selectMinutaEdital').value;
+            const ideia = document.getElementById('inputMinutaIdeia').value.trim();
+
+            if (!startupId || !editalId) {
+                alert('Selecione uma startup e um edital.');
+                return;
+            }
+
+            if (!ideia || ideia.length < 15) {
+                alert('Por favor, informe a ideia ou escopo do projeto com pelo menos 15 caracteres.');
+                return;
+            }
+
+            const btn = document.getElementById('btnGerarMinutaAction');
+            const status = document.getElementById('aiGenerationStatus');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Elaborando Minuta Técnica...';
+            status.textContent = 'Processando diretrizes do edital e perfil da empresa...';
+
+            try {
+                const res = await fetch(`${API_BASE}/minutas/gerar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        startup_id: startupId,
+                        edital_id: editalId,
+                        ideia_projeto: ideia
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.sucesso) {
+                    currentMinutaData = data.dados;
+                    renderizarEditorMinuta(currentMinutaData);
+                    status.textContent = `Proposta estruturada e salva com sucesso para este edital!`;
+                } else {
+                    alert('Falha ao elaborar minuta: ' + (data.message || 'Erro desconhecido.'));
+                    status.textContent = 'Erro na geração.';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de comunicação ao acionar o serviço de inteligência.');
+                status.textContent = 'Falha de comunicação.';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2z"/></svg> Estruturar Minuta Técnica`;
+            }
+        }
+
+        // RF-30: Renderiza no editor interativo
+        function renderizarEditorMinuta(minuta) {
+            const container = document.getElementById('minutaEditorContainer');
+            container.style.display = 'flex';
+
+            document.getElementById('lblMinutaVersao').textContent = `v${minuta.versao}`;
+            document.getElementById('lblMinutaAutor').textContent = minuta.autor_nome || 'Consultor';
+            document.getElementById('lblMinutaModelo').textContent = minuta.modelo_ia_usado || 'Sistema';
+
+            document.getElementById('txtMinutaConteudo').value = minuta.conteudo_gerado;
+
+            // Sincroniza o select do edital se a minuta tiver edital_id
+            if (minuta.edital_id) {
+                const selE = document.getElementById('selectMinutaEdital');
+                if (selE && selE.value != minuta.edital_id) {
+                    selE.value = minuta.edital_id;
+                }
+            }
+        }
+
+        // RF-30: Salvar alterações do editor gerando nova versão
+        async function handleSalvarEdicaoMinuta() {
+            if (!currentMinutaData) return;
+
+            const novoTexto = document.getElementById('txtMinutaConteudo').value;
+            if (!novoTexto.trim()) {
+                alert('O conteúdo da proposta não pode ficar vazio.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/minutas/${currentMinutaData.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        conteudo_gerado: novoTexto
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.sucesso) {
+                    currentMinutaData = data.dados;
+                    renderizarEditorMinuta(currentMinutaData);
+                    alert(data.mensagem);
+                } else {
+                    alert('Erro ao salvar revisão.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de comunicação.');
+            }
+        }
+
+        // RF-31: Cópia Rápida em 1 Clique
+        async function handleCopiarTextoMinuta() {
+            const texto = document.getElementById('txtMinutaConteudo').value;
+            if (!texto) {
+                alert('Nenhum texto disponível para cópia.');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(texto);
+                alert('Texto da proposta técnica copiado com sucesso para a Área de Transferência! (RF-31)');
+            } catch (err) {
+                const txtArea = document.getElementById('txtMinutaConteudo');
+                txtArea.select();
+                document.execCommand('copy');
+                alert('Texto copiado com sucesso!');
+            }
+        }
+
+        // RF-32: Exportar Word (.docx)
+        function handleExportarWord() {
+            if (!currentMinutaData) {
+                alert('Gere ou selecione uma minuta antes de exportar.');
+                return;
+            }
+            window.open(`${API_BASE}/minutas/${currentMinutaData.id}/exportar-docx`, '_blank');
+        }
+
+        // RF-32.1: Exportar / Visualizar PDF
+        function handleExportarPdf() {
+            if (!currentMinutaData) {
+                alert('Gere ou selecione uma minuta antes de exportar.');
+                return;
+            }
+            window.open(`${API_BASE}/minutas/${currentMinutaData.id}/exportar-pdf`, '_blank');
+        }
+
+        // RF-47: Match Inteligente de Editais
+        async function handleCarregarRankingFit() {
+            let selectFit = document.getElementById('selectFitStartup');
+            let startupId = selectFit ? selectFit.value : null;
+
+            // Se o select estiver vazio, carrega startups automaticamente
+            if (!startupId && (!cachedStartups || cachedStartups.length === 0)) {
+                await carregarStartupsEEditaisMinuta();
+                selectFit = document.getElementById('selectFitStartup');
+                if (selectFit) {
+                    const stAtivaId = localStorage.getItem('startup_ativa_id');
+                    if (stAtivaId && Array.from(selectFit.options).some(o => String(o.value) === String(stAtivaId))) {
+                        selectFit.value = stAtivaId;
+                    } else if (selectFit.options.length > 0) {
+                        selectFit.selectedIndex = 0;
+                    }
+                    startupId = selectFit ? selectFit.value : null;
+                }
+            }
+
+            const container = document.getElementById('fitListContainer');
+            if (!container) return;
+
+            if (!startupId) {
+                container.innerHTML = '<div style="color: #888; padding: 1rem; text-align: center;">Selecione uma startup para calcular a aderência.</div>';
+                return;
+            }
+
+            container.innerHTML = '<div style="color: #888;">Calculando aderência e pontuação semântica de fit...</div>';
+
+            try {
+                const res = await fetch(`${API_BASE}/ia/match-editais`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ startup_id: startupId })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.sucesso) {
+                    renderizarRankingFit(data.ranking);
+                } else {
+                    container.innerHTML = '<div style="color: #ef4444;">Falha ao calcular fit.</div>';
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div style="color: #ef4444;">Erro de comunicação ao calcular fit.</div>';
+            }
+        }
+
+        function renderizarRankingFit(ranking) {
+            const container = document.getElementById('fitListContainer');
+            container.innerHTML = '';
+
+            if (!ranking || ranking.length === 0) {
+                container.innerHTML = '<div style="color: #888;">Nenhum edital encontrado para comparação.</div>';
+                return;
+            }
+
+            ranking.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'fit-card';
+
+                const scoreColor = item.match_percentual >= 80 ? '#10b981' : (item.match_percentual >= 60 ? '#8b5cf6' : '#f59e0b');
+
+                card.innerHTML = `
+                    <div class="fit-header">
+                        <div>
+                            <span class="tag ${getTagClass(item.fonte)}">${item.fonte}</span>
+                            <strong style="margin-left: 8px; font-size: 0.95rem;">${item.titulo}</strong>
+                        </div>
+                        <span class="fit-score" style="color: ${scoreColor};">${item.match_percentual}% Fit</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #ccc; line-height: 1.4;">
+                        ${item.justificativa_fit}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #222; padding-top: 6px; font-size: 0.8rem; color: #888;">
+                        <span>Prazo: ${item.prazo} | Teto: R$ ${Number(item.orcamento_maximo || 0).toLocaleString('pt-BR')}</span>
+                        <button class="btn-ai-secondary" style="padding: 3px 8px; font-size: 0.75rem;" onclick="selecionarEditalParaMinuta(${item.edital_id})">
+                            Elaborar Proposta Deste Edital &rarr;
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function selecionarEditalParaMinuta(editalId) {
+            document.getElementById('selectMinutaEdital').value = editalId;
+            const startupId = document.getElementById('selectFitStartup').value;
+            if (startupId) document.getElementById('selectMinutaStartup').value = startupId;
+            switchMinutaTab('gerador');
+        }
+
+        // RF-33 & RF-34: Histórico e Auditoria Estritamente Vinculado ao Edital
+        async function fetchHistoricoMinutas() {
+            const container = document.getElementById('historicoMinutasList');
+            const selectFiltro = document.getElementById('selectHistoricoEdital');
+            const modoFiltro = selectFiltro ? selectFiltro.value : 'atual';
+            const editalAtualId = document.getElementById('selectMinutaEdital')?.value;
+
+            container.innerHTML = '<div style="color: #888;">Buscando histórico do edital...</div>';
+
+            try {
+                const stAtivaId = localStorage.getItem('startup_ativa_id');
+                const params = new URLSearchParams();
+
+                if (stAtivaId) {
+                    params.append('startup_id', stAtivaId);
+                }
+
+                if (modoFiltro === 'atual' && editalAtualId) {
+                    params.append('edital_id', editalAtualId);
+                }
+
+                const queryString = params.toString() ? `?${params.toString()}` : '';
+                const url = `${API_BASE}/minutas${queryString}`;
+
+                const res = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    }
+                });
+                const data = await res.json();
+
+                if (res.ok && data.sucesso) {
+                    renderizarHistoricoMinutas(data.dados.data || data.dados);
+                } else {
+                    container.innerHTML = '<div style="color: #ef4444;">Erro ao carregar histórico deste edital.</div>';
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div style="color: #ef4444;">Erro de conexão com o histórico.</div>';
+            }
+        }
+
+        function renderizarHistoricoMinutas(minutas) {
+            const container = document.getElementById('historicoMinutasList');
+            container.innerHTML = '';
+
+            if (!minutas || minutas.length === 0) {
+                container.innerHTML = '<div style="color: #888;">Nenhuma minuta gerada até o momento.</div>';
+                return;
+            }
+
+            minutas.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'fit-card';
+
+                const dataFmt = new Date(m.created_at).toLocaleString('pt-BR');
+
+                item.innerHTML = `
+                    <div class="fit-header">
+                        <div>
+                            <span class="tag tag-finep">v${m.versao}</span>
+                            <strong style="margin-left: 6px; font-size: 0.95rem;">${m.titulo_projeto || 'Minuta de Inovação'}</strong>
+                        </div>
+                        <span style="font-size: 0.8rem; color: #888;">Status: ${m.status.toUpperCase()}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #aaa;">
+                        Startup: <strong>${m.startup?.nome_fantasia || m.startup?.razao_social || 'N/A'}</strong> | Edital: <strong>${m.edital?.title?.substring(0, 50) || 'N/A'}...</strong>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #777;">
+                        Auditado em <strong>${dataFmt}</strong> por <strong>${m.autor_nome || 'Consultor'}</strong> (${m.modelo_ia_usado || 'IA'})
+                    </div>
+                    <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px;">
+                        <button class="btn-ai-secondary" style="font-size: 0.8rem;" onclick="abrirMinutaDoHistorico(${m.id})">Visualizar &rarr;</button>
+                        <a href="${API_BASE}/minutas/${m.id}/exportar-docx" target="_blank" class="btn-ai-secondary" style="font-size: 0.8rem; text-decoration: none;">Word (.docx)</a>
+                        <a href="${API_BASE}/minutas/${m.id}/exportar-pdf" target="_blank" class="btn-ai-secondary" style="font-size: 0.8rem; text-decoration: none;">PDF</a>
+                    </div>
+                `;
+
+                container.appendChild(item);
+            });
+        }
+
+        async function abrirMinutaDoHistorico(id) {
+            try {
+                const res = await fetch(`${API_BASE}/minutas/${id}`);
+                const data = await res.json();
+                if (res.ok && data.sucesso) {
+                    currentMinutaData = data.dados;
+                    switchMinutaTab('gerador');
+                    renderizarEditorMinuta(currentMinutaData);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao carregar minuta do histórico.');
+            }
+        }
+
+        // =========================================================================
+        // MÓDULO DE ANEXOS E DADOS DO CARD KANBAN
+        // =========================================================================
+        // (todosCardsKanban declarado no escopo principal do script)
+
+        function carregarOpcoesSelectCardsAnexo() {
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (!selectCard) return;
+
+            // Extrai todos os cards do quadro atual
+            todosCardsKanban = [];
+            if (currentBoard && currentBoard.columns) {
+                currentBoard.columns.forEach(col => {
+                    if (col.cards && col.cards.length > 0) {
+                        col.cards.forEach(c => todosCardsKanban.push(c));
+                    }
+                });
+            }
+
+            selectCard.innerHTML = '';
+            if (todosCardsKanban.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'Nenhum card cadastrado no Kanban';
+                selectCard.appendChild(opt);
+                limparCamposAnexos();
+                return;
+            }
+
+            todosCardsKanban.forEach(card => {
+                const opt = document.createElement('option');
+                opt.value = card.id;
+                const fullTitle = card.title || 'Card sem título';
+                const shortTitle = fullTitle.length > 65 ? fullTitle.substring(0, 65) + '...' : fullTitle;
+                opt.textContent = `${shortTitle} (#${card.id})`;
+                opt.title = fullTitle;
+                selectCard.appendChild(opt);
+            });
+
+            // Se ainda não selecionou nenhum, seleciona o primeiro
+            carregarDadosCardSelecionado();
+        }
+
+        function selecionarCardParaAnexos(cardId) {
+            carregarOpcoesSelectCardsAnexo();
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (selectCard) {
+                selectCard.value = cardId;
+                carregarDadosCardSelecionado();
+            }
+        }
+
+        function limparCamposAnexos() {
+            const inputValor = document.getElementById('inputValorProjetoCard');
+            const txtNotas = document.getElementById('txtNotasInternasCard');
+            const listaAnexos = document.getElementById('listaAnexosCard');
+            if (inputValor) inputValor.value = '';
+            if (txtNotas) txtNotas.value = '';
+            if (listaAnexos) listaAnexos.innerHTML = '<div style="color: #666; font-size: 0.85rem; text-align: center; padding: 1rem;">Nenhum card selecionado.</div>';
+        }
+
+        function carregarDadosCardSelecionado() {
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (!selectCard || !selectCard.value) {
+                limparCamposAnexos();
+                return;
+            }
+
+            const cardId = parseInt(selectCard.value);
+            const card = todosCardsKanban.find(c => c.id === cardId);
+            if (!card) return;
+
+            const meta = card.metadata || {};
+            const inputValor = document.getElementById('inputValorProjetoCard');
+            const txtNotas = document.getElementById('txtNotasInternasCard');
+
+            if (inputValor) inputValor.value = meta.valor_estimado || '';
+            if (txtNotas) txtNotas.value = meta.notas_internas || card.description || '';
+
+            renderizarListaAnexos(meta.anexos || []);
+        }
+
+        function renderizarListaAnexos(anexos) {
+            const container = document.getElementById('listaAnexosCard');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!anexos || anexos.length === 0) {
+                container.innerHTML = '<div style="color: #666; font-size: 0.85rem; text-align: center; padding: 1rem;">Nenhum arquivo anexado a este card ainda.</div>';
+                return;
+            }
+
+            anexos.forEach(arq => {
+                const item = document.createElement('div');
+                item.className = 'anexo-item-card';
+
+                const tamanhoFmt = arq.tamanho ? `(${(arq.tamanho / 1024).toFixed(1)} KB)` : '';
+                const linkCompleto = arq.caminho.startsWith('http') ? arq.caminho : `${window.location.origin}${arq.caminho}`;
+
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+                        <span style="font-size: 1.25rem;">📄</span>
+                        <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <a href="${linkCompleto}" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 0.88rem; font-weight: 500;" title="${arq.nome}">
+                                ${arq.nome}
+                            </a>
+                            <span style="font-size: 0.75rem; color: #64748b; margin-left: 6px;">${tamanhoFmt}</span>
+                        </div>
+                    </div>
+                    <a href="${linkCompleto}" download target="_blank" style="color: #cbd5e1; text-decoration: none; font-size: 0.8rem; padding: 4px 10px; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; background: rgba(255,255,255,0.05); display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" title="Baixar">
+                        ⬇ Baixar
+                    </a>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        async function handleSalvarDadosCard() {
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (!selectCard || !selectCard.value) {
+                alert('Selecione um card para salvar os dados.');
+                return;
+            }
+
+            const cardId = selectCard.value;
+            const valor = document.getElementById('inputValorProjetoCard')?.value.trim();
+            const notas = document.getElementById('txtNotasInternasCard')?.value.trim();
+
+            const btn = document.getElementById('btnSalvarDadosCard');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Salvando...';
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/dados-anexos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    },
+                    body: JSON.stringify({
+                        metadata: {
+                            valor_estimado: valor,
+                            notas_internas: notas
+                        }
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.status === 'sucesso') {
+                    // Atualiza cache local
+                    const card = todosCardsKanban.find(c => c.id === parseInt(cardId));
+                    if (card) {
+                        card.metadata = card.metadata || {};
+                        card.metadata.valor_estimado = valor;
+                        card.metadata.notas_internas = notas;
+                    }
+                    alert('Dados do card salvos com sucesso!');
+                    fetchBoard();
+                } else {
+                    alert('Erro ao salvar informações do card: ' + (data.mensagem || 'Falha na requisição.'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de comunicação ao salvar dados do card.');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '💾 Salvar Informações do Card';
+                }
+            }
+        }
+
+        async function handleUploadArquivoCard(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (!selectCard || !selectCard.value) {
+                alert('Selecione um card no seletor antes de anexar arquivos.');
+                event.target.value = '';
+                return;
+            }
+
+            const cardId = selectCard.value;
+            const formData = new FormData();
+            formData.append('arquivo', file);
+
+            const container = document.getElementById('listaAnexosCard');
+            if (container) {
+                container.insertAdjacentHTML('afterbegin', `<div id="uploadingNotice" style="color: #3b82f6; font-size: 0.85rem; padding: 6px;">Enviando ${file.name}...</div>`);
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/dados-anexos`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (res.ok && data.status === 'sucesso') {
+                    // Atualiza cache local do card
+                    const card = todosCardsKanban.find(c => c.id === parseInt(cardId));
+                    const cardAtualizado = data.card || data.data;
+                    if (card && cardAtualizado) {
+                        card.metadata = cardAtualizado.metadata;
+                        renderizarListaAnexos(card.metadata?.anexos || []);
+                    }
+                    alert(`Arquivo "${file.name}" anexado com sucesso!`);
+                    fetchBoard();
+                } else {
+                    alert('Falha no upload do arquivo: ' + (data.mensagem || 'Erro desconhecido'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de comunicação durante o upload do arquivo.');
+            } finally {
+                const notice = document.getElementById('uploadingNotice');
+                if (notice) notice.remove();
+                event.target.value = '';
+            }
+        }
+
+        // Exportação global para manipuladores inline
+        window.carregarDadosCardSelecionado = carregarDadosCardSelecionado;
+        window.handleSalvarDadosCard = handleSalvarDadosCard;
+        window.handleUploadArquivoCard = handleUploadArquivoCard;
+        window.selecionarCardParaAnexos = selecionarCardParaAnexos;
+    </script>
+
+</body>
+
+</html>

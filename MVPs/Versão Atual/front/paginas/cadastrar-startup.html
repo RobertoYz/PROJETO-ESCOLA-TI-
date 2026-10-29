@@ -2,12 +2,13 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Cadastrar Startup - Anjo Nexus</title>
     <link rel="stylesheet" href="../estilos/layout.css">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
     <style>
         .container-formulario {
-            max-width: 600px;
+            max-width: 650px;
         }
         .grupo-cnpj {
             display: flex;
@@ -21,40 +22,40 @@
         }
         .grupo-cnpj button {
             width: auto;
-            padding: 10px 18px;
-            background: #1e293b;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
             color: #fff;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             font-weight: 600;
             white-space: nowrap;
-            transition: background 0.2s;
+            transition: 0.2s;
         }
         .grupo-cnpj button:hover {
-            background: #0f172a;
+            filter: brightness(1.1);
         }
         .grupo-cnpj button:disabled {
-            background: #94a3b8;
+            opacity: 0.5;
             cursor: not-allowed;
         }
         .aviso-status {
             width: 100%;
             padding: 10px 14px;
-            border-radius: 4px;
+            border-radius: 8px;
             font-size: 13px;
             display: none;
         }
         .aviso-status.carregando {
             display: block;
-            background: #e0f2fe;
-            color: #0369a1;
-            border: 1px solid #bae6fd;
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
         }
         .aviso-status.sucesso {
             display: block;
-            background: #dcfce7;
-            color: #15803d;
-            border: 1px solid #bbf7d0;
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
         .linha-dupla {
             display: flex;
@@ -68,22 +69,23 @@
         }
         .separador-secao {
             width: 100%;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
+            letter-spacing: 0.8px;
+            color: #818cf8;
             margin-top: 14px;
             margin-bottom: 2px;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 6px;
         }
         .campo-destaque {
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
         .campo-auto {
-            background-color: #f1f5f9;
+            background-color: #0c101a;
+            color: #cbd5e1;
         }
     </style>
 </head>
