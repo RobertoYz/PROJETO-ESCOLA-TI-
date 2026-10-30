@@ -13,7 +13,7 @@ class PlanoSeeder extends Seeder
             [
                 'id' => 1,
                 'nome' => 'Standard',
-                'preco' => 0.00,
+                'preco' => 49.90,
                 'id_plataforma_pagamento' => 'prod_sWfDg0eZXTLbtZEHYpqnMLKP', // ID real do AbacatePay
                 'limite_startups' => 2,
                 'limite_membros_equipe' => 1
