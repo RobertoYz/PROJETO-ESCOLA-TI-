@@ -1,0 +1,41 @@
+%% ────────────────────────────────────────────────────────────
+%% DS-01: AUTENTICAÇÃO E CONTROLE DE ACESSO (UC-01, UC-02)
+%% Implementação Real via Laravel Sanctum (Bearer Token)
+%% ────────────────────────────────────────────────────────────
+sequenceDiagram
+    autonumber
+    actor Usuario
+    participant Frontend
+    participant AuthController
+    participant BD as Banco de Dados (MySQL)
+
+    Note over Usuario,BD: LOGIN VIA LARAVEL SANCTUM (UC-01)
+    Usuario->>Frontend: Preenche email e senha
+    Frontend->>AuthController: POST /api/auth/login {email, password}
+
+    AuthController->>BD: SELECT * FROM users WHERE email = ?
+    BD-->>AuthController: Registro do usuário + hash de senha
+
+    alt Credenciais válidas (Hash::check)
+        AuthController->>BD: INSERT INTO personal_access_tokens (user_id, token, abilities)
+        BD-->>AuthController: Token persistido
+        AuthController-->>Frontend: 200 OK {token, user: {id, name, email, perfil_acesso, agencia_id}}
+        Frontend-->>Usuario: Armazena Bearer Token e redireciona conforme perfil_acesso
+    else Credenciais inválidas
+        AuthController-->>Frontend: 401 Unauthorized {message: "Credenciais inválidas"}
+        Frontend-->>Usuario: Exibe alerta de erro de login
+    end
+
+    Note over Usuario,BD: RECUPERAÇÃO DE SENHA (UC-02)
+    Usuario->>Frontend: Clica em "Esqueci minha senha"
+    Frontend->>AuthController: POST /api/auth/recuperar-senha {email}
+    AuthController->>BD: INSERT INTO password_reset_tokens (email, token, created_at)
+    AuthController-->>Frontend: 200 OK {mensagem: "Instruções enviadas para seu e-mail"}
+    Frontend-->>Usuario: Exibe mensagem de confirmação
+
+    Note over Usuario,BD: LOGOUT (UC-03)
+    Usuario->>Frontend: Clica em "Sair da Plataforma"
+    Frontend->>AuthController: POST /api/auth/logout [Header: Bearer Token]
+    AuthController->>BD: DELETE FROM personal_access_tokens WHERE id = current_token_id
+    AuthController-->>Frontend: 200 OK {message: "Sessão encerrada"}
+    Frontend-->>Usuario: Remove token local e redireciona para tela de login
