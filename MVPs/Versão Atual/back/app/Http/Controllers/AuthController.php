@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Exception;
 
@@ -400,5 +402,141 @@ class AuthController extends Controller
                 'mensagem' => 'Erro ao cancelar cadastro e excluir dados: ' . $excecao->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Solicita a recuperação de senha (apenas para e-mails já cadastrados no sistema).
+     */
+    public function solicitarRecuperacaoSenha(Request $requisicao)
+    {
+        $requisicao->validate([
+            'email' => 'required|string|email|max:255',
+        ], [
+            'email.required' => 'Por favor, informe o seu endereço de e-mail.',
+            'email.email' => 'Informe um endereço de e-mail válido.',
+        ]);
+
+        $email = strtolower(trim($requisicao->email));
+
+        // Ferramenta de verificação estrita: verifica se o e-mail pertence a um usuário cadastrado
+        $usuario = User::where('email', $email)->first();
+
+        if (!$usuario) {
+            return response()->json([
+                'mensagem' => 'Nenhuma conta foi encontrada com este endereço de e-mail. Verifique o e-mail digitado ou crie uma conta.',
+                'message' => 'Nenhuma conta foi encontrada com este endereço de e-mail. Verifique o e-mail digitado ou crie uma conta.'
+            ], 404);
+        }
+
+        // Gera token seguro e grava na tabela password_reset_tokens
+        $tokenPuro = Str::random(64);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $usuario->email],
+            [
+                'token' => Hash::make($tokenPuro),
+                'created_at' => Carbon::now()
+            ]
+        );
+
+        // Descobre a URL base do Front-end (Live Server ou Produção) a partir do cabeçalho X-Frontend-Url
+        $urlOrigemFront = $requisicao->header('X-Frontend-Url') ?: $requisicao->header('Referer');
+        if ($urlOrigemFront && str_contains($urlOrigemFront, '/paginas/')) {
+            $urlBasePaginas = substr($urlOrigemFront, 0, strpos($urlOrigemFront, '/paginas/') + 9);
+        } else {
+            $urlBasePaginas = 'http://127.0.0.1:5500/MVPs/Vers%C3%A3o%20Atual/front/paginas/';
+        }
+
+        $linkRedefinicao = $urlBasePaginas . 'redefinir-senha.html?token=' . urlencode($tokenPuro) . '&email=' . urlencode($usuario->email);
+
+        // Monta o corpo do e-mail em HTML com a identidade visual do Anjo Nexus
+        $htmlEmail = "
+        <div style='font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background-color: #0d0f1a; color: #f8fafc; padding: 32px; border-radius: 12px; border: 1px solid #2e364f;'>
+            <h2 style='color: #818cf8; margin-top: 0;'>Recuperação de Senha — Anjo Nexus</h2>
+            <p style='color: #cbd5e1; line-height: 1.6;'>Olá, <strong>{$usuario->name}</strong>!</p>
+            <p style='color: #cbd5e1; line-height: 1.6;'>Recebemos uma solicitação para redefinir a senha da sua conta no <strong>Anjo Nexus</strong>. Clique no botão abaixo para criar uma nova senha:</p>
+            <div style='text-align: center; margin: 28px 0;'>
+                <a href='{$linkRedefinicao}' style='background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;'>Redefinir Minha Senha</a>
+            </div>
+            <p style='color: #94a3b8; font-size: 13px; line-height: 1.5;'>Este link expira em 60 minutos. Caso o botão não funcione, copie e cole o endereço abaixo no seu navegador:</p>
+            <p style='word-break: break-all; color: #818cf8; font-size: 12px;'>{$linkRedefinicao}</p>
+            <hr style='border: none; border-top: 1px solid #1e293b; margin: 24px 0;'>
+            <p style='color: #64748b; font-size: 12px;'>Se você não solicitou esta alteração, ignore este e-mail com segurança.</p>
+        </div>";
+
+        try {
+            Mail::html($htmlEmail, function ($mensagem) use ($usuario) {
+                $mensagem->to($usuario->email, $usuario->name)
+                         ->subject('Recuperação de Senha - Anjo Nexus');
+            });
+        } catch (\Exception $erro) {
+            return response()->json([
+                'mensagem' => 'Falha ao enviar o e-mail de recuperação: ' . $erro->getMessage(),
+                'message' => 'Falha ao enviar o e-mail de recuperação: ' . $erro->getMessage()
+            ], 500);
+        }
+
+        return response()->json([
+            'mensagem' => 'Enviamos um link de recuperação para o seu e-mail! Verifique sua caixa de entrada e o spam.'
+        ], 200);
+    }
+
+    /**
+     * Valida o token recebido e redefine a senha do usuário no banco de dados.
+     */
+    public function redefinirSenha(Request $requisicao)
+    {
+        $requisicao->validate([
+            'email' => 'required|string|email',
+            'token' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ], [
+            'password.min' => 'A nova senha deve ter no mínimo 8 caracteres.',
+            'password.confirmed' => 'A confirmação da senha não coincide.',
+        ]);
+
+        $email = strtolower(trim($requisicao->email));
+
+        $usuario = User::where('email', $email)->first();
+        if (!$usuario) {
+            return response()->json([
+                'mensagem' => 'Conta de usuário não encontrada.'
+            ], 404);
+        }
+
+        $registroToken = DB::table('password_reset_tokens')
+            ->where('email', $email)
+            ->first();
+
+        if (!$registroToken) {
+            return response()->json([
+                'mensagem' => 'Solicitação de redefinição inválida ou já utilizada. Solicite um novo link.'
+            ], 400);
+        }
+
+        // Verifica expiração de 60 minutos
+        if (Carbon::parse($registroToken->created_at)->addMinutes(60)->isPast()) {
+            DB::table('password_reset_tokens')->where('email', $email)->delete();
+            return response()->json([
+                'mensagem' => 'O link de recuperação expirou (validade de 60 minutos). Solicite um novo link.'
+            ], 400);
+        }
+
+        // Verifica se o token da URL corresponde ao hash salvo
+        if (!Hash::check($requisicao->token, $registroToken->token)) {
+            return response()->json([
+                'mensagem' => 'Token de recuperação inválido. Verifique se abriu o último e-mail enviado.'
+            ], 400);
+        }
+
+        // Atualiza a senha do usuário e remove o token utilizado
+        $usuario->password = Hash::make($requisicao->password);
+        $usuario->save();
+
+        DB::table('password_reset_tokens')->where('email', $email)->delete();
+
+        return response()->json([
+            'mensagem' => 'Sua senha foi redefinida com sucesso! Redirecionando para o login...'
+        ], 200);
     }
 }
