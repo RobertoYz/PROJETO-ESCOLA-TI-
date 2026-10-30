@@ -3,6 +3,7 @@ import { requisicaoApi } from './api.js';
 const CHAVE_TOKEN = 'token_autenticacao';
 const CHAVE_TOKEN_PENDENCIA = 'token_pendencia';
 const CHAVE_EMAIL_PENDENCIA = 'email_pendencia';
+const CHAVE_AGENCIA_PENDENCIA = 'agencia_pendencia';
 const CHAVE_STARTUP_ID = 'startup_ativa_id';
 const CHAVE_STARTUP_NOME = 'startup_ativa_nome';
 const CHAVE_USUARIO = 'usuario_logado';
@@ -126,6 +127,19 @@ export async function registrarComPlano(dados) {
     if (resposta?.usuario) {
         salvarUsuarioLogado(resposta.usuario);
     }
+    const tokenPend = resposta?.token_pendencia || resposta?.access_token || resposta?.token;
+    if (tokenPend) {
+        salvarTokenPendencia(tokenPend);
+    }
+    if (dados?.email) {
+        salvarEmailPendencia(dados.email);
+    }
+    if (resposta?.agencia || resposta?.checkout_url || resposta?.url_checkout) {
+        salvarAgenciaPendencia({
+            ...(resposta.agencia || {}),
+            checkout_url: resposta.checkout_url || resposta.url_checkout || resposta.agencia?.checkout_url || null
+        });
+    }
     return resposta;
 }
 
@@ -156,14 +170,32 @@ export async function realizarLogin(credenciais) {
 }
 
 export async function consultarPagamentoAnterior() {
-    return await requisicaoApi('/pagamentos/consultar-anterior', {
+    const email = obterEmailPendencia();
+    const tokenPend = obterTokenPendencia();
+    const params = new URLSearchParams();
+    if (email) params.set('email', email);
+    if (tokenPend) params.set('token_pendencia', tokenPend);
+    const query = params.toString() ? `?${params.toString()}` : '';
+
+    return await requisicaoApi(`/pagamentos/consultar-anterior${query}`, {
         method: 'GET'
     });
 }
 
 export async function cancelarCadastroPendente() {
-    return await requisicaoApi('/auth/cancelar-cadastro-pendente', {
-        method: 'DELETE'
+    const email = obterEmailPendencia();
+    const tokenPend = obterTokenPendencia();
+    const params = new URLSearchParams();
+    if (email) params.set('email', email);
+    if (tokenPend) params.set('token_pendencia', tokenPend);
+    const query = params.toString() ? `?${params.toString()}` : '';
+
+    return await requisicaoApi(`/auth/cancelar-cadastro-pendente${query}`, {
+        method: 'DELETE',
+        body: JSON.stringify({
+            email: email || undefined,
+            token_pendencia: tokenPend || undefined
+        })
     });
 }
 
@@ -182,6 +214,8 @@ export function removerToken() {
 }
 
 export function salvarTokenPendencia(token) {
+    // Remove qualquer token de autenticação antigo para evitar conflito (Unauthenticated) no header Authorization
+    localStorage.removeItem(CHAVE_TOKEN);
     if (token) {
         sessionStorage.setItem(CHAVE_TOKEN_PENDENCIA, token);
         localStorage.setItem(CHAVE_TOKEN_PENDENCIA, token);
@@ -203,11 +237,31 @@ export function obterEmailPendencia() {
     return sessionStorage.getItem(CHAVE_EMAIL_PENDENCIA) || localStorage.getItem(CHAVE_EMAIL_PENDENCIA) || '';
 }
 
+export function salvarAgenciaPendencia(agencia) {
+    if (!agencia) return;
+    try {
+        const serializado = JSON.stringify(agencia);
+        sessionStorage.setItem(CHAVE_AGENCIA_PENDENCIA, serializado);
+        localStorage.setItem(CHAVE_AGENCIA_PENDENCIA, serializado);
+    } catch (_) {}
+}
+
+export function obterAgenciaPendencia() {
+    try {
+        const bruto = sessionStorage.getItem(CHAVE_AGENCIA_PENDENCIA) || localStorage.getItem(CHAVE_AGENCIA_PENDENCIA);
+        return bruto ? JSON.parse(bruto) : null;
+    } catch (_) {
+        return null;
+    }
+}
+
 export function limparDadosPendencia() {
     sessionStorage.removeItem(CHAVE_TOKEN_PENDENCIA);
     sessionStorage.removeItem(CHAVE_EMAIL_PENDENCIA);
+    sessionStorage.removeItem(CHAVE_AGENCIA_PENDENCIA);
     localStorage.removeItem(CHAVE_TOKEN_PENDENCIA);
     localStorage.removeItem(CHAVE_EMAIL_PENDENCIA);
+    localStorage.removeItem(CHAVE_AGENCIA_PENDENCIA);
 }
 
 export function usuarioEstaAutenticado() {

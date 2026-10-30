@@ -1,5 +1,5 @@
 /**
- * Componente Global de Header (Seletor de Startup Ativa + Perfil do Consultor + Modal Editar Perfil)
+ * Componente Global de Header (Menu Customizado de Startups com Engrenagem + Criar Startup + Perfil do Consultor)
  * Padroniza o cabeçalho em todas as páginas da plataforma
  */
 import {
@@ -44,7 +44,9 @@ function injetarEstilosHeaderGlobal() {
             gap: 1.5rem;
         }
 
+        /* Menu Customizado de Startups no Header */
         .seletor-startup-wrapper {
+            position: relative;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -52,25 +54,171 @@ function injetarEstilosHeaderGlobal() {
             border: 1px solid #262930;
             padding: 6px 12px;
             border-radius: 10px;
+            cursor: pointer;
+            user-select: none;
+            transition: border-color 0.2s, background-color 0.2s;
         }
 
-        .seletor-startup-wrapper select {
+        .seletor-startup-wrapper:hover,
+        .seletor-startup-wrapper.open {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .startup-trigger-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
             background: #181b20;
             color: #f8fafc;
             border: 1px solid #334155;
             border-radius: 6px;
-            padding: 4px 10px;
+            padding: 5px 10px;
             font-size: 13px;
             font-weight: 600;
-            cursor: pointer;
-            outline: none;
-            min-width: 170px;
+            min-width: 185px;
             max-width: 260px;
+        }
+
+        .startup-trigger-nome {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .startup-trigger-seta {
+            font-size: 10px;
+            color: #94a3b8;
+            transition: transform 0.2s;
+        }
+
+        .seletor-startup-wrapper.open .startup-trigger-seta {
+            transform: rotate(180deg);
+        }
+
+        .startup-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 310px;
+            background: #14171c;
+            border: 1px solid #2e3440;
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .startup-dropdown-menu.active {
+            display: flex;
+        }
+
+        .startup-dropdown-header {
+            padding: 10px 14px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #94a3b8;
+            border-bottom: 1px solid #22262e;
+            background: #101317;
+        }
+
+        .startup-dropdown-lista {
+            max-height: 260px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .startup-dropdown-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            transition: background-color 0.15s;
+            cursor: pointer;
+        }
+
+        .startup-dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.06);
+        }
+
+        .startup-dropdown-item.ativa {
+            background-color: rgba(59, 130, 246, 0.12);
+            border-left: 3px solid #3b82f6;
+        }
+
+        .startup-item-info {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .startup-item-nome {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            white-space: nowrap;
+            overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .seletor-startup-wrapper select:focus {
+        .startup-item-status {
+            font-size: 0.72rem;
+            color: #10b981;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .btn-engrenagem-startup {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #334155;
+            color: #cbd5e1;
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.18s;
+            padding: 0;
+        }
+
+        .btn-engrenagem-startup:hover {
+            background: #2563eb;
             border-color: #3b82f6;
+            color: #ffffff;
+            transform: rotate(25deg);
+        }
+
+        .startup-dropdown-criar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 14px;
+            background: linear-gradient(135deg, rgba(27, 54, 255, 0.18), rgba(139, 92, 246, 0.18));
+            border-top: 1px solid #2e3440;
+            color: #93c5fd;
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .startup-dropdown-criar:hover {
+            background: linear-gradient(135deg, #1b36ff, #8b5cf6);
+            color: #ffffff;
         }
 
         .user-section-global {
@@ -473,18 +621,27 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
     const usuarioLocal = obterUsuarioLogado();
     const nomeInicialUsuario = usuarioLocal?.name || 'Consultor';
 
-    // Padroniza o container à direita do header com o Seletor de Startup à esquerda do Perfil do Consultor
+    // Padroniza o container à direita do header com o Menu de Startups à esquerda do Perfil do Consultor
     container.className = 'header-right-group';
     container.innerHTML = `
-        <div class="seletor-startup-wrapper">
+        <div class="seletor-startup-wrapper" id="seletorStartupWrapper">
             <div style="width: 34px; height: 34px; min-width: 34px; border-radius: 8px; background: linear-gradient(135deg, #2563eb, #7c3aed); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); flex-shrink: 0;" id="avatar-startup-sigla">
                 ${siglaInicial}
             </div>
             <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
                 <span style="font-size: 9px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;">Startup Assessorada:</span>
-                <select id="select-global-startup">
-                    <option value="${startupAtiva.id}" selected>${startupAtiva.nome}</option>
-                </select>
+                <div class="startup-trigger-box" id="startupTriggerBox">
+                    <span class="startup-trigger-nome" id="startupTriggerNome">${startupAtiva.nome}</span>
+                    <span class="startup-trigger-seta">▼</span>
+                </div>
+            </div>
+
+            <div class="startup-dropdown-menu" id="startupDropdownMenu">
+                <div class="startup-dropdown-header">Selecionar ou Configurar Startup</div>
+                <div class="startup-dropdown-lista" id="startupDropdownLista"></div>
+                <a href="nova-startup-painel.html" class="startup-dropdown-criar" id="btnHeaderCriarStartup">
+                    <span>+ Criar Startup</span>
+                </a>
             </div>
         </div>
 
@@ -503,27 +660,58 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         </div>
     `;
 
-    const selectEl = document.getElementById('select-global-startup');
+    const seletorWrapper = document.getElementById('seletorStartupWrapper');
+    const startupDropdownMenu = document.getElementById('startupDropdownMenu');
+    const startupDropdownLista = document.getElementById('startupDropdownLista');
+    const startupTriggerNome = document.getElementById('startupTriggerNome');
     const avatarSigla = document.getElementById('avatar-startup-sigla');
+
     const userMenuBtn = document.getElementById('userMenuBtn');
     const mainDropdown = document.getElementById('mainDropdown');
     const btnEditarPerfil = document.getElementById('btnMenuEditarPerfil');
     const btnConfigFake = document.getElementById('btnMenuConfiguracoesFake');
     const btnLogoff = document.getElementById('btnMenuLogoff');
 
-    // Eventos do menu do Perfil do Consultor
-    if (userMenuBtn && mainDropdown) {
-        userMenuBtn.addEventListener('click', (e) => {
-            if (e.target.closest('.user-dropdown-global')) return;
-            mainDropdown.classList.toggle('active');
-        });
+    const fecharDropdownStartups = () => {
+        if (startupDropdownMenu) startupDropdownMenu.classList.remove('active');
+        if (seletorWrapper) seletorWrapper.classList.remove('open');
+    };
 
-        document.addEventListener('click', (e) => {
-            if (!userMenuBtn.contains(e.target)) {
+    if (seletorWrapper && startupDropdownMenu) {
+        seletorWrapper.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-engrenagem-startup') || e.target.closest('.startup-dropdown-criar')) {
+                return;
+            }
+            if (e.target.closest('.startup-dropdown-item')) {
+                return;
+            }
+            const abriu = startupDropdownMenu.classList.toggle('active');
+            seletorWrapper.classList.toggle('open', abriu);
+            if (abriu && mainDropdown) {
                 mainDropdown.classList.remove('active');
             }
         });
     }
+
+    // Eventos do menu do Perfil do Consultor
+    if (userMenuBtn && mainDropdown) {
+        userMenuBtn.addEventListener('click', (e) => {
+            if (e.target.closest('.user-dropdown-global')) return;
+            const abriu = mainDropdown.classList.toggle('active');
+            if (abriu) {
+                fecharDropdownStartups();
+            }
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (userMenuBtn && !userMenuBtn.contains(e.target) && mainDropdown) {
+            mainDropdown.classList.remove('active');
+        }
+        if (seletorWrapper && !seletorWrapper.contains(e.target)) {
+            fecharDropdownStartups();
+        }
+    });
 
     if (btnEditarPerfil) {
         btnEditarPerfil.addEventListener('click', (e) => {
@@ -558,47 +746,87 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         }
     });
 
+    function renderizarItensDropdown(listaStartups) {
+        if (!startupDropdownLista) return;
+        startupDropdownLista.innerHTML = '';
+
+        const ativaAtual = obterStartupAtiva() || startupAtiva;
+
+        listaStartups.forEach((st) => {
+            const nomeExibicao = st.nome_fantasia || st.razao_social || st.nome || 'Startup';
+            const ehAtiva = String(st.id) === String(ativaAtual.id);
+
+            const itemEl = document.createElement('div');
+            itemEl.className = `startup-dropdown-item ${ehAtiva ? 'ativa' : ''}`;
+
+            const infoEl = document.createElement('div');
+            infoEl.className = 'startup-item-info';
+            infoEl.innerHTML = `
+                <span class="startup-item-nome">${nomeExibicao}</span>
+                ${ehAtiva ? '<span class="startup-item-status">● Em uso no momento</span>' : ''}
+            `;
+
+            const btnGear = document.createElement('button');
+            btnGear.type = 'button';
+            btnGear.className = 'btn-engrenagem-startup';
+            btnGear.title = `Configurar dados de ${nomeExibicao}`;
+            btnGear.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            `;
+
+            // Clicar na engrenagem vai para a página dedicada de configuração daquela startup
+            btnGear.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fecharDropdownStartups();
+                window.location.href = `perfil-startup.html?id=${encodeURIComponent(st.id)}`;
+            });
+
+            // Clicar no item seleciona a startup como ativa
+            itemEl.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-engrenagem-startup')) return;
+                e.stopPropagation();
+                salvarStartupAtiva(st.id, nomeExibicao);
+                startupAtiva = { id: String(st.id), nome: nomeExibicao };
+                if (startupTriggerNome) startupTriggerNome.textContent = nomeExibicao;
+                if (avatarSigla) avatarSigla.textContent = (nomeExibicao || 'AN').slice(0, 2).toUpperCase();
+                fecharDropdownStartups();
+                renderizarItensDropdown(listaStartups);
+
+                if (options.onTrocarStartup) {
+                    options.onTrocarStartup(st.id, nomeExibicao);
+                } else {
+                    window.location.reload();
+                }
+            });
+
+            itemEl.appendChild(infoEl);
+            itemEl.appendChild(btnGear);
+            startupDropdownLista.appendChild(itemEl);
+        });
+    }
+
+    // Renderiza inicialmente com a startup ativa em cache
+    renderizarItensDropdown([{ id: startupAtiva.id, nome_fantasia: startupAtiva.nome }]);
+
     // Tenta obter lista atualizada de startups da API sem bloquear o fluxo visual
     try {
         const startups = await listarStartupsDaConsultoria();
 
         if (Array.isArray(startups) && startups.length > 0) {
-            selectEl.innerHTML = '';
-            startups.forEach(st => {
-                const nomeExibicao = st.nome_fantasia || st.razao_social;
-                const opt = document.createElement('option');
-                opt.value = st.id;
-                opt.textContent = nomeExibicao;
-                if (String(st.id) === String(startupAtiva.id)) {
-                    opt.selected = true;
-                }
-                selectEl.appendChild(opt);
-            });
-
-            // Atualiza sigla caso a startup ativa esteja na lista
-            const selecionada = selectEl.options[selectEl.selectedIndex];
-            if (selecionada && selecionada.textContent) {
-                avatarSigla.textContent = selecionada.textContent.slice(0, 2).toUpperCase();
-                salvarStartupAtiva(selectEl.value, selecionada.textContent);
+            const encontrada = startups.find(st => String(st.id) === String(startupAtiva.id)) || startups[0];
+            if (encontrada) {
+                const nomeEncontrado = encontrada.nome_fantasia || encontrada.razao_social;
+                salvarStartupAtiva(encontrada.id, nomeEncontrado);
+                startupAtiva = { id: String(encontrada.id), nome: nomeEncontrado };
+                if (startupTriggerNome) startupTriggerNome.textContent = nomeEncontrado;
+                if (avatarSigla) avatarSigla.textContent = (nomeEncontrado || 'AN').slice(0, 2).toUpperCase();
             }
+            renderizarItensDropdown(startups);
         }
     } catch (err) {
         console.warn('Operando com startup em cache local.');
     }
-
-    // Listener de troca de startup
-    selectEl.addEventListener('change', (e) => {
-        const idSelecionado = e.target.value;
-        const optSelecionada = e.target.options[e.target.selectedIndex];
-        const nome = optSelecionada ? optSelecionada.textContent : '';
-
-        salvarStartupAtiva(idSelecionado, nome);
-        avatarSigla.textContent = (nome || 'AN').slice(0, 2).toUpperCase();
-
-        if (options.onTrocarStartup) {
-            options.onTrocarStartup(idSelecionado, nome);
-        } else {
-            window.location.reload();
-        }
-    });
 }
