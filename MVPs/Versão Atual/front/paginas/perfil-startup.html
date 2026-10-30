@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Perfil da Startup - Anjo Nexus</title>
+    <title>Configurar Dados da Startup - Anjo Nexus</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
     <style>
@@ -60,7 +60,26 @@
         .form-input:disabled { background: #0a0c0e; color: #777; cursor: not-allowed; border-color: #222; }
         .form-textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
 
-        .btn-salvar { background: linear-gradient(135deg, #1b36ff, #8b5cf6); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; align-self: flex-end; }
+        .btn-cancelar-startup {
+            background: transparent;
+            color: #cbd5e1;
+            border: 1px solid #475569;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-cancelar-startup:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+        }
+
+        .btn-salvar { background: linear-gradient(135deg, #1b36ff, #8b5cf6); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
         .btn-salvar:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-sync-cnpj { background: #1e293b; color: #fff; border: 1px solid #334155; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap; }
         .btn-sync-cnpj:hover { background: #334155; }
@@ -100,7 +119,7 @@
 
         <div class="perfil-container">
             <div>
-                <h1 style="font-size: 1.6rem; font-weight: 700; color: #fff;">Perfil e Identidade da Startup</h1>
+                <h1 style="font-size: 1.6rem; font-weight: 700; color: #fff;" id="tituloPaginaPerfilStartup">Configurar Dados da Startup</h1>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Gerencie os dados fiscais da Receita Federal, modelo de negócios, atividades e proposta de valor que alimentam o Match Inteligente de Editais e o Gerador de Minutas Técnicas via IA.</p>
             </div>
 
@@ -203,7 +222,10 @@
                         <textarea id="campoPitch" class="form-textarea" placeholder="Descreva o produto/serviço inovador, diferencial de mercado, modelo de negócio, missão e capacidade técnica da equipe para vencer editais de subvenção..."></textarea>
                     </div>
 
-                    <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 1.5rem;">
+                        <button type="button" class="btn-cancelar-startup" id="btnCancelarPerfil">
+                            Cancelar
+                        </button>
                         <button type="submit" class="btn-salvar" id="btnSalvarPerfil">
                             💾 Salvar Alterações da Startup
                         </button>

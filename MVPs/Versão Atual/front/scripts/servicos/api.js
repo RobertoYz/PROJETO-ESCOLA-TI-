@@ -23,9 +23,21 @@ if (typeof window !== 'undefined') {
 }
 
 export async function requisicaoApi(endpoint, opcoes = {}) {
-    const token = localStorage.getItem('token_autenticacao')
-        || sessionStorage.getItem('token_pendencia')
-        || localStorage.getItem('token_pendencia');
+    const tokenPendencia = sessionStorage.getItem('token_pendencia') || localStorage.getItem('token_pendencia');
+    const tokenAutenticacao = localStorage.getItem('token_autenticacao');
+    const emailPendencia = sessionStorage.getItem('email_pendencia') || localStorage.getItem('email_pendencia');
+
+    const ehFluxoPendencia = endpoint.includes('/pagamentos/consultar-anterior')
+        || endpoint.includes('/planos/gerar-nova-cobranca')
+        || endpoint.includes('/auth/cancelar-cadastro-pendente')
+        || (typeof window !== 'undefined' && (
+            window.location.pathname.includes('pagamento-pendente')
+            || window.location.search.includes('modo=renovacao')
+        ));
+
+    const token = ehFluxoPendencia
+        ? (tokenPendencia || tokenAutenticacao)
+        : (tokenAutenticacao || tokenPendencia);
 
     const startupAtivaId = localStorage.getItem('startup_ativa_id');
 
@@ -37,6 +49,14 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
 
     if (token && !cabecalhos['Authorization']) {
         cabecalhos['Authorization'] = `Bearer ${token}`;
+    }
+
+    if (ehFluxoPendencia && tokenPendencia && !cabecalhos['X-Pending-Token']) {
+        cabecalhos['X-Pending-Token'] = tokenPendencia;
+    }
+
+    if (ehFluxoPendencia && emailPendencia && !cabecalhos['X-Pending-Email']) {
+        cabecalhos['X-Pending-Email'] = emailPendencia;
     }
 
     if (startupAtivaId && !cabecalhos['X-Startup-Id']) {

@@ -1,4 +1,4 @@
-import { realizarLogin, salvarToken, limparStartupAtiva, salvarTokenPendencia, salvarEmailPendencia, limparDadosPendencia, salvarUsuarioLogado } from '../servicos/servicoAutenticacao.js';
+import { realizarLogin, salvarToken, limparStartupAtiva, salvarTokenPendencia, salvarEmailPendencia, salvarAgenciaPendencia, limparDadosPendencia, salvarUsuarioLogado } from '../servicos/servicoAutenticacao.js';
 
 const formulario = document.getElementById('formulario-login');
 const campoEmail = document.getElementById('campo-email');
@@ -30,12 +30,13 @@ formulario.addEventListener('submit', async (evento) => {
         const resposta = await realizarLogin({ email, password: senha });
 
         if (resposta.codigo === 'PAGAMENTO_PENDENTE' || resposta.codigo_erro === 'PAGAMENTO_PENDENTE') {
-            const tokenPendencia = resposta.access_token || resposta.token;
-            if (tokenPendencia) {
-                salvarTokenPendencia(tokenPendencia);
-            }
+            const tokenPendencia = resposta.token_pendencia || resposta.access_token || resposta.token;
+            salvarTokenPendencia(tokenPendencia || '');
             if (resposta.usuario) {
                 salvarUsuarioLogado(resposta.usuario);
+            }
+            if (resposta.agencia) {
+                salvarAgenciaPendencia(resposta.agencia);
             }
             salvarEmailPendencia(email);
             window.location.href = 'pagamento-pendente.html';
@@ -58,12 +59,13 @@ formulario.addEventListener('submit', async (evento) => {
     } catch (erro) {
         // Trata retorno HTTP 403 de Pagamento Pendente
         if (erro.status === 403 && (erro.dados?.codigo === 'PAGAMENTO_PENDENTE' || erro.dados?.codigo_erro === 'PAGAMENTO_PENDENTE')) {
-            const tokenPendencia = erro.dados.access_token || erro.dados.token;
-            if (tokenPendencia) {
-                salvarTokenPendencia(tokenPendencia);
-            }
+            const tokenPendencia = erro.dados.token_pendencia || erro.dados.access_token || erro.dados.token;
+            salvarTokenPendencia(tokenPendencia || '');
             if (erro.dados.usuario) {
                 salvarUsuarioLogado(erro.dados.usuario);
+            }
+            if (erro.dados.agencia) {
+                salvarAgenciaPendencia(erro.dados.agencia);
             }
             salvarEmailPendencia(email);
             window.location.href = 'pagamento-pendente.html';

@@ -1,14 +1,16 @@
-import { 
-    consultarPagamentoAnterior, 
-    cancelarCadastroPendente, 
-    obterTokenPendencia, 
-    obterEmailPendencia, 
+import {
+    consultarPagamentoAnterior,
+    cancelarCadastroPendente,
+    obterTokenPendencia,
+    obterEmailPendencia,
+    obterAgenciaPendencia,
     limparDadosPendencia,
-    removerToken 
+    removerToken
 } from '../servicos/servicoAutenticacao.js';
 
 const tokenPendencia = obterTokenPendencia();
 const emailPendencia = obterEmailPendencia();
+const agenciaPendencia = obterAgenciaPendencia();
 
 const emailDestaque = document.getElementById('email-destaque');
 const mensagemFeedback = document.getElementById('mensagem-feedback');
@@ -16,8 +18,8 @@ const botaoConsultarAnterior = document.getElementById('botao-consultar-anterior
 const botaoGerarNova = document.getElementById('botao-gerar-nova');
 const botaoCancelarConta = document.getElementById('botao-cancelar-conta');
 
-// Se não houver token de pendência, redireciona para a tela de login
-if (!tokenPendencia) {
+// Se não houver token nem e-mail de pendência, redireciona para a tela de login
+if (!tokenPendencia && !emailPendencia) {
     window.location.href = 'login.html';
 }
 
@@ -70,8 +72,8 @@ botaoConsultarAnterior?.addEventListener('click', async () => {
             return;
         }
 
-        const urlCheckout = resposta.checkout_url 
-            || resposta.url_checkout 
+        const urlCheckout = resposta.checkout_url
+            || resposta.url_checkout
             || (resposta.dados && (resposta.dados.checkout_url || resposta.dados.url_checkout));
 
         if (urlCheckout) {
@@ -81,8 +83,18 @@ botaoConsultarAnterior?.addEventListener('click', async () => {
         }
 
     } catch (erro) {
-        // Se a API retornar erro de expiração (ex: 400 ou 410)
         const mensagemErro = erro.message || '';
+        // Fallback: caso o servidor retorne falha de autenticação mas tenhamos a URL de checkout retornada no login (403)
+        if ((erro.status === 401 || mensagemErro.toLowerCase().includes('unauthenticated')) && agenciaPendencia) {
+            const urlSalva = agenciaPendencia.checkout_url || agenciaPendencia.url_checkout;
+            const expiraEm = agenciaPendencia.pagamento_expira_em ? new Date(agenciaPendencia.pagamento_expira_em) : null;
+            const aindaValido = !expiraEm || expiraEm > new Date();
+            if (urlSalva && aindaValido) {
+                window.location.href = urlSalva;
+                return;
+            }
+        }
+        // Se a API retornar erro de expiração (ex: 400 ou 410)
         if (mensagemErro.toLowerCase().includes('expirou') || mensagemErro.toLowerCase().includes('expirado') || erro.status === 410 || erro.status === 400) {
             exibirFeedback('O pagamento anterior expirou. Por favor, utilize a opção abaixo para gerar uma nova cobrança.');
         } else {
