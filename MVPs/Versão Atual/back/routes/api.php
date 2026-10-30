@@ -17,7 +17,9 @@ Route::get('/editais', [EditalController::class, 'index']);
 // Listagem pública dos planos disponíveis
 Route::get('/planos', [PlanoController::class, 'listarPlanos']);
 
-// Rotas de Autenticação / Registro SaaS
+// Rotas públicas de Autenticação / Registro SaaS
+Route::post('/auth/verificar-email', [AuthController::class, 'verificarEmail']);
+Route::post('/auth/registrar-com-plano', [AuthController::class, 'registrarComPlano']);
 Route::post('/auth/registro', [AuthController::class, 'registrar']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::get('/auth/login', function () {
@@ -27,14 +29,24 @@ Route::get('/auth/login', function () {
 // Rota do Webhook do AbacatePay
 Route::post('/webhook/abacatepay', [WebhookController::class, 'abacatePayWebhook']);
 
-// Rotas protegidas (Sanctum)
+// Rotas protegidas (Sanctum) - sem o middleware que bloqueia pagamento pendente
 Route::middleware('auth:sanctum')->group(function () {
+    // Gestão de cobrança e pendência de pagamento
+    Route::get('/pagamentos/consultar-anterior', [AuthController::class, 'consultarPagamentoAnterior']);
+    Route::post('/planos/gerar-nova-cobranca', [AuthController::class, 'gerarNovaCobranca']);
+    Route::delete('/auth/cancelar-cadastro-pendente', [AuthController::class, 'cancelarCadastroPendente']);
+
+    // Rotas legadas de plano/pagamento mantidas por compatibilidade
     Route::get('/pagamento/recuperar', [PagamentoController::class, 'recuperarLinkPagamento']);
     Route::post('/planos/selecionar', [PlanoController::class, 'selecionarPlano']);
-    Route::get('/startups', [StartupController::class, 'index']);
-    Route::post('/startups', [StartupController::class, 'store']);
-    Route::get('/startups/{id}', [StartupController::class, 'show']);
-    Route::put('/startups/{id}', [StartupController::class, 'update']);
+
+    // Rotas do painel que exigem pagamento ativo
+    Route::middleware('check.pagamento')->group(function () {
+        Route::get('/startups', [StartupController::class, 'index']);
+        Route::post('/startups', [StartupController::class, 'store']);
+        Route::get('/startups/{id}', [StartupController::class, 'show']);
+        Route::put('/startups/{id}', [StartupController::class, 'update']);
+    });
 });
 
 // Rotas do Pipeline Kanban

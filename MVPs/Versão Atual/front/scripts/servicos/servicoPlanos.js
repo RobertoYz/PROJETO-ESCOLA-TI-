@@ -12,3 +12,10 @@ export async function confirmarSelecaoPlano(planoId) {
         body: JSON.stringify({ plano_id: planoId })
     });
 }
+
+export async function gerarNovaCobranca(planoId) {
+    return await requisicaoApi('/planos/gerar-nova-cobranca', {
+        method: 'POST',
+        body: JSON.stringify({ plano_id: planoId })
+    });
+}

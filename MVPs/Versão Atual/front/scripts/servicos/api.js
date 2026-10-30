@@ -1,5 +1,13 @@
-// Endereço oficial da API em nuvem (pode ser sobrescrito para testes via localStorage)
-const URL_BASE_API = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
+// Detecta automaticamente se está rodando localmente no navegador ou em produção/APK
+const ehAmbienteLocal = typeof window !== 'undefined' &&
+    (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') &&
+    !window.Capacitor && window.location.protocol !== 'capacitor:';
+
+const URL_PADRAO = ehAmbienteLocal
+    ? 'http://127.0.0.1:8000/api'
+    : 'https://anjonexus.intalenti.com.br/api';
+
+const URL_BASE_API = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
 
 if (typeof window !== 'undefined') {
     const marcarCapacitor = () => {
@@ -15,7 +23,10 @@ if (typeof window !== 'undefined') {
 }
 
 export async function requisicaoApi(endpoint, opcoes = {}) {
-    const token = localStorage.getItem('token_autenticacao');
+    const token = localStorage.getItem('token_autenticacao')
+        || sessionStorage.getItem('token_pendencia')
+        || localStorage.getItem('token_pendencia');
+
     const startupAtivaId = localStorage.getItem('startup_ativa_id');
 
     const cabecalhos = {
@@ -24,12 +35,16 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
         ...(opcoes.headers || {})
     };
 
-    if (token) {
+    if (token && !cabecalhos['Authorization']) {
         cabecalhos['Authorization'] = `Bearer ${token}`;
     }
 
-    if (startupAtivaId) {
+    if (startupAtivaId && !cabecalhos['X-Startup-Id']) {
         cabecalhos['X-Startup-Id'] = startupAtivaId;
+    }
+
+    if (typeof window !== 'undefined' && window.location?.href) {
+        cabecalhos['X-Frontend-Url'] = window.location.href;
     }
 
     const resposta = await fetch(`${URL_BASE_API}${endpoint}`, {
@@ -52,7 +67,10 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
                 mensagemErro = primeiroErro[0];
             }
         }
-        throw new Error(mensagemErro);
+        const erroPersonalizado = new Error(mensagemErro);
+        erroPersonalizado.status = resposta.status;
+        erroPersonalizado.dados = dados;
+        throw erroPersonalizado;
     }
 
     return dados;
