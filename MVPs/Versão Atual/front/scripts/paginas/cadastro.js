@@ -1,4 +1,4 @@
-import { verificarEmail, limparDadosPendencia } from '../servicos/servicoAutenticacao.js';
+import { verificarEmail, limparDadosPendencia, salvarUsuarioLogado } from '../servicos/servicoAutenticacao.js';
 
 const formulario = document.getElementById('formulario-cadastro');
 const campoNomeUsuario = document.getElementById('campo-nome-usuario');
@@ -75,6 +75,7 @@ formulario.addEventListener('submit', async (evento) => {
                 password: senha
             };
             sessionStorage.setItem('dados_pre_cadastro', JSON.stringify(dadosPreCadastro));
+            salvarUsuarioLogado({ name: nomeUsuario, email: email });
 
             window.location.href = 'selecionar-plano.html';
         } else {

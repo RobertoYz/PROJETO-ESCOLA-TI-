@@ -33,6 +33,10 @@ Route::post('/webhook/abacatepay', [WebhookController::class, 'abacatePayWebhook
 
 // Rotas protegidas (Sanctum) - sem o middleware que bloqueia pagamento pendente
 Route::middleware('auth:sanctum')->group(function () {
+    // Perfil do Consultor (obter e atualizar dados de cadastro: nome, email, senha)
+    Route::get('/auth/perfil', [AuthController::class, 'obterPerfil']);
+    Route::put('/auth/perfil', [AuthController::class, 'atualizarPerfil']);
+
     // Gestão de cobrança e pendência de pagamento
     Route::get('/pagamentos/consultar-anterior', [AuthController::class, 'consultarPagamentoAnterior']);
     Route::post('/planos/gerar-nova-cobranca', [AuthController::class, 'gerarNovaCobranca']);

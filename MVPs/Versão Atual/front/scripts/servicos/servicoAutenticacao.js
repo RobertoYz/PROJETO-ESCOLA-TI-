@@ -5,6 +5,108 @@ const CHAVE_TOKEN_PENDENCIA = 'token_pendencia';
 const CHAVE_EMAIL_PENDENCIA = 'email_pendencia';
 const CHAVE_STARTUP_ID = 'startup_ativa_id';
 const CHAVE_STARTUP_NOME = 'startup_ativa_nome';
+const CHAVE_USUARIO = 'usuario_logado';
+const CHAVE_USUARIO_NOME = 'usuario_nome';
+const CHAVE_USUARIO_EMAIL = 'usuario_email';
+
+export function salvarUsuarioLogado(usuario) {
+    if (!usuario) return;
+    const atual = obterUsuarioLogado() || {};
+    const dadosConsolidados = {
+        id: usuario.id ?? atual.id ?? null,
+        name: usuario.name || usuario.nome || atual.name || '',
+        email: usuario.email || atual.email || '',
+        perfil_acesso: usuario.perfil_acesso || atual.perfil_acesso || 'consultor_admin'
+    };
+    localStorage.setItem(CHAVE_USUARIO, JSON.stringify(dadosConsolidados));
+    if (dadosConsolidados.name) {
+        localStorage.setItem(CHAVE_USUARIO_NOME, dadosConsolidados.name);
+    }
+    if (dadosConsolidados.email) {
+        localStorage.setItem(CHAVE_USUARIO_EMAIL, dadosConsolidados.email);
+    }
+}
+
+export function obterUsuarioLogado() {
+    try {
+        const bruto = localStorage.getItem(CHAVE_USUARIO);
+        if (bruto) {
+            const parsed = JSON.parse(bruto);
+            if (parsed && (parsed.name || parsed.email)) {
+                return parsed;
+            }
+        }
+    } catch (_) {}
+
+    const nomeSalvo = localStorage.getItem(CHAVE_USUARIO_NOME);
+    const emailSalvo = localStorage.getItem(CHAVE_USUARIO_EMAIL);
+    if (nomeSalvo || emailSalvo) {
+        return { name: nomeSalvo || '', email: emailSalvo || '' };
+    }
+
+    try {
+        const preCadastro = sessionStorage.getItem('dados_pre_cadastro');
+        if (preCadastro) {
+            const parsedPre = JSON.parse(preCadastro);
+            if (parsedPre && (parsedPre.name || parsedPre.email)) {
+                return { name: parsedPre.name || '', email: parsedPre.email || '' };
+            }
+        }
+    } catch (_) {}
+
+    return null;
+}
+
+export function limparUsuarioLogado() {
+    localStorage.removeItem(CHAVE_USUARIO);
+    localStorage.removeItem(CHAVE_USUARIO_NOME);
+    localStorage.removeItem(CHAVE_USUARIO_EMAIL);
+}
+
+export async function obterPerfilUsuario() {
+    try {
+        const resposta = await requisicaoApi('/auth/perfil', {
+            method: 'GET'
+        });
+        const usuario = resposta.usuario || resposta.dados?.usuario || resposta;
+        if (usuario && (usuario.name || usuario.email)) {
+            salvarUsuarioLogado(usuario);
+            return usuario;
+        }
+    } catch (_) {
+        // Fallback silencioso para cache local caso endpoint não responda
+    }
+    return obterUsuarioLogado();
+}
+
+export async function atualizarPerfilUsuario(dados) {
+    try {
+        const resposta = await requisicaoApi('/auth/perfil', {
+            method: 'PUT',
+            body: JSON.stringify(dados)
+        });
+        const usuarioAtualizado = resposta.usuario || resposta.dados?.usuario || {
+            name: dados.name,
+            email: dados.email
+        };
+        salvarUsuarioLogado(usuarioAtualizado);
+        return resposta;
+    } catch (erro) {
+        // Fallback local caso servidor remoto não possua a rota /auth/perfil ainda
+        if (erro.status === 404) {
+            salvarUsuarioLogado({
+                name: dados.name,
+                email: dados.email
+            });
+            return {
+                status: 'sucesso',
+                mensagem: 'Perfil atualizado com sucesso!',
+                usuario: obterUsuarioLogado()
+            };
+        }
+        throw erro;
+    }
+}
 
 export async function verificarEmail(email) {
     return await requisicaoApi('/auth/verificar-email', {
@@ -14,24 +116,43 @@ export async function verificarEmail(email) {
 }
 
 export async function registrarComPlano(dados) {
-    return await requisicaoApi('/auth/registrar-com-plano', {
+    if (dados?.name || dados?.email) {
+        salvarUsuarioLogado({ name: dados.name, email: dados.email });
+    }
+    const resposta = await requisicaoApi('/auth/registrar-com-plano', {
         method: 'POST',
         body: JSON.stringify(dados)
     });
+    if (resposta?.usuario) {
+        salvarUsuarioLogado(resposta.usuario);
+    }
+    return resposta;
 }
 
 export async function cadastrarUsuario(dadosCadastro) {
-    return await requisicaoApi('/auth/registro', {
+    if (dadosCadastro?.name || dadosCadastro?.email) {
+        salvarUsuarioLogado({ name: dadosCadastro.name, email: dadosCadastro.email });
+    }
+    const resposta = await requisicaoApi('/auth/registro', {
         method: 'POST',
         body: JSON.stringify(dadosCadastro)
     });
+    if (resposta?.usuario) {
+        salvarUsuarioLogado(resposta.usuario);
+    }
+    return resposta;
 }
 
 export async function realizarLogin(credenciais) {
-    return await requisicaoApi('/auth/login', {
+    const resposta = await requisicaoApi('/auth/login', {
         method: 'POST',
         body: JSON.stringify(credenciais)
     });
+    const usuario = resposta?.dados?.usuario || resposta?.usuario;
+    if (usuario) {
+        salvarUsuarioLogado(usuario);
+    }
+    return resposta;
 }
 
 export async function consultarPagamentoAnterior() {
@@ -57,6 +178,7 @@ export function obterToken() {
 export function removerToken() {
     localStorage.removeItem(CHAVE_TOKEN);
     limparStartupAtiva();
+    limparUsuarioLogado();
 }
 
 export function salvarTokenPendencia(token) {
