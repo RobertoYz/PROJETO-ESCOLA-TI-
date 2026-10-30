@@ -15,3 +15,9 @@ MANUAL_DE_CODIGO.md
 **/android/app/build/
 **/android/build/
 .gradle/
+
+
+# Arquivos locais / dumps / temporarios
+back.zip
+banco_anjonexus.sql
+scratch_artifact_info.json
