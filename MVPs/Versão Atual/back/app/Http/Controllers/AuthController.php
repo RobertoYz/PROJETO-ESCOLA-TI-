@@ -60,9 +60,23 @@ class AuthController extends Controller
      */
     public function registrarComPlano(Request $requisicao, AbacatePayService $servicoAbacatePay): JsonResponse
     {
+        $emailNormalizado = strtolower(trim((string) $requisicao->input('email')));
+        $usuarioExistente = $emailNormalizado ? User::with('agencia')->where('email', $emailNormalizado)->first() : null;
+
+        // Se o e-mail já existe mas pertence a uma conta que já está com pagamento ativo, bloqueia
+        if ($usuarioExistente && $usuarioExistente->agencia && ($usuarioExistente->agencia->pagamento_ativo || $usuarioExistente->agencia->status_pagamento === 'ativo')) {
+            return response()->json([
+                'mensagem' => 'Este e-mail já está cadastrado e possui assinatura ativa. Faça login para acessar sua conta.'
+            ], 422);
+        }
+
+        $regraEmail = $usuarioExistente
+            ? 'required|string|email|max:255'
+            : 'required|string|email|max:255|unique:users,email';
+
         $dadosValidados = $requisicao->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email',
+            'email' => $regraEmail,
             'password' => 'required|string|min:8',
             'plano_id' => 'required|exists:planos,id',
             'nome_agencia' => 'nullable|string|max:255',
@@ -86,24 +100,53 @@ class AuthController extends Controller
                 ? $dadosValidados['nome_agencia']
                 : 'Consultoria de ' . $dadosValidados['name'];
 
-            // Criação da Agência com status de pagamento pendente
-            $agencia = Agencia::create([
-                'nome' => $nomeAgencia,
-                'nome_fantasia' => $nomeAgencia,
-                'plano_id' => $plano->id,
-                'status_pagamento' => 'pendente',
-                'pagamento_ativo' => false,
-                'pagamento_expira_em' => Carbon::now()->addMinutes(60),
-            ]);
+            if ($usuarioExistente) {
+                // Reaproveita o usuário e agência pendentes sem duplicar registros
+                $usuario = $usuarioExistente;
+                $usuario->name = $dadosValidados['name'];
+                $usuario->password = Hash::make($dadosValidados['password']);
+                $usuario->save();
 
-            // Criação do Usuário com perfil de consultor_admin
-            $usuario = User::create([
-                'name' => $dadosValidados['name'],
-                'email' => $dadosValidados['email'],
-                'password' => Hash::make($dadosValidados['password']),
-                'agencia_id' => $agencia->id,
-                'perfil_acesso' => 'consultor_admin',
-            ]);
+                $agencia = $usuario->agencia;
+                if (!$agencia) {
+                    $agencia = Agencia::create([
+                        'nome' => $nomeAgencia,
+                        'nome_fantasia' => $nomeAgencia,
+                        'plano_id' => $plano->id,
+                        'status_pagamento' => 'pendente',
+                        'pagamento_ativo' => false,
+                        'pagamento_expira_em' => Carbon::now()->addMinutes(60),
+                    ]);
+                    $usuario->agencia_id = $agencia->id;
+                    $usuario->save();
+                } else {
+                    $agencia->nome = $nomeAgencia;
+                    $agencia->plano_id = $plano->id;
+                    $agencia->status_pagamento = 'pendente';
+                    $agencia->pagamento_ativo = false;
+                    $agencia->pagamento_expira_em = Carbon::now()->addMinutes(60);
+                    $agencia->save();
+                }
+            } else {
+                // Criação da Agência com status de pagamento pendente
+                $agencia = Agencia::create([
+                    'nome' => $nomeAgencia,
+                    'nome_fantasia' => $nomeAgencia,
+                    'plano_id' => $plano->id,
+                    'status_pagamento' => 'pendente',
+                    'pagamento_ativo' => false,
+                    'pagamento_expira_em' => Carbon::now()->addMinutes(60),
+                ]);
+
+                // Criação do Usuário com perfil de consultor_admin
+                $usuario = User::create([
+                    'name' => $dadosValidados['name'],
+                    'email' => strtolower(trim($dadosValidados['email'])),
+                    'password' => Hash::make($dadosValidados['password']),
+                    'agencia_id' => $agencia->id,
+                    'perfil_acesso' => 'consultor_admin',
+                ]);
+            }
 
             // Geração da cobrança real no AbacatePay
             $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano);
@@ -122,16 +165,29 @@ class AuthController extends Controller
             $agencia->id_plataforma_pagamento = $idCobranca;
             $agencia->save();
 
+            $tokenPendencia = $usuario->createToken('token_pendencia', ['pagamento:gerenciar'])->plainTextToken;
+
             DB::commit();
 
             return response()->json([
                 'mensagem' => 'Conta criada com pagamento pendente. Redirecionando para o pagamento...',
                 'checkout_url' => $urlCheckout,
                 'url_checkout' => $urlCheckout,
+                'token_pendencia' => $tokenPendencia,
+                'access_token' => $tokenPendencia,
+                'token' => $tokenPendencia,
                 'usuario' => [
                     'id' => $usuario->id,
                     'name' => $usuario->name,
                     'email' => $usuario->email
+                ],
+                'agencia' => [
+                    'id' => $agencia->id,
+                    'nome' => $agencia->nome,
+                    'status_pagamento' => $agencia->status_pagamento,
+                    'checkout_url' => $agencia->checkout_url,
+                    'url_checkout' => $agencia->checkout_url,
+                    'pagamento_expira_em' => $agencia->pagamento_expira_em,
                 ]
             ], 201);
 
@@ -246,15 +302,53 @@ class AuthController extends Controller
     }
 
     /**
+     * Resolve o usuário com pagamento pendente priorizando o e-mail da conta pendente exibida na tela,
+     * ou via Bearer token / Sanctum guard.
+     */
+    protected function resolverUsuarioPendente(Request $requisicao): ?User
+    {
+        $email = $requisicao->input('email')
+            ?: $requisicao->query('email')
+            ?: $requisicao->header('X-Pending-Email');
+
+        // Prioriza o e-mail explícito da tela de pendência para nunca operar sobre token residual de outra conta
+        if (!empty($email)) {
+            $usuarioPorEmail = User::with('agencia')->where('email', strtolower(trim($email)))->first();
+            if ($usuarioPorEmail) {
+                return $usuarioPorEmail;
+            }
+        }
+
+        $tokenBruto = $requisicao->bearerToken()
+            ?: $requisicao->header('X-Pending-Token')
+            ?: $requisicao->input('token_pendencia')
+            ?: $requisicao->query('token_pendencia');
+
+        if (!empty($tokenBruto) && class_exists(\Laravel\Sanctum\PersonalAccessToken::class)) {
+            $tokenModel = \Laravel\Sanctum\PersonalAccessToken::findToken($tokenBruto);
+            if ($tokenModel && $tokenModel->tokenable instanceof User) {
+                return $tokenModel->tokenable;
+            }
+        }
+
+        $usuario = $requisicao->user('sanctum') ?? $requisicao->user();
+        if ($usuario) {
+            return $usuario;
+        }
+
+        return null;
+    }
+
+    /**
      * 4. Consulta a janela de pagamento anterior
      * GET /api/pagamentos/consultar-anterior
      */
     public function consultarPagamentoAnterior(Request $requisicao, AbacatePayService $servicoAbacatePay): JsonResponse
     {
-        $usuario = $requisicao->user();
+        $usuario = $this->resolverUsuarioPendente($requisicao);
         $agencia = $usuario ? $usuario->agencia : null;
 
-        if (!$agencia) {
+        if (!$usuario || !$agencia) {
             return response()->json(['mensagem' => 'Agência não vinculada a este usuário.'], 404);
         }
 
@@ -315,10 +409,10 @@ class AuthController extends Controller
             'plano_id.exists' => 'O plano selecionado não existe.',
         ]);
 
-        $usuario = $requisicao->user();
+        $usuario = $this->resolverUsuarioPendente($requisicao);
         $agencia = $usuario ? $usuario->agencia : null;
 
-        if (!$agencia) {
+        if (!$usuario || !$agencia) {
             return response()->json(['mensagem' => 'Agência não encontrada para este usuário.'], 404);
         }
 
@@ -363,7 +457,7 @@ class AuthController extends Controller
      */
     public function cancelarCadastroPendente(Request $requisicao): JsonResponse
     {
-        $usuario = $requisicao->user();
+        $usuario = $this->resolverUsuarioPendente($requisicao);
 
         if (!$usuario) {
             return response()->json(['mensagem' => 'Usuário não autenticado.'], 401);
@@ -380,16 +474,34 @@ class AuthController extends Controller
 
         try {
             DB::transaction(function () use ($usuario, $agencia) {
-                // Revoga todos os tokens Sanctum do usuário
-                $usuario->tokens()->delete();
+                $emailUsuario = $usuario->email;
+                $idsUsuarios = [$usuario->id];
 
-                // Exclui a agência e seus dados vinculados
+                if ($agencia) {
+                    $idsDaAgencia = User::where('agencia_id', $agencia->id)->pluck('id')->toArray();
+                    $idsUsuarios = array_values(array_unique(array_merge($idsUsuarios, $idsDaAgencia)));
+                }
+
+                // Revoga todos os tokens Sanctum vinculados aos usuários da conta
+                if (class_exists(\Laravel\Sanctum\PersonalAccessToken::class)) {
+                    \Laravel\Sanctum\PersonalAccessToken::where('tokenable_type', User::class)
+                        ->whereIn('tokenable_id', $idsUsuarios)
+                        ->delete();
+                } else {
+                    $usuario->tokens()->delete();
+                }
+
+                // Limpa eventuais tokens de redefinição de senha e sessões
+                DB::table('password_reset_tokens')->where('email', $emailUsuario)->delete();
+                DB::table('sessions')->whereIn('user_id', $idsUsuarios)->delete();
+
+                // Exclui startups, todos os usuários vinculados e a agência
                 if ($agencia) {
                     $agencia->startups()->delete();
-                    $agencia->usuarios()->forceDelete();
+                    User::whereIn('id', $idsUsuarios)->forceDelete();
                     $agencia->forceDelete();
                 } else {
-                    $usuario->forceDelete();
+                    User::where('id', $usuario->id)->forceDelete();
                 }
             });
 

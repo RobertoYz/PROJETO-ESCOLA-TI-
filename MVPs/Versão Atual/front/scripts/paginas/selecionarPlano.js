@@ -1,4 +1,11 @@
-import { registrarComPlano, obterTokenPendencia } from '../servicos/servicoAutenticacao.js';
+import {
+    registrarComPlano,
+    obterTokenPendencia,
+    obterEmailPendencia,
+    salvarTokenPendencia,
+    salvarEmailPendencia,
+    salvarAgenciaPendencia
+} from '../servicos/servicoAutenticacao.js';
 import { buscarPlanos, gerarNovaCobranca } from '../servicos/servicoPlanos.js';
 
 const containerListaPlanos = document.getElementById('lista-planos');
@@ -20,8 +27,9 @@ try {
 }
 
 const tokenPendencia = obterTokenPendencia();
+const emailPendencia = obterEmailPendencia();
 
-if (modoRenovacao && tokenPendencia) {
+if (modoRenovacao && (tokenPendencia || emailPendencia)) {
     if (linkVoltar) {
         linkVoltar.href = 'pagamento-pendente.html';
         linkVoltar.textContent = '← Voltar para Pagamento Pendente';
@@ -174,11 +182,12 @@ async function carregarPlanosNaTela() {
                 botao.textContent = 'Gerando pagamento...';
 
                 try {
-                    if (modoRenovacao && tokenPendencia) {
+                    if (modoRenovacao && (tokenPendencia || emailPendencia)) {
                         const resposta = await gerarNovaCobranca(plano.id);
                         const urlCheckout = resposta.url_checkout || resposta.checkout_url;
 
                         if (urlCheckout && urlCheckout.startsWith('http')) {
+                            salvarAgenciaPendencia({ checkout_url: urlCheckout });
                             sessionStorage.removeItem('dados_pre_cadastro');
                             window.location.replace(urlCheckout);
                         } else {
@@ -193,8 +202,16 @@ async function carregarPlanosNaTela() {
                         });
 
                         const urlCheckout = resposta.url_checkout || resposta.checkout_url;
+                        const novoTokenPend = resposta.token_pendencia || resposta.access_token || resposta.token;
+                        if (novoTokenPend) {
+                            salvarTokenPendencia(novoTokenPend);
+                        }
+                        if (dadosPreCadastro.email) {
+                            salvarEmailPendencia(dadosPreCadastro.email);
+                        }
 
                         if (urlCheckout && urlCheckout.startsWith('http')) {
+                            salvarAgenciaPendencia({ checkout_url: urlCheckout });
                             sessionStorage.removeItem('dados_pre_cadastro');
                             window.location.replace(urlCheckout);
                         } else {
