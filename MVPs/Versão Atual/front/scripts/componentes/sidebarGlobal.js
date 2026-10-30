@@ -45,7 +45,7 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
         </nav>
 
         <div class="sidebar-footer" style="padding: 1rem 0; border-top: 1px solid #222;">
-            <a href="login.html" onclick="localStorage.removeItem('token_autenticacao');" class="nav-item" style="padding: 0.9rem 1.5rem; color: #ef4444; text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; gap: 14px;">
+            <a href="login.html" onclick="localStorage.removeItem('token_autenticacao'); localStorage.removeItem('usuario_logado'); localStorage.removeItem('usuario_nome'); localStorage.removeItem('usuario_email'); localStorage.removeItem('startup_ativa_id'); localStorage.removeItem('startup_ativa_nome');" class="nav-item" style="padding: 0.9rem 1.5rem; color: #ef4444; text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; gap: 14px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
                 <span class="nav-text">Sair do Sistema</span>
             </a>
