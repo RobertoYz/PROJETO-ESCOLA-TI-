@@ -16,13 +16,13 @@ Guia rápido de inicialização direta para desenvolvimento diário. Para explic
 
 Abra o terminal na pasta `back` e execute na sequência:
 
-~~~bash
+```bash
 cd back
 composer install
 npm install puppeteer
 php artisan key:generate
 php artisan migrate:fresh --seed
-~~~
+```
 
 ---
 
@@ -30,35 +30,37 @@ php artisan migrate:fresh --seed
 
 Para rodar o ecossistema completo, utilize os comandos abaixo em terminais separados (dentro de `/back`):
 
-### Terminal 1: API Laravel (`http://127.0.0.1:8000`)
-~~~bash
+### Terminal 1: API Laravel (`[http://127.0.0.1:8000](http://127.0.0.1:8000)`)
+```bash
 php artisan serve
-~~~
+```
 
 ### Terminal 2: Fila de Processamento e IA
-~~~bash
+```bash
 php artisan queue:work
-~~~
+```
 
 ### Terminal 3: Túnel Webhook AbacatePay (ngrok)
-~~~bash
+```bash
 # Apenas na 1ª vez na máquina:
 ngrok config add-authtoken <TOKEN_DA_EQUIPE>
 
 # Iniciar o túnel fixo:
 ngrok http --domain=esophagus-swifter-cultivate.ngrok-free.dev 8000
-~~~
+```
 
 ### Terminal 4: Robôs de Captura de Editais (Opcional)
-~~~bash
+```bash
 php artisan spider:fapesc
 php artisan spider:fapesp
 php artisan roach:run FinepSpider
-~~~
+```
 
 ---
 
 ## 4. Inicialização do Front-end (`/front`)
 
-1. No VS Code, navegue até `front/paginas/cadastro.html` ou `front/paginas/login.html`.
+> ⚠️ **IMPORTANTE (VS Code):** Para o Live Server funcionar sem dar *reload* infinito na página, você **deve abrir a pasta raiz exata** no VS Code. Vá em *File > Open Folder* e selecione a pasta **`PROJETO-ESCOLA-TI-`** (isso ativa as configurações que ignoram o backend).
+
+1. Com a pasta correta aberta no VS Code, navegue até `front/paginas/cadastro.html` ou `front/paginas/login.html`.
 2. Clique com o botão direito no arquivo e selecione **"Open with Live Server"**.

@@ -17,9 +17,13 @@ Route::get('/editais', [EditalController::class, 'index']);
 // Listagem pública dos planos disponíveis
 Route::get('/planos', [PlanoController::class, 'listarPlanos']);
 
-// Rotas de Autenticação / Registro SaaS
+// Rotas públicas de Autenticação / Registro SaaS
+Route::post('/auth/verificar-email', [AuthController::class, 'verificarEmail']);
+Route::post('/auth/registrar-com-plano', [AuthController::class, 'registrarComPlano']);
 Route::post('/auth/registro', [AuthController::class, 'registrar']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/esqueci-senha', [AuthController::class, 'solicitarRecuperacaoSenha']);
+Route::post('/auth/redefinir-senha', [AuthController::class, 'redefinirSenha']);
 Route::get('/auth/login', function () {
     return response()->json(['mensagem' => 'Não autenticado. Por favor, faça login.'], 401);
 })->name('login');
@@ -27,14 +31,28 @@ Route::get('/auth/login', function () {
 // Rota do Webhook do AbacatePay
 Route::post('/webhook/abacatepay', [WebhookController::class, 'abacatePayWebhook']);
 
-// Rotas protegidas (Sanctum)
+// Gestão de cobrança e pendência de pagamento (suporta token Sanctum ou identificação de conta pendente)
+Route::get('/pagamentos/consultar-anterior', [AuthController::class, 'consultarPagamentoAnterior']);
+Route::post('/planos/gerar-nova-cobranca', [AuthController::class, 'gerarNovaCobranca']);
+Route::delete('/auth/cancelar-cadastro-pendente', [AuthController::class, 'cancelarCadastroPendente']);
+
+// Rotas protegidas (Sanctum) - sem o middleware que bloqueia pagamento pendente
 Route::middleware('auth:sanctum')->group(function () {
+    // Perfil do Consultor (obter e atualizar dados de cadastro: nome, email, senha)
+    Route::get('/auth/perfil', [AuthController::class, 'obterPerfil']);
+    Route::put('/auth/perfil', [AuthController::class, 'atualizarPerfil']);
+
+    // Rotas legadas de plano/pagamento mantidas por compatibilidade
     Route::get('/pagamento/recuperar', [PagamentoController::class, 'recuperarLinkPagamento']);
     Route::post('/planos/selecionar', [PlanoController::class, 'selecionarPlano']);
-    Route::get('/startups', [StartupController::class, 'index']);
-    Route::post('/startups', [StartupController::class, 'store']);
-    Route::get('/startups/{id}', [StartupController::class, 'show']);
-    Route::put('/startups/{id}', [StartupController::class, 'update']);
+
+    // Rotas do painel que exigem pagamento ativo
+    Route::middleware('check.pagamento')->group(function () {
+        Route::get('/startups', [StartupController::class, 'index']);
+        Route::post('/startups', [StartupController::class, 'store']);
+        Route::get('/startups/{id}', [StartupController::class, 'show']);
+        Route::put('/startups/{id}', [StartupController::class, 'update']);
+    });
 });
 
 // Rotas do Pipeline Kanban

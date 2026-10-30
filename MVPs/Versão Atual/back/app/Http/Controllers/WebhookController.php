@@ -8,63 +8,78 @@ use Illuminate\Support\Facades\Log;
 
 class WebhookController extends Controller
 {
-    public function abacatePayWebhook(Request $request)
+    public function abacatePayWebhook(Request $requisicao)
     {
         try {
-            $secretRecebido = $request->query('webhookSecret');
-            $secretEsperado = env('ABACATEPAY_WEBHOOK_SECRET');
+            $chaveSecretaRecebida = $requisicao->query('webhookSecret');
+            $chaveSecretaEsperada = env('ABACATEPAY_WEBHOOK_SECRET');
 
-            if ($secretEsperado && $secretRecebido !== $secretEsperado) {
-                Log::warning('Webhook AbacatePay recusado: webhookSecret inválido ou ausente.', ['recebido' => $secretRecebido]);
-                return response()->json(['error' => 'Não autorizado'], 401);
+            if ($chaveSecretaEsperada && $chaveSecretaRecebida !== $chaveSecretaEsperada) {
+                Log::warning('Webhook AbacatePay recusado: webhookSecret inválido ou ausente.', ['recebido' => $chaveSecretaRecebida]);
+                return response()->json(['erro' => 'Não autorizado'], 401);
             }
 
-            Log::info('Webhook AbacatePay recebido:', $request->all());
+            Log::info('Webhook AbacatePay recebido:', $requisicao->all());
 
-            $evento = $request->input('event');
-            $data = $request->input('data', $request->all());
+            $evento = $requisicao->input('event');
+            $dados = $requisicao->input('data', $requisicao->all());
             
-            $externalId = $request->input('data.checkout.externalId') ?? $request->input('data.externalId');
-            $statusPagamento = $request->input('data.checkout.status') ?? $request->input('data.status');
-            $transacaoId = $request->input('data.checkout.id') ?? $request->input('data.id');
+            $idExterno = $requisicao->input('data.checkout.externalId') 
+                ?? $requisicao->input('data.externalId') 
+                ?? $requisicao->input('data.billing.externalId');
 
-            if (!$externalId) {
-                Log::warning('Webhook AbacatePay sem externalId', $request->all());
-                return response()->json(['error' => 'ID externo não encontrado no payload'], 400);
+            $statusPagamento = $requisicao->input('data.checkout.status') 
+                ?? $requisicao->input('data.status') 
+                ?? $requisicao->input('data.billing.status');
+
+            $idTransacao = $requisicao->input('data.checkout.id') 
+                ?? $requisicao->input('data.id') 
+                ?? $requisicao->input('data.billing.id');
+
+            if (!$idExterno) {
+                Log::warning('Webhook AbacatePay sem identificador externo', $requisicao->all());
+                return response()->json(['erro' => 'Identificador externo não encontrado no payload'], 400);
             }
 
-            $agenciaId = str_replace('agencia_', '', $externalId);
-            $agencia = Agencia::find($agenciaId);
+            $partes = explode('_', $idExterno);
+            $idAgencia = $partes[1] ?? str_replace('agencia_', '', $idExterno);
+            $agencia = Agencia::find($idAgencia);
 
             if (!$agencia) {
-                Log::error("Agência não encontrada para o externalId: {$externalId}");
-                return response()->json(['error' => 'Agência não encontrada'], 404);
+                Log::error("Agência não encontrada para o externalId: {$idExterno}");
+                return response()->json(['erro' => 'Agência não encontrada'], 404);
             }
 
             $statusRecebido = strtoupper($statusPagamento ?? '');
             
-            if (in_array($evento, ['checkout.completed', 'subscription.completed']) || $statusRecebido === 'PAID') {
+            if (in_array($evento, ['checkout.completed', 'subscription.completed', 'billing.paid']) || $statusRecebido === 'PAID') {
                 $agencia->status_pagamento = 'ativo';
+                $agencia->pagamento_ativo = true;
             } elseif (in_array($evento, ['checkout.refunded', 'subscription.cancelled']) || in_array($statusRecebido, ['REFUNDED', 'CANCELLED'])) {
                 $agencia->status_pagamento = 'cancelado';
+                $agencia->pagamento_ativo = false;
             } elseif (in_array($evento, ['checkout.lost', 'subscription.expired']) || $statusRecebido === 'EXPIRED') {
                 $agencia->status_pagamento = 'suspenso';
+                $agencia->pagamento_ativo = false;
             } elseif ($statusRecebido === 'PENDING') {
                 $agencia->status_pagamento = 'pendente';
+                $agencia->pagamento_ativo = false;
             }
 
-            if ($transacaoId && $agencia->id_plataforma_pagamento !== $transacaoId) {
-                $agencia->id_plataforma_pagamento = $transacaoId;
+            if ($idTransacao) {
+                $agencia->id_plataforma_pagamento = $idTransacao;
+                $agencia->billing_id = $idTransacao;
+                $agencia->id_cobranca = $idTransacao;
             }
 
             $agencia->save();
 
-            Log::info("Webhook processado com sucesso. Agência {$agencia->id} - Novo Status: {$agencia->status_pagamento}");
-            return response()->json(['message' => 'Webhook processado com sucesso'], 200);
+            Log::info("Webhook processado com sucesso. Agência {$agencia->id} - Status: {$agencia->status_pagamento}, Pagamento Ativo: " . ($agencia->pagamento_ativo ? 'sim' : 'não'));
+            return response()->json(['mensagem' => 'Webhook processado com sucesso'], 200);
 
-        } catch (\Exception $e) {
-            Log::error('Erro ao processar Webhook AbacatePay: ' . $e->getMessage());
-            return response()->json(['error' => 'Erro interno ao processar webhook'], 500);
+        } catch (\Exception $excecao) {
+            Log::error('Erro ao processar Webhook AbacatePay: ' . $excecao->getMessage());
+            return response()->json(['erro' => 'Erro interno ao processar webhook'], 500);
         }
     }
 }

@@ -1,6 +1,6 @@
 import { inicializarSidebarGlobal } from '../componentes/sidebarGlobal.js';
 import { inicializarSeletorGlobal } from '../componentes/seletorGlobalStartup.js';
-import { obterStartupAtiva } from '../servicos/servicoAutenticacao.js';
+import { obterStartupAtiva, salvarStartupAtiva } from '../servicos/servicoAutenticacao.js';
 import { obterStartupPorId, atualizarStartup, consultarDadosCnpj } from '../servicos/servicoStartups.js';
 
 let startupIdAtual = null;
@@ -8,15 +8,14 @@ let startupIdAtual = null;
 const form = document.getElementById('formPerfilStartup');
 const alertaFeedback = document.getElementById('alertaFeedback');
 const btnSalvar = document.getElementById('btnSalvarPerfil');
+const btnCancelar = document.getElementById('btnCancelarPerfil');
 const btnSyncReceita = document.getElementById('btnSincronizarReceita');
 
 function exibirAlerta(msg, tipo = 'sucesso') {
     alertaFeedback.textContent = msg;
     alertaFeedback.className = `alerta-feedback ${tipo}`;
+    alertaFeedback.style.display = 'block';
     alertaFeedback.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => {
-        alertaFeedback.style.display = 'none';
-    }, 6000);
 }
 
 async function carregarDadosStartup(id) {
@@ -45,6 +44,11 @@ async function carregarDadosStartup(id) {
         document.getElementById('campoNichoAtuacao').value = startup.nicho_atuacao || '';
         document.getElementById('campoPitch').value = startup.pitch || '';
 
+        const tituloEl = document.getElementById('tituloPaginaPerfilStartup');
+        const nomeExibicao = startup.nome_fantasia || startup.razao_social;
+        if (tituloEl && nomeExibicao) {
+            tituloEl.textContent = `Configurar Startup: ${nomeExibicao}`;
+        }
     } catch (err) {
         console.error('Erro ao carregar dados da startup:', err);
         exibirAlerta(`Não foi possível carregar os dados da startup: ${err.message}`, 'erro');
@@ -52,7 +56,7 @@ async function carregarDadosStartup(id) {
 }
 
 // Sincronizar dados frescos diretamente da Receita Federal
-btnSyncReceita.addEventListener('click', async () => {
+btnSyncReceita?.addEventListener('click', async () => {
     const cnpj = document.getElementById('campoCnpj').value;
     if (!cnpj) {
         exibirAlerta('CNPJ inválido para consulta.', 'erro');
@@ -90,8 +94,13 @@ btnSyncReceita.addEventListener('click', async () => {
     }
 });
 
-// Salvar alterações
-form.addEventListener('submit', async (e) => {
+// Botão Cancelar: retorna para a tela de Radar de Editais
+btnCancelar?.addEventListener('click', () => {
+    window.location.href = 'RadarEditais.html';
+});
+
+// Salvar alterações e voltar para a tela de Radar de Editais
+form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!startupIdAtual) return;
 
@@ -117,16 +126,19 @@ form.addEventListener('submit', async (e) => {
     btnSalvar.textContent = 'Salvando alterações...';
 
     try {
-        const resp = await atualizarStartup(startupIdAtual, payload);
-        exibirAlerta('✅ Perfil da startup e diferenciais tecnológicos atualizados com sucesso!', 'sucesso');
-        
-        // Atualiza nome na sessão local se mudou
-        const novoNome = payload.nome_fantasia || payload.razao_social;
-        localStorage.setItem('startup_ativa_nome', novoNome);
+        await atualizarStartup(startupIdAtual, payload);
 
+        // Atualiza nome na sessão local caso seja a startup ativa no momento
+        const ativa = obterStartupAtiva();
+        const novoNome = payload.nome_fantasia || payload.razao_social;
+        if (ativa && String(ativa.id) === String(startupIdAtual)) {
+            salvarStartupAtiva(startupIdAtual, novoNome);
+        }
+
+        // Retorna para a tela de Radar de Editais conforme solicitado
+        window.location.href = 'RadarEditais.html';
     } catch (err) {
         exibirAlerta(`Erro ao salvar perfil: ${err.message}`, 'erro');
-    } finally {
         btnSalvar.disabled = false;
         btnSalvar.textContent = '💾 Salvar Alterações da Startup';
     }
@@ -134,16 +146,20 @@ form.addEventListener('submit', async (e) => {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
-    inicializarSidebarGlobal('perfil-startup');
-    
+    inicializarSidebarGlobal('');
+
     inicializarSeletorGlobal('container-seletor-global', {
-        onTrocarStartup: (id, nome) => {
+        onTrocarStartup: (id) => {
             carregarDadosStartup(id);
         }
     });
 
+    const params = new URLSearchParams(window.location.search);
+    const idUrl = params.get('id');
     const ativa = obterStartupAtiva();
-    if (ativa && ativa.id) {
-        carregarDadosStartup(ativa.id);
+    const idAlvo = idUrl || (ativa && ativa.id);
+
+    if (idAlvo) {
+        carregarDadosStartup(idAlvo);
     }
 });
