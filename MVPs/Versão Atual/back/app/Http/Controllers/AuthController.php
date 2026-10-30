@@ -539,4 +539,72 @@ class AuthController extends Controller
             'mensagem' => 'Sua senha foi redefinida com sucesso! Redirecionando para o login...'
         ], 200);
     }
+
+    /**
+     * Retorna os dados de cadastro do Consultor autenticado
+     * GET /api/auth/perfil
+     */
+    public function obterPerfil(Request $requisicao): JsonResponse
+    {
+        $usuario = $requisicao->user();
+
+        if (!$usuario) {
+            return response()->json(['mensagem' => 'Usuário não autenticado.'], 401);
+        }
+
+        return response()->json([
+            'status' => 'sucesso',
+            'usuario' => [
+                'id' => $usuario->id,
+                'name' => $usuario->name,
+                'email' => $usuario->email,
+                'perfil_acesso' => $usuario->perfil_acesso,
+            ]
+        ], 200);
+    }
+
+    /**
+     * Atualiza as informações de cadastro do Consultor autenticado (nome, email, senha)
+     * PUT /api/auth/perfil
+     */
+    public function atualizarPerfil(Request $requisicao): JsonResponse
+    {
+        $usuario = $requisicao->user();
+
+        if (!$usuario) {
+            return response()->json(['mensagem' => 'Usuário não autenticado.'], 401);
+        }
+
+        $dadosValidados = $requisicao->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $usuario->id,
+            'password' => 'nullable|string|min:8',
+        ], [
+            'name.required' => 'O nome é obrigatório.',
+            'email.required' => 'O e-mail é obrigatório.',
+            'email.email' => 'Informe um endereço de e-mail válido.',
+            'email.unique' => 'Este e-mail já está em uso por outra conta.',
+            'password.min' => 'A nova senha deve conter no mínimo 8 caracteres.',
+        ]);
+
+        $usuario->name = trim($dadosValidados['name']);
+        $usuario->email = strtolower(trim($dadosValidados['email']));
+
+        if (!empty($dadosValidados['password'])) {
+            $usuario->password = Hash::make($dadosValidados['password']);
+        }
+
+        $usuario->save();
+
+        return response()->json([
+            'status' => 'sucesso',
+            'mensagem' => 'Perfil atualizado com sucesso!',
+            'usuario' => [
+                'id' => $usuario->id,
+                'name' => $usuario->name,
+                'email' => $usuario->email,
+                'perfil_acesso' => $usuario->perfil_acesso,
+            ]
+        ], 200);
+    }
 }

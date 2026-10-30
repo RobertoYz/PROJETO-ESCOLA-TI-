@@ -1,4 +1,4 @@
-import { realizarLogin, salvarToken, limparStartupAtiva, salvarTokenPendencia, salvarEmailPendencia, limparDadosPendencia } from '../servicos/servicoAutenticacao.js';
+import { realizarLogin, salvarToken, limparStartupAtiva, salvarTokenPendencia, salvarEmailPendencia, limparDadosPendencia, salvarUsuarioLogado } from '../servicos/servicoAutenticacao.js';
 
 const formulario = document.getElementById('formulario-login');
 const campoEmail = document.getElementById('campo-email');
@@ -34,6 +34,9 @@ formulario.addEventListener('submit', async (evento) => {
             if (tokenPendencia) {
                 salvarTokenPendencia(tokenPendencia);
             }
+            if (resposta.usuario) {
+                salvarUsuarioLogado(resposta.usuario);
+            }
             salvarEmailPendencia(email);
             window.location.href = 'pagamento-pendente.html';
             return;
@@ -41,6 +44,12 @@ formulario.addEventListener('submit', async (evento) => {
 
         // Login aprovado com assinatura ativa
         salvarToken(resposta.token || resposta.access_token);
+        const usuario = resposta.dados?.usuario || resposta.usuario;
+        if (usuario) {
+            salvarUsuarioLogado(usuario);
+        } else {
+            salvarUsuarioLogado({ email });
+        }
         limparStartupAtiva();
         sessionStorage.removeItem('dados_pre_cadastro');
         limparDadosPendencia();
@@ -52,6 +61,9 @@ formulario.addEventListener('submit', async (evento) => {
             const tokenPendencia = erro.dados.access_token || erro.dados.token;
             if (tokenPendencia) {
                 salvarTokenPendencia(tokenPendencia);
+            }
+            if (erro.dados.usuario) {
+                salvarUsuarioLogado(erro.dados.usuario);
             }
             salvarEmailPendencia(email);
             window.location.href = 'pagamento-pendente.html';

@@ -28,37 +28,6 @@ if (document.readyState === 'loading') {
 }
 
 function initUI() {
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggleSidebar');
-    if (toggleBtn) toggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
-
-    const userMenuBtn = document.getElementById('userMenuBtn');
-    const mainDropdown = document.getElementById('mainDropdown');
-    const manageProfilesBtn = document.getElementById('manageProfilesBtn');
-    const profilesSubmenu = document.getElementById('profilesSubmenu');
-
-    if (userMenuBtn) {
-        userMenuBtn.addEventListener('click', (e) => {
-            if (e.target.closest('.dropdown-menu')) return;
-            mainDropdown.classList.toggle('active');
-            if (!mainDropdown.classList.contains('active')) profilesSubmenu.classList.remove('active');
-        });
-    }
-
-    if (manageProfilesBtn) {
-        manageProfilesBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            profilesSubmenu.classList.toggle('active');
-        });
-    }
-
-    document.addEventListener('click', (e) => {
-        if (userMenuBtn && !userMenuBtn.contains(e.target)) {
-            if (mainDropdown) mainDropdown.classList.remove('active');
-            if (profilesSubmenu) profilesSubmenu.classList.remove('active');
-        }
-    });
-
     const btnFavDetail = document.getElementById('btnFavDetail');
     if (btnFavDetail) {
         btnFavDetail.addEventListener('click', () => {
@@ -349,7 +318,6 @@ function toggleFavorite(id) {
     if (edital) {
         edital.favorite = !edital.favorite;
         renderTable();
-        // TODO: Enviar requisição POST/PUT para a API atualizar o banco
     }
 }
 
@@ -373,7 +341,6 @@ function showEmptyState() {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: #a0a0a0;">Nenhum edital encontrado.</td></tr>`;
     }
 }
-
 
 // Função para fechar painel de detalhes no mobile
 function fecharDetalhesMobile() {
