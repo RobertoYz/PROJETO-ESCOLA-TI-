@@ -22,6 +22,8 @@ Route::post('/auth/verificar-email', [AuthController::class, 'verificarEmail']);
 Route::post('/auth/registrar-com-plano', [AuthController::class, 'registrarComPlano']);
 Route::post('/auth/registro', [AuthController::class, 'registrar']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/esqueci-senha', [AuthController::class, 'solicitarRecuperacaoSenha']);
+Route::post('/auth/redefinir-senha', [AuthController::class, 'redefinirSenha']);
 Route::get('/auth/login', function () {
     return response()->json(['mensagem' => 'Não autenticado. Por favor, faça login.'], 401);
 })->name('login');
