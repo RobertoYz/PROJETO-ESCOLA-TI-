@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Anjo Nexus</title>
+    <link rel="stylesheet" href="../estilos/layout.css">
+</head>
+<body>
+    <div id="container-cabecalho" class="container-cabecalho">
+        <h1>Login</h1>
+        <a href="cadastro.html">Não possui uma conta? Cadastre-se</a>
+    </div>
+
+    <div id="container-formulario" class="container-formulario">
+        <form id="formulario-login" novalidate>
+            <input type="email" id="campo-email" placeholder="E-mail" autocomplete="email">
+            <input type="password" id="campo-senha" placeholder="Senha" autocomplete="current-password">
+            <div id="mensagem-erro" class="texto-erro" hidden></div>
+            <button type="submit" id="botao-confirmar">Entrar</button>
+        </form>
+    </div>
+
+    <script type="module" src="../scripts/paginas/login.js"></script>
+</body>
+</html>
