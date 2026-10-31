@@ -10,6 +10,8 @@ Guia rápido de inicialização direta para desenvolvimento diário. Para explic
 1. **XAMPP:** Inicie o **Apache** e o **MySQL** e garanta que o banco `anjo_nexus` exista no `http://localhost/phpmyadmin`.
 2. **Arquivo `.env`:** Solicite o arquivo `.env` completo com os membros da equipe e cole dentro da pasta `/back` (ou copie o `.env.example` e preencha `ABACATEPAY_API_KEY`, `ABACATEPAY_WEBHOOK_SECRET`, `GROQ_API_KEY`, `DEEPSEEK_API_KEY` e `GEMINI_API_KEY`).
 
+1.1. **Arquivo .env:** Solicite o arquivo .env completo com os membros da equipe e cole dentro da pasta /back (ou copie o .env.example e preencha as chaves do AbacatePay, chaves das IAs e o bloco SMTP do Gmail com uma Senha de App de 16 dígitos em MAIL_PASSWORD para a recuperação de senha)
+
 ---
 
 ## 2. Instalação e Banco de Dados (`/back`)
