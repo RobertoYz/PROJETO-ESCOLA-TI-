@@ -21,8 +21,13 @@ cd PROJETO-ESCOLA-TI-
 git checkout EDTAN-x-Fazer-Descrição-Caso-de-Uso-e-Diagrama
 
 --------------------------------------------------------------------
+EXTRA 1: Caso tenha criado a branch depois de já ter clonado o projeto e a branch não esteja sendo reconhecida, faça:
 
-EXTRA: Caso a branch esteja desatualizada (outro merge foi feito antes dela), faça:
+git fetch origin
+
+--------------------------------------------------------------------
+
+EXTRA 2: Caso a branch esteja desatualizada (outro merge foi feito antes dela), faça:
 
 git pull origin main (vai atualizar a sua branch com o que está na main)
 
