@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Cadastro - Anjo Nexus</title>
+    <link rel="stylesheet" href="../estilos/layout.css">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
+</head>
+<body>
+    <div id="container-cabecalho" class="container-cabecalho">
+        <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #4f46e5, #7c3aed); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4); margin-bottom: 6px;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+        </div>
+        <h1>Criar Conta</h1>
+        <p>Cadastre sua consultoria e acesse editais de fomento</p>
+        <a href="login.html">Já possui conta? Faça login</a>
+    </div>
+
+    <div id="container-formulario" class="container-formulario">
+        <form id="formulario-cadastro" novalidate>
+            <input type="text" id="campo-nome-usuario" placeholder="Nome completo" autocomplete="name">
+            <input type="email" id="campo-email" placeholder="E-mail" autocomplete="email">
+            <input type="password" id="campo-senha" placeholder="Senha (mínimo 8 caracteres)" autocomplete="new-password">
+            <div id="mensagem-erro" class="texto-erro" hidden></div>
+            <button type="submit" id="botao-confirmar">Continuar para Escolha de Plano</button>
+        </form>
+    </div>
+
+    <div class="banner-download-apk" style="margin-top: 1.75rem; text-align: center; max-width: 420px; width: 100%;">
+        <div style="background: rgba(99, 102, 241, 0.08); border: 1px dashed rgba(99, 102, 241, 0.4); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div style="text-align: left;">
+                <div style="font-weight: 600; font-size: 0.9rem; color: #4338ca;">📱 App Mobile Android</div>
+                <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">Prefere usar no smartphone?</div>
+            </div>
+            <a href="baixar-app.html" style="background: #4f46e5; color: #fff; text-decoration: none; padding: 8px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; white-space: nowrap;">Baixar App</a>
+        </div>
+    </div>
+
+    <script type="module" src="../scripts/paginas/cadastro.js"></script>
+</body>
+</html>
