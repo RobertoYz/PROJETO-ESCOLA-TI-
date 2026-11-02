@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Pagamento Pendente - Anjo Nexus</title>
+    <link rel="stylesheet" href="../estilos/layout.css">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
+    <style>
+        .btn-secundario {
+            background: rgba(99, 102, 241, 0.14) !important;
+            border: 1px solid rgba(99, 102, 241, 0.4) !important;
+            color: #c7d2fe !important;
+            box-shadow: none !important;
+        }
+        .btn-secundario:hover:not(:disabled) {
+            background: rgba(99, 102, 241, 0.25) !important;
+            border-color: #6366f1 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3) !important;
+        }
+        .btn-perigo {
+            background: rgba(239, 68, 68, 0.12) !important;
+            border: 1px solid rgba(239, 68, 68, 0.35) !important;
+            color: #fca5a5 !important;
+            box-shadow: none !important;
+        }
+        .btn-perigo:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.22) !important;
+            border-color: #ef4444 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3) !important;
+        }
+        .caixa-feedback-sucesso {
+            background-color: var(--success-bg) !important;
+            border: 1px solid rgba(16, 185, 129, 0.35) !important;
+            color: #6ee7b7 !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="container-cabecalho" class="container-cabecalho">
+        <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #4f46e5, #7c3aed); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4); margin-bottom: 6px;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        </div>
+        <h1>Pagamento Pendente</h1>
+        <p>A conta associada a <strong id="email-destaque" style="color: #a5b4fc;">seu e-mail</strong> ainda aguarda a confirmação de pagamento da assinatura para liberar o acesso ao painel.</p>
+    </div>
+
+    <div id="container-formulario" class="container-formulario">
+        <div id="mensagem-feedback" class="texto-erro" style="margin-bottom: 18px;" hidden></div>
+
+        <div style="display: flex; flex-direction: column; gap: 14px; width: 100%;">
+            <!-- Opção 1: Consultar cobrança anterior -->
+            <button type="button" id="botao-consultar-anterior">
+                Consultar Janela de Pagamento Anterior
+            </button>
+
+            <!-- Opção 2: Gerar nova cobrança -->
+            <button type="button" id="botao-gerar-nova" class="btn-secundario">
+                Gerar Nova Cobrança (Escolher Plano)
+            </button>
+
+            <div style="height: 1px; background: var(--border-color); margin: 6px 0;"></div>
+
+            <!-- Opção 3: Cancelar e excluir conta -->
+            <button type="button" id="botao-cancelar-conta" class="btn-perigo">
+                Cancelar Pagamento e Excluir Conta
+            </button>
+        </div>
+
+        <a href="login.html" style="color: var(--text-muted); font-size: 0.88rem; text-decoration: none; margin-top: 18px; text-align: center;">
+            ← Fazer login com outra conta
+        </a>
+    </div>
+
+    <div class="banner-download-apk" style="margin-top: 1.75rem; text-align: center; max-width: 440px; width: 100%;">
+        <div style="background: rgba(99, 102, 241, 0.08); border: 1px dashed rgba(99, 102, 241, 0.35); border-radius: var(--radius-md); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div style="text-align: left;">
+                <div style="font-weight: 600; font-size: 0.9rem; color: #818cf8;">Precisa de suporte?</div>
+                <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Pagou via PIX e não liberou? Aguarde até 2 minutos ou contate o suporte.</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../scripts/paginas/pagamentoPendente.js"></script>
+</body>
+</html>

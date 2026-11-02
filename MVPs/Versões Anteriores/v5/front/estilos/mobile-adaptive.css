@@ -1,0 +1,927 @@
+/* ==========================================================================
+   ANJONEXUS — ESTILOS ADAPTATIVOS NATIVOS MOBILE (CAPACITOR & SMARTPHONES)
+   Compatibilidade total com Safe-Area / Notches, Drawer e Cards Modernos
+   ========================================================================== */
+
+:root {
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+/* Prevenção global de scroll horizontal involuntário */
+html,
+body {
+    max-width: 100vw;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* ==========================================================================
+   BACKDROP OVERLAY PARA DRAWER LATERAL (MOBILE)
+   ========================================================================== */
+.sidebar-backdrop {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ==========================================================================
+   ELEMENTOS DE APOIO AO DESKTOP (Escondidos por padrão no desktop)
+   ========================================================================== */
+.card-mobile-top {
+    display: none;
+}
+
+.meta-label {
+    display: none;
+}
+
+.match-pill {
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.match-pill.match-high {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.match-pill.match-medium {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.match-pill.match-low {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Esconder banner ou link de download APK quando executando no Capacitor */
+body.is-capacitor a[href="baixar-app.html"],
+body.is-capacitor a[href*="baixar-app"],
+body.is-capacitor .banner-download-apk,
+body.is-capacitor .link-download-app-header {
+    display: none !important;
+}
+
+.card-mobile-actions,
+.btn-fechar-detalhes-mobile {
+    display: none;
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE MOBILE NATIVA (<= 900px)
+   ========================================================================== */
+@media (max-width: 900px) {
+
+    html,
+    body {
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        display: block !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+    }
+
+    /* Centralização de containers de formulário e cartões no mobile */
+    .container-cabecalho,
+    .container-formulario,
+    .container-selecao-startup,
+    .container-planos,
+    .banner-download-apk {
+        margin-left: auto !important;
+        margin-right: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Ajuste de formulários e linhas compostas (CEP/Cidade/UF, CNPJ, etc) */
+    .linha-dupla,
+    .linha-tripla,
+    .grupo-cnpj {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 12px !important;
+    }
+
+    .linha-tripla input,
+    .linha-dupla input,
+    .grupo-cnpj input {
+        max-width: 100% !important;
+        width: 100% !important;
+        flex: none !important;
+    }
+
+    .grupo-cnpj button {
+        width: 100% !important;
+        padding: 14px !important;
+        white-space: normal !important;
+    }
+
+    /* 1. GAVETA LATERAL (DRAWER NATIVO COM NOTCH SAFE AREA) */
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: -320px !important;
+        bottom: 0 !important;
+        width: min(300px, 84vw) !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        background-color: #0b0f19 !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+        box-shadow: 12px 0 35px rgba(0, 0, 0, 0.85) !important;
+        z-index: 999 !important;
+        transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        padding-top: max(40px, calc(var(--safe-area-top) + 16px)) !important;
+        padding-bottom: max(20px, var(--safe-area-bottom)) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .sidebar.mobile-open {
+        left: 0 !important;
+    }
+
+    .sidebar .nav-menu {
+        overflow: visible !important;
+        flex: 1 !important;
+    }
+
+    .sidebar .nav-text {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: auto !important;
+        display: inline !important;
+    }
+
+    .sidebar .logo {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        height: auto !important;
+        display: block !important;
+    }
+
+    /* 2. TOPBAR COM RESPEITO AO STATUS BAR DO SMARTPHONE */
+    .top-navbar {
+        padding-top: max(38px, calc(var(--safe-area-top) + 12px)) !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+        padding-bottom: 12px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        background-color: #0d0f12 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 100 !important;
+    }
+
+    .header-left-slot {
+        width: auto !important;
+        display: flex !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+    }
+
+    .header-right-group,
+    #container-seletor-global,
+    #container-seletor-global-kanban {
+        flex: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 10px !important;
+        min-width: 0 !important;
+    }
+
+    .mobile-menu-trigger {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: #fff !important;
+        font-size: 1.3rem !important;
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 10px !important;
+        cursor: pointer !important;
+        flex-shrink: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .seletor-startup-wrapper {
+        flex: 1 !important;
+        max-width: 240px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        min-width: 0 !important;
+    }
+
+    .seletor-startup-wrapper select,
+    #select-global-startup {
+        flex: 1 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        font-size: 13px !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+    }
+
+    .radar-top-bar,
+    .kanban-top-bar {
+        padding: 12px 12px 0 12px !important;
+        width: 100% !important;
+    }
+
+    .radar-actions-box,
+    .kanban-actions-box {
+        width: 100% !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        justify-content: space-between !important;
+    }
+
+    .kanban-actions-box button {
+        flex: 1 !important;
+        min-width: 130px !important;
+        justify-content: center !important;
+    }
+
+    /* 3. CONTEÚDO PRINCIPAL */
+    .main-content {
+        height: auto !important;
+        overflow: visible !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        display: block !important;
+        box-sizing: border-box !important;
+    }
+
+    .dashboard-container {
+        display: flex !important;
+        flex-direction: column !important;
+        height: auto !important;
+        padding: 12px !important;
+        gap: 16px !important;
+        overflow: visible !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+    }
+
+    .card {
+        height: auto !important;
+        min-height: auto !important;
+        border-radius: 16px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+        width: 100% !important;
+    }
+
+    .card-header {
+        padding: 6px 4px 12px 4px !important;
+        border-bottom: none !important;
+    }
+
+    .card-title {
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        color: #fff !important;
+    }
+
+    .card-body {
+        overflow: visible !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    /* 4. TRANSFORMAÇÃO DA TABELA DO RADAR EM CARDS MODERNOS TOUCH */
+    #dataTable {
+        display: block !important;
+        width: 100% !important;
+        border: none !important;
+        border-collapse: separate !important;
+    }
+
+    #dataTable thead {
+        display: none !important;
+    }
+
+    #dataTable tbody {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 12px !important;
+        padding: 0 !important;
+    }
+
+    #dataTable tbody tr {
+        display: flex !important;
+        flex-direction: column !important;
+        background: linear-gradient(180deg, #131823 0%, #0e121a 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 16px !important;
+        padding: 16px !important;
+        gap: 10px !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+        cursor: pointer !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        transition: transform 0.15s ease, border-color 0.15s ease !important;
+        position: relative !important;
+    }
+
+    #dataTable tbody tr:active,
+    #dataTable tbody tr.selected {
+        border-color: #6366f1 !important;
+        background: linear-gradient(180deg, #1a2235 0%, #111726 100%) !important;
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.25) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    #dataTable tbody tr td {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    /* Cabeçalho do Card: Badges + Match + Favorito */
+    .card-mobile-top {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        margin-bottom: 8px !important;
+    }
+
+    .btn-fav-card {
+        padding: 4px !important;
+        color: #94a3b8 !important;
+    }
+
+    .btn-fav-card.active {
+        color: #f59e0b !important;
+    }
+
+    /* Nome e Órgão */
+    .edital-name {
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+        line-height: 1.4 !important;
+        color: #f8fafc !important;
+    }
+
+    .edital-org {
+        font-size: 0.8rem !important;
+        color: #818cf8 !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        margin-top: 4px !important;
+        display: inline-block !important;
+    }
+
+    /* Metadados: Orçamento e Prazo */
+    .meta-label {
+        display: inline !important;
+        font-size: 0.78rem !important;
+        font-weight: 600 !important;
+        color: #94a3b8 !important;
+        text-transform: uppercase !important;
+        margin-right: 4px !important;
+    }
+
+    .cell-budget {
+        color: #38bdf8 !important;
+        font-weight: 700 !important;
+        font-size: 0.95rem !important;
+        margin-top: 4px !important;
+    }
+
+    .cell-deadline {
+        color: #e2e8f0 !important;
+        font-size: 0.88rem !important;
+    }
+
+    /* Ocultar células da tabela desktop redundantes */
+    .cell-status-desktop,
+    .cell-match-desktop,
+    .cell-fav-desktop {
+        display: none !important;
+    }
+
+    /* 5. PAINEL DE DETALHES DO EDITAL (MODAL DIRETO NO MOBILE) */
+    .detail-panel {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        background: #0b0f19 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding-top: max(20px, env(safe-area-inset-top, 20px)) !important;
+        padding-bottom: max(24px, env(safe-area-inset-bottom, 24px)) !important;
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+        z-index: 1000 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.95) !important;
+    }
+
+    .detail-header {
+        padding: 1.25rem !important;
+    }
+
+    .detail-title {
+        font-size: 1.25rem !important;
+    }
+
+    .detail-content {
+        padding: 1.25rem !important;
+        max-height: none !important;
+    }
+
+    .info-group {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .detail-footer {
+        padding: 1.25rem !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    .detail-footer .btn-primary,
+    .detail-footer .btn-outline {
+        width: 100% !important;
+        text-align: center !important;
+        padding: 14px !important;
+        font-size: 1rem !important;
+    }
+
+    /* 6. PERFIL DA STARTUP NO MOBILE */
+    .perfil-container {
+        padding: 14px !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+    }
+
+    .card-perfil {
+        padding: 16px !important;
+        border-radius: 16px !important;
+        box-sizing: border-box !important;
+        background: #111622 !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        width: 100% !important;
+        margin-bottom: 16px !important;
+    }
+
+    .card-perfil-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        padding-bottom: 12px !important;
+    }
+
+    .card-perfil-title {
+        font-size: 1.05rem !important;
+        line-height: 1.3 !important;
+    }
+
+    .btn-sync-cnpj {
+        width: 100% !important;
+        text-align: center !important;
+        padding: 12px !important;
+        font-size: 0.95rem !important;
+    }
+
+    .form-grid,
+    .form-grid-3 {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 14px !important;
+        width: 100% !important;
+    }
+
+    .form-input,
+    .form-textarea,
+    .form-select {
+        font-size: 16px !important;
+        /* Evita auto-zoom incômodo no iOS e Android */
+        padding: 12px 14px !important;
+        border-radius: 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .btn-salvar {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 14px !important;
+        font-size: 1rem !important;
+    }
+
+    /* 7. PIPELINE KANBAN NO MOBILE */
+    .kanban-container {
+        padding: 10px 12px 24px 12px !important;
+        gap: 14px !important;
+        display: flex !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-snap-type: x mandatory !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-x pan-y !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        height: calc(100dvh - 140px) !important;
+        height: calc(100vh - 140px) !important;
+        max-height: calc(100dvh - 140px) !important;
+        box-sizing: border-box !important;
+    }
+
+    .kanban-column {
+        min-width: 85vw !important;
+        max-width: 85vw !important;
+        width: 85vw !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        scroll-snap-align: center !important;
+        border-radius: 16px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex-shrink: 0 !important;
+    }
+
+    .column-body {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 12px !important;
+        gap: 12px !important;
+        min-height: 0 !important;
+    }
+
+    .kanban-card {
+        padding: 14px !important;
+        border-radius: 12px !important;
+        touch-action: pan-y !important;
+    }
+
+    /* Ações touch no card do Kanban para celular */
+    .card-mobile-actions {
+        display: flex !important;
+        gap: 8px !important;
+        margin-top: 10px !important;
+        padding-top: 8px !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .btn-card-move {
+        flex: 1 !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: #e2e8f0 !important;
+        padding: 8px 10px !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        cursor: pointer !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        transition: 0.15s !important;
+    }
+
+    .btn-card-move:active {
+        background: #2563eb !important;
+        color: #fff !important;
+    }
+
+    .btn-card-move:disabled {
+        opacity: 0.25 !important;
+        cursor: not-allowed !important;
+    }
+
+    .actions-section {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    .actions-section button {
+        flex: 1 !important;
+        min-width: 130px !important;
+        font-size: 0.88rem !important;
+        padding: 10px !important;
+    }
+
+    /* 8. MODAIS RESPONSIVOS NO MOBILE (KANBAN, IA MINUTA, DETALHES) */
+    .modal-overlay {
+        padding: 8px !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: none;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+    }
+
+    .modal-card {
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        max-height: 92dvh !important;
+        max-height: 92vh !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        padding: 18px 16px !important;
+        border-radius: 16px !important;
+        margin: auto !important;
+        box-sizing: border-box !important;
+    }
+
+    .modal-minuta-card {
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        max-height: 94dvh !important;
+        max-height: 94vh !important;
+        border-radius: 16px !important;
+        overflow-x: hidden !important;
+        margin: auto !important;
+        box-sizing: border-box !important;
+    }
+
+    .modal-minuta-body {
+        padding: 12px 14px !important;
+        gap: 12px !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Aba 2: Diagnóstico de Aderência no Mobile */
+    #tabContentFit>div:first-child {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+
+    #tabContentFit>div:first-child>div {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+
+    #selectFitStartup {
+        min-width: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    #tabContentFit>div:first-child button {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 12px !important;
+    }
+
+    /* Aba 4: Anexos e Documentos no Mobile */
+    .anexos-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 14px !important;
+        width: 100% !important;
+    }
+
+    .anexos-panel {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 14px !important;
+    }
+
+    .upload-dropzone {
+        padding: 16px 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    #selectCardAnexo {
+        max-width: 100% !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        text-overflow: ellipsis !important;
+    }
+
+    .modal-minuta-header {
+        padding: 12px 14px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    .modal-minuta-header h2 {
+        font-size: 1rem !important;
+    }
+
+    .modal-minuta-header span {
+        display: none !important;
+    }
+
+    .minuta-tabs-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .minuta-tabs {
+        display: flex !important;
+        padding: 0 8px !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        scrollbar-width: none !important;
+    }
+
+    .minuta-tabs::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .minuta-tab-btn {
+        padding: 10px 14px !important;
+        font-size: 0.8rem !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+
+    .modal-minuta-body {
+        padding: 14px !important;
+        gap: 14px !important;
+    }
+
+    /* Grid de selects da aba Gerador de Minuta */
+    #tabContentGerador>div:first-child {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        margin-bottom: 12px !important;
+    }
+
+    /* Barra de botões do editor de minuta */
+    #minutaEditorContainer>div:first-child {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    #minutaEditorContainer>div:first-child>div:last-child {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    #minutaEditorContainer>div:first-child>div:last-child button {
+        width: 100% !important;
+        justify-content: center !important;
+        font-size: 0.8rem !important;
+        padding: 9px 6px !important;
+    }
+
+    /* Modal de Detalhes do Edital */
+    .modal-detalhes-card {
+        width: 100% !important;
+        max-width: 96vw !important;
+        max-height: 94dvh !important;
+        max-height: 94vh !important;
+        border-radius: 16px !important;
+    }
+
+    .modal-detalhes-header {
+        padding: 12px 14px !important;
+    }
+
+    .modal-detalhes-body {
+        padding: 14px !important;
+        gap: 14px !important;
+    }
+
+    .detalhes-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+    }
+
+    .modal-detalhes-body>div:last-child {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        align-items: stretch !important;
+    }
+
+    .modal-detalhes-body>div:last-child>div {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+
+    .modal-detalhes-body>div:last-child a,
+    .modal-detalhes-body>div:last-child button {
+        width: 100% !important;
+        text-align: center !important;
+        justify-content: center !important;
+        padding: 12px !important;
+    }
+
+    /* 9. RADAR DE EDITAIS NO MOBILE */
+    .top-navbar a[href*="baixar-app"] {
+        display: none !important;
+    }
+
+    .btn-fechar-detalhes-mobile {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        background: rgba(99, 102, 241, 0.18) !important;
+        border: 1px solid rgba(99, 102, 241, 0.4) !important;
+        color: #a5b4fc !important;
+        font-size: 0.88rem !important;
+        font-weight: 600 !important;
+        padding: 10px 16px !important;
+        border-radius: 10px !important;
+        cursor: pointer !important;
+        width: 100% !important;
+        margin-bottom: 12px !important;
+        text-align: center !important;
+    }
+}
