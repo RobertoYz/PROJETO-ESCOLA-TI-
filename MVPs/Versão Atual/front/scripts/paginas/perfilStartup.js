@@ -1,7 +1,11 @@
 import { inicializarSidebarGlobal } from '../componentes/sidebarGlobal.js';
 import { inicializarSeletorGlobal } from '../componentes/seletorGlobalStartup.js';
-import { obterStartupAtiva, salvarStartupAtiva } from '../servicos/servicoAutenticacao.js';
+import { obterStartupAtiva, salvarStartupAtiva, usuarioEstaAutenticado } from '../servicos/servicoAutenticacao.js';
 import { obterStartupPorId, atualizarStartup, consultarDadosCnpj } from '../servicos/servicoStartups.js';
+
+if (!usuarioEstaAutenticado()) {
+    window.location.replace('login.html');
+}
 
 let startupIdAtual = null;
 

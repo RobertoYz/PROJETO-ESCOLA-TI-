@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anjo Nexus - Histórico de Ações</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Paleta Dark Mode */
+            --bg-dark: #050505;
+            --sidebar-bg: #111418;
+            --navbar-bg: #0d0f12;
+            --card-bg: #1a1d21;
+            --card-hover: #23272c;
+            
+            /* Textos */
+            --text-light: #ffffff;
+            --text-muted: #a0a0a0;
+            --menu-bg: #f5f5f5;
+            --menu-text: #333333;
+            
+            /* Cores de Destaque */
+            --accent-blue: #1b36ff;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            
+            /* Status */
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); display: flex; height: 100vh; overflow: hidden; }
+        svg { fill: currentColor; }
+
+        /* ================= SIDEBAR ================= */
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); height: 100vh; display: flex; flex-direction: column; border-right: 1px solid #222; transition: width 0.3s ease; position: relative; z-index: 100; }
+        .sidebar.collapsed { width: 70px; }
+        .sidebar-header { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+        .toggle-btn { background: none; border: none; color: var(--text-light); cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; align-self: flex-start; }
+        .toggle-btn:hover { background-color: rgba(255,255,255,0.1); }
+        .logo { font-size: 1.5rem; font-weight: 600; transition: opacity 0.3s; }
+        .logo span { font-weight: 400; }
+        .sidebar.collapsed .logo { opacity: 0; pointer-events: none; height: 0; margin: 0; overflow: hidden; }
+
+        .nav-menu { flex: 1; display: flex; flex-direction: column; padding: 1rem 0; overflow: hidden; }
+        .nav-item { padding: 1rem 1.5rem; color: var(--text-light); text-decoration: none; font-size: 1rem; display: flex; align-items: center; gap: 15px; transition: background-color 0.2s; white-space: nowrap; }
+        .nav-item:hover { background-color: rgba(255,255,255,0.05); }
+        .nav-item.active { background-color: rgba(255,255,255,0.05); border-left: 3px solid var(--accent-blue); color: var(--accent-blue); }
+        .nav-item.active .nav-text { font-weight: 600; }
+        .nav-icon { width: 20px; height: 20px; min-width: 20px; }
+        .nav-text { transition: opacity 0.3s; }
+        .sidebar.collapsed .nav-text { opacity: 0; pointer-events: none; width: 0; overflow: hidden; }
+        .sidebar-footer { padding: 1rem 0; border-top: 1px solid #222; }
+
+        /* ================= MAIN CONTENT ================= */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Topbar */
+        .top-navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--navbar-bg); border-bottom: 1px solid #222; }
+        .startup-info { display: flex; align-items: center; gap: 1rem; }
+        .startup-avatar { width: 45px; height: 45px; background-color: #d9d9d9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666; }
+        .startup-name { font-size: 1.2rem; font-weight: 600; }
+
+        /* Dropdown Roberto */
+        .user-section { display: flex; align-items: center; gap: 1rem; position: relative; cursor: pointer; }
+        .user-name { font-weight: 400; font-size: 1rem; }
+        .avatar { width: 40px; height: 40px; background-color: #d9d9d9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666; }
+        .dropdown-menu { position: absolute; top: 100%; right: 0; margin-top: 10px; background-color: var(--menu-bg); color: var(--menu-text); border-radius: 8px; width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: none; flex-direction: column; z-index: 100; padding: 0.5rem 0; }
+        .dropdown-menu.active { display: flex; }
+        .dropdown-item { padding: 10px 20px; font-size: 0.95rem; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; justify-content: space-between; }
+        .dropdown-item:hover { background-color: #e0e0e0; }
+        .submenu-container { position: relative; }
+        .submenu { position: absolute; top: 0; right: 100%; margin-right: 5px; background-color: var(--menu-bg); border-radius: 8px; width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: none; flex-direction: column; padding: 0.5rem 0; }
+        .submenu.active { display: flex; }
+        .submenu-item { display: flex; align-items: center; gap: 10px; padding: 8px 15px; font-size: 0.9rem; cursor: pointer; }
+        .submenu-item:hover { background-color: #e0e0e0; }
+        .small-avatar { width: 24px; height: 24px; background-color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .btn-add-user { margin: 10px 15px 5px; background-color: #b9bec6; color: #333; border: none; padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+
+        /* ================= HISTÓRICO DE AÇÕES ================= */
+        .dashboard-container { padding: 2rem; display: flex; flex-direction: column; height: calc(100vh - 77px); overflow-y: auto; }
+        
+        .card { background-color: var(--card-bg); border-radius: 16px; border: 1px solid #2a2a2a; display: flex; flex-direction: column; overflow: hidden; flex: 1; }
+        .card-header { padding: 1.5rem 2rem; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; background-color: #16181b; }
+        .card-title { font-size: 1.4rem; font-weight: 600; }
+        
+        /* Filtros */
+        .filters { display: flex; gap: 1rem; }
+        .filter-btn { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid #444; padding: 8px 16px; border-radius: 20px; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
+        .filter-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .filter-btn.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+
+        /* Timeline / Log List */
+        .log-area { padding: 2rem; overflow-y: auto; flex: 1; }
+        
+        .timeline { position: relative; max-width: 900px; margin: 0 auto; }
+        
+        /* Linha Vertical da Timeline */
+        .timeline::before {
+            content: ''; position: absolute; top: 0; bottom: 0; left: 160px;
+            width: 2px; background-color: #333;
+        }
+
+        .timeline-item { display: flex; margin-bottom: 2rem; position: relative; }
+        
+        .timeline-time { width: 140px; padding-right: 20px; text-align: right; font-size: 0.9rem; color: var(--text-muted); padding-top: 6px; }
+        .timeline-date { font-weight: 600; color: #fff; margin-bottom: 4px; display: block; font-size: 0.95rem; }
+        
+        .timeline-icon {
+            width: 42px; height: 42px; border-radius: 50%; background-color: var(--card-bg); border: 2px solid #333;
+            display: flex; align-items: center; justify-content: center; position: absolute; left: 140px; top: 0;
+            z-index: 2; box-shadow: 0 0 0 4px var(--card-bg);
+        }
+        
+        /* Cores dinâmicas para os ícones */
+        .icon-type-kanban { color: var(--accent-blue); border-color: var(--accent-blue); background-color: rgba(27, 54, 255, 0.1); }
+        .icon-type-minuta { color: var(--accent-purple); border-color: var(--accent-purple); background-color: rgba(139, 92, 246, 0.1); }
+        .icon-type-favorito { color: var(--warning-color); border-color: var(--warning-color); background-color: rgba(245, 158, 11, 0.1); }
+        
+        .timeline-content { margin-left: 60px; background-color: rgba(255,255,255,0.03); border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.5rem; flex: 1; transition: transform 0.2s, background-color 0.2s; }
+        .timeline-content:hover { background-color: rgba(255,255,255,0.05); transform: translateX(5px); }
+        
+        .log-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: #fff; }
+        .log-edital { font-size: 0.9rem; color: var(--accent-cyan); font-weight: 500; margin-bottom: 12px; display: inline-block; padding: 4px 10px; background: rgba(6, 182, 212, 0.1); border-radius: 6px; border: 1px solid rgba(6, 182, 212, 0.2); }
+        .log-desc { font-size: 0.95rem; color: #d1d5db; line-height: 1.5; }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .timeline::before { left: 30px; }
+            .timeline-item { flex-direction: column; }
+            .timeline-time { width: auto; text-align: left; padding-left: 60px; padding-bottom: 10px; }
+            .timeline-icon { left: 10px; top: 25px; width: 36px; height: 36px; }
+            .timeline-content { margin-left: 60px; }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Ícones SVG -->
+    <svg style="display: none;">
+        <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+        <symbol id="icon-star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+        <symbol id="icon-star-filled" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="currentColor"/></symbol>
+        <symbol id="icon-history" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></symbol>
+        <symbol id="icon-kanban" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7V7h2v10zm4-5h-2V7h2v5zm4 3h-2V7h2v8z"/></symbol>
+        <symbol id="icon-file" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></symbol>
+        <symbol id="icon-back" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></symbol>
+    </svg>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-btn" id="toggleSidebar">
+                <svg viewBox="0 0 24 24"><use href="#icon-menu"></use></svg>
+            </button>
+            <div class="logo">Anjo<span>Nexus</span></div>
+        </div>
+        <nav class="nav-menu">
+            <a href="busca_editais.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-search"></use></svg>
+                <span class="nav-text">Busca</span>
+            </a>
+            <a href="favoritos_editais.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-star"></use></svg>
+                <span class="nav-text">Favoritos</span>
+            </a>
+            <a href="#" class="nav-item active">
+                <svg class="nav-icon"><use href="#icon-history"></use></svg>
+                <span class="nav-text">Histórico</span>
+            </a>
+            <a href="kanban_anjonexus.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-kanban"></use></svg>
+                <span class="nav-text">Kanban</span>
+            </a>
+            <a href="minuta_anjonexus.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-file"></use></svg>
+                <span class="nav-text">Minutas</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="selecao_perfis_anjonexus.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-back"></use></svg>
+                <span class="nav-text">Perfis</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="top-navbar">
+            <div class="startup-info">
+                <div class="startup-avatar"><svg width="24" height="24"><use href="#icon-user"></use></svg></div>
+                <h1 class="startup-name">Startup X</h1>
+            </div>
+            
+            <div class="user-section" id="userMenuBtn">
+                <span class="user-name">Roberto</span>
+                <div class="avatar"><svg width="24" height="24"><use href="#icon-user"></use></svg></div>
+                
+                <div class="dropdown-menu" id="mainDropdown">
+                    <div class="dropdown-item">Meu Perfil</div>
+                    <div class="dropdown-item">Configurações</div>
+                    <div class="dropdown-item">Privacidade</div>
+                    
+                    <div class="submenu-container" id="manageProfilesBtn">
+                        <div class="dropdown-item">&lt; Gerenciar Perfis</div>
+                        <div class="submenu" id="profilesSubmenu">
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Ademar</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Pedro</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>João</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Lucas</div>
+                            <button class="btn-add-user">Adicionar usuário</button>
+                        </div>
+                    </div>
+                    <div class="dropdown-item" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 15px;">Logoff</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard / Histórico -->
+        <div class="dashboard-container">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Log de Ações</h2>
+                    <div class="filters">
+                        <button class="filter-btn active" data-filter="all">Todas as ações</button>
+                        <button class="filter-btn" data-filter="minuta">Minutas</button>
+                        <button class="filter-btn" data-filter="kanban">Kanban</button>
+                        <button class="filter-btn" data-filter="favorito">Favoritos</button>
+                    </div>
+                </div>
+                
+                <div class="log-area">
+                    <div class="timeline" id="timelineContainer">
+                        <!-- Itens renderizados dinamicamente pelo JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Mock Data: Histórico de Ações
+        const actionLogs = [
+            {
+                id: 1,
+                date: "Hoje",
+                time: "08:50",
+                type: "minuta",
+                title: "Minuta de Proposta Gerada via IA",
+                edital: "Edital Y - Inovação Aberta",
+                description: "A primeira versão da minuta foi gerada com sucesso pela IA. O documento está pendente de aprovação e revisão manual pelo consultor Roberto.",
+                icon: "#icon-file"
+            },
+            {
+                id: 2,
+                date: "Hoje",
+                time: "08:15",
+                type: "kanban",
+                title: "Edital Movido no Kanban",
+                edital: "Edital Y - Inovação Aberta",
+                description: "O cartão foi movido da coluna 'Backlog' para a coluna 'A fazer'.",
+                icon: "#icon-kanban"
+            },
+            {
+                id: 3,
+                date: "Ontem, 23/08/2026",
+                time: "16:40",
+                type: "favorito",
+                title: "Edital Adicionado aos Favoritos",
+                edital: "Edital Y - Inovação Aberta",
+                description: "O edital foi salvo na lista de prioridades para análise detalhada.",
+                icon: "#icon-star-filled"
+            },
+            {
+                id: 4,
+                date: "Ontem, 23/08/2026",
+                time: "14:10",
+                type: "kanban",
+                title: "Edital Movido no Kanban",
+                edital: "Edital Z - Mulheres Tech",
+                description: "O cartão foi movido da coluna 'Em elaboração' para a coluna 'Pronto para Submissão'.",
+                icon: "#icon-kanban"
+            },
+            {
+                id: 5,
+                date: "20/08/2026",
+                time: "09:30",
+                type: "favorito",
+                title: "Edital Removido dos Favoritos",
+                edital: "Edital X - Pesquisa DeepTech",
+                description: "Edital foi desclassificado por incompatibilidade de TRL exigido.",
+                icon: "#icon-star"
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // ================= SIDEBAR & DROPDOWN =================
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggleSidebar');
+            toggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const mainDropdown = document.getElementById('mainDropdown');
+            const manageProfilesBtn = document.getElementById('manageProfilesBtn');
+            const profilesSubmenu = document.getElementById('profilesSubmenu');
+
+            userMenuBtn.addEventListener('click', (e) => {
+                if(e.target.closest('.dropdown-menu')) return; 
+                mainDropdown.classList.toggle('active');
+                if(!mainDropdown.classList.contains('active')) profilesSubmenu.classList.remove('active');
+            });
+
+            manageProfilesBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                profilesSubmenu.classList.toggle('active');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!userMenuBtn.contains(e.target)) {
+                    mainDropdown.classList.remove('active');
+                    profilesSubmenu.classList.remove('active');
+                }
+            });
+
+            // ================= RENDERIZAR TIMELINE =================
+            const timelineContainer = document.getElementById('timelineContainer');
+            const filterBtns = document.querySelectorAll('.filter-btn');
+
+            function renderTimeline(filterType = 'all') {
+                timelineContainer.innerHTML = '';
+                
+                const filteredLogs = actionLogs.filter(log => filterType === 'all' || log.type === filterType);
+                
+                if (filteredLogs.length === 0) {
+                    timelineContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Nenhuma ação encontrada para este filtro.</p>';
+                    return;
+                }
+
+                filteredLogs.forEach(log => {
+                    const item = document.createElement('div');
+                    item.className = 'timeline-item';
+                    
+                    item.innerHTML = `
+                        <div class="timeline-time">
+                            <span class="timeline-date">${log.date}</span>
+                            ${log.time}
+                        </div>
+                        <div class="timeline-icon icon-type-${log.type}">
+                            <svg width="20" height="20"><use href="${log.icon}"></use></svg>
+                        </div>
+                        <div class="timeline-content">
+                            <h3 class="log-title">${log.title}</h3>
+                            <span class="log-edital">${log.edital}</span>
+                            <p class="log-desc">${log.description}</p>
+                        </div>
+                    `;
+                    timelineContainer.appendChild(item);
+                });
+            }
+
+            // Render Inicial
+            renderTimeline();
+
+            // Filtros
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderTimeline(btn.dataset.filter);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

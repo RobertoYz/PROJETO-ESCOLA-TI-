@@ -1,0 +1,53 @@
+%% ────────────────────────────────────────────────────────────
+%% DS-07: PIPELINE KANBAN (UC-31 a UC-35)
+%% Visualização, criação, movimentação, anexos e exclusão de cards no fluxo REST
+%% ────────────────────────────────────────────────────────────
+sequenceDiagram
+    autonumber
+    actor Consultor
+    participant Frontend
+    participant KanbanController
+    participant BD as Banco de Dados
+    participant Storage as Armazenamento de Arquivos
+
+    Note over Consultor,Storage: VISUALIZAÇÃO DO PIPELINE KANBAN (UC-31)
+    Consultor->>Frontend: Acessa tela do Pipeline Kanban (filtrado por startup ativa)
+    Frontend->>KanbanController: GET /api/kanban?startup_name=...
+    KanbanController->>BD: SELECT boards WITH columns, cards ORDER BY position ASC
+    BD-->>KanbanController: Estrutura completa do quadro com colunas e cards
+    KanbanController-->>Frontend: 200 OK {boards}
+    Frontend-->>Consultor: Renderiza o quadro Kanban na tela
+
+    Note over Consultor,Storage: CRIAÇÃO DE CARD NO KANBAN (UC-32)
+    Consultor->>Frontend: Clica em "+ Novo Ticket" ou "Enviar ao Kanban" no Radar
+    Frontend->>KanbanController: POST /api/kanban/cards {column_id, edital_id, title, startup_name}
+    KanbanController->>BD: INSERT INTO kanban_cards (column_id, edital_id, title, position, startup_name)
+    BD-->>KanbanController: Card criado com ID
+    KanbanController-->>Frontend: 201 Created {card}
+    Frontend-->>Consultor: Card inserido visualmente na coluna
+
+    Note over Consultor,Storage: MOVIMENTAÇÃO DE CARD - DRAG & DROP (UC-33)
+    Consultor->>Frontend: Arrasta card para outra coluna (drag & drop)
+    Frontend->>KanbanController: PATCH /api/kanban/cards/{id}/mover {target_column_id, prev_position, next_position}
+    KanbanController->>BD: UPDATE kanban_cards SET column_id = ?, position = ?
+    BD-->>KanbanController: Posição e coluna atualizadas
+    KanbanController-->>Frontend: 200 OK {status: "sucesso"}
+    Frontend-->>Consultor: Card fixado na nova coluna com ordenação persistida
+
+    Note over Consultor,Storage: GESTÃO DE ANEXOS E NOTAS CUSTOMIZADAS (UC-35 / EDTAN-183)
+    Consultor->>Frontend: Anexa arquivo (até 10MB) e preenche valor/notas no modal
+    Frontend->>KanbanController: POST /api/kanban/cards/{id}/dados-anexos (multipart/form-data)
+    KanbanController->>Storage: $file->store('kanban_anexos', 'public')
+    Storage-->>KanbanController: Caminho do arquivo armazenado
+    KanbanController->>BD: UPDATE kanban_cards SET metadata = JSON_MERGE_PATCH(metadata, ...)
+    BD-->>KanbanController: Metadados e anexos persistidos
+    KanbanController-->>Frontend: 200 OK {status: "sucesso", card}
+    Frontend-->>Consultor: Exibe anexo com link de download e confirmação
+
+    Note over Consultor,Storage: EXCLUSÃO DE CARD (UC-34)
+    Consultor->>Frontend: Clica no ícone de lixeira no card
+    Frontend->>KanbanController: DELETE /api/kanban/cards/{id}
+    KanbanController->>BD: DELETE FROM kanban_cards WHERE id = ?
+    BD-->>KanbanController: Registro removido
+    KanbanController-->>Frontend: 200 OK {status: "sucesso"}
+    Frontend-->>Consultor: Remove card do quadro

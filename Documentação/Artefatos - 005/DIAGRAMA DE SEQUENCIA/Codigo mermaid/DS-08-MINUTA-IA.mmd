@@ -1,0 +1,57 @@
+%% ────────────────────────────────────────────────────────────
+%% DS-08: GERAÇÃO DE MINUTA VIA IA COM RESILIÊNCIA E EXPORTAÇÃO (UC-21, UC-22)
+%% Fluxo com política de contingência em 3 níveis (Gemini ➔ DeepSeek ➔ Motor Local)
+%% e exportação nativa Word (.docx) / PDF
+%% ────────────────────────────────────────────────────────────
+sequenceDiagram
+    autonumber
+    actor Consultor
+    participant Frontend
+    participant MinutaController
+    participant MinutaAiService
+    participant GeminiAPI as Google Gemini API
+    participant DeepSeekAPI as Groq / DeepSeek API
+    participant MotorLocal as Motor Determinístico Local
+    participant BD as Banco de Dados
+    participant DocService as DocumentExportService
+
+    Consultor->>Frontend: Clica "Estruturar Minuta Técnica" no ticket/edital
+    Frontend->>MinutaController: POST /api/minutas/gerar {startup_id, edital_id, ideia_projeto}
+
+    MinutaController->>BD: Carrega Startup e Edital correspondente
+    BD-->>MinutaController: Dados completos {pitch, nicho, porte, teto_orcamento, diretrizes}
+    MinutaController->>MinutaAiService: gerarMinuta(startup, edital, ideia_projeto)
+
+    Note over MinutaAiService,MotorLocal: POLÍTICA DE RESILIÊNCIA (FALLBACK EM TRÊS NÍVEIS)
+    alt Nível 1: Gemini 2.5 Flash
+        MinutaAiService->>GeminiAPI: Prompt estruturado com 11 seções temáticas
+        GeminiAPI-->>MinutaAiService: Retorno JSON com seções compiladas
+    else Nível 2 (Fallback): DeepSeek / Groq (em caso de rate limit ou timeout)
+        MinutaAiService->>DeepSeekAPI: Prompt idêntico de contingência
+        DeepSeekAPI-->>MinutaAiService: Retorno JSON com seções compiladas
+    else Nível 3 (Fallback Local): Offline / Sem Internet / Sem Chaves
+        MinutaAiService->>MotorLocal: Síntese matemática das 11 seções com dados do banco
+        MotorLocal-->>MinutaAiService: Retorno JSON estruturado com proposta técnica
+    end
+
+    MinutaAiService-->>MinutaController: Proposta completa e formatada
+    MinutaController->>BD: INSERT INTO minutas (versao=1, secoes_estruturadas, modelo_ia_usado, autor_nome)
+    BD-->>MinutaController: Minuta gravada com ID
+    MinutaController-->>Frontend: 201 Created {minuta}
+    Frontend-->>Consultor: Abre editor interativo em tela com as 11 seções (RF-30)
+
+    Note over Consultor,DocService: REVISÃO E VERSIONAMENTO (RF-30, RF-33, RF-34)
+    Consultor->>Frontend: Ajusta texto da proposta e clica "Salvar Versão"
+    Frontend->>MinutaController: PUT /api/minutas/{id} {conteudo}
+    MinutaController->>BD: INSERT INTO minutas (versao=versao+1, parent_minuta_id=id)
+    BD-->>MinutaController: Nova versão imutável salva
+    MinutaController-->>Frontend: 200 OK {nova_versao}
+
+    Note over Consultor,DocService: EXPORTAÇÃO OFICIAL EM ARQUIVO (RF-32 e RF-32.1)
+    Consultor->>Frontend: Clica "Word (.docx)" ou "Imprimir / PDF"
+    Frontend->>MinutaController: GET /api/minutas/{id}/exportar-docx
+    MinutaController->>DocService: gerarDocx(minuta)
+    DocService->>DocService: Monta pacote OpenXML puro via ZipArchive (ISO/IEC 29500)
+    DocService-->>MinutaController: Stream do arquivo .docx
+    MinutaController-->>Frontend: Download do arquivo Word formatado
+    Frontend-->>Consultor: Arquivo .docx salvo no computador

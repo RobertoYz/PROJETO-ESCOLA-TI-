@@ -1,5 +1,24 @@
-// Endereço oficial da API em nuvem (pode ser sobrescrito para testes via localStorage)
-const URL_BASE_API = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
+// Detecta se o aplicativo está rodando em ambiente Capacitor (APK Android)
+const ehCapacitorApp = typeof window !== 'undefined' && (
+    window.Capacitor !== undefined ||
+    window.location.protocol === 'capacitor:' ||
+    (window.location.hostname === 'localhost' && window.location.protocol === 'https:') ||
+    (typeof navigator !== 'undefined' && navigator.userAgent && (navigator.userAgent.includes('wv') || navigator.userAgent.includes('Capacitor')))
+);
+
+// Se for Capacitor (APK no celular) ou domínio de produção, SEMPRE consome o servidor oficial na nuvem!
+// Só usa localhost se for explicitamente navegador desktop de desenvolvimento (ex: porta 3000 ou 5500 via http)
+const ehDevNavegadorLocal = typeof window !== 'undefined' &&
+    !ehCapacitorApp &&
+    window.location.protocol === 'http:' &&
+    (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') &&
+    (window.location.port !== '');
+
+const URL_PADRAO = ehDevNavegadorLocal
+    ? 'http://127.0.0.1:8000/api'
+    : 'https://anjonexus.intalenti.com.br/api';
+
+const URL_BASE_API = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
 
 if (typeof window !== 'undefined') {
     const marcarCapacitor = () => {
@@ -15,7 +34,22 @@ if (typeof window !== 'undefined') {
 }
 
 export async function requisicaoApi(endpoint, opcoes = {}) {
-    const token = localStorage.getItem('token_autenticacao');
+    const tokenPendencia = sessionStorage.getItem('token_pendencia') || localStorage.getItem('token_pendencia');
+    const tokenAutenticacao = localStorage.getItem('token_autenticacao');
+    const emailPendencia = sessionStorage.getItem('email_pendencia') || localStorage.getItem('email_pendencia');
+
+    const ehFluxoPendencia = endpoint.includes('/pagamentos/consultar-anterior')
+        || endpoint.includes('/planos/gerar-nova-cobranca')
+        || endpoint.includes('/auth/cancelar-cadastro-pendente')
+        || (typeof window !== 'undefined' && (
+            window.location.pathname.includes('pagamento-pendente')
+            || window.location.search.includes('modo=renovacao')
+        ));
+
+    const token = ehFluxoPendencia
+        ? (tokenPendencia || tokenAutenticacao)
+        : (tokenAutenticacao || tokenPendencia);
+
     const startupAtivaId = localStorage.getItem('startup_ativa_id');
 
     const cabecalhos = {
@@ -24,12 +58,24 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
         ...(opcoes.headers || {})
     };
 
-    if (token) {
+    if (token && !cabecalhos['Authorization']) {
         cabecalhos['Authorization'] = `Bearer ${token}`;
     }
 
-    if (startupAtivaId) {
+    if (ehFluxoPendencia && tokenPendencia && !cabecalhos['X-Pending-Token']) {
+        cabecalhos['X-Pending-Token'] = tokenPendencia;
+    }
+
+    if (ehFluxoPendencia && emailPendencia && !cabecalhos['X-Pending-Email']) {
+        cabecalhos['X-Pending-Email'] = emailPendencia;
+    }
+
+    if (startupAtivaId && !cabecalhos['X-Startup-Id']) {
         cabecalhos['X-Startup-Id'] = startupAtivaId;
+    }
+
+    if (typeof window !== 'undefined' && window.location?.href) {
+        cabecalhos['X-Frontend-Url'] = window.location.href;
     }
 
     const resposta = await fetch(`${URL_BASE_API}${endpoint}`, {
@@ -52,7 +98,10 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
                 mensagemErro = primeiroErro[0];
             }
         }
-        throw new Error(mensagemErro);
+        const erroPersonalizado = new Error(mensagemErro);
+        erroPersonalizado.status = resposta.status;
+        erroPersonalizado.dados = dados;
+        throw erroPersonalizado;
     }
 
     return dados;

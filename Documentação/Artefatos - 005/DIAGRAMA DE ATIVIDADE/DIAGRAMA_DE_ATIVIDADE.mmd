@@ -1,0 +1,133 @@
+flowchart TD
+    %% ------------------------------------------------------------------------
+    %% DIAGRAMA DE ATIVIDADES - ANJO NEXUS (VERSÃO 005 - ATUALIZADA)
+    %% ------------------------------------------------------------------------
+
+    Start([Início: Acesso à Plataforma]) --> CheckAuth{Possui Conta Ativa?}
+
+    %% ========================================================================
+    %% 1. AUTENTICAÇÃO, PLANOS E RECUPERAÇÃO DE ACESSO
+    %% ========================================================================
+    subgraph SG_Auth ["1. Módulo de Acesso, Planos e Autenticação"]
+        CheckAuth -- Não --> CadastrarUsuario["Cadastrar Usuário / Consultoria"]
+        CadastrarUsuario --> EscolherPlano["Selecionar Plano SaaS (Starter, Pro, Enterprise)"]
+        EscolherPlano --> GerarPix["Gerar Cobrança Pix via Gateway AbacatePay"]
+        GerarPix --> AguardarPagamento{"Pagamento Aprovado?"}
+        AguardarPagamento -- Não --> TelaPendente["Tela de Pagamento Pendente / Tentar Novamente"]
+        TelaPendente --> GerarPix
+        AguardarPagamento -- Sim --> CriarSessao["Conta Ativada e Token Sanctum Gerado"]
+
+        CheckAuth -- Sim --> TelaLogin["Informar Credenciais (Login)"]
+        TelaLogin --> EsqueciSenha{"Esqueceu a Senha?"}
+        EsqueciSenha -- Sim --> SolicitarRecuperacao["Solicitar Link/Token por E-mail"]
+        SolicitarRecuperacao --> RedefinirSenha["Validar Token e Cadastrar Nova Senha"]
+        RedefinirSenha --> TelaLogin
+        EsqueciSenha -- Não --> ValidarLogin{"Credenciais Válidas?"}
+        ValidarLogin -- Não --> ErroLogin["Exibir Alerta de Credenciais Inválidas"]
+        ErroLogin --> TelaLogin
+        ValidarLogin -- Sim --> CriarSessao
+    end
+
+    %% ========================================================================
+    %% 2. GESTÃO MULTI-STARTUP E CONTEXTO ATIVO
+    %% ========================================================================
+    subgraph SG_Startup ["2. Contexto Multi-tenancy e Gestão de Startups"]
+        CriarSessao --> CheckTemStartup{"Possui Startup Cadastrada?"}
+        CheckTemStartup -- Não --> OnboardingStartup["Onboarding: Cadastrar Primeira Startup"]
+        OnboardingStartup --> BuscarCNPJ{"Consultar CNPJ via API Pública?"}
+        BuscarCNPJ -- Sim --> AutoPreencher["Preencher Razão Social, CNAEs, Regime e UF via API"]
+        BuscarCNPJ -- Não --> PreencherManual["Preenchimento Manual dos Dados Cadastrais"]
+        AutoPreencher --> SalvarStartup["Salvar Startup no Banco de Dados"]
+        PreencherManual --> SalvarStartup
+
+        CheckTemStartup -- Sim --> PainelPrincipal["Acessar Painel / Dashboard Principal"]
+        SalvarStartup --> PainelPrincipal
+
+        PainelPrincipal --> SeletorGlobal["Seletor Global de Startups (Cabeçalho/Sidebar)"]
+        SeletorGlobal --> AcaoStartup{"Deseja Gerenciar Startups?"}
+        AcaoStartup -- Cadastrar Nova --> NovaStartup["Cadastrar Nova Startup pelo Painel"]
+        NovaStartup --> BuscarCNPJ
+        AcaoStartup -- Editar Perfil --> EditarPerfil["Atualizar Porte, Nicho, TRL e Pitch da Startup"]
+        EditarPerfil --> PainelPrincipal
+        AcaoStartup -- Trocar Ativa --> TrocarContexto["Definir Nova Startup Ativa"]
+        TrocarContexto --> PainelPrincipal
+        AcaoStartup -- Continuar Fluxo --> EscolhaModulo{"Escolher Módulo Operacional"}
+    end
+
+    %% ========================================================================
+    %% 3. RADAR DE EDITAIS E MATCH INTELIGENTE
+    %% ========================================================================
+    subgraph SG_Radar ["3. Radar de Editais e Algoritmo de Match Inteligente"]
+        EscolhaModulo -- Radar de Editais --> AcessarRadar["Acessar Tela Radar de Editais"]
+        AcessarRadar --> ScrapingIngestao["Motor de Scraping Autônomo ingere Editais (FINEP, FAPESC, FAPESP)"]
+        ScrapingIngestao --> ExecutarMatch["Executar Algoritmo de Match Inteligente (RF-47)"]
+        ExecutarMatch --> MatchPontuacao["Calcular Score Ponderado: Nicho (+20), Porte (+15), Orçamento (+10)"]
+        MatchPontuacao --> ExibirCards["Exibir Editais Ordenados por % de Compatibilidade e Justificativa"]
+        ExibirCards --> FiltrarEditais["Filtrar por Agência, Valor Máximo, Prazo ou Palavra-Chave"]
+        FiltrarEditais --> VerDetalhes["Abrir Modal/Painel de Detalhes do Edital (Sem Recarregar)"]
+        VerDetalhes --> DecisaoOportunidade{"Enviar ao Kanban da Startup?"}
+        DecisaoOportunidade -- Não --> ExibirCards
+        DecisaoOportunidade -- Sim --> InserirKanban["Criar Card do Edital na Coluna Triagem/Backlog do Kanban"]
+    end
+
+    %% ========================================================================
+    %% 4. ESTEIRA KANBAN DE FOMENTO (PIPELINE DE OPORTUNIDADES)
+    %% ========================================================================
+    subgraph SG_Kanban ["4. Esteira Kanban de Fomento e Gestão de Documentos"]
+        EscolhaModulo -- Pipeline Kanban --> AcessarKanban["Acessar Quadro Kanban da Startup Ativa"]
+        InserirKanban --> AcessarKanban
+        AcessarKanban --> VisualizarColunas["Visualizar Colunas: Triagem | Em Análise | Minuta | Submetido | Aprovado"]
+        VisualizarColunas --> MoverCard["Mover Card entre Estágios (Drag-and-Drop Desktop ou Botões Touch Mobile)"]
+        MoverCard --> PersistirOrdem["Persistir Ordem e Coluna via PATCH /api/kanban/cards/{id}/mover"]
+        VisualizarColunas --> AbrirCardModal["Abrir Modal de Detalhes do Card"]
+        AbrirCardModal --> AcoesCard{"Ação no Card"}
+
+        AcoesCard -- Diagnóstico --> VerDiagnostico["Visualizar Diagnóstico de Aderência e Pontos Fortes/Atenção"]
+        VerDiagnostico --> AbrirCardModal
+
+        AcoesCard -- Upload Anexos --> AnexarDocumentos["Upload de Anexos até 10MB (CNDs, Planilhas) e Salvar Notas"]
+        AnexarDocumentos --> PersistirAnexos["Salvar Metadados JSON e Arquivos no Storage"]
+        PersistirAnexos --> AbrirCardModal
+
+        AcoesCard -- Minuta Técnica --> IrParaMinuta["Iniciar Geração de Minuta Técnica"]
+    end
+
+    %% ========================================================================
+    %% 5. MÓDULO DE IA: MINUTAS TÉCNICAS E FALLBACK DETERMINÍSTICO
+    %% ========================================================================
+    subgraph SG_MinutaIA ["5. Geração e Refinamento de Minutas Técnicas com IA"]
+        EscolhaModulo -- Minutas Diretas --> ListarMinutas["Acessar Histórico de Minutas da Startup"]
+        IrParaMinuta --> PrepararContexto["Consolidar Contexto: Dados da Startup + Regras do Edital + Ideia do Projeto"]
+        PrepararContexto --> DispararIA["Acionar Esteira de Fallback em Cascata (MinutaAiService)"]
+
+        DispararIA --> TryGemini{"Tentativa 1: Google Gemini 2.5 Flash"}
+        TryGemini -- Sucesso --> Formatar11Secoes["Estruturar 11 Seções Homologadas (Modelo Anjo Inovador/FAPESC)"]
+        TryGemini -- Falha/RateLimit --> TryDeepSeek{"Tentativa 2: DeepSeek Chat"}
+        TryDeepSeek -- Sucesso --> Formatar11Secoes
+        TryDeepSeek -- Falha/RateLimit --> TryGroq{"Tentativa 3: Groq / Llama-3"}
+        TryGroq -- Sucesso --> Formatar11Secoes
+        TryGroq -- Falha/Offline --> MotorDeterministico["Tentativa 4: Motor Determinístico Local (PHP Offline em <10ms)"]
+        MotorDeterministico --> Formatar11Secoes
+
+        Formatar11Secoes --> EditorMinuta["Carregar Texto no Editor com Abas por Seção"]
+        EditorMinuta --> EditarSecoes["Revisar e Refinar Metodologia, Orçamento (75/25), ODS e TRL"]
+        EditarSecoes --> SalvarVersao["Salvar Nova Versão da Minuta no Banco (Árvore de Auditoria)"]
+        ListarMinutas --> CarregarVersao["Visualizar/Carregar Versão Anterior"]
+        CarregarVersao --> EditorMinuta
+    end
+
+    %% ========================================================================
+    %% 6. EXPORTAÇÃO NATIVA E CONCLUSÃO DA PROPOSTA
+    %% ========================================================================
+    subgraph SG_Export ["6. Exportação de Documentos Oficiais"]
+        SalvarVersao --> OpcaoExport{"Deseja Exportar a Proposta?"}
+        OpcaoExport -- Não --> VoltarKanban["Retornar ao Pipeline Kanban para Acompanhamento"]
+        VoltarKanban --> AcessarKanban
+        OpcaoExport -- Sim --> EscolherFormato{"Escolher Formato de Saída"}
+        EscolherFormato -- Word (.docx) --> GerarDocx["Geração Nativa OpenXML via ZipArchive (Sem Pacotes Externos)"]
+        EscolherFormato -- PDF --> GerarPDF["Renderização e Geração de PDF Oficial"]
+        GerarDocx --> DownloadDocumento["Download do Arquivo Formatado com Cabeçalhos e Metadados"]
+        GerarPDF --> DownloadDocumento
+        DownloadDocumento --> FimProcesso([Fim: Proposta Pronta para Submissão ao Órgão de Fomento])
+    end
+

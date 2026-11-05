@@ -11,13 +11,16 @@
 }
 
 /* Prevenção global de scroll horizontal involuntário */
-html, body {
+html,
+body {
     max-width: 100vw;
     overflow-x: hidden;
     box-sizing: border-box;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
@@ -51,9 +54,11 @@ html, body {
 .card-mobile-top {
     display: none;
 }
+
 .meta-label {
     display: none;
 }
+
 .match-pill {
     padding: 3px 8px;
     border-radius: 999px;
@@ -63,16 +68,19 @@ html, body {
     align-items: center;
     gap: 4px;
 }
+
 .match-pill.match-high {
     background: rgba(16, 185, 129, 0.15);
     color: #10b981;
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
+
 .match-pill.match-medium {
     background: rgba(245, 158, 11, 0.15);
     color: #f59e0b;
     border: 1px solid rgba(245, 158, 11, 0.3);
 }
+
 .match-pill.match-low {
     background: rgba(239, 68, 68, 0.15);
     color: #ef4444;
@@ -96,7 +104,9 @@ body.is-capacitor .link-download-app-header {
    RESPONSIVIDADE MOBILE NATIVA (<= 900px)
    ========================================================================== */
 @media (max-width: 900px) {
-    html, body {
+
+    html,
+    body {
         height: auto !important;
         min-height: 100vh !important;
         overflow-x: hidden !important;
@@ -122,14 +132,18 @@ body.is-capacitor .link-download-app-header {
     }
 
     /* Ajuste de formulários e linhas compostas (CEP/Cidade/UF, CNPJ, etc) */
-    .linha-dupla, .linha-tripla, .grupo-cnpj {
+    .linha-dupla,
+    .linha-tripla,
+    .grupo-cnpj {
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
         gap: 12px !important;
     }
 
-    .linha-tripla input, .linha-dupla input, .grupo-cnpj input {
+    .linha-tripla input,
+    .linha-dupla input,
+    .grupo-cnpj input {
         max-width: 100% !important;
         width: 100% !important;
         flex: none !important;
@@ -193,7 +207,9 @@ body.is-capacitor .link-download-app-header {
         padding-right: 14px !important;
         padding-bottom: 12px !important;
         display: flex !important;
-        flex-direction: column !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
         gap: 10px !important;
         width: 100% !important;
         max-width: 100vw !important;
@@ -205,20 +221,21 @@ body.is-capacitor .link-download-app-header {
         z-index: 100 !important;
     }
 
-    .top-navbar > div:first-child {
-        width: 100% !important;
+    .header-left-slot {
+        width: auto !important;
         display: flex !important;
         align-items: center !important;
-        gap: 8px !important;
-        min-width: 0 !important;
+        flex-shrink: 0 !important;
     }
 
-    .top-navbar > div:nth-child(2) {
-        width: 100% !important;
+    .header-right-group,
+    #container-seletor-global,
+    #container-seletor-global-kanban {
+        flex: 1 !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: space-between !important;
-        gap: 8px !important;
+        justify-content: flex-end !important;
+        gap: 10px !important;
         min-width: 0 !important;
     }
 
@@ -235,17 +252,12 @@ body.is-capacitor .link-download-app-header {
         border-radius: 10px !important;
         cursor: pointer !important;
         flex-shrink: 0 !important;
-    }
-
-    /* Seletor global de startup no topo */
-    #container-seletor-global {
-        flex: 1 !important;
-        min-width: 0 !important;
-        overflow: hidden !important;
+        margin-right: 0 !important;
     }
 
     .seletor-startup-wrapper {
-        width: 100% !important;
+        flex: 1 !important;
+        max-width: 240px !important;
         display: flex !important;
         align-items: center !important;
         gap: 8px !important;
@@ -264,28 +276,25 @@ body.is-capacitor .link-download-app-header {
         overflow: hidden !important;
     }
 
-    .seletor-startup-wrapper a[href="cadastrar-startup.html"] {
-        display: none !important; /* Esconde no topo para não quebrar a largura no mobile */
+    .radar-top-bar,
+    .kanban-top-bar {
+        padding: 12px 12px 0 12px !important;
+        width: 100% !important;
     }
 
-    .filter-section {
-        margin-right: 0 !important;
+    .radar-actions-box,
+    .kanban-actions-box {
+        width: 100% !important;
         display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        justify-content: space-between !important;
     }
 
-    .filter-select {
-        font-size: 13px !important;
-        padding: 5px 10px !important;
-    }
-
-    .user-section {
-        margin-left: auto !important;
-    }
-
-    .user-name {
-        display: none !important; /* Mostra apenas o avatar no mobile para economizar espaço */
+    .kanban-actions-box button {
+        flex: 1 !important;
+        min-width: 130px !important;
+        justify-content: center !important;
     }
 
     /* 3. CONTEÚDO PRINCIPAL */
@@ -402,6 +411,7 @@ body.is-capacitor .link-download-app-header {
         padding: 4px !important;
         color: #94a3b8 !important;
     }
+
     .btn-fav-card.active {
         color: #f59e0b !important;
     }
@@ -549,15 +559,19 @@ body.is-capacitor .link-download-app-header {
         font-size: 0.95rem !important;
     }
 
-    .form-grid, .form-grid-3 {
+    .form-grid,
+    .form-grid-3 {
         display: flex !important;
         flex-direction: column !important;
         gap: 14px !important;
         width: 100% !important;
     }
 
-    .form-input, .form-textarea, .form-select {
-        font-size: 16px !important; /* Evita auto-zoom incômodo no iOS e Android */
+    .form-input,
+    .form-textarea,
+    .form-select {
+        font-size: 16px !important;
+        /* Evita auto-zoom incômodo no iOS e Android */
         padding: 12px 14px !important;
         border-radius: 10px !important;
         width: 100% !important;
@@ -712,7 +726,7 @@ body.is-capacitor .link-download-app-header {
     }
 
     /* Aba 2: Diagnóstico de Aderência no Mobile */
-    #tabContentFit > div:first-child {
+    #tabContentFit>div:first-child {
         display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;
@@ -720,7 +734,7 @@ body.is-capacitor .link-download-app-header {
         width: 100% !important;
     }
 
-    #tabContentFit > div:first-child > div {
+    #tabContentFit>div:first-child>div {
         display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;
@@ -735,7 +749,7 @@ body.is-capacitor .link-download-app-header {
         box-sizing: border-box !important;
     }
 
-    #tabContentFit > div:first-child button {
+    #tabContentFit>div:first-child button {
         width: 100% !important;
         justify-content: center !important;
         padding: 12px !important;
@@ -814,7 +828,7 @@ body.is-capacitor .link-download-app-header {
     }
 
     /* Grid de selects da aba Gerador de Minuta */
-    #tabContentGerador > div:first-child {
+    #tabContentGerador>div:first-child {
         display: flex !important;
         flex-direction: column !important;
         gap: 12px !important;
@@ -822,21 +836,21 @@ body.is-capacitor .link-download-app-header {
     }
 
     /* Barra de botões do editor de minuta */
-    #minutaEditorContainer > div:first-child {
+    #minutaEditorContainer>div:first-child {
         display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 10px !important;
     }
 
-    #minutaEditorContainer > div:first-child > div:last-child {
+    #minutaEditorContainer>div:first-child>div:last-child {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 8px !important;
         width: 100% !important;
     }
 
-    #minutaEditorContainer > div:first-child > div:last-child button {
+    #minutaEditorContainer>div:first-child>div:last-child button {
         width: 100% !important;
         justify-content: center !important;
         font-size: 0.8rem !important;
@@ -866,22 +880,22 @@ body.is-capacitor .link-download-app-header {
         gap: 8px !important;
     }
 
-    .modal-detalhes-body > div:last-child {
+    .modal-detalhes-body>div:last-child {
         display: flex !important;
         flex-direction: column !important;
         gap: 10px !important;
         align-items: stretch !important;
     }
 
-    .modal-detalhes-body > div:last-child > div {
+    .modal-detalhes-body>div:last-child>div {
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
         gap: 8px !important;
     }
 
-    .modal-detalhes-body > div:last-child a,
-    .modal-detalhes-body > div:last-child button {
+    .modal-detalhes-body>div:last-child a,
+    .modal-detalhes-body>div:last-child button {
         width: 100% !important;
         text-align: center !important;
         justify-content: center !important;
