@@ -1,6 +1,11 @@
 import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
 import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
-import { obterStartupAtiva } from '../scripts/servicos/servicoAutenticacao.js';
+import { obterStartupAtiva, usuarioEstaAutenticado } from '../scripts/servicos/servicoAutenticacao.js';
+
+// Guard de autenticação: redireciona para login se não houver token
+if (!usuarioEstaAutenticado()) {
+    window.location.replace('login.html');
+}
 
 let mockEditais = [];
 let selectedId = null;

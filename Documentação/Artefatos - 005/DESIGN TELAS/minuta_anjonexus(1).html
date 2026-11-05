@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anjo Nexus - Geração de Minuta</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Paleta Dark Mode */
+            --bg-dark: #050505;
+            --sidebar-bg: #111418;
+            --navbar-bg: #0d0f12;
+            --card-bg: #1a1d21;
+            --card-hover: #23272c;
+            
+            /* Textos */
+            --text-light: #ffffff;
+            --text-muted: #a0a0a0;
+            --menu-bg: #f5f5f5;
+            --menu-text: #333333;
+            
+            /* Cores de Destaque */
+            --accent-blue: #1b36ff;
+            --accent-purple: #8b5cf6;
+            
+            /* Status / Match */
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); display: flex; height: 100vh; overflow: hidden; }
+        svg { fill: currentColor; }
+
+        /* ================= SIDEBAR ================= */
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); height: 100vh; display: flex; flex-direction: column; border-right: 1px solid #222; transition: width 0.3s ease; position: relative; z-index: 100; }
+        .sidebar.collapsed { width: 70px; }
+        .sidebar-header { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+        .toggle-btn { background: none; border: none; color: var(--text-light); cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; align-self: flex-start; }
+        .toggle-btn:hover { background-color: rgba(255,255,255,0.1); }
+        .logo { font-size: 1.5rem; font-weight: 600; transition: opacity 0.3s; }
+        .logo span { font-weight: 400; }
+        .sidebar.collapsed .logo { opacity: 0; pointer-events: none; height: 0; margin: 0; overflow: hidden; }
+
+        .nav-menu { flex: 1; display: flex; flex-direction: column; padding: 1rem 0; overflow: hidden; }
+        .nav-item { padding: 1rem 1.5rem; color: var(--text-light); text-decoration: none; font-size: 1rem; display: flex; align-items: center; gap: 15px; transition: background-color 0.2s; white-space: nowrap; }
+        .nav-item:hover { background-color: rgba(255,255,255,0.05); }
+        .nav-item.active { background-color: rgba(255,255,255,0.05); border-left: 3px solid var(--accent-blue); color: var(--accent-blue); }
+        .nav-item.active .nav-text { font-weight: 600; }
+        .nav-icon { width: 20px; height: 20px; min-width: 20px; }
+        .nav-text { transition: opacity 0.3s; }
+        .sidebar.collapsed .nav-text { opacity: 0; pointer-events: none; width: 0; overflow: hidden; }
+        .sidebar-footer { padding: 1rem 0; border-top: 1px solid #222; }
+
+        /* ================= MAIN CONTENT ================= */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Topbar */
+        .top-navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--navbar-bg); border-bottom: 1px solid #222; }
+        .startup-info { display: flex; align-items: center; gap: 1rem; }
+        .startup-avatar { width: 45px; height: 45px; background-color: #d9d9d9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666; }
+        .startup-name { font-size: 1.2rem; font-weight: 600; }
+
+        /* Dropdown Roberto */
+        .user-section { display: flex; align-items: center; gap: 1rem; position: relative; cursor: pointer; }
+        .user-name { font-weight: 400; font-size: 1rem; }
+        .avatar { width: 40px; height: 40px; background-color: #d9d9d9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #666; }
+        .dropdown-menu { position: absolute; top: 100%; right: 0; margin-top: 10px; background-color: var(--menu-bg); color: var(--menu-text); border-radius: 8px; width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: none; flex-direction: column; z-index: 100; padding: 0.5rem 0; }
+        .dropdown-menu.active { display: flex; }
+        .dropdown-item { padding: 10px 20px; font-size: 0.95rem; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; justify-content: space-between; }
+        .dropdown-item:hover { background-color: #e0e0e0; }
+        .submenu-container { position: relative; }
+        .submenu { position: absolute; top: 0; right: 100%; margin-right: 5px; background-color: var(--menu-bg); border-radius: 8px; width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: none; flex-direction: column; padding: 0.5rem 0; }
+        .submenu.active { display: flex; }
+        .submenu-item { display: flex; align-items: center; gap: 10px; padding: 8px 15px; font-size: 0.9rem; cursor: pointer; }
+        .submenu-item:hover { background-color: #e0e0e0; }
+        .small-avatar { width: 24px; height: 24px; background-color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .btn-add-user { margin: 10px 15px 5px; background-color: #b9bec6; color: #333; border: none; padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+
+        /* ================= DASHBOARD GRID ================= */
+        .dashboard-container { padding: 2rem; display: grid; grid-template-columns: 1.5fr 1.2fr; gap: 2rem; height: calc(100vh - 77px); overflow: hidden; }
+        
+        .card { background-color: var(--card-bg); border-radius: 16px; border: 1px solid #2a2a2a; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* PAINEL DA MINUTA (Esquerda) */
+        .card-header-minuta { padding: 1.5rem; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; }
+        .card-title { font-size: 1.2rem; font-weight: 600; }
+        
+        .minuta-area { flex: 1; padding: 2rem; display: flex; flex-direction: column; background-color: var(--bg-dark); border-radius: 0 0 16px 16px; overflow-y: auto; position: relative; }
+
+        /* Loading AI State */
+        .ai-loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 1.5rem; text-align: center; }
+        .spinner-ring { width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .ai-loading-text { font-size: 1.2rem; font-weight: 500; background: linear-gradient(90deg, #fff, var(--text-muted), #fff); background-size: 200% auto; color: transparent; -webkit-background-clip: text; animation: shine 2s linear infinite; }
+        @keyframes shine { to { background-position: 200% center; } }
+
+        /* Minuta Content */
+        .minuta-content { display: none; color: #d1d5db; line-height: 1.8; font-size: 1.05rem; animation: fadeIn 0.5s ease-out forwards; }
+        .minuta-content h1 { color: #fff; font-size: 1.5rem; margin-bottom: 1.5rem; }
+        .minuta-content h2 { color: #fff; font-size: 1.2rem; margin: 1.5rem 0 1rem; border-bottom: 1px solid #333; padding-bottom: 0.5rem; }
+        .minuta-content p { margin-bottom: 1rem; }
+        .minuta-content ul { padding-left: 2rem; margin-bottom: 1rem; }
+        .minuta-content li { margin-bottom: 0.5rem; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .minuta-actions { display: none; gap: 1rem; padding-top: 1rem; }
+        .btn-action { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid #444; padding: 8px 16px; border-radius: 8px; font-weight: 500; cursor: pointer; transition: 0.2s; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+        .btn-action:hover { background: rgba(255,255,255,0.1); border-color: #666; }
+        .btn-action.primary { background: var(--accent-blue); border-color: var(--accent-blue); }
+        .btn-action.primary:hover { background: #0d1ecc; border-color: #0d1ecc; }
+
+        /* PAINEL DE DETALHES DO EDITAL (Direita - Restaurado) */
+        .detail-panel { display: flex; flex-direction: column; }
+        .detail-header { padding: 1.5rem; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: flex-start; }
+        .detail-org-badge { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent-purple); font-weight: 700; margin-bottom: 5px; }
+        .detail-title-panel { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }
+        
+        .detail-content { padding: 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.5rem; }
+        
+        .info-group { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .info-box { background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid #222; }
+        .info-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; }
+        .info-value { font-size: 0.95rem; font-weight: 500; }
+
+        .section-title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-muted); border-bottom: 1px solid #2a2a2a; padding-bottom: 5px; }
+        
+        .diag-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .diag-item { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; padding: 8px 12px; border-radius: 6px; background: rgba(0,0,0,0.2); }
+        .diag-success { border-left: 3px solid var(--success-color); }
+        .diag-warning { border-left: 3px solid var(--warning-color); }
+        .diag-danger { border-left: 3px solid var(--danger-color); }
+
+        .detail-footer { padding: 1.5rem; border-top: 1px solid #2a2a2a; display: flex; flex-direction: column; gap: 10px; }
+        .btn-primary { background-color: var(--accent-blue); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 1rem; text-align: center; }
+        .btn-primary:hover { background-color: #0d1ecc; }
+        .btn-outline { background: transparent; color: var(--text-light); border: 1px solid #444; padding: 12px; border-radius: 8px; font-weight: 500; cursor: pointer; transition: 0.2s; text-align: center; text-decoration: none; font-size: 0.95rem; }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); border-color: #666; }
+        
+        .match-bar-container { width: 100%; height: 8px; background: #333; border-radius: 4px; margin-top: 8px; overflow: hidden; }
+        .match-bar-fill { height: 100%; background: var(--success-color); transition: width 0.5s ease-in-out; }
+        .match-high { color: var(--success-color); }
+
+        .btn-icon { background: none; border: none; color: var(--text-muted); cursor: pointer; transition: 0.2s; padding: 5px; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-icon:hover { color: #f59e0b; transform: scale(1.1); }
+        .btn-icon.active { color: #f59e0b; }
+    </style>
+</head>
+<body>
+    <!-- Ícones SVG -->
+    <svg style="display: none;">
+        <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+        <symbol id="icon-star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+        <symbol id="icon-star-filled" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="currentColor"/></symbol>
+        <symbol id="icon-history" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></symbol>
+        <symbol id="icon-kanban" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7V7h2v10zm4-5h-2V7h2v5zm4 3h-2V7h2v8z"/></symbol>
+        <symbol id="icon-file" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></symbol>
+        <symbol id="icon-back" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></symbol>
+    </svg>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-btn" id="toggleSidebar">
+                <svg viewBox="0 0 24 24"><use href="#icon-menu"></use></svg>
+            </button>
+            <div class="logo">Anjo<span>Nexus</span></div>
+        </div>
+        <nav class="nav-menu">
+            <a href="busca_editais.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-search"></use></svg>
+                <span class="nav-text">Busca</span>
+            </a>
+            <a href="favoritos_editais.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-star"></use></svg>
+                <span class="nav-text">Favoritos</span>
+            </a>
+            <a href="#" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-history"></use></svg>
+                <span class="nav-text">Histórico</span>
+            </a>
+            <a href="kanban_anjonexus.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-kanban"></use></svg>
+                <span class="nav-text">Kanban</span>
+            </a>
+            <a href="#" class="nav-item active">
+                <svg class="nav-icon"><use href="#icon-file"></use></svg>
+                <span class="nav-text">Minutas</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="selecao_perfis_anjonexus.html" class="nav-item">
+                <svg class="nav-icon"><use href="#icon-back"></use></svg>
+                <span class="nav-text">Perfis</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="top-navbar">
+            <div class="startup-info">
+                <div class="startup-avatar"><svg width="24" height="24"><use href="#icon-user"></use></svg></div>
+                <h1 class="startup-name">Startup X</h1>
+            </div>
+            
+            <div class="user-section" id="userMenuBtn">
+                <span class="user-name">Roberto</span>
+                <div class="avatar"><svg width="24" height="24"><use href="#icon-user"></use></svg></div>
+                
+                <div class="dropdown-menu" id="mainDropdown">
+                    <div class="dropdown-item">Meu Perfil</div>
+                    <div class="dropdown-item">Configurações</div>
+                    <div class="dropdown-item">Privacidade</div>
+                    
+                    <div class="submenu-container" id="manageProfilesBtn">
+                        <div class="dropdown-item">&lt; Gerenciar Perfis</div>
+                        <div class="submenu" id="profilesSubmenu">
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Ademar</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Pedro</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>João</div>
+                            <div class="submenu-item"><div class="small-avatar"><svg width="14" height="14" fill="#fff"><use href="#icon-user"></use></svg></div>Lucas</div>
+                            <button class="btn-add-user">Adicionar usuário</button>
+                        </div>
+                    </div>
+                    <div class="dropdown-item" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 15px;">Logoff</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-container">
+            
+            <!-- Painel Esquerdo (Minuta / Master) -->
+            <div class="card">
+                <div class="card-header-minuta">
+                    <h2 class="card-title">Minuta Gerada</h2>
+                    <div class="minuta-actions" id="minutaActions">
+                        <button class="btn-action">Regerar IA</button>
+                        <button class="btn-action">Baixar PDF</button>
+                        <button class="btn-action primary">Aprovar e Salvar</button>
+                    </div>
+                </div>
+                
+                <div class="minuta-area">
+                    <!-- Estado de Carregamento -->
+                    <div class="ai-loading-container" id="loadingState">
+                        <div class="spinner-ring"></div>
+                        <div class="ai-loading-text">Analisando o Edital Y e gerando a minuta com a API da IA...</div>
+                    </div>
+
+                    <!-- Minuta Real Gerada -->
+                    <div class="minuta-content" id="minutaContent">
+                        <h1>Minuta de Proposta Técnica - Edital Y</h1>
+                        
+                        <h2>1. Apresentação da Startup X</h2>
+                        <p>A <strong>Startup X</strong> apresenta soluções inovadoras no setor de tecnologia, focadas em escalabilidade e eficiência. Com um histórico comprovado em projetos de alta complexidade, a empresa possui 100% de adequação ao CNAE principal exigido por este edital.</p>
+                        
+                        <h2>2. Objeto do Projeto</h2>
+                        <p>Desenvolvimento e implementação de plataforma unificada para gestão de dados em nuvem, utilizando arquitetura escalável e algoritmos de aprendizado de máquina proprietários.</p>
+
+                        <h2>3. Adequação aos Critérios (Match: 89%)</h2>
+                        <ul>
+                            <li><strong>Capacidade Técnica:</strong> A equipe é formada por especialistas seniores na área de IA e Big Data.</li>
+                            <li><strong>Maturidade Tecnológica (TRL):</strong> O projeto encontra-se atualmente no estágio TRL 5, em fase de prototipagem em ambiente relevante, cumprindo o critério do edital (TRL 4 a 7).</li>
+                            <li><strong>Orçamento:</strong> O valor solicitado de R$ 1.200.000,00 adequa-se perfeitamente ao teto de R$ 1.5M estipulado pelo órgão financiador.</li>
+                        </ul>
+
+                        <h2>4. Cronograma Físico-Financeiro Preliminar</h2>
+                        <p>As entregas serão divididas em 4 etapas bimestrais (M1 a M4), com desembolso proporcional aos marcos de desenvolvimento validados pela Finep.</p>
+
+                        <br><br>
+                        <p><em>*Documento gerado automaticamente pelo Anjo Nexus em 23 de Agosto de 2026. Revisão humana recomendada antes da submissão final no portal do órgão.*</em></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painel Direito (Resumo do Edital / Detail - Layout Restaurado) -->
+            <div class="card detail-panel" id="detailPanel">
+                <div class="detail-header">
+                    <div>
+                        <div class="detail-org-badge" id="detOrg">FINEP</div>
+                        <h2 class="detail-title-panel" id="detName">Edital Y - Inovação Aberta</h2>
+                    </div>
+                    <button id="btnFavDetail" class="btn-icon active" style="transform: scale(1.4); margin-right: 10px; margin-top: 5px;" title="Favoritar Edital">
+                        <svg width="20" height="20"><use href="#icon-star-filled"></use></svg>
+                    </button>
+                </div>
+                
+                <div class="detail-content">
+                    <div>
+                        <h3 class="section-title">Parâmetros Principais</h3>
+                        <div class="info-group">
+                            <div class="info-box"><div class="info-label">Público-alvo / Porte</div><div class="info-value" id="detTarget">ME, EPP, Startup</div></div>
+                            <div class="info-box"><div class="info-label">Abrangência</div><div class="info-value" id="detRegion">Nacional</div></div>
+                            <div class="info-box"><div class="info-label">TRL Exigido</div><div class="info-value" id="detTrl">TRL 4 a 7</div></div>
+                            <div class="info-box">
+                                <div class="info-label">Compatibilidade Total</div><div class="info-value match-high" id="detMatchVal">89%</div>
+                                <div class="match-bar-container"><div class="match-bar-fill" id="detMatchBar" style="width: 89%;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="section-title">Cronograma</h3>
+                        <div class="info-group">
+                            <div class="info-box"><div class="info-label">Data de Abertura</div><div class="info-value" id="detOpen">01/08/2026</div></div>
+                            <div class="info-box" style="border-color: rgba(239, 68, 68, 0.4);"><div class="info-label" style="color: #ef4444;">Submissão Final</div><div class="info-value" id="detClose">15/09/2026</div></div>
+                            <div class="info-box"><div class="info-label">Previsão de Resultado</div><div class="info-value" id="detResult">30/10/2026</div></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="section-title">Diagnóstico da IA</h3>
+                        <ul class="diag-list" id="detDiag">
+                            <li class="diag-item diag-success">✅ CNAE Principal 100% compatível.</li>
+                            <li class="diag-item diag-success">✅ Faturamento dentro do teto do edital.</li>
+                            <li class="diag-item diag-warning">⚠️ Nível de TRL requer comprovação técnica extra.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="detail-footer">
+                    <button class="btn-primary" onclick="window.location.href='kanban_anjonexus.html'">Enviar ao Kanban</button>
+                    <a href="#" class="btn-outline">Ir para a página do edital oficial</a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ================= SIDEBAR & DROPDOWN =================
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggleSidebar');
+            toggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const mainDropdown = document.getElementById('mainDropdown');
+            const manageProfilesBtn = document.getElementById('manageProfilesBtn');
+            const profilesSubmenu = document.getElementById('profilesSubmenu');
+
+            userMenuBtn.addEventListener('click', (e) => {
+                if(e.target.closest('.dropdown-menu')) return; 
+                mainDropdown.classList.toggle('active');
+                if(!mainDropdown.classList.contains('active')) profilesSubmenu.classList.remove('active');
+            });
+
+            manageProfilesBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                profilesSubmenu.classList.toggle('active');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!userMenuBtn.contains(e.target)) {
+                    mainDropdown.classList.remove('active');
+                    profilesSubmenu.classList.remove('active');
+                }
+            });
+
+            // ================= SIMULAÇÃO DA API DE IA =================
+            const loadingState = document.getElementById('loadingState');
+            const minutaContent = document.getElementById('minutaContent');
+            const minutaActions = document.getElementById('minutaActions');
+
+            // Simula um delay de "Geração via IA"
+            setTimeout(() => {
+                loadingState.style.display = 'none';
+                minutaContent.style.display = 'block';
+                minutaActions.style.display = 'flex';
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+classDiagram
+    direction TB
+
+    %% ----------------------------------------------------
+    %% 1. CLASSES DE DOMÍNIO (MODELOS DO BANCO DE DADOS)
+    %% ----------------------------------------------------
+
+    class Plano {
+        -BigInt id
+        -String nome
+        -Decimal preco
+        -Int limite_startups
+    }
+
+    class Agencia {
+        -BigInt id
+        -BigInt plano_id
+        -String nome
+        -String id_plataforma_pagamento
+        -Enum status_pagamento
+    }
+
+    class Usuario {
+        -BigInt id
+        -BigInt agencia_id
+        -String name
+        -String email
+        -String password
+        -String perfil_acesso
+        +login() void
+        +redefinirSenha() void
+        +temPermissao(String permissao) Boolean
+    }
+
+    class Startup {
+        -BigInt id
+        -BigInt agencia_id
+        -String cnpj
+        -String razao_social
+        -String nome_fantasia
+        -String porte
+        -String regime_tributario
+        -String nicho_atuacao
+        -Text pitch
+        +atualizarPerfil(Array dados) void
+    }
+
+    class Edital {
+        -BigInt id
+        -String title
+        -String fonte
+        -Text objetivo
+        -Decimal min_budget
+        -Decimal max_budget
+        -DateTime deadline
+        -Json documentos
+        -Json ai_diagnosis
+        +extrairRequisitosVetorialRegex() void
+    }
+
+    class KanbanBoard {
+        -BigInt id
+        -BigInt startup_id
+        -String title
+    }
+
+    class KanbanColumn {
+        -BigInt id
+        -BigInt board_id
+        -String title
+        -Int position
+        +reordenar(Int novaOrdem) void
+    }
+
+    class KanbanCard {
+        -BigInt id
+        -BigInt board_id
+        -BigInt column_id
+        -BigInt edital_id
+        -String title
+        -Double position
+        -Json metadata
+        +moverParaColuna(BigInt colunaId) void
+    }
+
+    class Minuta {
+        -BigInt id
+        -BigInt startup_id
+        -BigInt edital_id
+        -BigInt user_id
+        -BigInt kanban_card_id
+        -BigInt parent_minuta_id
+        -Int versao
+        -String titulo_projeto
+        -Text ideia_projeto
+        -LongText conteudo_gerado
+        -Json secoes_estruturadas
+        -String status
+        -String modelo_ia_usado
+        -String autor_nome
+        +exportarParaWord() File
+        +exportarParaPdf() File
+    }
+
+    class Notificacao {
+        -BigInt id
+        -Enum tipo
+        -Text mensagem
+        -Boolean foi_lida
+        +marcarComoLida() void
+    }
+
+    %% ----------------------------------------------------
+    %% 2. RELACIONAMENTOS REAIS (DOMÍNIO / MULTI-TENANCY)
+    %% ----------------------------------------------------
+
+    Plano "1" -- "*" Agencia : assina
+    Agencia "1" *-- "*" Usuario : possui_membros
+    Agencia "1" *-- "*" Startup : assessora_e_gerencia
+
+    Startup "1" *-- "1" KanbanBoard : possui_pipeline
+    KanbanBoard "1" *-- "*" KanbanColumn : contem_etapas
+    KanbanColumn "1" *-- "*" KanbanCard : organiza
+    KanbanCard "*" -- "0..1" Edital : referente_a
+
+    Startup "1" *-- "*" Minuta : proponente
+    Edital "1" *-- "*" Minuta : proposta_para
+    Usuario "1" *-- "*" Minuta : elaborada_por
+    KanbanCard "0..1" *-- "*" Minuta : vinculada_a
+    Minuta "1" *-- "*" Minuta : versao_anterior (parent_minuta_id)
+
+    Usuario "1" *-- "*" Notificacao : recebe
+    Notificacao "*" -- "1" Edital : sobre_edital
+
+    %% ----------------------------------------------------
+    %% 3. CLASSES DE SERVIÇO E JOBS (ARQUITETURA)
+    %% ----------------------------------------------------
+
+    class ServicoAutenticacao {
+        +autenticarUsuario(email, senha) Token
+        +gerarLinkRecuperacao(email) Boolean
+    }
+
+    class ServicoRastreamentoCnpj {
+        +buscarDadosEmpresa(cnpj) Array
+    }
+
+    class JobColetaEdital {
+        +executarRotina() void
+        -limparDescricoes(htmlBruto) String
+        -evitarDuplicatas(chave_unica) Boolean
+    }
+
+    class PdfExtractorService {
+        +extrairTextoDoPdf(caminho) String
+        +parseDatasRegex(texto) Array
+        +parseOrcamentoRegex(texto) Decimal
+    }
+
+    class MinutaAiService {
+        +gerarMinuta(Startup, Edital, String ideia) Array
+        +calcularMatchEditais(Startup, Collection editais) Array
+        -callGemini(String prompt) Array
+        -callDeepSeek(String prompt) Array
+        -gerarMinutaFallback(Startup, Edital, String ideia) Array
+    }
+
+    class DocumentExportService {
+        +gerarDocx(Minuta minuta) String
+        +gerarPdf(Minuta minuta) String
+    }
+
+    class AbacatePayService {
+        +criarCobrancaPix(Agencia, Plano) Array
+        +processarWebhook(Array payload) Boolean
+    }
+
+    %% ----------------------------------------------------
+    %% RELAÇÕES DE DEPENDÊNCIA (SERVIÇOS → MODELOS)
+    %% ----------------------------------------------------
+
+    ServicoAutenticacao ..> Usuario : usa
+    ServicoRastreamentoCnpj ..> Startup : usa
+    JobColetaEdital ..> Edital : usa
+    PdfExtractorService ..> Edital : usa
+    MinutaAiService ..> Minuta : cria
+    MinutaAiService ..> Startup : analisa
+    MinutaAiService ..> Edital : analisa
+    DocumentExportService ..> Minuta : exporta
+    AbacatePayService ..> Agencia : cobra
+    AbacatePayService ..> Plano : referencia

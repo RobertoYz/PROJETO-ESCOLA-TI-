@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Criar Nova Senha - Anjo Nexus</title>
+    <link rel="stylesheet" href="../estilos/layout.css">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
+</head>
+<body>
+    <div id="container-cabecalho" class="container-cabecalho">
+        <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #4f46e5, #7c3aed); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4); margin-bottom: 6px;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+        </div>
+        <h1>Criar Nova Senha</h1>
+        <p>Defina uma nova senha segura de no mínimo 8 caracteres</p>
+        <a href="login.html">← Voltar para o login</a>
+    </div>
+
+    <div id="container-formulario" class="container-formulario">
+        <form id="form-redefinir-senha" novalidate>
+            <input type="email" id="email" placeholder="E-mail" readonly>
+            <input type="password" id="nova-senha" placeholder="Nova senha (mín. 8 caracteres)" autocomplete="new-password" required>
+            <input type="password" id="confirmar-senha" placeholder="Confirme a nova senha" autocomplete="new-password" required>
+            <div id="mensagem-feedback" style="display: none; padding: 12px 14px; border-radius: 8px; border: 1px solid transparent; font-size: 0.88rem; font-weight: 500; text-align: left; width: 100%; line-height: 1.4;"></div>
+            <button type="submit" id="botao-redefinir">Salvar Nova Senha</button>
+        </form>
+    </div>
+
+    <script type="module" src="../scripts/paginas/redefinirSenha.js"></script>
+</body>
+</html>
+

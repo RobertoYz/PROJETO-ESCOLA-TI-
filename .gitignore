@@ -19,6 +19,10 @@ guias_de_codigo/
 
 
 # Arquivos locais / dumps / temporarios
+*.zip
 back.zip
+front.zip
 banco_anjonexus.sql
 scratch_artifact_info.json
+atualizacao_servidor.zip
+env_servidor

@@ -325,7 +325,7 @@
     <div class="container">
         <!-- Barra de Navegação Superior -->
         <header class="top-nav">
-            <a href="RadarEditais.html" class="brand-logo">
+            <a href="login.html" class="brand-logo" id="linkBrandLogo">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                     <polyline points="2 17 12 22 22 17"></polyline>
@@ -333,8 +333,8 @@
                 </svg>
                 Anjo<span>Nexus</span> Mobile
             </a>
-            <a href="RadarEditais.html" class="nav-link">
-                ← Voltar para a Plataforma Web
+            <a href="login.html" class="nav-link" id="linkNavTopo">
+                ← Fazer Login na Plataforma
             </a>
         </header>
 
@@ -424,9 +424,39 @@
     </div>
 
     <script>
-        // Atualiza a URL do QR Code dinamicamente com base no domínio atual
+        // Atualiza a URL do QR Code e ajusta links conforme o estado de autenticação
         document.addEventListener('DOMContentLoaded', () => {
-            const mobileUrl = `${window.location.origin}/mobile/index.html`;
+            const token = localStorage.getItem('token_autenticacao');
+            const navLink = document.getElementById('linkNavTopo');
+            const brandLogo = document.getElementById('linkBrandLogo');
+            const btnTestarWebMobile = document.getElementById('btnTestarWebMobile');
+
+            if (token) {
+                if (navLink) {
+                    navLink.href = 'RadarEditais.html';
+                    navLink.textContent = '← Voltar para o Radar';
+                }
+                if (brandLogo) {
+                    brandLogo.href = 'RadarEditais.html';
+                }
+                if (btnTestarWebMobile) {
+                    btnTestarWebMobile.href = 'RadarEditais.html';
+                    btnTestarWebMobile.textContent = '🚀 Acessar Plataforma (Já Conectado)';
+                }
+            } else {
+                if (navLink) {
+                    navLink.href = 'login.html';
+                    navLink.textContent = '← Fazer Login na Plataforma';
+                }
+                if (brandLogo) {
+                    brandLogo.href = 'login.html';
+                }
+                if (btnTestarWebMobile) {
+                    btnTestarWebMobile.href = 'login.html';
+                }
+            }
+
+            const mobileUrl = `${window.location.origin}/paginas/login.html`;
             const qrImg = document.getElementById('qrCodeImg');
             if (qrImg) {
                 qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(mobileUrl)}`;
