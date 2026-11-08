@@ -22,3 +22,9 @@ guias_de_codigo/
 back.zip
 banco_anjonexus.sql
 scratch_artifact_info.json
+
+*.log
+bootstrap/cache/
+storage/logs/
+**/bootstrap/cache/
+MVPs/Projeto Anjo Nexus/
