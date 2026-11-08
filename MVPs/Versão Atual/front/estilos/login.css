@@ -380,6 +380,10 @@ body.dark-mode .btn-banner-download:hover {
     background-color: var(--accent-action-hover);
 }
 
+body.is-capacitor .banner-mobile-app {
+    display: none !important;
+}
+
 /* Responsividade Mobile e Tablet */
 @media (max-width: 900px) {
     .auth-brand-panel {
