@@ -139,3 +139,4 @@ class SecurityMiddlewareTest extends TestCase
             ]);
     }
 }
+

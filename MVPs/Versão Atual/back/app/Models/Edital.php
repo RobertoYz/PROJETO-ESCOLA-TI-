@@ -22,5 +22,10 @@ class Edital extends Model
         'ai_analyzed' => 'boolean',
         'ai_diagnosis' => 'array',
     ];
+
+    public function favoritos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(EditalFavorito::class, 'edital_id');
+    }
 }
 

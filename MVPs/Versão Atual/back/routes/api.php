@@ -38,6 +38,10 @@ Route::delete('/auth/cancelar-cadastro-pendente', [AuthController::class, 'cance
 
 // Rotas protegidas (Sanctum) - sem o middleware que bloqueia pagamento pendente
 Route::middleware('auth:sanctum')->group(function () {
+    // RF-11: Favoritar e listar editais favoritos
+    Route::post('/editais/{id}/favoritar', [EditalController::class, 'toggleFavorito']);
+    Route::get('/editais/favoritos', [EditalController::class, 'listarFavoritos']);
+
     // Perfil do Consultor (obter e atualizar dados de cadastro: nome, email, senha)
     Route::get('/auth/perfil', [AuthController::class, 'obterPerfil']);
     Route::put('/auth/perfil', [AuthController::class, 'atualizarPerfil']);

@@ -94,12 +94,32 @@ export async function fetchEditais() {
 
     try {
         const radarFilterEl = document.getElementById('radarFilter');
-        let url = `${API_BASE_URL}/editais`;
+        const token = localStorage.getItem('token_autenticacao');
+        const startupAtiva = obterStartupAtiva();
+
+        const params = new URLSearchParams();
         if (radarFilterEl && radarFilterEl.value) {
-            url += `?fonte=${radarFilterEl.value}`;
+            if (radarFilterEl.value === 'FAVORITOS') {
+                params.append('favoritos', '1');
+            } else {
+                params.append('fonte', radarFilterEl.value);
+            }
+        }
+        if (startupAtiva && startupAtiva.id) {
+            params.append('startup_id', startupAtiva.id);
         }
 
-        const response = await fetch(url);
+        const queryString = params.toString() ? `?${params.toString()}` : '';
+        const url = `${API_BASE_URL}/editais${queryString}`;
+
+        const headers = {
+            'Accept': 'application/json'
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(url, { headers });
 
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);
@@ -238,17 +258,7 @@ function selectEdital(id) {
     }
     
     // Atualiza icone de favorito no painel
-    const btnFavDetail = document.getElementById('btnFavDetail');
-    if (btnFavDetail) {
-        const useTag = btnFavDetail.querySelector('use');
-        if (edital.favorite) {
-            btnFavDetail.classList.add('active');
-            if(useTag) useTag.setAttribute('href', '#icon-star-filled');
-        } else {
-            btnFavDetail.classList.remove('active');
-            if(useTag) useTag.setAttribute('href', '#icon-star');
-        }
-    }
+    atualizarBotaoFavoritoPainel(edital);
 
     // Renderiza blocos complexos
     renderDocuments(edital.documentos);
@@ -318,11 +328,75 @@ function getMatchHexColor(match) {
     return 'var(--danger-color)';
 }
 
-function toggleFavorite(id) {
+function atualizarBotaoFavoritoPainel(edital) {
+    if (!edital || edital.id !== selectedId) return;
+    const btnFavDetail = document.getElementById('btnFavDetail');
+    if (btnFavDetail) {
+        const useTag = btnFavDetail.querySelector('use');
+        if (edital.favorite) {
+            btnFavDetail.classList.add('active');
+            if (useTag) useTag.setAttribute('href', '#icon-star-filled');
+        } else {
+            btnFavDetail.classList.remove('active');
+            if (useTag) useTag.setAttribute('href', '#icon-star');
+        }
+    }
+}
+
+async function toggleFavorite(id) {
     const edital = mockEditais.find(e => e.id === id);
-    if (edital) {
-        edital.favorite = !edital.favorite;
+    if (!edital) return;
+
+    const estadoAnterior = !!edital.favorite;
+    // Atualização otimista imediata na interface
+    edital.favorite = !estadoAnterior;
+    renderTable();
+    atualizarBotaoFavoritoPainel(edital);
+
+    const token = localStorage.getItem('token_autenticacao');
+    if (!token) {
+        return; // Usuário não autenticado mantém em memória na sessão
+    }
+
+    try {
+        const startupAtiva = obterStartupAtiva();
+        const res = await fetch(`${API_BASE_URL}/editais/${id}/favoritar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                startup_id: startupAtiva ? startupAtiva.id : null
+            })
+        });
+
+        if (!res.ok) {
+            throw new Error(`Erro status: ${res.status}`);
+        }
+
+        const json = await res.json();
+        edital.favorite = !!json.favorito;
         renderTable();
+        atualizarBotaoFavoritoPainel(edital);
+
+        // Se estiver filtrando apenas por favoritos e o usuário desfavoritou, remove da listagem
+        const radarFilterEl = document.getElementById('radarFilter');
+        if (radarFilterEl && radarFilterEl.value === 'FAVORITOS' && !edital.favorite) {
+            mockEditais = mockEditais.filter(e => e.id !== id);
+            renderTable();
+            if (mockEditais.length > 0) {
+                selectEdital(mockEditais[0].id);
+            } else {
+                showEmptyState();
+            }
+        }
+    } catch (err) {
+        console.error('Falha ao persistir favorito no backend:', err);
+        edital.favorite = estadoAnterior;
+        renderTable();
+        atualizarBotaoFavoritoPainel(edital);
     }
 }
 
