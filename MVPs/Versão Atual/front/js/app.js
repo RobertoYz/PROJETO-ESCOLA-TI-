@@ -132,7 +132,15 @@ export async function fetchEditais() {
 
         if (mockEditais.length > 0) {
             renderTable();
-            if (window.innerWidth > 900) { selectEdital(mockEditais[0].id); }
+            const urlParams = new URLSearchParams(window.location.search);
+            const editalUrlId = urlParams.get('edital_id');
+            const editalAlvo = editalUrlId ? mockEditais.find(e => String(e.id) === String(editalUrlId)) : null;
+
+            if (editalAlvo) {
+                selectEdital(editalAlvo.id);
+            } else if (window.innerWidth > 900) {
+                selectEdital(mockEditais[0].id);
+            }
         } else {
             showEmptyState();
         }
@@ -146,6 +154,7 @@ export async function fetchEditais() {
 // Expõe no escopo global para o onchange do select de filtro funcionar com ES modules
 window.fetchEditais = fetchEditais;
 window.toggleFavorite = toggleFavorite;
+window.selectEdital = selectEdital;
 
 // ==========================================
 // RENDERIZAÇÃO DA INTERFACE (Componentes)

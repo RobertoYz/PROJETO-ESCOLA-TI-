@@ -10,6 +10,7 @@ use App\Http\Controllers\MinutaController;
 use App\Http\Controllers\CnpjController;
 use App\Http\Controllers\PlanoController;
 use App\Http\Controllers\StartupController;
+use App\Http\Controllers\AlertaMatchController;
 
 // Rotas de Editais
 Route::get('/editais', [EditalController::class, 'index']);
@@ -41,6 +42,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // RF-11: Favoritar e listar editais favoritos
     Route::post('/editais/{id}/favoritar', [EditalController::class, 'toggleFavorito']);
     Route::get('/editais/favoritos', [EditalController::class, 'listarFavoritos']);
+
+    // RF-26 (EDTAN-172): Módulo de Alertas de Match de Editais Compatíveis
+    Route::get('/alertas/match', [AlertaMatchController::class, 'index']);
+    Route::post('/alertas/verificar', [AlertaMatchController::class, 'verificar']);
+    Route::get('/alertas/contador', [AlertaMatchController::class, 'contador']);
+    Route::patch('/alertas/{id}/lido', [AlertaMatchController::class, 'marcarLido']);
+    Route::post('/alertas/marcar-todos-lidos', [AlertaMatchController::class, 'marcarTodosLidos']);
 
     // Perfil do Consultor (obter e atualizar dados de cadastro: nome, email, senha)
     Route::get('/auth/perfil', [AuthController::class, 'obterPerfil']);

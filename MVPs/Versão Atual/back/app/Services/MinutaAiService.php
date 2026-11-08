@@ -69,7 +69,11 @@ class MinutaAiService
             $nichoStartup = mb_strtolower($startup->nicho_atuacao ?? '');
             $nichoEdital = mb_strtolower($edital->ai_nicho ?? $edital->objetivo ?? '');
             
-            if (!empty($nichoStartup) && (str_contains($nichoEdital, $nichoStartup) || str_contains($nichoStartup, 'tecnologia') || str_contains($nichoStartup, 'software'))) {
+            if (!empty($nichoStartup) && (
+                str_contains($nichoEdital, $nichoStartup) || 
+                (str_contains($nichoStartup, 'tecnologia') && str_contains($nichoEdital, 'tecnologia')) || 
+                (str_contains($nichoStartup, 'software') && str_contains($nichoEdital, 'software'))
+            )) {
                 $score += 20;
                 $pontosFortes[] = "Aderência direta entre o nicho da startup ({$startup->nicho_atuacao}) e as temáticas prioritárias do edital.";
             } else {

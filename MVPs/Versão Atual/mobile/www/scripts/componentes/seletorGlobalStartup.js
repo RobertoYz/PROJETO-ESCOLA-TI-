@@ -11,6 +11,12 @@ import {
     removerToken
 } from '../servicos/servicoAutenticacao.js';
 import { listarStartupsDaConsultoria } from '../servicos/servicoStartups.js';
+import {
+    verificarAlertasMatch,
+    listarAlertasMatch,
+    marcarAlertaComoLido,
+    marcarTodosAlertasComoLidos
+} from '../servicos/servicoAlertas.js';
 
 function injetarEstilosHeaderGlobal() {
     if (document.getElementById('estilos-header-global')) return;
@@ -645,6 +651,23 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             </div>
         </div>
 
+        <!-- Alertas de Match Inteligente (EDTAN-172 / RF-26) -->
+        <div class="alerta-notificacoes-wrapper" id="alertaNotificacoesWrapper" style="position: relative;">
+            <button id="btnSinoAlertas" class="btn-sino-alertas" title="Alertas de Match de Editais" style="background: rgba(255,255,255,0.04); border: 1px solid #2a2e39; width: 38px; height: 38px; border-radius: 10px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: 0.2s;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+                </svg>
+                <span id="badgeContadorAlertas" style="display: none; position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; align-items: center; justify-content: center; box-shadow: 0 0 8px rgba(239,68,68,0.6);">0</span>
+            </button>
+            <div class="alertas-dropdown-menu" id="alertasDropdownMenu" style="display: none; position: absolute; right: 0; top: 46px; width: 350px; background: #0f131a; border: 1px solid #262b36; border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.8); z-index: 1000; overflow: hidden; font-family: inherit;">
+                <div style="padding: 12px 16px; border-bottom: 1px solid #1e2430; display: flex; justify-content: space-between; align-items: center; background: #131822;">
+                    <span style="font-weight: 700; font-size: 13px; color: #f8fafc;">🔔 Alertas de Match</span>
+                    <button id="btnMarcarTodosLidos" style="background: none; border: none; color: #38bdf8; font-size: 11px; cursor: pointer; font-weight: 600;">Marcar todos lidos</button>
+                </div>
+                <div id="listaAlertasDropdown" style="max-height: 380px; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+        </div>
+
         <div class="user-section-global" id="userMenuBtn">
             <span class="user-name" id="headerUserName">${nomeInicialUsuario}</span>
             <div class="avatar">
@@ -829,4 +852,141 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
     } catch (err) {
         console.warn('Operando com startup em cache local.');
     }
+
+    // ==========================================
+    // MÓDULO DE ALERTAS DE MATCH (EDTAN-172 / RF-26)
+    // ==========================================
+    const btnSinoAlertas = document.getElementById('btnSinoAlertas');
+    const badgeContador = document.getElementById('badgeContadorAlertas');
+    const alertasDropdown = document.getElementById('alertasDropdownMenu');
+    const listaAlertasDropdown = document.getElementById('listaAlertasDropdown');
+    const btnMarcarTodosLidos = document.getElementById('btnMarcarTodosLidos');
+
+    let alertasCarregados = [];
+
+    async function atualizarAlertasMatch(stId) {
+        if (!stId) return;
+        try {
+            const res = await verificarAlertasMatch(stId);
+            if (res && res.sucesso) {
+                alertasCarregados = res.dados || [];
+                renderizarAlertas(alertasCarregados, res.total_nao_lidos ?? alertasCarregados.filter(a => !a.lido).length);
+            }
+        } catch (e) {
+            console.debug('Alertas de match em modo offline.');
+        }
+    }
+
+    function renderizarAlertas(lista, totalNaoLidos) {
+        if (!badgeContador || !listaAlertasDropdown) return;
+
+        if (totalNaoLidos > 0) {
+            badgeContador.textContent = totalNaoLidos > 9 ? '9+' : String(totalNaoLidos);
+            badgeContador.style.display = 'flex';
+        } else {
+            badgeContador.style.display = 'none';
+        }
+
+        if (!lista || lista.length === 0) {
+            listaAlertasDropdown.innerHTML = `
+                <div style="padding: 24px 16px; text-align: center; color: #64748b; font-size: 12px;">
+                    <div style="font-size: 24px; margin-bottom: 6px;">🎯</div>
+                    Nenhuma oportunidade de match detectada no momento.
+                </div>
+            `;
+            return;
+        }
+
+        listaAlertasDropdown.innerHTML = '';
+        lista.forEach(alerta => {
+            const cardEl = document.createElement('div');
+            cardEl.style.cssText = `
+                background: ${alerta.lido ? 'rgba(255,255,255,0.02)' : 'rgba(30,41,59,0.5)'};
+                border: 1px solid ${alerta.lido ? '#1e2430' : '#334155'};
+                border-left: 3px solid ${alerta.score_match >= 85 ? '#10b981' : '#6366f1'};
+                border-radius: 8px;
+                padding: 10px 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                transition: 0.2s;
+            `;
+
+            const tituloEdital = alerta.edital?.title || alerta.titulo;
+            const score = alerta.score_match || 70;
+
+            cardEl.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="background: rgba(16,185,129,0.15); color: #10b981; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px;">⚡ ${score}% Match</span>
+                    ${!alerta.lido ? `<button class="btn-marcar-um-lido" data-id="${alerta.id}" style="background: none; border: none; color: #94a3b8; font-size: 11px; cursor: pointer; padding: 2px 6px;">✓ Lido</button>` : ''}
+                </div>
+                <div style="font-weight: 600; font-size: 12px; color: #f1f5f9; line-height: 1.3;">${tituloEdital}</div>
+                <div style="font-size: 11px; color: #94a3b8; line-height: 1.35;">${alerta.mensagem}</div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+                    <button class="btn-ver-edital-alerta" data-edital-id="${alerta.edital_id}" style="background: #2563eb; color: #fff; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">Ver no Radar →</button>
+                </div>
+            `;
+
+            cardEl.querySelector('.btn-ver-edital-alerta')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fecharDropdownAlertas();
+                if (window.selectEdital) {
+                    window.selectEdital(alerta.edital_id);
+                } else {
+                    window.location.href = `RadarEditais.html?edital_id=${alerta.edital_id}`;
+                }
+            });
+
+            cardEl.querySelector('.btn-marcar-um-lido')?.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                try {
+                    await marcarAlertaComoLido(alerta.id);
+                    alerta.lido = true;
+                    const naoLidos = alertasCarregados.filter(a => !a.lido).length;
+                    renderizarAlertas(alertasCarregados, naoLidos);
+                } catch (err) {
+                    console.error('Falha ao marcar lido:', err);
+                }
+            });
+
+            listaAlertasDropdown.appendChild(cardEl);
+        });
+    }
+
+    function fecharDropdownAlertas() {
+        if (alertasDropdown) alertasDropdown.style.display = 'none';
+    }
+
+    if (btnSinoAlertas) {
+        btnSinoAlertas.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fecharDropdownStartups();
+            fecharMenuUsuario();
+            if (alertasDropdown) {
+                alertasDropdown.style.display = alertasDropdown.style.display === 'block' ? 'none' : 'block';
+            }
+        });
+    }
+
+    if (btnMarcarTodosLidos) {
+        btnMarcarTodosLidos.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            try {
+                await marcarTodosAlertasComoLidos(startupAtiva.id);
+                alertasCarregados.forEach(a => a.lido = true);
+                renderizarAlertas(alertasCarregados, 0);
+            } catch (err) {
+                console.error('Falha ao marcar todos lidos:', err);
+            }
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#alertaNotificacoesWrapper')) {
+            fecharDropdownAlertas();
+        }
+    });
+
+    // Inicia verificação automática de alertas de match para a startup ativa
+    atualizarAlertasMatch(startupAtiva.id);
 }
