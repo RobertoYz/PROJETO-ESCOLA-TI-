@@ -16,7 +16,8 @@ class PlanoSeeder extends Seeder
                 'preco' => 49.90,
                 'id_plataforma_pagamento' => 'prod_sWfDg0eZXTLbtZEHYpqnMLKP', // ID real do AbacatePay
                 'limite_startups' => 2,
-                'limite_membros_equipe' => 1
+                'limite_membros_equipe' => 1,
+                'limite_minutas_ia' => 3
             ],
             [
                 'id' => 2,
@@ -24,7 +25,8 @@ class PlanoSeeder extends Seeder
                 'preco' => 99.90,
                 'id_plataforma_pagamento' => 'prod_sWfDg0eZXTLbtZEHYpqnMLKP',
                 'limite_startups' => 10,
-                'limite_membros_equipe' => 5
+                'limite_membros_equipe' => 5,
+                'limite_minutas_ia' => 15
             ],
             [
                 'id' => 3,
@@ -32,7 +34,8 @@ class PlanoSeeder extends Seeder
                 'preco' => 299.90,
                 'id_plataforma_pagamento' => 'prod_sWfDg0eZXTLbtZEHYpqnMLKP',
                 'limite_startups' => 50,
-                'limite_membros_equipe' => 15
+                'limite_membros_equipe' => 15,
+                'limite_minutas_ia' => 50
             ]
         ];
 

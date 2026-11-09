@@ -121,6 +121,11 @@ class Agencia extends Model
         return $this->hasMany(User::class, 'agencia_id');
     }
 
+    public function users(): HasMany
+    {
+        return $this->usuarios();
+    }
+
     // Relacionamento das agências com startups
     public function startups(): HasMany
     {

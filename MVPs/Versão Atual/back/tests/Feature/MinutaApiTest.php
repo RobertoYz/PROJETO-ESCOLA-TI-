@@ -234,5 +234,79 @@ class MinutaApiTest extends TestCase
             str_contains($response->headers->get('content-type'), 'octet-stream')
         );
     }
+
+    /**
+     * EDTAN-250: Teste de consulta do consumo de minutas do plano.
+     */
+    public function test_consulta_consumo_minutas_retorna_cota_do_plano(): void
+    {
+        $plano = $this->agencia->plano;
+        $plano->update(['limite_minutas_ia' => 10]);
+
+        $response = $this->actingAs($this->usuario, 'sanctum')
+            ->getJson("/api/minutas/consumo?startup_id={$this->startup->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('sucesso', true)
+            ->assertJsonPath('dados.limite', 10)
+            ->assertJsonPath('dados.usadas', 0)
+            ->assertJsonPath('dados.disponiveis', 10)
+            ->assertJsonPath('dados.atingiu_limite', false);
+    }
+
+    /**
+     * EDTAN-250: Bloqueio de geração de minutas quando limite do plano é atingido para controle de custos de IA.
+     */
+    public function test_bloqueio_geracao_minuta_quando_limite_do_plano_atingido(): void
+    {
+        // Define o limite do plano como 2 minutas
+        $plano = $this->agencia->plano;
+        $plano->update(['limite_minutas_ia' => 2]);
+
+        // Simula 2 minutas já geradas neste mês
+        Minuta::create([
+            'startup_id' => $this->startup->id,
+            'edital_id' => $this->edital->id,
+            'user_id' => $this->usuario->id,
+            'versao' => 1,
+            'titulo_projeto' => 'Minuta 1',
+            'ideia_projeto' => 'Ideia 1',
+            'conteudo_gerado' => 'Conteudo 1',
+            'status' => 'concluido'
+        ]);
+
+        Minuta::create([
+            'startup_id' => $this->startup->id,
+            'edital_id' => $this->edital->id,
+            'user_id' => $this->usuario->id,
+            'versao' => 1,
+            'titulo_projeto' => 'Minuta 2',
+            'ideia_projeto' => 'Ideia 2',
+            'conteudo_gerado' => 'Conteudo 2',
+            'status' => 'concluido'
+        ]);
+
+        // Tenta gerar a 3ª minuta
+        $payload = [
+            'startup_id' => $this->startup->id,
+            'edital_id' => $this->edital->id,
+            'ideia_projeto' => 'Tentativa de minuta alem do limite do plano.'
+        ];
+
+        // O MinutaAiService NÃO deve ser chamado (evitando custos com IA externa)
+        $this->mock(MinutaAiService::class, function ($mock) {
+            $mock->shouldNotReceive('gerarMinuta');
+        });
+
+        $response = $this->actingAs($this->usuario, 'sanctum')
+            ->postJson('/api/minutas/gerar', $payload);
+
+        $response->assertStatus(403)
+            ->assertJsonPath('sucesso', false)
+            ->assertJsonPath('codigo', 'LIMITE_MINUTAS_ATINGIDO')
+            ->assertJsonPath('consumo.atingiu_limite', true)
+            ->assertJsonPath('consumo.usadas', 2)
+            ->assertJsonPath('consumo.limite', 2);
+    }
 }
 

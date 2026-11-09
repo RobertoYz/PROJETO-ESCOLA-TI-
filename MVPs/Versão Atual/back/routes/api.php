@@ -87,6 +87,7 @@ Route::prefix('kanban')->group(function () {
 
 // Rotas do Módulo de IA e Minutas (RF-29 a RF-34 e RF-47)
 Route::prefix('minutas')->group(function () {
+    Route::get('/consumo', [MinutaController::class, 'consumo']);
     Route::post('/gerar', [MinutaController::class, 'gerar']);
     Route::get('/', [MinutaController::class, 'index']);
     Route::get('/{id}', [MinutaController::class, 'show']);
