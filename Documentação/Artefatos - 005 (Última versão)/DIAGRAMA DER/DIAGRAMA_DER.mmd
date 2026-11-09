@@ -1,0 +1,231 @@
+﻿erDiagram
+    %% ====================================================
+    %% 1. NUCLEO MULTI-TENANCY & FATURAMENTO
+    %% ====================================================
+    planos {
+        bigint id PK
+        string nome
+        decimal preco
+        string id_plataforma_pagamento
+        int limite_startups
+        int limite_membros_equipe
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    agencias {
+        bigint id PK
+        bigint plano_id FK "nullable"
+        string nome
+        string id_plataforma_pagamento
+        enum status_pagamento "pendente, ativo, suspenso, cancelado"
+        text checkout_url "nullable"
+        string billing_id "nullable"
+        string id_cobranca "nullable"
+        timestamp pagamento_expira_em "nullable"
+        boolean pagamento_ativo
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    users {
+        bigint id PK
+        bigint agencia_id FK "nullable"
+        string name
+        string email UK
+        string password
+        enum perfil_acesso "admin_global, consultor_admin, consultor_padrao, startup"
+        timestamp email_verified_at "nullable"
+        string remember_token "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% ====================================================
+    %% 2. STARTUPS & TAXONOMIA
+    %% ====================================================
+    startups {
+        bigint id PK
+        bigint agencia_id FK
+        string cnpj "UNIQUE(agencia_id, cnpj)"
+        string razao_social
+        string nome_fantasia "nullable"
+        date data_abertura "nullable"
+        string email "nullable"
+        string telefone "nullable"
+        string cep "nullable"
+        string logradouro "nullable"
+        string numero "nullable"
+        string bairro "nullable"
+        string cidade "nullable"
+        string estado "nullable"
+        string porte "nullable"
+        string regime_tributario "nullable"
+        string nicho_atuacao "nullable"
+        text pitch "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    tags {
+        bigint id PK
+        enum category "nicho, regiao, regime, porte"
+        string name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    startup_tag {
+        bigint startup_id PK,FK
+        bigint tag_id PK,FK
+    }
+
+    %% ====================================================
+    %% 3. EDITAIS & SCRAPING COM IA
+    %% ====================================================
+    editals {
+        bigint id PK
+        string external_id UK "nullable"
+        string title
+        string fonte
+        text objetivo "nullable"
+        longtext conteudo_completo "nullable"
+        string condicao_financiamento "nullable"
+        string operacao "nullable"
+        string publico "nullable"
+        text source_url "nullable"
+        text original_file_path "nullable"
+        decimal min_budget "nullable"
+        decimal max_budget "nullable"
+        datetime deadline "nullable"
+        datetime open_date "nullable"
+        datetime result_date "nullable"
+        datetime published_at "nullable"
+        enum status "active, closed"
+        json documentos "nullable"
+        string regiao "nullable"
+        string nicho_tema "nullable"
+        boolean ai_analyzed
+        int ai_match "nullable"
+        string ai_trl "nullable"
+        string ai_faturamento "nullable"
+        string ai_nicho "nullable"
+        json ai_diagnosis "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    edital_tag {
+        bigint edital_id PK,FK
+        bigint tag_id PK,FK
+    }
+
+    startup_edital_favorito {
+        bigint startup_id PK,FK
+        bigint edital_id PK,FK
+        bigint user_id FK "nullable"
+        timestamp favorited_at
+    }
+
+    %% ====================================================
+    %% 4. PIPELINE KANBAN
+    %% ====================================================
+    kanban_boards {
+        bigint id PK
+        bigint agencia_id FK
+        string title
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    kanban_columns {
+        bigint id PK
+        bigint board_id FK
+        string title
+        double position
+        string slug "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    kanban_cards {
+        bigint id PK
+        bigint board_id FK
+        bigint column_id FK
+        bigint edital_id FK "nullable"
+        string title
+        text description "nullable"
+        string startup_name "nullable"
+        double position
+        json metadata "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% ====================================================
+    %% 5. MINUTAS & IA
+    %% ====================================================
+    minutas {
+        bigint id PK
+        bigint startup_id FK
+        bigint edital_id FK
+        bigint user_id FK "nullable"
+        bigint kanban_card_id FK "nullable"
+        bigint parent_minuta_id FK "nullable"
+        int versao
+        string titulo_projeto "nullable"
+        text ideia_projeto "nullable"
+        longtext conteudo_gerado
+        json secoes_estruturadas "nullable"
+        string status
+        string modelo_ia_usado "nullable"
+        string autor_nome "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% ====================================================
+    %% 6. NOTIFICACOES
+    %% ====================================================
+    notificacoes {
+        bigint id PK
+        bigint user_id FK
+        bigint edital_id FK "nullable"
+        enum tipo "match, deadline, cota_excedida, status_minuta"
+        text message
+        boolean is_read
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% ====================================================
+    %% RELACIONAMENTOS (CARDINALIDADES)
+    %% ====================================================
+    planos ||--o{ agencias : "assina"
+    agencias ||--o{ users : "possui_membros"
+    agencias ||--o{ startups : "gerencia"
+    agencias ||--o{ kanban_boards : "possui"
+
+    startups ||--o{ startup_tag : "possui"
+    tags ||--o{ startup_tag : "classifica"
+
+    editais ||--o{ edital_tag : "categorizado_por"
+    tags ||--o{ edital_tag : "classifica"
+
+    startups ||--o{ startup_edital_favorito : "favorita"
+    editais ||--o{ startup_edital_favorito : "favoritado_em"
+    users |o--o{ startup_edital_favorito : "registrado_por"
+
+    kanban_boards ||--o{ kanban_columns : "contem"
+    kanban_columns ||--o{ kanban_cards : "organiza"
+    kanban_boards ||--o{ kanban_cards : "agrupa"
+    editais |o--o{ kanban_cards : "vinculado_a"
+
+    startups ||--o{ minutas : "proponente"
+    editais ||--o{ minutas : "baseado_em"
+    users |o--o{ minutas : "elaborado_por"
+    kanban_cards |o--o{ minutas : "associado_a"
+    minutas |o--o{ minutas : "versao_anterior"
+
+    users ||--o{ notificacoes : "recebe"
+    editais |o--o{ notificacoes : "relacionado_a"

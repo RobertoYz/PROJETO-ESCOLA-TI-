@@ -12,7 +12,7 @@ function exibirErro(mensagem, exibirLinkLogin = false) {
         divMensagemErro.innerHTML = `
             <div>${mensagem}</div>
             <div style="margin-top: 8px;">
-                <a href="login.html" style="color: #a5b4fc; font-weight: 600; text-decoration: underline;">Ir para a tela de Login →</a>
+                <a href="login.html" class="alert-link" style="color: #a5b4fc; font-weight: 600; text-decoration: underline;">Ir para a tela de Login →</a>
             </div>
         `;
     } else {
@@ -42,16 +42,30 @@ try {
     // Ignora falha ao restaurar pré-cadastro
 }
 
+// Limpa erro ao digitar novamente
+[campoNomeUsuario, campoEmail, campoSenha].forEach((campo) => {
+    campo?.addEventListener('input', () => {
+        if (!divMensagemErro.hidden) {
+            limparErro();
+        }
+    });
+});
 formulario.addEventListener('submit', async (evento) => {
     evento.preventDefault();
     limparErro();
 
     const nomeUsuario = campoNomeUsuario.value.trim();
-    const email = campoEmail.value.trim();
+    const email = campoEmail.value.trim().toLowerCase();
     const senha = campoSenha.value;
 
     if (!nomeUsuario || !email || !senha) {
         exibirErro('Preencha todos os campos obrigatórios.');
+        return;
+    }
+
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regexEmail.test(email)) {
+        exibirErro('Informe um endereço de e-mail corporativo válido.');
         return;
     }
 
