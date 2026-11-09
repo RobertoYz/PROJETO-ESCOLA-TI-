@@ -11,6 +11,7 @@ use App\Http\Controllers\CnpjController;
 use App\Http\Controllers\PlanoController;
 use App\Http\Controllers\StartupController;
 use App\Http\Controllers\AlertaMatchController;
+use App\Http\Controllers\AlertaPrazoController;
 
 // Rotas de Editais
 Route::get('/editais', [EditalController::class, 'index']);
@@ -49,6 +50,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/alertas/contador', [AlertaMatchController::class, 'contador']);
     Route::patch('/alertas/{id}/lido', [AlertaMatchController::class, 'marcarLido']);
     Route::post('/alertas/marcar-todos-lidos', [AlertaMatchController::class, 'marcarTodosLidos']);
+
+    // RF-47 (EDTAN-171): Módulo de Alertas de Prazos Críticos de Editais
+    Route::get('/alertas/prazos-criticos', [AlertaPrazoController::class, 'index']);
+    Route::post('/alertas/prazos-criticos/verificar', [AlertaPrazoController::class, 'verificar']);
+    Route::get('/alertas/prazos-criticos/contador', [AlertaPrazoController::class, 'contador']);
+    Route::patch('/alertas/prazos-criticos/{id}/lido', [AlertaPrazoController::class, 'marcarLido']);
+    Route::post('/alertas/prazos-criticos/marcar-todos-lidos', [AlertaPrazoController::class, 'marcarTodosLidos']);
 
     // Perfil do Consultor (obter e atualizar dados de cadastro: nome, email, senha)
     Route::get('/auth/perfil', [AuthController::class, 'obterPerfil']);

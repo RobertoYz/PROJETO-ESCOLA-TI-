@@ -15,7 +15,11 @@ import {
     verificarAlertasMatch,
     listarAlertasMatch,
     marcarAlertaComoLido,
-    marcarTodosAlertasComoLidos
+    marcarTodosAlertasComoLidos,
+    verificarAlertasPrazosCriticos,
+    listarAlertasPrazosCriticos,
+    marcarAlertaPrazoComoLido,
+    marcarTodosAlertasPrazoComoLidos
 } from '../servicos/servicoAlertas.js';
 
 function injetarEstilosHeaderGlobal() {
@@ -651,18 +655,24 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             </div>
         </div>
 
-        <!-- Alertas de Match Inteligente (EDTAN-172 / RF-26) -->
+        <!-- Central de Alertas: Match Inteligente (EDTAN-172) & Prazos Críticos (EDTAN-171) -->
         <div class="alerta-notificacoes-wrapper" id="alertaNotificacoesWrapper" style="position: relative;">
-            <button id="btnSinoAlertas" class="btn-sino-alertas" title="Alertas de Match de Editais" style="background: rgba(255,255,255,0.04); border: 1px solid #2a2e39; width: 38px; height: 38px; border-radius: 10px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: 0.2s;">
+            <button id="btnSinoAlertas" class="btn-sino-alertas" title="Central de Alertas e Prazos" style="background: rgba(255,255,255,0.04); border: 1px solid #2a2e39; width: 38px; height: 38px; border-radius: 10px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: 0.2s;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
                 </svg>
                 <span id="badgeContadorAlertas" style="display: none; position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; align-items: center; justify-content: center; box-shadow: 0 0 8px rgba(239,68,68,0.6);">0</span>
             </button>
-            <div class="alertas-dropdown-menu" id="alertasDropdownMenu" style="display: none; position: absolute; right: 0; top: 46px; width: 350px; background: #0f131a; border: 1px solid #262b36; border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.8); z-index: 1000; overflow: hidden; font-family: inherit;">
+            <div class="alertas-dropdown-menu" id="alertasDropdownMenu" style="display: none; position: absolute; right: 0; top: 46px; width: 370px; background: #0f131a; border: 1px solid #262b36; border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.85); z-index: 1000; overflow: hidden; font-family: inherit;">
                 <div style="padding: 12px 16px; border-bottom: 1px solid #1e2430; display: flex; justify-content: space-between; align-items: center; background: #131822;">
-                    <span style="font-weight: 700; font-size: 13px; color: #f8fafc;">🔔 Alertas de Match</span>
+                    <span style="font-weight: 700; font-size: 13px; color: #f8fafc;">🔔 Central de Alertas</span>
                     <button id="btnMarcarTodosLidos" style="background: none; border: none; color: #38bdf8; font-size: 11px; cursor: pointer; font-weight: 600;">Marcar todos lidos</button>
+                </div>
+                <!-- Filtros por tipo de alerta -->
+                <div id="abasFiltroAlertas" style="display: flex; border-bottom: 1px solid #1e2430; background: #0b0e14; padding: 4px 8px; gap: 4px;">
+                    <button class="aba-alerta-btn ativa" data-tipo="todos" style="flex: 1; padding: 5px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: #1e293b; color: #f1f5f9; cursor: pointer;">Todos</button>
+                    <button class="aba-alerta-btn" data-tipo="prazos" style="flex: 1; padding: 5px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: transparent; color: #94a3b8; cursor: pointer;">⏳ Prazos</button>
+                    <button class="aba-alerta-btn" data-tipo="match" style="flex: 1; padding: 5px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: transparent; color: #94a3b8; cursor: pointer;">🎯 Matches</button>
                 </div>
                 <div id="listaAlertasDropdown" style="max-height: 380px; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px;"></div>
             </div>
@@ -854,31 +864,47 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
     }
 
     // ==========================================
-    // MÓDULO DE ALERTAS DE MATCH (EDTAN-172 / RF-26)
+    // CENTRAL DE ALERTAS (MATCH EDTAN-172 & PRAZOS CRÍTICOS EDTAN-171 / RF-47)
     // ==========================================
     const btnSinoAlertas = document.getElementById('btnSinoAlertas');
     const badgeContador = document.getElementById('badgeContadorAlertas');
     const alertasDropdown = document.getElementById('alertasDropdownMenu');
     const listaAlertasDropdown = document.getElementById('listaAlertasDropdown');
     const btnMarcarTodosLidos = document.getElementById('btnMarcarTodosLidos');
+    const abasFiltroAlertas = document.querySelectorAll('.aba-alerta-btn');
 
-    let alertasCarregados = [];
+    let alertasMatch = [];
+    let alertasPrazos = [];
+    let filtroTipoAtivo = 'todos';
 
-    async function atualizarAlertasMatch(stId) {
+    async function atualizarTodosAlertas(stId) {
         if (!stId) return;
         try {
-            const res = await verificarAlertasMatch(stId);
-            if (res && res.sucesso) {
-                alertasCarregados = res.dados || [];
-                renderizarAlertas(alertasCarregados, res.total_nao_lidos ?? alertasCarregados.filter(a => !a.lido).length);
+            const [resMatch, resPrazos] = await Promise.allSettled([
+                verificarAlertasMatch(stId),
+                verificarAlertasPrazosCriticos(stId, 15)
+            ]);
+
+            if (resMatch.status === 'fulfilled' && resMatch.value?.sucesso) {
+                alertasMatch = (resMatch.value.dados || []).map(a => ({ ...a, _tipo: 'match' }));
             }
+
+            if (resPrazos.status === 'fulfilled' && resPrazos.value?.sucesso) {
+                alertasPrazos = (resPrazos.value.dados || []).map(a => ({ ...a, _tipo: 'prazos' }));
+            }
+
+            renderizarCentralAlertas();
         } catch (e) {
-            console.debug('Alertas de match em modo offline.');
+            console.debug('Central de alertas operando em fallback offline.');
         }
     }
 
-    function renderizarAlertas(lista, totalNaoLidos) {
+    function renderizarCentralAlertas() {
         if (!badgeContador || !listaAlertasDropdown) return;
+
+        const naoLidosMatch = alertasMatch.filter(a => !a.lido).length;
+        const naoLidosPrazos = alertasPrazos.filter(a => !a.lido).length;
+        const totalNaoLidos = naoLidosMatch + naoLidosPrazos;
 
         if (totalNaoLidos > 0) {
             badgeContador.textContent = totalNaoLidos > 9 ? '9+' : String(totalNaoLidos);
@@ -887,23 +913,60 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             badgeContador.style.display = 'none';
         }
 
-        if (!lista || lista.length === 0) {
+        let listaFiltrada = [];
+        if (filtroTipoAtivo === 'match') {
+            listaFiltrada = [...alertasMatch];
+        } else if (filtroTipoAtivo === 'prazos') {
+            listaFiltrada = [...alertasPrazos];
+        } else {
+            // Todos: prioriza prazos críticos não lidos, depois matches não lidos, depois lidos
+            listaFiltrada = [...alertasPrazos, ...alertasMatch].sort((a, b) => {
+                if (a.lido !== b.lido) return a.lido ? 1 : -1;
+                if (a._tipo === 'prazos' && a.nivel_urgencia === 'critico') return -1;
+                if (b._tipo === 'prazos' && b.nivel_urgencia === 'critico') return 1;
+                return 0;
+            });
+        }
+
+        if (listaFiltrada.length === 0) {
             listaAlertasDropdown.innerHTML = `
                 <div style="padding: 24px 16px; text-align: center; color: #64748b; font-size: 12px;">
                     <div style="font-size: 24px; margin-bottom: 6px;">🎯</div>
-                    Nenhuma oportunidade de match detectada no momento.
+                    Nenhuma notificação encontrada no momento.
                 </div>
             `;
             return;
         }
 
         listaAlertasDropdown.innerHTML = '';
-        lista.forEach(alerta => {
+        listaFiltrada.forEach(alerta => {
+            const ehPrazo = alerta._tipo === 'prazos';
             const cardEl = document.createElement('div');
+
+            let corBordaEsquerda = '#3b82f6';
+            let badgeTagHtml = '';
+
+            if (ehPrazo) {
+                if (alerta.nivel_urgencia === 'critico') {
+                    corBordaEsquerda = '#ef4444';
+                    badgeTagHtml = `<span style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.4); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px;">🚨 Crítico (${alerta.dias_restantes}d)</span>`;
+                } else if (alerta.nivel_urgencia === 'urgente') {
+                    corBordaEsquerda = '#f59e0b';
+                    badgeTagHtml = `<span style="background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.4); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px;">⚠️ Urgente (${alerta.dias_restantes}d)</span>`;
+                } else {
+                    corBordaEsquerda = '#3b82f6';
+                    badgeTagHtml = `<span style="background: rgba(59,130,246,0.15); color: #3b82f6; border: 1px solid rgba(59,130,246,0.4); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px;">📅 Atenção (${alerta.dias_restantes}d)</span>`;
+                }
+            } else {
+                const score = alerta.score_match || 70;
+                corBordaEsquerda = score >= 85 ? '#10b981' : '#6366f1';
+                badgeTagHtml = `<span style="background: rgba(16,185,129,0.15); color: #10b981; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px;">⚡ ${score}% Match</span>`;
+            }
+
             cardEl.style.cssText = `
                 background: ${alerta.lido ? 'rgba(255,255,255,0.02)' : 'rgba(30,41,59,0.5)'};
                 border: 1px solid ${alerta.lido ? '#1e2430' : '#334155'};
-                border-left: 3px solid ${alerta.score_match >= 85 ? '#10b981' : '#6366f1'};
+                border-left: 3px solid ${corBordaEsquerda};
                 border-radius: 8px;
                 padding: 10px 12px;
                 display: flex;
@@ -913,17 +976,17 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             `;
 
             const tituloEdital = alerta.edital?.title || alerta.titulo;
-            const score = alerta.score_match || 70;
+            const editalId = alerta.edital_id;
 
             cardEl.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="background: rgba(16,185,129,0.15); color: #10b981; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px;">⚡ ${score}% Match</span>
-                    ${!alerta.lido ? `<button class="btn-marcar-um-lido" data-id="${alerta.id}" style="background: none; border: none; color: #94a3b8; font-size: 11px; cursor: pointer; padding: 2px 6px;">✓ Lido</button>` : ''}
+                    ${badgeTagHtml}
+                    ${!alerta.lido ? `<button class="btn-marcar-um-lido" data-id="${alerta.id}" data-tipo="${alerta._tipo}" style="background: none; border: none; color: #94a3b8; font-size: 11px; cursor: pointer; padding: 2px 6px;">✓ Lido</button>` : ''}
                 </div>
                 <div style="font-weight: 600; font-size: 12px; color: #f1f5f9; line-height: 1.3;">${tituloEdital}</div>
                 <div style="font-size: 11px; color: #94a3b8; line-height: 1.35;">${alerta.mensagem}</div>
                 <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
-                    <button class="btn-ver-edital-alerta" data-edital-id="${alerta.edital_id}" style="background: #2563eb; color: #fff; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">Ver no Radar →</button>
+                    <button class="btn-ver-edital-alerta" data-edital-id="${editalId}" style="background: #2563eb; color: #fff; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">Ver no Radar →</button>
                 </div>
             `;
 
@@ -931,25 +994,47 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 e.stopPropagation();
                 fecharDropdownAlertas();
                 if (window.selectEdital) {
-                    window.selectEdital(alerta.edital_id);
+                    window.selectEdital(editalId);
                 } else {
-                    window.location.href = `RadarEditais.html?edital_id=${alerta.edital_id}`;
+                    window.location.href = `RadarEditais.html?edital_id=${editalId}`;
                 }
             });
 
             cardEl.querySelector('.btn-marcar-um-lido')?.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 try {
-                    await marcarAlertaComoLido(alerta.id);
+                    if (ehPrazo) {
+                        await marcarAlertaPrazoComoLido(alerta.id);
+                    } else {
+                        await marcarAlertaComoLido(alerta.id);
+                    }
                     alerta.lido = true;
-                    const naoLidos = alertasCarregados.filter(a => !a.lido).length;
-                    renderizarAlertas(alertasCarregados, naoLidos);
+                    renderizarCentralAlertas();
                 } catch (err) {
                     console.error('Falha ao marcar lido:', err);
                 }
             });
 
             listaAlertasDropdown.appendChild(cardEl);
+        });
+    }
+
+    // Configura botões de abas de filtro
+    if (abasFiltroAlertas) {
+        abasFiltroAlertas.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                abasFiltroAlertas.forEach(b => {
+                    b.classList.remove('ativa');
+                    b.style.background = 'transparent';
+                    b.style.color = '#94a3b8';
+                });
+                btn.classList.add('ativa');
+                btn.style.background = '#1e293b';
+                btn.style.color = '#f1f5f9';
+                filtroTipoAtivo = btn.dataset.tipo || 'todos';
+                renderizarCentralAlertas();
+            });
         });
     }
 
@@ -972,9 +1057,13 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         btnMarcarTodosLidos.addEventListener('click', async (e) => {
             e.stopPropagation();
             try {
-                await marcarTodosAlertasComoLidos(startupAtiva.id);
-                alertasCarregados.forEach(a => a.lido = true);
-                renderizarAlertas(alertasCarregados, 0);
+                await Promise.allSettled([
+                    marcarTodosAlertasComoLidos(startupAtiva.id),
+                    marcarTodosAlertasPrazoComoLidos(startupAtiva.id)
+                ]);
+                alertasMatch.forEach(a => a.lido = true);
+                alertasPrazos.forEach(a => a.lido = true);
+                renderizarCentralAlertas();
             } catch (err) {
                 console.error('Falha ao marcar todos lidos:', err);
             }
@@ -987,6 +1076,6 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         }
     });
 
-    // Inicia verificação automática de alertas de match para a startup ativa
-    atualizarAlertasMatch(startupAtiva.id);
+    // Inicia verificação automática de alertas de match e prazos críticos para a startup ativa
+    atualizarTodosAlertas(startupAtiva.id);
 }

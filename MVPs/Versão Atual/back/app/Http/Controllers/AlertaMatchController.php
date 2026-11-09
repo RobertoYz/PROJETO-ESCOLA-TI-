@@ -77,11 +77,24 @@ class AlertaMatchController extends Controller
     {
         $usuario = $request->user();
         $startupId = $request->input('startup_id') ? (int) $request->input('startup_id') : null;
-        $totalNaoLidos = $this->alertaService->contarNaoLidos($usuario, $startupId);
+        $totalNaoLidosMatch = $this->alertaService->contarNaoLidos($usuario, $startupId);
+        
+        $prazosQuery = \App\Models\AlertaPrazo::where('user_id', $usuario->id)->where('lido', false);
+        if ($startupId) {
+            $prazosQuery->where(function ($q) use ($startupId) {
+                $q->where('startup_id', $startupId)->orWhereNull('startup_id');
+            });
+        }
+        $totalNaoLidosPrazos = $prazosQuery->count();
+        $totalGeral = $totalNaoLidosMatch + $totalNaoLidosPrazos;
 
         return response()->json([
             'sucesso' => true,
-            'total_nao_lidos' => $totalNaoLidos
+            'total_nao_lidos' => $totalGeral,
+            'detalhes' => [
+                'match' => $totalNaoLidosMatch,
+                'prazos' => $totalNaoLidosPrazos
+            ]
         ]);
     }
 
