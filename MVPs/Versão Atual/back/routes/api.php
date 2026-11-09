@@ -57,6 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/alertas/prazos-criticos/contador', [AlertaPrazoController::class, 'contador']);
     Route::patch('/alertas/prazos-criticos/{id}/lido', [AlertaPrazoController::class, 'marcarLido']);
     Route::post('/alertas/prazos-criticos/marcar-todos-lidos', [AlertaPrazoController::class, 'marcarTodosLidos']);
+    Route::post('/alertas/prazos-criticos/{id}/enviar-email', [AlertaPrazoController::class, 'enviarEmail']);
 
     // Perfil do Consultor (obter e atualizar dados de cadastro: nome, email, senha)
     Route::get('/auth/perfil', [AuthController::class, 'obterPerfil']);

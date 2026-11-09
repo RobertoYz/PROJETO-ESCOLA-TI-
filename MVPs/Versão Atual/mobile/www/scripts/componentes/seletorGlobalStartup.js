@@ -19,7 +19,8 @@ import {
     verificarAlertasPrazosCriticos,
     listarAlertasPrazosCriticos,
     marcarAlertaPrazoComoLido,
-    marcarTodosAlertasPrazoComoLidos
+    marcarTodosAlertasPrazoComoLidos,
+    dispararEmailAlertaPrazo
 } from '../servicos/servicoAlertas.js';
 
 function injetarEstilosHeaderGlobal() {
@@ -28,6 +29,36 @@ function injetarEstilosHeaderGlobal() {
     const style = document.createElement('style');
     style.id = 'estilos-header-global';
     style.textContent = `
+        @keyframes deslizarNotificacaoEntrada {
+            from {
+                opacity: 0;
+                transform: translateY(-24px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        @keyframes deslizarNotificacaoSaida {
+            from {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+        }
+        @media (max-width: 640px) {
+            .anjo-toast-notificacao {
+                top: 12px !important;
+                right: 12px !important;
+                left: 12px !important;
+                width: auto !important;
+                max-width: none !important;
+            }
+        }
+
         .top-navbar {
             display: flex !important;
             justify-content: space-between !important;
@@ -664,9 +695,12 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 <span id="badgeContadorAlertas" style="display: none; position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; align-items: center; justify-content: center; box-shadow: 0 0 8px rgba(239,68,68,0.6);">0</span>
             </button>
             <div class="alertas-dropdown-menu" id="alertasDropdownMenu" style="display: none; position: absolute; right: 0; top: 46px; width: 370px; background: #0f131a; border: 1px solid #262b36; border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.85); z-index: 1000; overflow: hidden; font-family: inherit;">
-                <div style="padding: 12px 16px; border-bottom: 1px solid #1e2430; display: flex; justify-content: space-between; align-items: center; background: #131822;">
+                <div style="padding: 10px 14px; border-bottom: 1px solid #1e2430; display: flex; justify-content: space-between; align-items: center; background: #131822;">
                     <span style="font-weight: 700; font-size: 13px; color: #f8fafc;">🔔 Central de Alertas</span>
-                    <button id="btnMarcarTodosLidos" style="background: none; border: none; color: #38bdf8; font-size: 11px; cursor: pointer; font-weight: 600;">Marcar todos lidos</button>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button id="btnTestarNotificacaoPopUp" title="Testar Pop-up na Web e Mobile" style="background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.35); color: #a5b4fc; font-size: 10px; cursor: pointer; font-weight: 600; padding: 3px 8px; border-radius: 6px;">🔔 Pop-up</button>
+                        <button id="btnMarcarTodosLidos" style="background: none; border: none; color: #38bdf8; font-size: 11px; cursor: pointer; font-weight: 600;">Marcar lidos</button>
+                    </div>
                 </div>
                 <!-- Filtros por tipo de alerta -->
                 <div id="abasFiltroAlertas" style="display: flex; border-bottom: 1px solid #1e2430; background: #0b0e14; padding: 4px 8px; gap: 4px;">
@@ -871,11 +905,134 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
     const alertasDropdown = document.getElementById('alertasDropdownMenu');
     const listaAlertasDropdown = document.getElementById('listaAlertasDropdown');
     const btnMarcarTodosLidos = document.getElementById('btnMarcarTodosLidos');
+    const btnTestarPopUp = document.getElementById('btnTestarNotificacaoPopUp');
     const abasFiltroAlertas = document.querySelectorAll('.aba-alerta-btn');
 
     let alertasMatch = [];
     let alertasPrazos = [];
     let filtroTipoAtivo = 'todos';
+
+    function exibirPopUpNotificacao(alerta, opcoes = {}) {
+        if (!alerta) return;
+
+        // Remove qualquer popup flutuante anterior
+        const antigo = document.getElementById('anjo-toast-notificacao');
+        if (antigo) antigo.remove();
+
+        // Tenta acionar vibração tátil no mobile
+        try {
+            if ('vibrate' in navigator) {
+                navigator.vibrate([70, 50, 70]);
+            }
+        } catch (_) {}
+
+        // Tenta disparar Notification nativa do navegador/dispositivo se houver permissão
+        try {
+            if (window.Notification && Notification.permission === 'granted') {
+                new Notification(alerta.titulo || 'Alerta Anjo Nexus', {
+                    body: alerta.mensagem || 'Confira os detalhes no Radar de Editais.',
+                    icon: '../favicon.ico'
+                });
+            }
+        } catch (_) {}
+
+        const ehPrazo = alerta._tipo === 'prazos' || alerta.dias_restantes !== undefined;
+        const isCritico = ehPrazo ? (alerta.nivel_urgencia === 'critico') : ((alerta.score_match || 0) >= 85);
+        const corBorda = isCritico ? '#ef4444' : '#f59e0b';
+        const icone = ehPrazo ? '🚨' : '⚡';
+        const tagTexto = ehPrazo
+            ? (alerta.nivel_urgencia === 'critico' ? `CRÍTICO • ${alerta.dias_restantes}d` : `PRAZO • ${alerta.dias_restantes}d`)
+            : `${alerta.score_match || 80}% MATCH`;
+
+        const titulo = alerta.edital?.title || alerta.titulo || 'Alerta de Oportunidade';
+        const editalId = alerta.edital_id;
+        const mensagem = alerta.mensagem || 'Atenção aos requisitos e prazos do edital.';
+
+        const toast = document.createElement('div');
+        toast.id = 'anjo-toast-notificacao';
+        toast.className = 'anjo-toast-notificacao';
+        toast.style.cssText = `
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            max-width: 410px;
+            width: calc(100% - 32px);
+            background: rgba(15, 19, 26, 0.96);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid ${corBorda};
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85), 0 0 20px ${corBorda}33;
+            border-radius: 12px;
+            padding: 14px 16px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-family: inherit;
+            animation: deslizarNotificacaoEntrada 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        `;
+
+        toast.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 16px;">${icone}</span>
+                    <span style="background: ${corBorda}22; color: ${corBorda}; border: 1px solid ${corBorda}55; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; text-transform: uppercase;">
+                        ${tagTexto}
+                    </span>
+                </div>
+                <button id="btnFecharToast" style="background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+            </div>
+            <div style="font-size: 13px; font-weight: 600; color: #f8fafc; line-height: 1.35;">
+                ${titulo}
+            </div>
+            <div style="font-size: 12px; color: #cbd5e1; line-height: 1.4;">
+                ${mensagem}
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px;">
+                <button id="btnDispensarToast" style="background: transparent; border: 1px solid #334155; color: #94a3b8; font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 6px; cursor: pointer;">
+                    Dispensar
+                </button>
+                <button id="btnVerEditalToast" style="background: #2563eb; border: none; color: #ffffff; font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 6px; cursor: pointer;">
+                    Ver no Radar →
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+
+        const fechar = () => {
+            toast.style.animation = 'deslizarNotificacaoSaida 0.25s ease forwards';
+            setTimeout(() => toast.remove(), 260);
+        };
+
+        toast.querySelector('#btnFecharToast')?.addEventListener('click', fechar);
+        toast.querySelector('#btnDispensarToast')?.addEventListener('click', () => {
+            if (alerta.id) {
+                if (ehPrazo) marcarAlertaPrazoComoLido(alerta.id);
+                else marcarAlertaComoLido(alerta.id);
+            }
+            fechar();
+        });
+
+        toast.querySelector('#btnVerEditalToast')?.addEventListener('click', () => {
+            fechar();
+            if (editalId) {
+                if (window.selectEdital) {
+                    window.selectEdital(editalId);
+                } else {
+                    window.location.href = `RadarEditais.html?edital_id=${editalId}`;
+                }
+            }
+        });
+
+        if (!opcoes.persistente) {
+            setTimeout(() => {
+                if (document.getElementById('anjo-toast-notificacao') === toast) {
+                    fechar();
+                }
+            }, 8000);
+        }
+    }
 
     async function atualizarTodosAlertas(stId) {
         if (!stId) return;
@@ -894,6 +1051,21 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             }
 
             renderizarCentralAlertas();
+
+            // Disparo automático do Pop-up Mobile / Web para o alerta mais crítico na sessão
+            const alertaMaisCritico = alertasPrazos.find(a => !a.lido && a.nivel_urgencia === 'critico')
+                || alertasPrazos.find(a => !a.lido && a.nivel_urgencia === 'urgente')
+                || alertasMatch.find(a => !a.lido && (a.score_match || 0) >= 85);
+
+            if (alertaMaisCritico) {
+                const chaveSessao = `anjo_notif_visto_${alertaMaisCritico._tipo}_${alertaMaisCritico.id}`;
+                if (!sessionStorage.getItem(chaveSessao)) {
+                    sessionStorage.setItem(chaveSessao, '1');
+                    setTimeout(() => {
+                        exibirPopUpNotificacao(alertaMaisCritico);
+                    }, 1200);
+                }
+            }
         } catch (e) {
             console.debug('Central de alertas operando em fallback offline.');
         }
@@ -985,7 +1157,8 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 </div>
                 <div style="font-weight: 600; font-size: 12px; color: #f1f5f9; line-height: 1.3;">${tituloEdital}</div>
                 <div style="font-size: 11px; color: #94a3b8; line-height: 1.35;">${alerta.mensagem}</div>
-                <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+                <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin-top: 4px;">
+                    ${ehPrazo ? `<button class="btn-email-alerta" data-id="${alerta.id}" title="Disparar e-mail de notificação" style="background: rgba(255,255,255,0.04); border: 1px solid #334155; color: #94a3b8; font-size: 11px; font-weight: 500; padding: 4px 8px; border-radius: 6px; cursor: pointer;">✉️ E-mail</button>` : ''}
                     <button class="btn-ver-edital-alerta" data-edital-id="${editalId}" style="background: #2563eb; color: #fff; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">Ver no Radar →</button>
                 </div>
             `;
@@ -999,6 +1172,30 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                     window.location.href = `RadarEditais.html?edital_id=${editalId}`;
                 }
             });
+
+            if (ehPrazo) {
+                cardEl.querySelector('.btn-email-alerta')?.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const btn = e.currentTarget;
+                    const original = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = 'Enviando...';
+                    try {
+                        const res = await dispararEmailAlertaPrazo(alerta.id);
+                        if (res && res.sucesso) {
+                            btn.innerHTML = '✓ Enviado!';
+                            btn.style.color = '#10b981';
+                            btn.style.borderColor = '#10b981';
+                        } else {
+                            btn.innerHTML = 'Falha';
+                            setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2000);
+                        }
+                    } catch (err) {
+                        btn.innerHTML = 'Erro';
+                        setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2000);
+                    }
+                });
+            }
 
             cardEl.querySelector('.btn-marcar-um-lido')?.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -1053,6 +1250,21 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         });
     }
 
+    if (btnTestarPopUp) {
+        btnTestarPopUp.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fecharDropdownAlertas();
+            const amostra = alertasPrazos[0] || alertasMatch[0] || {
+                titulo: 'Edital FINEP Mulheres Inovadoras - Fase Final',
+                mensagem: '🚨 Encerramento em 2 dias (11/11/2026)! Revise proposta e documentação técnica.',
+                dias_restantes: 2,
+                nivel_urgencia: 'critico',
+                _tipo: 'prazos'
+            };
+            exibirPopUpNotificacao(amostra, { persistente: false });
+        });
+    }
+
     if (btnMarcarTodosLidos) {
         btnMarcarTodosLidos.addEventListener('click', async (e) => {
             e.stopPropagation();
@@ -1071,7 +1283,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
     }
 
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('#alertaNotificacoesWrapper')) {
+        if (!e.target.closest('#alertaNotificacoesWrapper') && !e.target.closest('#anjo-toast-notificacao')) {
             fecharDropdownAlertas();
         }
     });

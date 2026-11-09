@@ -77,3 +77,9 @@ export async function marcarTodosAlertasPrazoComoLidos(startupId = null) {
         body: JSON.stringify({ startup_id: startupId })
     });
 }
+
+export async function dispararEmailAlertaPrazo(alertaId) {
+    return await requisicaoApi(`/alertas/prazos-criticos/${alertaId}/enviar-email`, {
+        method: 'POST'
+    });
+}

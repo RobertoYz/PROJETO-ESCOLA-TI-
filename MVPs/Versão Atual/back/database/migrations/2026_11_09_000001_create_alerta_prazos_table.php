@@ -24,6 +24,8 @@ return new class extends Migration
             $table->string('titulo');
             $table->text('mensagem');
             $table->boolean('lido')->default(false);
+            $table->boolean('email_enviado')->default(false);
+            $table->dateTime('email_enviado_em')->nullable();
             $table->timestamps();
 
             $table->unique(['user_id', 'edital_id', 'nivel_urgencia'], 'user_edital_urgencia_unique');
@@ -42,3 +44,4 @@ return new class extends Migration
         Schema::dropIfExists('alerta_prazos');
     }
 };
+

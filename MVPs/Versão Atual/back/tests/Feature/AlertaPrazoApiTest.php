@@ -11,6 +11,7 @@ use App\Models\Edital;
 use App\Models\AlertaPrazo;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 
 class AlertaPrazoApiTest extends TestCase
 {
@@ -271,4 +272,53 @@ class AlertaPrazoApiTest extends TestCase
             ->getJson('/api/alertas/prazos-criticos/contador');
         $resContadorOutro->assertJsonPath('total_nao_lidos', 0);
     }
+
+    public function test_envio_email_notificacao_prazo_critico_sucesso(): void
+    {
+        Mail::fake();
+
+        $this->actingAs($this->usuario)
+            ->postJson('/api/alertas/prazos-criticos/verificar', [
+                'startup_id' => $this->startup->id,
+                'enviar_email' => false
+            ]);
+
+        $alerta = AlertaPrazo::where('user_id', $this->usuario->id)
+            ->where('nivel_urgencia', 'critico')
+            ->firstOrFail();
+
+        $this->assertFalse($alerta->email_enviado);
+
+        $res = $this->actingAs($this->usuario)
+            ->postJson("/api/alertas/prazos-criticos/{$alerta->id}/enviar-email");
+
+        $res->assertStatus(200)
+            ->assertJsonPath('sucesso', true);
+
+        $alerta->refresh();
+        $this->assertTrue($alerta->email_enviado);
+        $this->assertNotNull($alerta->email_enviado_em);
+    }
+
+    public function test_verificar_com_flag_enviar_email_despacha_notificacoes(): void
+    {
+        Mail::fake();
+
+        $this->actingAs($this->usuario)
+            ->postJson('/api/alertas/prazos-criticos/verificar', [
+                'startup_id' => $this->startup->id,
+                'enviar_email' => true
+            ]);
+
+        // Verifica que alertas criticos e urgentes foram marcados como email enviado
+        $alertasUrgentes = AlertaPrazo::where('user_id', $this->usuario->id)
+            ->whereIn('nivel_urgencia', ['critico', 'urgente'])
+            ->get();
+
+        $this->assertNotEmpty($alertasUrgentes);
+        foreach ($alertasUrgentes as $alerta) {
+            $this->assertTrue($alerta->email_enviado);
+        }
+    }
 }
+

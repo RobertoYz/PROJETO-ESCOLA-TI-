@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\Startup;
+use App\Models\AlertaPrazo;
 use App\Services\AlertaPrazoService;
 use Exception;
 
@@ -57,7 +58,8 @@ class AlertaPrazoController extends Controller
             }
 
             $diasMaximos = (int) $request->input('dias_maximos', 15);
-            $alertas = $this->prazoService->verificarEGerarAlertasPrazos($usuario, $startup, $diasMaximos);
+            $enviarEmail = $request->boolean('enviar_email', false);
+            $alertas = $this->prazoService->verificarEGerarAlertasPrazos($usuario, $startup, $diasMaximos, $enviarEmail);
             $totalNaoLidos = $this->prazoService->contarNaoLidos($usuario, $startup?->id);
 
             return response()->json([
@@ -114,6 +116,31 @@ class AlertaPrazoController extends Controller
     }
 
     /**
+     * RF-47 / EDTAN-171: Dispara e-mail de alerta de prazo crítico manualmente
+     * POST /api/alertas/prazos-criticos/{id}/enviar-email
+     */
+    public function enviarEmail(Request $request, int $id): JsonResponse
+    {
+        try {
+            $alerta = AlertaPrazo::where('id', $id)
+                ->where('user_id', $request->user()->id)
+                ->firstOrFail();
+
+            $enviado = $this->prazoService->enviarEmailAlertaPrazo($request->user(), $alerta);
+
+            return response()->json([
+                'sucesso' => $enviado,
+                'mensagem' => $enviado ? 'E-mail de alerta de prazo enviado com sucesso.' : 'Falha ao despachar e-mail.'
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'sucesso' => false,
+                'mensagem' => 'Alerta não encontrado ou não autorizado.'
+            ], 404);
+        }
+    }
+
+    /**
      * RF-47 / EDTAN-171: Marca todos os alertas de prazos do usuário como lidos
      * POST /api/alertas/prazos-criticos/marcar-todos-lidos
      */
@@ -131,3 +158,4 @@ class AlertaPrazoController extends Controller
         ]);
     }
 }
+

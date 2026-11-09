@@ -20,13 +20,17 @@ class AlertaPrazo extends Model
         'nivel_urgencia',
         'titulo',
         'mensagem',
-        'lido'
+        'lido',
+        'email_enviado',
+        'email_enviado_em'
     ];
 
     protected $casts = [
         'data_limite' => 'datetime',
         'dias_restantes' => 'integer',
-        'lido' => 'boolean'
+        'lido' => 'boolean',
+        'email_enviado' => 'boolean',
+        'email_enviado_em' => 'datetime'
     ];
 
     public function user(): BelongsTo
@@ -49,3 +53,4 @@ class AlertaPrazo extends Model
         return $this->belongsTo(KanbanCard::class, 'kanban_card_id');
     }
 }
+
