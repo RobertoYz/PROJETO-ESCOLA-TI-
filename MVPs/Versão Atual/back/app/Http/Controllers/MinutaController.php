@@ -6,6 +6,7 @@ use App\Models\Minuta;
 use App\Models\Startup;
 use App\Models\Edital;
 use App\Services\MinutaAiService;
+use App\Services\MinutaLimitService;
 use App\Services\DocumentExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -13,9 +14,9 @@ use Illuminate\Support\Facades\Log;
 class MinutaController extends Controller
 {
     /**
-     * RF-29 & RF-34: Gera uma nova minuta via IA com registro auditável
+     * RF-29 & RF-34: Gera uma nova minuta via IA com registro auditável e controle de cota por plano (EDTAN-250)
      */
-    public function gerar(Request $request, MinutaAiService $aiService)
+    public function gerar(Request $request, MinutaAiService $aiService, MinutaLimitService $limitService)
     {
         $request->validate([
             'startup_id' => 'required|exists:startups,id',
@@ -28,10 +29,28 @@ class MinutaController extends Controller
         $edital = Edital::findOrFail($request->edital_id);
         $usuario = $request->user();
 
+        // EDTAN-250: Controle de custos de IA - valida cota de minutas do plano antes de chamar o LLM
+        $consumo = $limitService->obterConsumoMinutas($usuario, $startup);
+        if ($consumo['atingiu_limite']) {
+            Log::warning("Bloqueio de cota de IA (EDTAN-250): limite atingido para plano {$consumo['plano_nome']}", [
+                'user_id' => $usuario?->id,
+                'startup_id' => $startup->id,
+                'consumo' => $consumo
+            ]);
+
+            return response()->json([
+                'sucesso' => false,
+                'codigo' => 'LIMITE_MINUTAS_ATINGIDO',
+                'mensagem' => "Você atingiu o limite de {$consumo['limite']} minutas geradas por IA do seu plano {$consumo['plano_nome']} neste mês ({$consumo['usadas']}/{$consumo['limite']}). Faça upgrade para continuar gerando.",
+                'consumo' => $consumo
+            ], 403);
+        }
+
         Log::info("Iniciando geração de minuta via IA (RF-29)", [
             'startup_id' => $startup->id,
             'edital_id' => $edital->id,
-            'user_id' => $usuario?->id
+            'user_id' => $usuario?->id,
+            'consumo_atual' => "{$consumo['usadas']}/{$consumo['limite']}"
         ]);
 
         $resultadoIa = $aiService->gerarMinuta($startup, $edital, $request->ideia_projeto);
@@ -54,11 +73,33 @@ class MinutaController extends Controller
 
         Log::info("Minuta #{$minuta->id} criada e auditada com sucesso (RF-34)");
 
+        // Recalcula o consumo pós-geração
+        $novoConsumo = $limitService->obterConsumoMinutas($usuario, $startup);
+
         return response()->json([
             'sucesso' => true,
             'mensagem' => 'Minuta gerada com sucesso pela Inteligência Artificial.',
-            'dados' => $minuta->load(['startup', 'edital', 'user'])
+            'dados' => $minuta->load(['startup', 'edital', 'user']),
+            'consumo' => $novoConsumo
         ], 201);
+    }
+
+    /**
+     * EDTAN-250: Consulta a cota e o consumo atual de minutas de IA do plano
+     * GET /api/minutas/consumo
+     */
+    public function consumo(Request $request, MinutaLimitService $limitService)
+    {
+        $usuario = $request->user();
+        $startupId = $request->input('startup_id');
+        $startup = $startupId ? Startup::find($startupId) : null;
+
+        $consumo = $limitService->obterConsumoMinutas($usuario, $startup);
+
+        return response()->json([
+            'sucesso' => true,
+            'dados' => $consumo
+        ]);
     }
 
     /**

@@ -12,7 +12,7 @@ function exibirErro(mensagem, exibirLinkLogin = false) {
         divMensagemErro.innerHTML = `
             <div>${mensagem}</div>
             <div style="margin-top: 8px;">
-                <a href="login.html" class="alert-link">Ir para a tela de Login →</a>
+                <a href="login.html" class="alert-link" style="color: #a5b4fc; font-weight: 600; text-decoration: underline;">Ir para a tela de Login →</a>
             </div>
         `;
     } else {
@@ -50,7 +50,6 @@ try {
         }
     });
 });
-
 formulario.addEventListener('submit', async (evento) => {
     evento.preventDefault();
     limparErro();

@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Anjo Nexus - Pipeline Kanban</title>
+    <script>
+        if (!localStorage.getItem('token_autenticacao')) {
+            window.location.replace('login.html');
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
     <style>
@@ -1148,7 +1153,7 @@
                     </div>
 
                     <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
                         <button type="button" class="btn-ai-sparkle" id="btnGerarMinutaAction"
                             onclick="handleGerarMinuta(event)">
                             <svg width="16" height="16" viewBox="0 0 24 24">
@@ -1157,6 +1162,10 @@
                             </svg>
                             Estruturar Minuta Técnica
                         </button>
+                        <div id="cotaMinutasContainer" style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; background: rgba(255,255,255,0.03); border: 1px solid #2e3440; padding: 4px 10px; border-radius: 6px;">
+                            <span style="color: #94a3b8;">Cota do Plano:</span>
+                            <strong id="badgeCotaMinutas" style="color: #38bdf8;">--/--</strong>
+                        </div>
                         <span id="aiGenerationStatus" style="font-size: 0.85rem; color: #aaa;"></span>
                     </div>
 
@@ -1992,6 +2001,7 @@
         }
 
         async function carregarStartupsEEditaisMinuta() {
+            carregarConsumoMinutasPlano();
             const selectS = document.getElementById('selectMinutaStartup');
             const selectFit = document.getElementById('selectFitStartup');
             const selectE = document.getElementById('selectMinutaEdital');
@@ -2124,7 +2134,7 @@
             }
         }
 
-        // RF-29: Gerar Minuta de Proposta com IA
+        // RF-29 & EDTAN-250: Gerar Minuta de Proposta com IA respeitando limite do plano
         async function handleGerarMinuta(evt) {
             if (evt) evt.preventDefault();
 
@@ -2151,7 +2161,11 @@
             try {
                 const res = await fetch(`${API_BASE}/minutas/gerar`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    },
                     body: JSON.stringify({
                         startup_id: startupId,
                         edital_id: editalId,
@@ -2164,8 +2178,17 @@
                     currentMinutaData = data.dados;
                     renderizarEditorMinuta(currentMinutaData);
                     status.textContent = `Proposta estruturada e salva com sucesso para este edital!`;
+                    if (data.consumo) {
+                        atualizarBadgeCotaMinutas(data.consumo);
+                    }
+                } else if (res.status === 403 && data.codigo === 'LIMITE_MINUTAS_ATINGIDO') {
+                    alert('⚠️ ' + data.mensagem);
+                    status.innerHTML = `<span style="color: #ef4444; font-weight: 600;">Limite do plano atingido (${data.consumo?.usadas}/${data.consumo?.limite}). Faça upgrade para gerar mais.</span>`;
+                    if (data.consumo) {
+                        atualizarBadgeCotaMinutas(data.consumo);
+                    }
                 } else {
-                    alert('Falha ao elaborar minuta: ' + (data.message || 'Erro desconhecido.'));
+                    alert('Falha ao elaborar minuta: ' + (data.mensagem || data.message || 'Erro desconhecido.'));
                     status.textContent = 'Erro na geração.';
                 }
             } catch (err) {
@@ -2175,6 +2198,46 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2z"/></svg> Estruturar Minuta Técnica`;
+            }
+        }
+
+        // EDTAN-250: Consulta e renderização da cota de minutas do plano
+        async function carregarConsumoMinutasPlano() {
+            const badge = document.getElementById('badgeCotaMinutas');
+            if (!badge) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/minutas/consumo`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    }
+                });
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.sucesso && json.dados) {
+                        atualizarBadgeCotaMinutas(json.dados);
+                    }
+                }
+            } catch (err) {
+                console.debug('Falha ao verificar consumo de minutas:', err);
+            }
+        }
+
+        function atualizarBadgeCotaMinutas(dados) {
+            const badge = document.getElementById('badgeCotaMinutas');
+            const btn = document.getElementById('btnGerarMinutaAction');
+            if (!badge) return;
+
+            badge.textContent = `${dados.usadas}/${dados.limite} minutas`;
+            if (dados.atingiu_limite) {
+                badge.style.color = '#ef4444';
+                badge.textContent += ' (Esgotada)';
+                if (btn) {
+                    btn.title = `Limite de minutas atingido para o plano ${dados.plano_nome}.`;
+                }
+            } else {
+                badge.style.color = '#10b981';
             }
         }
 

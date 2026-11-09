@@ -36,7 +36,10 @@ jobs:
 
       - name: 4. Instalar dependências e Sincronizar Capacitor
         run: |
-          SETTINGS_FILE=$(find . -path "*/mobile/android/settings.gradle" | head -n 1)
+          SETTINGS_FILE=$(find . -path "*/Versão Atual/mobile/android/settings.gradle" | head -n 1)
+          if [ -z "$SETTINGS_FILE" ]; then
+            SETTINGS_FILE=$(find . -path "*/mobile/android/settings.gradle" | grep -v "Anteriores" | head -n 1)
+          fi
           ANDROID_DIR=$(dirname "$SETTINGS_FILE")
           MOBILE_DIR=$(dirname "$ANDROID_DIR")
           FRONT_DIR="$(dirname "$MOBILE_DIR")/front"
@@ -53,7 +56,10 @@ jobs:
 
       - name: 5. Compilar APK com Gradle
         run: |
-          SETTINGS_FILE=$(find . -path "*/mobile/android/settings.gradle" | head -n 1)
+          SETTINGS_FILE=$(find . -path "*/Versão Atual/mobile/android/settings.gradle" | head -n 1)
+          if [ -z "$SETTINGS_FILE" ]; then
+            SETTINGS_FILE=$(find . -path "*/mobile/android/settings.gradle" | grep -v "Anteriores" | head -n 1)
+          fi
           ANDROID_DIR=$(dirname "$SETTINGS_FILE")
           cd "$ANDROID_DIR"
           echo "Configurando local.properties..."
@@ -66,16 +72,6 @@ jobs:
           
           echo "=== ULTIMAS LINHAS DO GRADLE ==="
           tail -n 60 build.log
-          
-          # Salvar log no git para diagnostico rapido
-          cd "$GITHUB_WORKSPACE"
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -B debug-build-log
-          cp "$ANDROID_DIR/build.log" ./build.log
-          git add ./build.log
-          git commit -m "chore: save build.log [skip ci]" || true
-          git push -f origin debug-build-log || true
           
           if [ "$BUILD_FAILED" = "1" ]; then
             echo "Gradle build falhou!"

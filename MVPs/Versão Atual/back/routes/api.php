@@ -10,6 +10,8 @@ use App\Http\Controllers\MinutaController;
 use App\Http\Controllers\CnpjController;
 use App\Http\Controllers\PlanoController;
 use App\Http\Controllers\StartupController;
+use App\Http\Controllers\AlertaMatchController;
+use App\Http\Controllers\AlertaPrazoController;
 
 // Rotas de Editais
 Route::get('/editais', [EditalController::class, 'index']);
@@ -38,6 +40,25 @@ Route::delete('/auth/cancelar-cadastro-pendente', [AuthController::class, 'cance
 
 // Rotas protegidas (Sanctum) - sem o middleware que bloqueia pagamento pendente
 Route::middleware('auth:sanctum')->group(function () {
+    // RF-11: Favoritar e listar editais favoritos
+    Route::post('/editais/{id}/favoritar', [EditalController::class, 'toggleFavorito']);
+    Route::get('/editais/favoritos', [EditalController::class, 'listarFavoritos']);
+
+    // RF-26 (EDTAN-172): Módulo de Alertas de Match de Editais Compatíveis
+    Route::get('/alertas/match', [AlertaMatchController::class, 'index']);
+    Route::post('/alertas/verificar', [AlertaMatchController::class, 'verificar']);
+    Route::get('/alertas/contador', [AlertaMatchController::class, 'contador']);
+    Route::patch('/alertas/{id}/lido', [AlertaMatchController::class, 'marcarLido']);
+    Route::post('/alertas/marcar-todos-lidos', [AlertaMatchController::class, 'marcarTodosLidos']);
+
+    // RF-47 (EDTAN-171): Módulo de Alertas de Prazos Críticos de Editais
+    Route::get('/alertas/prazos-criticos', [AlertaPrazoController::class, 'index']);
+    Route::post('/alertas/prazos-criticos/verificar', [AlertaPrazoController::class, 'verificar']);
+    Route::get('/alertas/prazos-criticos/contador', [AlertaPrazoController::class, 'contador']);
+    Route::patch('/alertas/prazos-criticos/{id}/lido', [AlertaPrazoController::class, 'marcarLido']);
+    Route::post('/alertas/prazos-criticos/marcar-todos-lidos', [AlertaPrazoController::class, 'marcarTodosLidos']);
+    Route::post('/alertas/prazos-criticos/{id}/enviar-email', [AlertaPrazoController::class, 'enviarEmail']);
+
     // Perfil do Consultor (obter e atualizar dados de cadastro: nome, email, senha)
     Route::get('/auth/perfil', [AuthController::class, 'obterPerfil']);
     Route::put('/auth/perfil', [AuthController::class, 'atualizarPerfil']);
@@ -66,6 +87,7 @@ Route::prefix('kanban')->group(function () {
 
 // Rotas do Módulo de IA e Minutas (RF-29 a RF-34 e RF-47)
 Route::prefix('minutas')->group(function () {
+    Route::get('/consumo', [MinutaController::class, 'consumo']);
     Route::post('/gerar', [MinutaController::class, 'gerar']);
     Route::get('/', [MinutaController::class, 'index']);
     Route::get('/{id}', [MinutaController::class, 'show']);

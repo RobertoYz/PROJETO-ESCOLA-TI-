@@ -1,9 +1,20 @@
-// Detecta automaticamente se está rodando localmente no navegador ou em produção/APK
-const ehAmbienteLocal = typeof window !== 'undefined' &&
-    (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') &&
-    !window.Capacitor && window.location.protocol !== 'capacitor:';
+// Detecta se o aplicativo está rodando em ambiente Capacitor (APK Android)
+const ehCapacitorApp = typeof window !== 'undefined' && (
+    window.Capacitor !== undefined ||
+    window.location.protocol === 'capacitor:' ||
+    (window.location.hostname === 'localhost' && window.location.protocol === 'https:') ||
+    (typeof navigator !== 'undefined' && navigator.userAgent && (navigator.userAgent.includes('wv') || navigator.userAgent.includes('Capacitor')))
+);
 
-const URL_PADRAO = ehAmbienteLocal
+// Se for Capacitor (APK no celular) ou domínio de produção, SEMPRE consome o servidor oficial na nuvem!
+// Só usa localhost se for explicitamente navegador desktop de desenvolvimento (ex: porta 3000 ou 5500 via http)
+const ehDevNavegadorLocal = typeof window !== 'undefined' &&
+    !ehCapacitorApp &&
+    window.location.protocol === 'http:' &&
+    (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') &&
+    (window.location.port !== '');
+
+const URL_PADRAO = ehDevNavegadorLocal
     ? 'http://127.0.0.1:8000/api'
     : 'https://anjonexus.intalenti.com.br/api';
 

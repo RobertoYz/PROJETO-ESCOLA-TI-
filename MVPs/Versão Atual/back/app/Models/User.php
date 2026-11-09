@@ -50,4 +50,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Agencia::class, 'agencia_id');
     }
+
+    public function favoritos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(EditalFavorito::class, 'user_id');
+    }
 }

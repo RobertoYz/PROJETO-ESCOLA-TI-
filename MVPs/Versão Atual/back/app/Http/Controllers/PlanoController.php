@@ -19,7 +19,8 @@ class PlanoController extends Controller
             'preco as preco_mensal',
             'limite_startups',
             'limite_membros_equipe',
-            'limite_membros_equipe as limite_usuarios'
+            'limite_membros_equipe as limite_usuarios',
+            'limite_minutas_ia'
         )->get();
         return response()->json($planos, 200);
     }

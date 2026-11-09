@@ -1,6 +1,11 @@
 import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
 import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
-import { obterStartupAtiva } from '../scripts/servicos/servicoAutenticacao.js';
+import { obterStartupAtiva, usuarioEstaAutenticado } from '../scripts/servicos/servicoAutenticacao.js';
+
+// Guard de autenticação: redireciona para login se não houver token
+if (!usuarioEstaAutenticado()) {
+    window.location.replace('login.html');
+}
 
 let mockEditais = [];
 let selectedId = null;
@@ -28,37 +33,6 @@ if (document.readyState === 'loading') {
 }
 
 function initUI() {
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggleSidebar');
-    if (toggleBtn) toggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
-
-    const userMenuBtn = document.getElementById('userMenuBtn');
-    const mainDropdown = document.getElementById('mainDropdown');
-    const manageProfilesBtn = document.getElementById('manageProfilesBtn');
-    const profilesSubmenu = document.getElementById('profilesSubmenu');
-
-    if (userMenuBtn) {
-        userMenuBtn.addEventListener('click', (e) => {
-            if (e.target.closest('.dropdown-menu')) return;
-            mainDropdown.classList.toggle('active');
-            if (!mainDropdown.classList.contains('active')) profilesSubmenu.classList.remove('active');
-        });
-    }
-
-    if (manageProfilesBtn) {
-        manageProfilesBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            profilesSubmenu.classList.toggle('active');
-        });
-    }
-
-    document.addEventListener('click', (e) => {
-        if (userMenuBtn && !userMenuBtn.contains(e.target)) {
-            if (mainDropdown) mainDropdown.classList.remove('active');
-            if (profilesSubmenu) profilesSubmenu.classList.remove('active');
-        }
-    });
-
     const btnFavDetail = document.getElementById('btnFavDetail');
     if (btnFavDetail) {
         btnFavDetail.addEventListener('click', () => {
@@ -120,12 +94,32 @@ export async function fetchEditais() {
 
     try {
         const radarFilterEl = document.getElementById('radarFilter');
-        let url = `${API_BASE_URL}/editais`;
+        const token = localStorage.getItem('token_autenticacao');
+        const startupAtiva = obterStartupAtiva();
+
+        const params = new URLSearchParams();
         if (radarFilterEl && radarFilterEl.value) {
-            url += `?fonte=${radarFilterEl.value}`;
+            if (radarFilterEl.value === 'FAVORITOS') {
+                params.append('favoritos', '1');
+            } else {
+                params.append('fonte', radarFilterEl.value);
+            }
+        }
+        if (startupAtiva && startupAtiva.id) {
+            params.append('startup_id', startupAtiva.id);
         }
 
-        const response = await fetch(url);
+        const queryString = params.toString() ? `?${params.toString()}` : '';
+        const url = `${API_BASE_URL}/editais${queryString}`;
+
+        const headers = {
+            'Accept': 'application/json'
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(url, { headers });
 
         if (!response.ok) {
             throw new Error(`Erro HTTP: ${response.status}`);
@@ -138,7 +132,15 @@ export async function fetchEditais() {
 
         if (mockEditais.length > 0) {
             renderTable();
-            if (window.innerWidth > 900) { selectEdital(mockEditais[0].id); }
+            const urlParams = new URLSearchParams(window.location.search);
+            const editalUrlId = urlParams.get('edital_id');
+            const editalAlvo = editalUrlId ? mockEditais.find(e => String(e.id) === String(editalUrlId)) : null;
+
+            if (editalAlvo) {
+                selectEdital(editalAlvo.id);
+            } else if (window.innerWidth > 900) {
+                selectEdital(mockEditais[0].id);
+            }
         } else {
             showEmptyState();
         }
@@ -152,6 +154,7 @@ export async function fetchEditais() {
 // Expõe no escopo global para o onchange do select de filtro funcionar com ES modules
 window.fetchEditais = fetchEditais;
 window.toggleFavorite = toggleFavorite;
+window.selectEdital = selectEdital;
 
 // ==========================================
 // RENDERIZAÇÃO DA INTERFACE (Componentes)
@@ -264,17 +267,7 @@ function selectEdital(id) {
     }
     
     // Atualiza icone de favorito no painel
-    const btnFavDetail = document.getElementById('btnFavDetail');
-    if (btnFavDetail) {
-        const useTag = btnFavDetail.querySelector('use');
-        if (edital.favorite) {
-            btnFavDetail.classList.add('active');
-            if(useTag) useTag.setAttribute('href', '#icon-star-filled');
-        } else {
-            btnFavDetail.classList.remove('active');
-            if(useTag) useTag.setAttribute('href', '#icon-star');
-        }
-    }
+    atualizarBotaoFavoritoPainel(edital);
 
     // Renderiza blocos complexos
     renderDocuments(edital.documentos);
@@ -344,12 +337,75 @@ function getMatchHexColor(match) {
     return 'var(--danger-color)';
 }
 
-function toggleFavorite(id) {
+function atualizarBotaoFavoritoPainel(edital) {
+    if (!edital || edital.id !== selectedId) return;
+    const btnFavDetail = document.getElementById('btnFavDetail');
+    if (btnFavDetail) {
+        const useTag = btnFavDetail.querySelector('use');
+        if (edital.favorite) {
+            btnFavDetail.classList.add('active');
+            if (useTag) useTag.setAttribute('href', '#icon-star-filled');
+        } else {
+            btnFavDetail.classList.remove('active');
+            if (useTag) useTag.setAttribute('href', '#icon-star');
+        }
+    }
+}
+
+async function toggleFavorite(id) {
     const edital = mockEditais.find(e => e.id === id);
-    if (edital) {
-        edital.favorite = !edital.favorite;
+    if (!edital) return;
+
+    const estadoAnterior = !!edital.favorite;
+    // Atualização otimista imediata na interface
+    edital.favorite = !estadoAnterior;
+    renderTable();
+    atualizarBotaoFavoritoPainel(edital);
+
+    const token = localStorage.getItem('token_autenticacao');
+    if (!token) {
+        return; // Usuário não autenticado mantém em memória na sessão
+    }
+
+    try {
+        const startupAtiva = obterStartupAtiva();
+        const res = await fetch(`${API_BASE_URL}/editais/${id}/favoritar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                startup_id: startupAtiva ? startupAtiva.id : null
+            })
+        });
+
+        if (!res.ok) {
+            throw new Error(`Erro status: ${res.status}`);
+        }
+
+        const json = await res.json();
+        edital.favorite = !!json.favorito;
         renderTable();
-        // TODO: Enviar requisição POST/PUT para a API atualizar o banco
+        atualizarBotaoFavoritoPainel(edital);
+
+        // Se estiver filtrando apenas por favoritos e o usuário desfavoritou, remove da listagem
+        const radarFilterEl = document.getElementById('radarFilter');
+        if (radarFilterEl && radarFilterEl.value === 'FAVORITOS' && !edital.favorite) {
+            mockEditais = mockEditais.filter(e => e.id !== id);
+            renderTable();
+            if (mockEditais.length > 0) {
+                selectEdital(mockEditais[0].id);
+            } else {
+                showEmptyState();
+            }
+        }
+    } catch (err) {
+        console.error('Falha ao persistir favorito no backend:', err);
+        edital.favorite = estadoAnterior;
+        renderTable();
+        atualizarBotaoFavoritoPainel(edital);
     }
 }
 
@@ -373,7 +429,6 @@ function showEmptyState() {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: #a0a0a0;">Nenhum edital encontrado.</td></tr>`;
     }
 }
-
 
 // Função para fechar painel de detalhes no mobile
 function fecharDetalhesMobile() {
