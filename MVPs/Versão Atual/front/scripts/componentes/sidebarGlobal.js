@@ -2,15 +2,32 @@
  * Componente Sidebar Global
  * Mantém navegação padronizada e unificada entre Radar, Kanban e Startups
  */
+import { centralPrazos } from './centralPrazos.js';
+
 export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
     const sidebarEl = document.getElementById('sidebar');
     if (!sidebarEl) return;
 
+    // Carregar dinamicamente o CSS de prazos caso ainda não exista
+    if (!document.getElementById('cssPrazosCriticos')) {
+        const link = document.createElement('link');
+        link.id = 'cssPrazosCriticos';
+        link.rel = 'stylesheet';
+        link.href = '../css/prazos.css';
+        document.head.appendChild(link);
+    }
+
     sidebarEl.innerHTML = `
         <div class="sidebar-header" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-            <button class="toggle-btn" id="toggleSidebar" title="Recolher / Expandir menu" style="background: none; border: none; color: #fff; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-            </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <button class="toggle-btn" id="toggleSidebar" title="Recolher / Expandir menu" style="background: none; border: none; color: #fff; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+                </button>
+                <button id="btnSinoPrazos" title="Alertas de Prazos Críticos (EDTAN-171)" style="background: rgba(30, 41, 59, 0.8); border: 1px solid #334155; color: #f8fafc; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; position: relative; transition: 0.2s;">
+                    <span style="font-size: 1.1rem;">🔔</span>
+                    <span id="badgePrazosCriticos" style="display: none; position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; font-size: 0.68rem; font-weight: 700; border-radius: 10px; min-width: 18px; height: 18px; align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);">0</span>
+                </button>
+            </div>
             <div class="logo" style="font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: -0.5px;">Anjo<span style="font-weight: 400; color: #3b82f6;">Nexus</span></div>
         </div>
 
@@ -51,4 +68,16 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
             sidebarEl.classList.toggle('collapsed');
         });
     }
+
+    // Inicializar listener do Sino de Prazos Críticos (EDTAN-171)
+    const btnSino = document.getElementById('btnSinoPrazos');
+    if (btnSino) {
+        btnSino.addEventListener('click', (e) => {
+            e.preventDefault();
+            centralPrazos.abrirModal();
+        });
+    }
+
+    // Disparar carga de prazos em background
+    centralPrazos.iniciar();
 }

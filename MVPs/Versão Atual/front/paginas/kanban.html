@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anjo Nexus - Pipeline Kanban</title>
+    <link rel="manifest" href="../manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/prazos.css">
     <style>
         :root {
             --bg-dark: #050505;
@@ -1439,6 +1441,21 @@
             const matchVal = edital.ai_match || meta.ai_match || 0;
             const matchColorClass = getMatchColorClass(matchVal);
 
+            // Módulo Alertas de Prazos Críticos (EDTAN-171)
+            const crit = card.criticidade_prazo || {};
+            let badgePrazoHtml = '';
+            if (crit.has_deadline) {
+                let badgeClass = crit.badge_class || 'prazo-neutro';
+                let icone = crit.status === 'critico_24h' ? '🔥' : (crit.status === 'alerta_72h' ? '⚠️' : '⏱️');
+                badgePrazoHtml = `
+                    <div style="margin-top: 6px;">
+                        <span class="badge-prazo-tag ${badgeClass}">
+                            ${icone} ${crit.rotulo}
+                        </span>
+                    </div>
+                `;
+            }
+
             cardEl.innerHTML = `
                 <div class="card-top">
                     <div class="card-tags">
@@ -1450,6 +1467,7 @@
                 </div>
                 <h3 class="card-title">${card.title}</h3>
                 ${card.description ? `<p class="card-desc">${card.description}</p>` : ''}
+                ${badgePrazoHtml}
                 <div class="card-footer">
                     <span class="card-budget">${budgetFormatted}</span>
                     ${matchVal ? `<span class="match-score ${matchColorClass}">${matchVal}% Match</span>` : ''}

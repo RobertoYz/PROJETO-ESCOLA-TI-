@@ -5,15 +5,18 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\KanbanService;
+use App\Services\PrazoAlertaService;
 use Exception;
 
 class KanbanController extends Controller
 {
     protected KanbanService $kanbanService;
+    protected PrazoAlertaService $prazoService;
 
-    public function __construct(KanbanService $kanbanService)
+    public function __construct(KanbanService $kanbanService, PrazoAlertaService $prazoService)
     {
         $this->kanbanService = $kanbanService;
+        $this->prazoService = $prazoService;
     }
 
     /**
@@ -28,6 +31,14 @@ class KanbanController extends Controller
                 $agenciaId ? (int)$agenciaId : null,
                 $startupName ? trim($startupName) : null
             );
+
+            // Anexa dados calculados de prazos críticos (EDTAN-171) em cada card
+            foreach ($board->columns as $coluna) {
+                foreach ($coluna->cards as $card) {
+                    $deadline = $card->edital->deadline ?? ($card->metadata['deadline'] ?? null);
+                    $card->criticidade_prazo = $this->prazoService->calcularCriticidade($deadline);
+                }
+            }
 
             return response()->json([
                 'status' => 'sucesso',
@@ -47,7 +58,7 @@ class KanbanController extends Controller
      */
     public function storeCard(Request $request): JsonResponse
     {
-        $dados = $request->validate([
+        $payloadValidoCartao = $request->validate([
             'board_id' => 'nullable|integer|exists:kanban_boards,id',
             'column_id' => 'nullable|integer|exists:kanban_columns,id',
             'edital_id' => 'nullable|integer|exists:editals,id',
@@ -57,7 +68,7 @@ class KanbanController extends Controller
             'metadata' => 'nullable|array'
         ]);
 
-        if (empty($dados['title']) && empty($dados['edital_id'])) {
+        if (empty($payloadValidoCartao['title']) && empty($payloadValidoCartao['edital_id'])) {
             return response()->json([
                 'status' => 'erro',
                 'mensagem' => 'O título do card ou o edital_id deve ser informado.'
@@ -65,13 +76,13 @@ class KanbanController extends Controller
         }
 
         try {
-            $card = $this->kanbanService->createCard($dados);
-            $card->load('edital');
+            $novoCartaoCriado = $this->kanbanService->createCard($payloadValidoCartao);
+            $novoCartaoCriado->load('edital');
 
             return response()->json([
                 'status' => 'sucesso',
                 'mensagem' => 'Card criado com sucesso!',
-                'data' => $card
+                'data' => $novoCartaoCriado
             ], 201);
         } catch (Exception $e) {
             return response()->json([
@@ -87,29 +98,29 @@ class KanbanController extends Controller
      */
     public function moveCard(Request $request, int $id): JsonResponse
     {
-        $dados = $request->validate([
+        $parametrosMovimentacao = $request->validate([
             'target_column_id' => 'required|integer|exists:kanban_columns,id',
             'prev_position' => 'nullable|numeric',
             'next_position' => 'nullable|numeric'
         ]);
 
         try {
-            $card = $this->kanbanService->moveCard(
+            $cartaoReposicionado = $this->kanbanService->moveCard(
                 $id,
-                (int)$dados['target_column_id'],
-                isset($dados['prev_position']) ? (float)$dados['prev_position'] : null,
-                isset($dados['next_position']) ? (float)$dados['next_position'] : null
+                (int)$parametrosMovimentacao['target_column_id'],
+                isset($parametrosMovimentacao['prev_position']) ? (float)$parametrosMovimentacao['prev_position'] : null,
+                isset($parametrosMovimentacao['next_position']) ? (float)$parametrosMovimentacao['next_position'] : null
             );
 
             return response()->json([
                 'status' => 'sucesso',
-                'mensagem' => 'Card movimentado com sucesso!',
-                'data' => $card
+                'mensagem' => 'Posição do card atualizada com sucesso!',
+                'data' => $cartaoReposicionado
             ]);
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => 'Falha ao movimentar card.',
+                'mensagem' => 'Falha ao mover card.',
                 'detalhe' => $e->getMessage()
             ], 500);
         }

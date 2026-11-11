@@ -62,3 +62,47 @@ php artisan roach:run FinepSpider
 
 1. No VS Code, navegue até `front/paginas/cadastro.html` ou `front/paginas/login.html`.
 2. Clique com o botão direito no arquivo e selecione **"Open with Live Server"**.
+
+---
+
+## 5. Compilação Mobile com Capacitor (Geração de APK / Android)
+
+O aplicativo móvel do Anjo Nexus utiliza o **Capacitor** para empacotar o mesmo frontend Vanilla JS/CSS dentro de uma **WebView nativa de alto desempenho**, conectando-se diretamente às APIs nativas de notificações do Android/iOS.
+
+### 5.1 Como funciona a compilação na prática:
+1. **Ponte Nativa (JavaScript Bridge):** O Capacitor não reescreve seu código; ele cria um projeto nativo Android (`/android`) e hospeda seus arquivos estáticos em `android/app/src/main/assets/public`.
+2. **Notificações na Barra do Celular:** Plugins como `@capacitor/local-notifications` convertem chamadas JavaScript em eventos reais do sistema operacional (`NotificationManagerCompat`), fazendo o smartphone vibrar e exibir alertas mesmo com a tela bloqueada.
+
+### 5.2 Passo a passo para gerar o APK:
+
+1. **Instalar dependências do Capacitor (na pasta `/front`):**
+   ~~~bash
+   cd front
+   npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/local-notifications
+   ~~~
+
+2. **Inicializar o projeto Capacitor (apenas na 1ª vez):**
+   ~~~bash
+   npx cap init "Anjo Nexus" "com.anjonexus.app" --web-dir .
+   npx cap add android
+   ~~~
+
+3. **Sincronizar arquivos do frontend para o Android:**
+   Sempre que alterar códigos HTML, CSS ou JS, rode:
+   ~~~bash
+   npx cap sync
+   ~~~
+
+4. **Compilar e Rodar o APK:**
+   - **Opção A (Via Android Studio):**
+     ~~~bash
+     npx cap open android
+     ~~~
+     *(No Android Studio, clique em `Build > Build APK(s)` ou aperte `Play` com o celular/emulador conectado).*
+   
+   - **Opção B (Linha de comando direta via Gradle):**
+     ~~~bash
+     cd android
+     ./gradlew assembleDebug
+     ~~~
+     *O arquivo instalável será gerado em: `android/app/build/outputs/apk/debug/app-debug.apk`.*
