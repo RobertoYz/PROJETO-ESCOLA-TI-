@@ -17,47 +17,47 @@ class MinutaController extends Controller
      */
     public function gerar(Request $request, MinutaAiService $aiService)
     {
-        $request->validate([
+        $payloadValidoMinuta = $request->validate([
             'startup_id' => 'required|exists:startups,id',
             'edital_id' => 'required|exists:editals,id',
             'ideia_projeto' => 'required|string|min:15',
             'kanban_card_id' => 'nullable|exists:kanban_cards,id'
         ]);
 
-        $startup = Startup::findOrFail($request->startup_id);
-        $edital = Edital::findOrFail($request->edital_id);
-        $usuario = $request->user();
+        $startupProponente = Startup::findOrFail($payloadValidoMinuta['startup_id']);
+        $editalAlvo = Edital::findOrFail($payloadValidoMinuta['edital_id']);
+        $usuarioAutor = $request->user();
 
         Log::info("Iniciando geração de minuta via IA (RF-29)", [
-            'startup_id' => $startup->id,
-            'edital_id' => $edital->id,
-            'user_id' => $usuario?->id
+            'startup_id' => $startupProponente->id,
+            'edital_id' => $editalAlvo->id,
+            'user_id' => $usuarioAutor?->id
         ]);
 
-        $resultadoIa = $aiService->gerarMinuta($startup, $edital, $request->ideia_projeto);
+        $resultadoIa = $aiService->gerarMinuta($startupProponente, $editalAlvo, $payloadValidoMinuta['ideia_projeto']);
 
         // RF-33 & RF-34: Persiste histórico e autor auditável
-        $minuta = Minuta::create([
-            'startup_id' => $startup->id,
-            'edital_id' => $edital->id,
-            'user_id' => $usuario?->id,
-            'kanban_card_id' => $request->kanban_card_id,
+        $novaMinutaCriada = Minuta::create([
+            'startup_id' => $startupProponente->id,
+            'edital_id' => $editalAlvo->id,
+            'user_id' => $usuarioAutor?->id,
+            'kanban_card_id' => $payloadValidoMinuta['kanban_card_id'] ?? null,
             'versao' => 1,
             'titulo_projeto' => $resultadoIa['titulo_projeto'],
-            'ideia_projeto' => $request->ideia_projeto,
+            'ideia_projeto' => $payloadValidoMinuta['ideia_projeto'],
             'conteudo_gerado' => $resultadoIa['conteudo_formatado'],
             'secoes_estruturadas' => $resultadoIa['secoes'],
             'status' => 'concluido',
             'modelo_ia_usado' => $resultadoIa['modelo_usado'],
-            'autor_nome' => $usuario?->name ?? 'Consultor Sistema'
+            'autor_nome' => $usuarioAutor?->name ?? 'Consultor Sistema'
         ]);
 
-        Log::info("Minuta #{$minuta->id} criada e auditada com sucesso (RF-34)");
+        Log::info("Minuta #{$novaMinutaCriada->id} criada e auditada com sucesso (RF-34)");
 
         return response()->json([
             'sucesso' => true,
             'mensagem' => 'Minuta gerada com sucesso pela Inteligência Artificial.',
-            'dados' => $minuta->load(['startup', 'edital', 'user'])
+            'dados' => $novaMinutaCriada->load(['startup', 'edital', 'user'])
         ], 201);
     }
 

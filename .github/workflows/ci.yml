@@ -1,0 +1,56 @@
+name: CI Pipeline - Anjo Nexus (Testes & Qualidade)
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  backend-tests:
+    name: Testes Automatizados & Linter (Laravel Backend)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do Repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Ambiente PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, sqlite, pdo_sqlite, zip
+          coverage: none
+
+      - name: Cache de Dependências do Composer
+        uses: actions/cache@v3
+        with:
+          path: ~/.composer/cache/files
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Instalar Dependências do Backend
+        run: |
+          cd "MVPs/Versão Atual/back"
+          composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Configurar Arquivo de Ambiente (.env) e Chave da Aplicação
+        run: |
+          cd "MVPs/Versão Atual/back"
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Executar Validação de Sintaxe (Linter PHP)
+        run: |
+          cd "MVPs/Versão Atual/back"
+          find app -name "*.php" -exec php -l {} +
+
+      - name: Executar Suíte de Testes Automatizados (PHPUnit)
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: |
+          cd "MVPs/Versão Atual/back"
+          php artisan test
+

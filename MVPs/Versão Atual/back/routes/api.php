@@ -10,6 +10,7 @@ use App\Http\Controllers\MinutaController;
 use App\Http\Controllers\CnpjController;
 use App\Http\Controllers\PlanoController;
 use App\Http\Controllers\StartupController;
+use App\Http\Controllers\PrazoAlertaController;
 
 // Rotas de Editais
 Route::get('/editais', [EditalController::class, 'index']);
@@ -60,4 +61,10 @@ Route::post('/ia/match-editais', [MinutaController::class, 'matchEditais']);
 Route::prefix('cnpj')->group(function () {
     Route::get('/{cnpj}', [CnpjController::class, 'consultar']);
     Route::post('/consultar', [CnpjController::class, 'consultarPost']);
+});
+
+// Rotas de Alertas de Prazos Críticos (EDTAN-171 / Módulo 8 / RF-31 / RF-28)
+Route::prefix('prazos')->group(function () {
+    Route::get('/alertas', [PrazoAlertaController::class, 'alertas']);
+    Route::get('/resumo', [PrazoAlertaController::class, 'resumo']);
 });

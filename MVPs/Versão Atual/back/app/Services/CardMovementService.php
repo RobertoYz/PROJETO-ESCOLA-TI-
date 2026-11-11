@@ -9,52 +9,64 @@ use App\Events\CardMovedToProposal;
 class CardMovementService
 {
     /**
-     * Move o card e recalcula sua posição no quadro via Fractional Indexing.
+     * Espaçamento numérico padrão para inserção em Fractional Indexing.
+     * Permite múltiplas inserções intermediárias sem colisões.
      */
-    public function move(KanbanCard $card, int $targetColumnId, ?float $prevPosition = null, ?float $nextPosition = null): KanbanCard
-    {
-        $originalColumnId = $card->column_id;
+    private const INTERVALO_POSICIONAMENTO_PADRAO = 65536.0;
+
+    /**
+     * Move o cartão e recalcula sua posição no quadro via Fractional Indexing.
+     */
+    public function move(
+        KanbanCard $cartaoAlvo, 
+        int $colunaDestinoId, 
+        ?float $posicaoCartaoAnterior = null, 
+        ?float $posicaoCartaoPosterior = null
+    ): KanbanCard {
+        $colunaOrigemId = $cartaoAlvo->column_id;
 
         // Calcula a nova posição baseada nos vizinhos
-        $newPosition = $this->calculateNewPosition($prevPosition, $nextPosition);
+        $novaPosicaoCalculada = $this->calculateNewPosition($posicaoCartaoAnterior, $posicaoCartaoPosterior);
 
-        $card->column_id = $targetColumnId;
-        $card->position = $newPosition;
-        $card->save();
+        $cartaoAlvo->column_id = $colunaDestinoId;
+        $cartaoAlvo->position = $novaPosicaoCalculada;
+        $cartaoAlvo->save();
 
         // Verifica se mudou para a coluna de geração de proposta / elaboração
-        $targetColumn = KanbanColumn::find($targetColumnId);
+        $colunaDestino = KanbanColumn::find($colunaDestinoId);
         
-        if ($targetColumn && $originalColumnId !== $targetColumnId) {
-            $colTitle = mb_strtolower($targetColumn->title);
-            if (str_contains($colTitle, 'proposta') || str_contains($colTitle, 'elaboração')) {
+        if ($colunaDestino && $colunaOrigemId !== $colunaDestinoId) {
+            $tituloColunaMinusculo = mb_strtolower($colunaDestino->title);
+            if (str_contains($tituloColunaMinusculo, 'proposta') || str_contains($tituloColunaMinusculo, 'elaboração')) {
                 // Dispara o evento de proposta caso haja listeners registrados
-                event(new CardMovedToProposal($card));
+                event(new CardMovedToProposal($cartaoAlvo));
             }
         }
 
-        return $card;
+        return $cartaoAlvo;
     }
 
     /**
-     * Lógica de Fractional Indexing
+     * Lógica de Fractional Indexing para reordenação sem reindexar a tabela inteira.
      */
-    private function calculateNewPosition(?float $prevPosition, ?float $nextPosition): float
+    private function calculateNewPosition(?float $posicaoAnterior, ?float $posicaoPosterior): float
     {
-        $step = 65536.0; // Gap inicial padrão
-
-        if ($prevPosition === null && $nextPosition === null) {
-            return $step;
+        // Caso 1: Coluna vazia, assume o espaçamento padrão
+        if ($posicaoAnterior === null && $posicaoPosterior === null) {
+            return self::INTERVALO_POSICIONAMENTO_PADRAO;
         }
 
-        if ($prevPosition === null) {
-            return $nextPosition / 2.0;
+        // Caso 2: Inserido no topo absoluto da coluna (antes do primeiro card)
+        if ($posicaoAnterior === null) {
+            return $posicaoPosterior / 2.0;
         }
 
-        if ($nextPosition === null) {
-            return $prevPosition + $step;
+        // Caso 3: Inserido no final absoluto da coluna (após o último card)
+        if ($posicaoPosterior === null) {
+            return $posicaoAnterior + self::INTERVALO_POSICIONAMENTO_PADRAO;
         }
 
-        return ($prevPosition + $nextPosition) / 2.0;
+        // Caso 4: Inserido exatamente entre dois cards existentes
+        return ($posicaoAnterior + $posicaoPosterior) / 2.0;
     }
 }
