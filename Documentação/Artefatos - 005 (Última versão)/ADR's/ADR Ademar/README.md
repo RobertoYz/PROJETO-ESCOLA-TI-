@@ -1,6 +1,6 @@
 # Matriz Consolidada de Registros de Decisões Arquiteturais (ADRs) - Versão 005
 
-Este catálogo reúne as 17 Decisões Arquiteturais que norteiam o desenvolvimento e a infraestrutura do ecossistema **Anjo Nexus**, detalhando o contexto, alternativas descartadas e a justificativa acadêmica para a banca avaliadora.
+Este catálogo reúne as 18 Decisões Arquiteturais que norteiam o desenvolvimento e a infraestrutura do ecossistema **Anjo Nexus**, detalhando o contexto, alternativas descartadas e a justificativa acadêmica para a banca avaliadora.
 
 | ADR | Decisão Arquitetural | Problema Resolvido | Justificativa para a Banca |
 | :--- | :--- | :--- | :--- |
@@ -22,4 +22,5 @@ Este catálogo reúne as 17 Decisões Arquiteturais que norteiam o desenvolvimen
 | **015** | Deploy Apache/cPanel Unificado + CI/CD GitHub Actions | Deploy manual propenso a erro humano | Build autônomo do APK nativo em nuvem e distribuição estável em produção. |
 | **016** | Gestão Multi-tenant B2B e Seletor Global de Startups | Isolamento de carteira de clientes | Consultor gerencia N startups sem vazamento de dados, com eventos reativos na UI. |
 | **017** | Resiliência Touch e Ergonomia Mobile no Kanban e Radar | Incompatibilidade de drag-and-drop em telas touch| Botões direcionais touch, modais em viewport estrito e eliminação de saltos de scroll.|
+| **018** | Modelo de Custos, Precificação SaaS e Benchmark Competitivo | Risco de custos imprevisíveis com IA e falta de sustentabilidade de negócio | Garante viabilidade econômica com margem bruta >95%, cotas estritas de IA e vantagem contra consultorias tradicionais.|
 
