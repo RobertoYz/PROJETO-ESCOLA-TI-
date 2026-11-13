@@ -38,13 +38,21 @@ class AuthController extends Controller
             'email.email' => 'Informe um endereço de e-mail válido.',
         ]);
 
-        $usuarioExistente = User::where('email', $requisicao->email)->exists();
+        $usuarioExistente = User::with('agencia')->where('email', strtolower(trim((string) $requisicao->email)))->first();
 
         if ($usuarioExistente) {
+            $agencia = $usuarioExistente->agencia;
+            $pagamentoPendente = $agencia && (!$agencia->pagamento_ativo && $agencia->status_pagamento !== 'ativo');
+
             return response()->json([
                 'disponivel' => false,
-                'message' => 'Este e-mail já está cadastrado. Faça login para acessar ou gerenciar sua conta.',
-                'mensagem' => 'Este e-mail já está cadastrado. Faça login para acessar ou gerenciar sua conta.'
+                'pagamento_pendente' => (bool) $pagamentoPendente,
+                'message' => $pagamentoPendente
+                    ? 'Este e-mail já possui um cadastro com pagamento pendente. Conclua o pagamento para liberar seu acesso.'
+                    : 'Este e-mail já está cadastrado. Faça login para acessar ou gerenciar sua conta.',
+                'mensagem' => $pagamentoPendente
+                    ? 'Este e-mail já possui um cadastro com pagamento pendente. Conclua o pagamento para liberar seu acesso.'
+                    : 'Este e-mail já está cadastrado. Faça login para acessar ou gerenciar sua conta.'
             ], 422);
         }
 

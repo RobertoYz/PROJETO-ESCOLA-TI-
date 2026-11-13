@@ -98,6 +98,39 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
                 mensagemErro = primeiroErro[0];
             }
         }
+
+        // Intercepta bloqueio por Pagamento Pendente em qualquer chamada da API
+        if (resposta.status === 403 && (dados.codigo === 'PAGAMENTO_PENDENTE' || dados.codigo_erro === 'PAGAMENTO_PENDENTE')) {
+            const tokenPend = dados.token_pendencia || dados.access_token || dados.token;
+            if (tokenPend) {
+                sessionStorage.setItem('token_pendencia', tokenPend);
+                localStorage.setItem('token_pendencia', tokenPend);
+            }
+            if (dados.usuario?.email) {
+                sessionStorage.setItem('email_pendencia', dados.usuario.email);
+                localStorage.setItem('email_pendencia', dados.usuario.email);
+            }
+            if (dados.agencia) {
+                try {
+                    sessionStorage.setItem('agencia_pendencia', JSON.stringify(dados.agencia));
+                    localStorage.setItem('agencia_pendencia', JSON.stringify(dados.agencia));
+                } catch (_) {}
+            }
+
+            // Se o usuário estiver navegando em páginas internas protegidas, redireciona para a tela de pendência
+            if (typeof window !== 'undefined' && window.location) {
+                const caminho = window.location.pathname.toLowerCase();
+                const ehTelaPublicaOuPendencia = caminho.includes('login')
+                    || caminho.includes('cadastro')
+                    || caminho.includes('selecionar-plano')
+                    || caminho.includes('pagamento-pendente');
+
+                if (!ehTelaPublicaOuPendencia) {
+                    window.location.href = 'pagamento-pendente.html';
+                }
+            }
+        }
+
         const erroPersonalizado = new Error(mensagemErro);
         erroPersonalizado.status = resposta.status;
         erroPersonalizado.dados = dados;
