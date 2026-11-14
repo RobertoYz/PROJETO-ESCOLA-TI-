@@ -1,37 +1,168 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Criar Nova Senha - Anjo Nexus</title>
-    <link rel="stylesheet" href="../estilos/layout.css">
-    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
+    <title>Criar Nova Senha — Anjo Nexus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="../estilos/esqueci-senha.css">
 </head>
+
 <body>
-    <div id="container-cabecalho" class="container-cabecalho">
-        <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #4f46e5, #7c3aed); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4); margin-bottom: 6px;">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 12 17 22 12"></polyline>
+    <div class="auth-container">
+        <!-- Botão de Alternância de Tema (Sol / Lua) -->
+        <button id="btnAlternarTema" class="theme-toggle-btn" type="button" aria-label="Alternar tema claro e escuro" title="Alternar tema">
+            <svg id="iconeSol" style="display: none;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
             </svg>
-        </div>
-        <h1>Criar Nova Senha</h1>
-        <p>Defina uma nova senha segura de no mínimo 8 caracteres</p>
-        <a href="login.html">← Voltar para o login</a>
+            <svg id="iconeLua" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </button>
+
+        <!-- Painel Institucional -->
+        <aside class="auth-brand-panel">
+            <div class="brand-logo-panel">
+                <div class="brand-symbol" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-title">Anjo Nexus</div>
+            </div>
+
+            <div class="brand-statement">
+                <h1 class="brand-headline">Defina uma nova senha para sua conta</h1>
+                <p class="brand-paragraph">
+                    Após salvar sua nova senha, seu acesso à plataforma será restabelecido imediatamente
+                    para gerenciar editais, startups e minutas técnicas.
+                </p>
+
+                <div class="brand-metrics">
+                    <div class="metric-item">
+                        <span class="metric-title">Padrão de Segurança</span>
+                        <span class="metric-detail">Exigência mínima de 8 caracteres com validação em tempo real.</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-title">Uso Único</span>
+                        <span class="metric-detail">O token de recuperação é invalidado automaticamente após o uso.</span>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="brand-footer">
+                Anjo Nexus &copy; 2026. Todos os direitos reservados.
+            </footer>
+        </aside>
+
+        <!-- Painel de Redefinição de Senha -->
+        <main class="auth-form-panel">
+            <div class="form-wrapper">
+                <a href="login.html" class="back-link">← Voltar para o login</a>
+
+                <div class="form-header">
+                    <h2 class="form-title">Criar nova senha</h2>
+                    <p class="form-subtitle">Defina uma senha segura de no mínimo 8 caracteres</p>
+                </div>
+
+                <!-- Elemento de feedback consumido pelo redefinirSenha.js -->
+                <div id="mensagem-feedback" class="alert-box" role="alert" aria-live="polite" style="display: none;"></div>
+
+                <!-- Formulário integrado ao redefinirSenha.js -->
+                <form id="form-redefinir-senha" novalidate>
+                    <div class="form-group">
+                        <label for="email">E-mail corporativo</label>
+                        <input type="email" id="email" name="email" placeholder="E-mail da conta" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nova-senha">Nova senha</label>
+                        <input type="password" id="nova-senha" name="password" autocomplete="new-password"
+                            placeholder="Mínimo de 8 caracteres" required>
+                        <span class="field-hint">Utilize no mínimo 8 caracteres.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmar-senha">Confirmar nova senha</label>
+                        <input type="password" id="confirmar-senha" name="password_confirmation" autocomplete="new-password"
+                            placeholder="Repita a nova senha" required>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="botao-redefinir">
+                        Salvar nova senha
+                    </button>
+                </form>
+
+                <footer class="form-footer">
+                    <div>Precisa de um novo link? <a href="esqueci-senha.html">Solicitar recuperação</a></div>
+                    <div>Lembrou sua senha? <a href="login.html">Fazer login</a></div>
+                </footer>
+
+                <!-- Banner Mobile -->
+                <div class="banner-mobile-app">
+                    <div class="banner-mobile-info">
+                        <div class="banner-mobile-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 2px;">
+                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                            </svg>
+                            Aplicativo Mobile Android
+                        </div>
+                        <div class="banner-mobile-desc">Baixe o APK para acompanhar prazos e editais no celular</div>
+                    </div>
+                    <a href="baixar-app.html" class="btn-banner-download">Baixar APK</a>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <div id="container-formulario" class="container-formulario">
-        <form id="form-redefinir-senha" novalidate>
-            <input type="email" id="email" placeholder="E-mail" readonly>
-            <input type="password" id="nova-senha" placeholder="Nova senha (mín. 8 caracteres)" autocomplete="new-password" required>
-            <input type="password" id="confirmar-senha" placeholder="Confirme a nova senha" autocomplete="new-password" required>
-            <div id="mensagem-feedback" style="display: none; padding: 12px 14px; border-radius: 8px; border: 1px solid transparent; font-size: 0.88rem; font-weight: 500; text-align: left; width: 100%; line-height: 1.4;"></div>
-            <button type="submit" id="botao-redefinir">Salvar Nova Senha</button>
-        </form>
-    </div>
+    <!-- Script de Alternância de Tema -->
+    <script>
+        const btnTema = document.getElementById('btnAlternarTema');
+        const iconeSol = document.getElementById('iconeSol');
+        const iconeLua = document.getElementById('iconeLua');
 
+        function aplicarTema(escuro) {
+            if (escuro) {
+                document.body.classList.add('dark-mode');
+                iconeSol.style.display = 'block';
+                iconeLua.style.display = 'none';
+                localStorage.setItem('tema_preferido', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                iconeSol.style.display = 'none';
+                iconeLua.style.display = 'block';
+                localStorage.setItem('tema_preferido', 'light');
+            }
+        }
+
+        const temaSalvo = localStorage.getItem('tema_preferido');
+        if (temaSalvo === 'dark' || (!temaSalvo && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            aplicarTema(true);
+        } else {
+            aplicarTema(false);
+        }
+
+        btnTema.addEventListener('click', () => {
+            const estaEscuro = document.body.classList.contains('dark-mode');
+            aplicarTema(!estaEscuro);
+        });
+    </script>
+
+    <!-- Script modular oficial mantido -->
     <script type="module" src="../scripts/paginas/redefinirSenha.js"></script>
 </body>
-</html>
 
+</html>
