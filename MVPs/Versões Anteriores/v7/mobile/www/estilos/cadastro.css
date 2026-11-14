@@ -1,0 +1,414 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+    --bg-page: #F8FAFC;
+    --bg-surface: #FFFFFF;
+    --bg-brand-panel: #0F172A;
+    --text-main: #0F172A;
+    --text-muted: #475569;
+    --text-brand: #F8FAFC;
+    --text-brand-muted: #94A3B8;
+    --accent-action: #0369A1;
+    --accent-action-hover: #075985;
+    --border-subtle: #E2E8F0;
+    --border-field: #CBD5E1;
+    --border-focus: #0284C7;
+    --color-error: #B91C1C;
+    --bg-banner: #F1F5F9;
+    --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+/* Variáveis do Modo Noturno */
+body.dark-mode {
+    --bg-page: #07090E;
+    --bg-surface: #0F1422;
+    --bg-brand-panel: #0A0F1D;
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-field: rgba(255, 255, 255, 0.14);
+    --border-focus: #38BDF8;
+    --accent-action: #0284C7;
+    --accent-action-hover: #0369A1;
+    --bg-banner: #111827;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-page);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.auth-container {
+    display: flex;
+    width: 100vw;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Botão Alternador de Tema */
+.theme-toggle-btn {
+    position: absolute;
+    top: 24px;
+    right: 28px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-field);
+    border-radius: 9999px;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-main);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
+    z-index: 100;
+}
+
+.theme-toggle-btn:hover {
+    transform: scale(1.05);
+    border-color: var(--border-focus);
+}
+
+.theme-toggle-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+/* Painel Institucional (Esquerda) */
+.auth-brand-panel {
+    flex: 0 0 45%;
+    background-color: var(--bg-brand-panel);
+    color: var(--text-brand);
+    padding: 64px 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-right: 1px solid #1E293B;
+    transition: background-color 0.25s ease;
+}
+
+.brand-logo-panel {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.brand-symbol {
+    width: 38px;
+    height: 38px;
+    background-color: var(--accent-action);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(3, 105, 161, 0.35);
+}
+
+.brand-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.brand-statement {
+    max-width: 480px;
+}
+
+.brand-headline {
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+    color: #FFFFFF;
+}
+
+.brand-paragraph {
+    font-size: 15px;
+    color: var(--text-brand-muted);
+    line-height: 1.6;
+    margin-bottom: 32px;
+}
+
+.brand-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    border-top: 1px solid #1E293B;
+    padding-top: 28px;
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.metric-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #E2E8F0;
+}
+
+.metric-detail {
+    font-size: 12px;
+    color: var(--text-brand-muted);
+    line-height: 1.4;
+}
+
+.brand-footer {
+    font-size: 13px;
+    color: #64748B;
+}
+
+/* Painel de Cadastro (Direita) */
+.auth-form-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 32px;
+    overflow-y: auto;
+    position: relative;
+}
+
+.form-wrapper {
+    width: 100%;
+    max-width: 420px;
+}
+
+.form-header {
+    margin-bottom: 30px;
+}
+
+.form-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+}
+
+.form-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+/* Mensagem de Erro / Alerta */
+.alert-box {
+    padding: 12px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-bottom: 24px;
+    line-height: 1.4;
+    background-color: #FEF2F2;
+    color: var(--color-error);
+    border: 1px solid #FCA5A5;
+}
+
+body.dark-mode .alert-box {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #FCA5A5;
+}
+
+.alert-box[hidden] {
+    display: none;
+}
+
+.alert-box a,
+.alert-box .alert-link {
+    color: var(--accent-action);
+    font-weight: 600;
+    text-decoration: underline;
+    transition: color 0.15s ease;
+}
+
+body.dark-mode .alert-box a,
+body.dark-mode .alert-box .alert-link {
+    color: #38BDF8;
+}
+
+.alert-box a:hover,
+.alert-box .alert-link:hover {
+    color: var(--accent-action-hover);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 18px;
+}
+
+.label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.field-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+input {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-main);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-field);
+    border-radius: 4px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.25s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+}
+
+.btn-submit {
+    width: 100%;
+    height: 46px;
+    background-color: var(--accent-action);
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease;
+}
+
+.btn-submit:hover {
+    background-color: var(--accent-action-hover);
+}
+
+.btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.form-footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.form-footer a {
+    color: var(--accent-action);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.form-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Banner do App Mobile */
+.banner-mobile-app {
+    margin-top: 24px;
+    background-color: var(--bg-banner);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: background-color 0.25s ease;
+}
+
+.banner-mobile-info {
+    text-align: left;
+}
+
+.banner-mobile-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.banner-mobile-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.btn-banner-download {
+    background-color: var(--bg-brand-panel);
+    color: #FFFFFF;
+    text-decoration: none;
+    padding: 7px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+}
+
+body.dark-mode .btn-banner-download {
+    background-color: var(--accent-action);
+}
+
+.btn-banner-download:hover {
+    background-color: #1E293B;
+}
+
+body.dark-mode .btn-banner-download:hover {
+    background-color: var(--accent-action-hover);
+}
+
+body.is-capacitor .banner-mobile-app {
+    display: none !important;
+}
+
+/* Responsividade Mobile e Tablet */
+@media (max-width: 900px) {
+    .auth-brand-panel {
+        display: none;
+    }
+
+    .auth-form-panel {
+        padding: 32px 20px;
+    }
+
+    .theme-toggle-btn {
+        top: 16px;
+        right: 16px;
+    }
+}

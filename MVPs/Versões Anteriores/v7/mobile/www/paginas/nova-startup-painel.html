@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Criar Nova Startup - Anjo Nexus</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --sidebar-bg: #111418;
+            --navbar-bg: #0d0f12;
+            --card-bg: #1a1d21;
+            --text-light: #ffffff;
+            --text-muted: #a0a0a0;
+            --accent-blue: #1b36ff;
+            --accent-purple: #8b5cf6;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); display: flex; height: 100vh; overflow: hidden; }
+
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); height: 100vh; display: flex; flex-direction: column; border-right: 1px solid #222; transition: width 0.3s ease; }
+        .sidebar.collapsed { width: 70px; }
+        .sidebar-header { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+        .toggle-btn { background: none; border: none; color: var(--text-light); cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+        .toggle-btn:hover { background-color: rgba(255,255,255,0.1); }
+        .logo { font-size: 1.5rem; font-weight: 600; }
+        .logo span { font-weight: 400; color: #3b82f6; }
+        .sidebar.collapsed .logo { opacity: 0; pointer-events: none; height: 0; margin: 0; overflow: hidden; }
+
+        .nav-menu { flex: 1; display: flex; flex-direction: column; padding: 1rem 0; }
+        .nav-item { padding: 1rem 1.5rem; color: var(--text-light); text-decoration: none; font-size: 1rem; display: flex; align-items: center; gap: 15px; transition: 0.2s; white-space: nowrap; }
+        .nav-item:hover { background-color: rgba(255,255,255,0.05); }
+        .nav-item.active { background-color: rgba(255,255,255,0.05); border-left: 3px solid var(--accent-blue); color: var(--accent-blue); font-weight: 600; }
+        .sidebar.collapsed .nav-text { opacity: 0; pointer-events: none; width: 0; overflow: hidden; }
+        .sidebar-footer { padding: 1rem 0; border-top: 1px solid #222; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background-color: var(--bg-dark); }
+        .top-navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--navbar-bg); border-bottom: 1px solid #222; position: sticky; top: 0; z-index: 10; }
+
+        .cadastro-painel-container { padding: 2rem; max-width: 1000px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 1.5rem; }
+        .card-painel { background: var(--card-bg); border-radius: 12px; border: 1px solid #2a2a2a; padding: 1.5rem; }
+        .card-painel-header { border-bottom: 1px solid #2a2a2a; padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .card-painel-title { font-size: 1.15rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 10px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; }
+        .form-input, .form-textarea { background: #111418; border: 1px solid #333; border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.95rem; outline: none; transition: 0.2s; width: 100%; }
+        .form-input:focus, .form-textarea:focus { border-color: var(--accent-blue); background: #161a20; }
+        .form-textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+
+        .grupo-cnpj-painel {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-buscar-cnpj {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: 0.2s;
+        }
+        .btn-buscar-cnpj:hover { filter: brightness(1.1); }
+        .btn-buscar-cnpj:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-cancelar-painel {
+            background: transparent;
+            color: #cbd5e1;
+            border: 1px solid #475569;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-cancelar-painel:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+        }
+
+        .btn-confirmar-painel {
+            background: linear-gradient(135deg, #1b36ff, #8b5cf6);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-confirmar-painel:hover { opacity: 0.92; transform: translateY(-1px); }
+
+        .alerta-feedback { padding: 12px 16px; border-radius: 8px; font-size: 0.9rem; display: none; }
+        .alerta-feedback.carregando { display: block; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #93c5fd; }
+        .alerta-feedback.sucesso { display: block; background: rgba(16, 185, 129, 0.15); border: 1px solid var(--success-color); color: var(--success-color); }
+        .alerta-feedback.erro { display: block; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger-color); color: var(--danger-color); }
+
+        .mobile-menu-trigger {
+            display: none;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #333;
+            color: #fff;
+            font-size: 1.25rem;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+        <header class="top-navbar">
+            <div class="header-left-slot">
+                <button id="btnMobileMenu" class="mobile-menu-trigger" aria-label="Abrir Menu">☰</button>
+            </div>
+            <div id="container-seletor-global"></div>
+        </header>
+
+        <div class="cadastro-painel-container">
+            <div>
+                <h1 style="font-size: 1.6rem; font-weight: 700; color: #fff;">Cadastrar Nova Startup Assessorada</h1>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Informe o CNPJ da startup para importar automaticamente os dados cadastrais da Receita Federal e configure seu perfil tecnológico.</p>
+            </div>
+
+            <div id="alertaStatusPainel" class="alerta-feedback"></div>
+
+            <form id="formNovaStartupPainel" novalidate>
+                <!-- BLOCO 1: IDENTIFICAÇÃO E CONSULTA CNPJ -->
+                <div class="card-painel">
+                    <div class="card-painel-header">
+                        <div class="card-painel-title">🏢 1. Identificação Fiscal & Consulta Automática (Receita Federal)</div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label">CNPJ (00.000.000/0000-00)</label>
+                            <div class="grupo-cnpj-painel">
+                                <input type="text" id="campo-cnpj" class="form-input" placeholder="Digite o CNPJ da startup (00.000.000/0000-00)" maxlength="18" required autocomplete="off">
+                                <button type="button" class="btn-buscar-cnpj" id="botao-buscar-cnpj">🔍 Puxar Dados da Receita</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Razão Social *</label>
+                            <input type="text" id="campo-razao-social" class="form-input" placeholder="Razão Social da empresa" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Nome Fantasia</label>
+                            <input type="text" id="campo-nome-fantasia" class="form-input" placeholder="Nome Fantasia">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Data de Abertura Oficial</label>
+                            <input type="date" id="campo-data-abertura" class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Porte Empresarial</label>
+                            <input type="text" id="campo-porte" class="form-input" placeholder="Ex: ME, EPP, Médio Porte">
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label">Regime Tributário</label>
+                            <input type="text" id="campo-regime-tributario" class="form-input" placeholder="Ex: Simples Nacional, Lucro Presumido">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BLOCO 2: LOCALIZAÇÃO -->
+                <div class="card-painel" style="margin-top: 1.5rem;">
+                    <div class="card-painel-header">
+                        <div class="card-painel-title">📍 2. Localização da Empresa</div>
+                    </div>
+
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label class="form-label">CEP</label>
+                            <input type="text" id="campo-cep" class="form-input" placeholder="00000-000" maxlength="9">
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">Logradouro / Rua</label>
+                            <input type="text" id="campo-logradouro" class="form-input" placeholder="Rua / Avenida">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Número</label>
+                            <input type="text" id="campo-numero" class="form-input" placeholder="Nº">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Bairro</label>
+                            <input type="text" id="campo-bairro" class="form-input" placeholder="Bairro">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Cidade / UF</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="campo-cidade" class="form-input" placeholder="Cidade" style="flex: 3;">
+                                <input type="text" id="campo-estado" class="form-input" placeholder="UF" maxlength="2" style="flex: 1; text-transform: uppercase;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BLOCO 3: PERFIL DE INOVAÇÃO & SUBVENÇÃO -->
+                <div class="card-painel" style="margin-top: 1.5rem;">
+                    <div class="card-painel-header">
+                        <div class="card-painel-title">🚀 3. Perfil de Inovação & Subvenção</div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label">Nicho Principal de Atuação & Tecnologias-Chave</label>
+                        <input type="text" id="campo-nicho-atuacao" class="form-input" placeholder="Ex: Inteligência Artificial, Agrotech, Biotecnologia, Healthtech, Fintech">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label">Pitch Institucional / Resumo Tecnológico</label>
+                        <textarea id="campo-pitch" class="form-textarea" placeholder="Descreva os projetos de P&D, produtos inovadores e proposta de valor da startup para enriquecer o Match com Editais e a Minuta por IA."></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 1.5rem;">
+                        <button type="button" class="btn-cancelar-painel" id="botao-cancelar-cadastro">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-confirmar-painel" id="botao-confirmar">
+                            + Concluir Cadastro da Startup
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script type="module" src="../scripts/paginas/novaStartupPainel.js"></script>
+</body>
+</html>
+

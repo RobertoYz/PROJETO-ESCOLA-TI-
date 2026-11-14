@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Cadastrar Startup - Anjo Nexus</title>
+    <link rel="stylesheet" href="../estilos/layout.css">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
+    <style>
+        .container-formulario {
+            max-width: 650px;
+        }
+        .grupo-cnpj {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .grupo-cnpj input {
+            flex: 1;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        .grupo-cnpj button {
+            width: auto;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: 0.2s;
+        }
+        .grupo-cnpj button:hover {
+            filter: brightness(1.1);
+        }
+        .grupo-cnpj button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .aviso-status {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+        }
+        .aviso-status.carregando {
+            display: block;
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .aviso-status.sucesso {
+            display: block;
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .linha-dupla {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .linha-tripla {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .separador-secao {
+            width: 100%;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #818cf8;
+            margin-top: 14px;
+            margin-bottom: 2px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 6px;
+        }
+        .campo-destaque {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .campo-auto {
+            background-color: #0c101a;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+    <div id="container-cabecalho" class="container-cabecalho">
+        <h1>Nova Startup Assessorada</h1>
+        <p style="color: #64748b; font-size: 14px;">Preencha o CNPJ para carregar os dados cadastrais oficiais automaticamente.</p>
+        <a href="selecionar-startup.html">← Voltar para Minhas Startups</a>
+    </div>
+
+    <div id="container-formulario" class="container-formulario">
+        <form id="formulario-cadastro-startup" novalidate>
+            <div class="separador-secao">1. Identificação Fiscal & Consulta Automática</div>
+            
+            <div class="grupo-cnpj">
+                <input type="text" id="campo-cnpj" placeholder="CNPJ (00.000.000/0000-00)" maxlength="18" required autocomplete="off">
+                <button type="button" id="botao-buscar-cnpj">🔍 Puxar Dados</button>
+            </div>
+
+            <div id="aviso-status-cnpj" class="aviso-status"></div>
+
+            <input type="text" id="campo-razao-social" class="campo-auto" placeholder="Razão Social (obrigatório)" required>
+            <input type="text" id="campo-nome-fantasia" class="campo-auto" placeholder="Nome Fantasia">
+            
+            <div class="linha-dupla">
+                <input type="date" id="campo-data-abertura" class="campo-auto" title="Data de Abertura">
+                <input type="text" id="campo-porte" class="campo-auto" placeholder="Porte (ex: ME, EPP)">
+            </div>
+
+            <input type="text" id="campo-regime-tributario" class="campo-auto" placeholder="Regime Tributário (ex: Simples Nacional)">
+
+            <div class="separador-secao">2. Localização da Empresa</div>
+            
+            <div class="linha-tripla">
+                <input type="text" id="campo-cep" class="campo-auto" placeholder="CEP" maxlength="9">
+                <input type="text" id="campo-cidade" class="campo-auto" placeholder="Cidade" style="flex: 2;">
+                <input type="text" id="campo-estado" class="campo-auto" placeholder="UF" maxlength="2" style="max-width: 65px; text-transform: uppercase;">
+            </div>
+
+            <div class="linha-dupla">
+                <input type="text" id="campo-logradouro" class="campo-auto" placeholder="Logradouro / Rua" style="flex: 3;">
+                <input type="text" id="campo-numero" class="campo-auto" placeholder="Nº" style="max-width: 90px;">
+            </div>
+
+            <input type="text" id="campo-bairro" class="campo-auto" placeholder="Bairro">
+
+            <div class="separador-secao">3. Perfil de Inovação & Subvenção</div>
+            
+            <input type="text" id="campo-nicho-atuacao" class="campo-destaque" placeholder="Nicho de Atuação (ex: Inteligência Artificial, Agrotech, Saúde)">
+            <textarea id="campo-pitch" class="campo-destaque" placeholder="Pitch / Resumo Tecnológico: Descreva os projetos de P&D, produtos inovadores e proposta de valor da startup para enriquecer o Match com Editais e a Minuta por IA."></textarea>
+
+            <div id="mensagem-erro" class="texto-erro" hidden></div>
+            <button type="submit" id="botao-confirmar" style="background: #2563eb; color: #fff; font-weight: bold; padding: 12px; margin-top: 8px;">Concluir Cadastro da Startup</button>
+        </form>
+    </div>
+
+    <script type="module" src="../scripts/paginas/cadastrarStartup.js"></script>
+</body>
+</html>

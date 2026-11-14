@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Selecione o seu Plano - Anjo Nexus</title>
+    <link rel="stylesheet" href="../estilos/layout.css">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
+</head>
+<body>
+    <div id="container-cabecalho" class="container-cabecalho" style="max-width: 600px;">
+        <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #4f46e5, #7c3aed); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4); margin-bottom: 6px;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+        </div>
+        <h1 id="titulo-pagina">Selecione o seu Plano</h1>
+        <p id="subtitulo-pagina">Escolha o plano ideal para a sua consultoria e acesse editais de fomento</p>
+        <a href="cadastro.html" id="link-voltar">← Voltar ao cadastro</a>
+    </div>
+
+    <div style="width: 100%; max-width: 960px; display: flex; flex-direction: column; align-items: center; gap: 16px;">
+        <div id="mensagem-erro" class="texto-erro" style="max-width: 540px;" hidden></div>
+        <div id="lista-planos" class="container-planos">
+            <!-- Os cards de planos serão renderizados aqui dinamicamente -->
+        </div>
+    </div>
+
+    <script type="module" src="../scripts/paginas/selecionarPlano.js"></script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Criar Conta — Anjo Nexus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="../estilos/cadastro.css">
+</head>
+
+<body>
+    <div class="auth-container">
+        <!-- Botão de Alternância de Tema (Sol / Lua) -->
+        <button id="btnAlternarTema" class="theme-toggle-btn" type="button" aria-label="Alternar tema claro e escuro" title="Alternar tema">
+            <!-- Ícone Sol (Exibido no Dark Mode para voltar ao Claro) -->
+            <svg id="iconeSol" style="display: none;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <!-- Ícone Lua (Exibido no Light Mode para ir ao Escuro) -->
+            <svg id="iconeLua" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </button>
+
+        <!-- Painel Institucional -->
+        <aside class="auth-brand-panel">
+            <div class="brand-logo-panel">
+                <div class="brand-symbol" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-title">Anjo Nexus</div>
+            </div>
+
+            <div class="brand-statement">
+                <h1 class="brand-headline">Plataforma técnica para captação de recursos e subvenção</h1>
+                <p class="brand-paragraph">
+                    Cadastre sua consultoria e acesse oportunidades em editais abertos da FINEP, FAPESC e FAPESP.
+                    Estruture propostas técnicas com pipeline inteligente e submissões de alto padrão.
+                </p>
+
+                <div class="brand-metrics">
+                    <div class="metric-item">
+                        <span class="metric-title">Onboarding Especializado</span>
+                        <span class="metric-detail">Fluxo ágil e integração direta com a esteira de editais.</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-title">Modelagem Formal</span>
+                        <span class="metric-detail">Planos de trabalho alinhados às exigências das bancas avaliadoras.</span>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="brand-footer">
+                Anjo Nexus &copy; 2026. Todos os direitos reservados.
+            </footer>
+        </aside>
+
+        <!-- Painel de Cadastro -->
+        <main class="auth-form-panel">
+            <div class="form-wrapper">
+                <div class="form-header">
+                    <h2 class="form-title">Criar conta de consultoria</h2>
+                    <p class="form-subtitle">Cadastre seus dados para acessar a inteligência de editais</p>
+                </div>
+
+                <!-- Elemento de erro consumido pelo cadastro.js -->
+                <div id="mensagem-erro" class="alert-box" role="alert" aria-live="polite" hidden></div>
+
+                <!-- Formulário integrado ao cadastro.js -->
+                <form id="formulario-cadastro" novalidate>
+                    <div class="form-group">
+                        <label for="campo-nome-usuario">Nome completo</label>
+                        <input type="text" id="campo-nome-usuario" name="name" autocomplete="name"
+                            placeholder="Seu nome completo" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="campo-email">E-mail corporativo</label>
+                        <input type="email" id="campo-email" name="email" autocomplete="email"
+                            placeholder="consultor@empresa.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="label-row">
+                            <label for="campo-senha">Senha de acesso</label>
+                            <span class="field-hint">Mínimo de 8 caracteres</span>
+                        </div>
+                        <input type="password" id="campo-senha" name="password" autocomplete="new-password"
+                            placeholder="Crie sua senha segura" required>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="botao-confirmar">
+                        Continuar para Escolha de Plano
+                    </button>
+                </form>
+
+                <footer class="form-footer">
+                    Já possui conta na plataforma? <a href="login.html">Fazer login</a>
+                </footer>
+
+                <!-- Banner Mobile integrado com visual refinado -->
+                <div class="banner-mobile-app">
+                    <div class="banner-mobile-info">
+                        <div class="banner-mobile-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 2px;">
+                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                            </svg>
+                            Aplicativo Mobile Android
+                        </div>
+                        <div class="banner-mobile-desc">Baixe o APK para acompanhar prazos e editais no celular</div>
+                    </div>
+                    <a href="baixar-app.html" class="btn-banner-download">Baixar APK</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script de Alternância de Tema -->
+    <script>
+        const btnTema = document.getElementById('btnAlternarTema');
+        const iconeSol = document.getElementById('iconeSol');
+        const iconeLua = document.getElementById('iconeLua');
+
+        function aplicarTema(escuro) {
+            if (escuro) {
+                document.body.classList.add('dark-mode');
+                iconeSol.style.display = 'block';
+                iconeLua.style.display = 'none';
+                localStorage.setItem('tema_preferido', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                iconeSol.style.display = 'none';
+                iconeLua.style.display = 'block';
+                localStorage.setItem('tema_preferido', 'light');
+            }
+        }
+
+        // Recupera a preferência salva ou detecta a do sistema
+        const temaSalvo = localStorage.getItem('tema_preferido');
+        if (temaSalvo === 'dark' || (!temaSalvo && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            aplicarTema(true);
+        } else {
+            aplicarTema(false);
+        }
+
+        btnTema.addEventListener('click', () => {
+            const estaEscuro = document.body.classList.contains('dark-mode');
+            aplicarTema(!estaEscuro);
+        });
+    </script>
+
+    <!-- Script modular oficial de cadastro -->
+    <script type="module" src="../scripts/paginas/cadastro.js"></script>
+</body>
+
+</html>

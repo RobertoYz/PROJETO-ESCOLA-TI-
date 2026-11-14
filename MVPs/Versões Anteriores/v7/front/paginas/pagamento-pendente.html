@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Pagamento Pendente — Anjo Nexus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="../estilos/pagamento-pendente.css">
+</head>
+
+<body>
+    <div class="auth-container">
+        <!-- Botão de Alternância de Tema (Sol / Lua) -->
+        <button id="btnAlternarTema" class="theme-toggle-btn" type="button" aria-label="Alternar tema claro e escuro" title="Alternar tema">
+            <!-- Ícone Sol (Exibido no Dark Mode para voltar ao Claro) -->
+            <svg id="iconeSol" style="display: none;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <!-- Ícone Lua (Exibido no Light Mode para ir ao Escuro) -->
+            <svg id="iconeLua" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </button>
+
+        <!-- Painel Institucional (Esquerda) -->
+        <aside class="auth-brand-panel">
+            <div class="brand-logo-panel">
+                <div class="brand-symbol" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-title">Anjo Nexus</div>
+            </div>
+
+            <div class="brand-statement">
+                <h1 class="brand-headline">Plataforma técnica para captação de recursos e subvenção</h1>
+                <p class="brand-paragraph">
+                    Conectamos consultorias e empresas inovadoras aos editais de fomento público
+                    das principais agências brasileiras, com pipeline estruturado e geração técnica de propostas.
+                </p>
+
+                <div class="brand-metrics">
+                    <div class="metric-item">
+                        <span class="metric-title">Faturamento Corporativo</span>
+                        <span class="metric-detail">Gestão contratual com conciliação automática via PIX.</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-title">Ativação Imediata</span>
+                        <span class="metric-detail">Liberação do ambiente de editais em até 60 segundos após confirmação.</span>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="brand-footer">
+                Anjo Nexus &copy; 2026. Todos os direitos reservados.
+            </footer>
+        </aside>
+
+        <!-- Painel de Gestão da Pendência (Direita) -->
+        <main class="auth-form-panel">
+            <div class="form-wrapper">
+                <div class="form-header">
+                    <h2 class="form-title">Pagamento e assinatura pendente</h2>
+                    <p class="form-subtitle">Sua conta corporativa aguarda a confirmação bancária para liberação de acesso</p>
+                </div>
+
+                <!-- Elemento de feedback e alertas consumido pelo pagamentoPendente.js -->
+                <div id="mensagem-feedback" class="alert-box" role="alert" aria-live="polite" hidden></div>
+
+                <!-- Card Corporativo de Detalhes da Conta -->
+                <div class="status-card">
+                    <div class="status-row">
+                        <span class="status-label">E-mail corporativo:</span>
+                        <span id="email-destaque" class="status-value">Carregando...</span>
+                    </div>
+                    <div id="linha-agencia" class="status-row" style="display: none;">
+                        <span class="status-label">Consultoria:</span>
+                        <span id="agencia-destaque" class="status-value">Consultoria Cadastrada</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Modalidade:</span>
+                        <span class="status-value">Assinatura de Consultoria</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Meio de pagamento:</span>
+                        <span class="status-value">PIX Empresarial (AbacatePay)</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Situação cadastral:</span>
+                        <span class="status-badge">
+                            <span class="badge-dot"></span>
+                            Aguardando conciliação
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Grupo de Ações -->
+                <div class="actions-group">
+                    <button type="button" class="btn-submit" id="botao-consultar-anterior">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        Verificar confirmação de pagamento
+                    </button>
+
+                    <button type="button" class="btn-secondary" id="botao-gerar-nova">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        Gerar nova cobrança / Alterar plano
+                    </button>
+
+                    <div style="text-align: center; margin-top: 4px;">
+                        <button type="button" class="btn-danger-link" id="botao-cancelar-conta">
+                            Cancelar contratação e excluir cadastro
+                        </button>
+                    </div>
+
+                    <!-- Confirmação Segura Inline de Exclusão -->
+                    <div id="painel-confirmacao" class="confirmation-panel" hidden>
+                        <p><strong>Atenção:</strong> Ao confirmar, seu pré-cadastro será permanentemente cancelado e seu e-mail corporativo ficará disponível para um novo registro.</p>
+                        <div class="confirmation-actions">
+                            <button type="button" id="botao-confirmar-exclusao-sim" class="btn-confirm-delete">Sim, cancelar e excluir</button>
+                            <button type="button" id="botao-confirmar-exclusao-nao" class="btn-confirm-cancel">Voltar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="form-footer">
+                    Deseja acessar com outra conta corporativa? <a href="login.html">Fazer login</a>
+                </footer>
+
+                <!-- Banner Mobile integrado com visual refinado -->
+                <div class="banner-mobile-app">
+                    <div class="banner-mobile-info">
+                        <div class="banner-mobile-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 2px;">
+                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                            </svg>
+                            Aplicativo Mobile Android
+                        </div>
+                        <div class="banner-mobile-desc">Acompanhe prazos e conciliações de editais no celular</div>
+                    </div>
+                    <a href="baixar-app.html" class="btn-banner-download">Baixar APK</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script de Alternância de Tema -->
+    <script>
+        const btnTema = document.getElementById('btnAlternarTema');
+        const iconeSol = document.getElementById('iconeSol');
+        const iconeLua = document.getElementById('iconeLua');
+
+        function aplicarTema(escuro) {
+            if (escuro) {
+                document.body.classList.add('dark-mode');
+                iconeSol.style.display = 'block';
+                iconeLua.style.display = 'none';
+                localStorage.setItem('tema_preferido', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                iconeSol.style.display = 'none';
+                iconeLua.style.display = 'block';
+                localStorage.setItem('tema_preferido', 'light');
+            }
+        }
+
+        // Recupera a preferência salva ou detecta a do sistema
+        const temaSalvo = localStorage.getItem('tema_preferido');
+        if (temaSalvo === 'dark' || (!temaSalvo && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            aplicarTema(true);
+        } else {
+            aplicarTema(false);
+        }
+
+        btnTema.addEventListener('click', () => {
+            const estaEscuro = document.body.classList.contains('dark-mode');
+            aplicarTema(!estaEscuro);
+        });
+    </script>
+
+    <!-- Script modular oficial de pagamento pendente -->
+    <script type="module" src="../scripts/paginas/pagamentoPendente.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Minhas Startups - Anjo Nexus</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --sidebar-bg: #111418;
+            --navbar-bg: #0d0f12;
+            --card-bg: #1a1d21;
+            --card-hover: #23272c;
+            --text-light: #ffffff;
+            --text-muted: #a0a0a0;
+            --accent-blue: #1b36ff;
+            --accent-purple: #8b5cf6;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); display: flex; height: 100vh; overflow: hidden; }
+
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); height: 100vh; display: flex; flex-direction: column; border-right: 1px solid #222; transition: width 0.3s ease; }
+        .sidebar.collapsed { width: 70px; }
+        .sidebar-header { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+        .toggle-btn { background: none; border: none; color: var(--text-light); cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+        .toggle-btn:hover { background-color: rgba(255,255,255,0.1); }
+        .logo { font-size: 1.5rem; font-weight: 600; }
+        .logo span { font-weight: 400; color: #3b82f6; }
+        .sidebar.collapsed .logo { opacity: 0; pointer-events: none; height: 0; margin: 0; overflow: hidden; }
+
+        .nav-menu { flex: 1; display: flex; flex-direction: column; padding: 1rem 0; }
+        .nav-item { padding: 1rem 1.5rem; color: var(--text-light); text-decoration: none; font-size: 1rem; display: flex; align-items: center; gap: 15px; transition: 0.2s; white-space: nowrap; }
+        .nav-item:hover { background-color: rgba(255,255,255,0.05); }
+        .nav-item.active { background-color: rgba(255,255,255,0.05); border-left: 3px solid var(--accent-blue); color: var(--accent-blue); font-weight: 600; }
+        .sidebar.collapsed .nav-text { opacity: 0; pointer-events: none; width: 0; overflow: hidden; }
+        .sidebar-footer { padding: 1rem 0; border-top: 1px solid #222; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background-color: var(--bg-dark); }
+        .top-navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--navbar-bg); border-bottom: 1px solid #222; position: sticky; top: 0; z-index: 10; }
+
+        .minhas-startups-container {
+            padding: 2rem;
+            max-width: 1040px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .barra-busca-startups {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--card-bg);
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 0.85rem 1.2rem;
+        }
+
+        .barra-busca-startups input {
+            flex: 1;
+            background: #111418;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .barra-busca-startups input:focus {
+            border-color: #3b82f6;
+        }
+
+        .grid-lista-startups {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .card-item-startup {
+            background: #14171c;
+            border: 1px solid #282c34;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .card-item-startup:hover {
+            background: #1b2028;
+            border-color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        /* Startup atualmente em uso: Highlight com borda azul e texto em verde */
+        .card-item-startup.startup-em-uso {
+            border: 2px solid #3b82f6 !important;
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(20, 23, 28, 0.95) 100%);
+            box-shadow: 0 0 22px rgba(59, 130, 246, 0.22);
+        }
+
+        .card-startup-esquerda {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 0;
+        }
+
+        .card-startup-sigla {
+            width: 46px;
+            height: 46px;
+            min-width: 46px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+        }
+
+        .card-startup-dados {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .card-startup-nome {
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-startup-subinfo {
+            font-size: 0.84rem;
+            color: #94a3b8;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .texto-startup-em-uso {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #10b981;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .card-startup-direita {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .badge-ver-informacoes {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #334155;
+            padding: 8px 14px;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+
+        .card-item-startup:hover .badge-ver-informacoes {
+            background: #2563eb;
+            border-color: #3b82f6;
+            color: #fff;
+        }
+
+        /* Visão de Detalhes / Edição na mesma página */
+        .topo-voltar-lista {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-voltar-lista {
+            background: #161a22;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .btn-voltar-lista:hover {
+            background: #1e293b;
+            border-color: #3b82f6;
+            color: #fff;
+        }
+
+        .card-perfil { background: var(--card-bg); border-radius: 12px; border: 1px solid #2a2a2a; padding: 1.5rem; }
+        .card-perfil-header { border-bottom: 1px solid #2a2a2a; padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .card-perfil-title { font-size: 1.15rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 10px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; }
+        .form-input, .form-textarea { background: #111418; border: 1px solid #333; border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 0.95rem; outline: none; transition: 0.2s; width: 100%; }
+        .form-input:focus, .form-textarea:focus { border-color: var(--accent-blue); background: #161a20; }
+        .form-input:disabled { background: #0a0c0e; color: #777; cursor: not-allowed; border-color: #222; }
+        .form-textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+
+        .btn-cancelar-startup {
+            background: transparent;
+            color: #cbd5e1;
+            border: 1px solid #475569;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-cancelar-startup:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+        }
+
+        .btn-salvar {
+            background: linear-gradient(135deg, #1b36ff, #8b5cf6);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-salvar:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .btn-sync-cnpj { background: #1e293b; color: #fff; border: 1px solid #334155; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+        .btn-sync-cnpj:hover { background: #334155; }
+
+        .alerta-feedback { padding: 12px 16px; border-radius: 8px; font-size: 0.9rem; display: none; }
+        .alerta-feedback.sucesso { display: block; background: rgba(16, 185, 129, 0.15); border: 1px solid var(--success-color); color: var(--success-color); }
+        .alerta-feedback.erro { display: block; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger-color); color: var(--danger-color); }
+
+        .mobile-menu-trigger {
+            display: none;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #333;
+            color: #fff;
+            font-size: 1.25rem;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+        <header class="top-navbar">
+            <div class="header-left-slot">
+                <button id="btnMobileMenu" class="mobile-menu-trigger" aria-label="Abrir Menu">☰</button>
+            </div>
+            <div id="container-seletor-global"></div>
+        </header>
+
+        <div class="minhas-startups-container">
+            <!-- VISÃO 1: LISTA DE TODAS AS STARTUPS -->
+            <section id="secaoListaStartups" style="display: flex; flex-direction: column; gap: 1.4rem;">
+                <div>
+                    <h1 style="font-size: 1.6rem; font-weight: 700; color: #fff;">Minhas Startups</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Acompanhe todas as startups cadastradas na sua consultoria. A startup destacada com borda azul está sendo utilizada atualmente. Clique em qualquer startup para visualizar e alterar suas informações.</p>
+                </div>
+
+                <div class="barra-busca-startups">
+                    <input type="text" id="campoBuscaMinhasStartups" placeholder="Buscar startup por nome fantasia, razão social ou CNPJ...">
+                </div>
+
+                <div id="alertaListaStartups" class="alerta-feedback"></div>
+
+                <div id="containerListaStartups" class="grid-lista-startups"></div>
+            </section>
+
+            <!-- VISÃO 2: INFORMAÇÕES E EDIÇÃO DA STARTUP (NA MESMA PÁGINA) -->
+            <section id="secaoDetalhesStartup" style="display: none; flex-direction: column; gap: 1.5rem;">
+                <div class="topo-voltar-lista">
+                    <button type="button" class="btn-voltar-lista" id="btnVoltarListaStartups">
+                        ← Voltar para a lista de Startups
+                    </button>
+                    <div id="badgeStatusStartupAberta"></div>
+                </div>
+
+                <div>
+                    <h1 style="font-size: 1.55rem; font-weight: 700; color: #fff;" id="tituloStartupSelecionada">Informações da Startup</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Visualize e edite os dados cadastrais, localização e perfil de inovação da startup selecionada.</p>
+                </div>
+
+                <div id="alertaFeedbackEdicao" class="alerta-feedback"></div>
+
+                <form id="formEditarStartupMesmaPagina">
+                    <!-- BLOCO 1: DADOS FISCAIS -->
+                    <div class="card-perfil">
+                        <div class="card-perfil-header">
+                            <div class="card-perfil-title">
+                                🏢 Dados Cadastrais & Fiscais (Receita Federal)
+                            </div>
+                            <button type="button" class="btn-sync-cnpj" id="btnSincronizarReceita">
+                                🔄 Atualizar via Receita Federal
+                            </button>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">CNPJ (Identificador Fiscal)</label>
+                                <input type="text" id="campoCnpj" class="form-input" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Razão Social</label>
+                                <input type="text" id="campoRazaoSocial" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nome Fantasia</label>
+                                <input type="text" id="campoNomeFantasia" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Data de Abertura Oficial</label>
+                                <input type="date" id="campoDataAbertura" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Porte Empresarial (MEI, ME, EPP, Médio/Grande)</label>
+                                <input type="text" id="campoPorte" class="form-input" placeholder="Ex: ME, EPP">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Regime Tributário</label>
+                                <input type="text" id="campoRegimeTributario" class="form-input" placeholder="Ex: Simples Nacional, Lucro Presumido">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BLOCO 2: LOCALIZAÇÃO E CONTATO -->
+                    <div class="card-perfil" style="margin-top: 1.5rem;">
+                        <div class="card-perfil-header">
+                            <div class="card-perfil-title">📍 Localização e Contato Institucional</div>
+                        </div>
+
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label class="form-label">CEP</label>
+                                <input type="text" id="campoCep" class="form-input" placeholder="00000-000">
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Logradouro / Endereço</label>
+                                <input type="text" id="campoLogradouro" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Número</label>
+                                <input type="text" id="campoNumero" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Bairro</label>
+                                <input type="text" id="campoBairro" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Cidade / UF</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="campoCidade" class="form-input" placeholder="Cidade" style="flex: 3;">
+                                    <input type="text" id="campoEstado" class="form-input" placeholder="UF" maxlength="2" style="flex: 1; text-transform: uppercase;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">E-mail de Contato</label>
+                                <input type="email" id="campoEmail" class="form-input" placeholder="contato@empresa.com.br">
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Telefone / WhatsApp</label>
+                                <input type="text" id="campoTelefone" class="form-input" placeholder="(00) 00000-0000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BLOCO 3: ATIVIDADES, NEGÓCIO E VALORES -->
+                    <div class="card-perfil" style="margin-top: 1.5rem;">
+                        <div class="card-perfil-header">
+                            <div class="card-perfil-title">🚀 Atividades, Diferenciais Tecnológicos & Valores da Startup</div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label class="form-label">Nicho Principal de Atuação & Tecnologias-Chave</label>
+                            <input type="text" id="campoNichoAtuacao" class="form-input" placeholder="Ex: Inteligência Artificial Aplicada, Agritech, Biotecnologia, Healthtech, Fintech, IoT">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label class="form-label">Pitch Institucional, Proposta de Valor e Diferencial Competitivo</label>
+                            <textarea id="campoPitch" class="form-textarea" placeholder="Descreva o produto/serviço inovador, diferencial de mercado, modelo de negócio, missão e capacidade técnica da equipe para vencer editais de subvenção..."></textarea>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 1.5rem;">
+                            <button type="button" class="btn-cancelar-startup" id="btnCancelarEdicaoMesmaPagina">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn-salvar" id="btnSalvarEdicaoMesmaPagina">
+                                💾 Salvar Alterações da Startup
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <script type="module" src="../scripts/paginas/minhasStartups.js"></script>
+</body>
+</html>
+
