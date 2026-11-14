@@ -1,4 +1,4 @@
-import { requisicaoApi } from '../servicos/api.js';
+import { redefinirSenha } from '../servicos/servicoAutenticacao.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const parametrosUrl = new URLSearchParams(window.location.search);
@@ -56,14 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
         botaoRedefinir.textContent = 'Salvando nova senha...';
 
         try {
-            const resposta = await requisicaoApi('/auth/redefinir-senha', {
-                method: 'POST',
-                body: JSON.stringify({
-                    email: emailUrl,
-                    token: token,
-                    password: novaSenha,
-                    password_confirmation: confirmarSenha
-                })
+            const resposta = await redefinirSenha({
+                email: emailUrl,
+                token: token,
+                password: novaSenha,
+                password_confirmation: confirmarSenha
             });
 
             exibirMensagem(resposta.message || resposta.mensagem || 'Senha atualizada com sucesso!', 'sucesso');

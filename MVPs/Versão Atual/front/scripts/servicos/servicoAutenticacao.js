@@ -298,3 +298,17 @@ export function limparStartupAtiva() {
 export function possuiStartupSelecionada() {
     return Boolean(localStorage.getItem(CHAVE_STARTUP_ID));
 }
+
+export async function solicitarRecuperacaoSenha(email) {
+    return await requisicaoApi('/auth/esqueci-senha', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+    });
+}
+
+export async function redefinirSenha(dados) {
+    return await requisicaoApi('/auth/redefinir-senha', {
+        method: 'POST',
+        body: JSON.stringify(dados)
+    });
+}

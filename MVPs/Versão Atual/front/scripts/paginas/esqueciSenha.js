@@ -1,4 +1,4 @@
-import { requisicaoApi } from '../servicos/api.js';
+import { solicitarRecuperacaoSenha } from '../servicos/servicoAutenticacao.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const formulario = document.getElementById('form-esqueci-senha');
@@ -35,10 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         botaoEnviar.textContent = 'Verificando e enviando...';
 
         try {
-            const resposta = await requisicaoApi('/auth/esqueci-senha', {
-                method: 'POST',
-                body: JSON.stringify({ email })
-            });
+            const resposta = await solicitarRecuperacaoSenha(email);
 
             exibirMensagem(resposta.message || resposta.mensagem || 'Link enviado com sucesso! Verifique seu e-mail.', 'sucesso');
             campoEmail.value = '';
