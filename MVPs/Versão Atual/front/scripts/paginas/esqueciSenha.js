@@ -13,13 +13,25 @@ document.addEventListener('DOMContentLoaded', () => {
         caixaMensagem.hidden = false;
     }
 
+    campoEmail?.addEventListener('input', () => {
+        if (!caixaMensagem.hidden) {
+            caixaMensagem.hidden = true;
+        }
+    });
+
     formulario.addEventListener('submit', async (evento) => {
         evento.preventDefault();
         caixaMensagem.hidden = true;
 
-        const email = campoEmail.value.trim();
+        const email = campoEmail.value.trim().toLowerCase();
         if (!email) {
             exibirMensagem('Por favor, digite o seu e-mail cadastrado.');
+            return;
+        }
+
+        const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!regexEmail.test(email)) {
+            exibirMensagem('Informe um endereço de e-mail corporativo válido.');
             return;
         }
 

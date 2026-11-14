@@ -27,6 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     campoEmail.value = emailUrl;
 
+    [campoNovaSenha, campoConfirmarSenha].forEach((campo) => {
+        campo?.addEventListener('input', () => {
+            if (!caixaMensagem.hidden) {
+                caixaMensagem.hidden = true;
+            }
+        });
+    });
+
     formulario.addEventListener('submit', async (evento) => {
         evento.preventDefault();
         caixaMensagem.hidden = true;
