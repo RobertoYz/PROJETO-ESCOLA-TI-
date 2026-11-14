@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
-            exibirMensagem(resposta.message || 'Senha atualizada com sucesso!', 'sucesso');
+            exibirMensagem(resposta.message || resposta.mensagem || 'Senha atualizada com sucesso!', 'sucesso');
             setTimeout(() => {
                 window.location.href = 'login.html';
             }, 2000);
