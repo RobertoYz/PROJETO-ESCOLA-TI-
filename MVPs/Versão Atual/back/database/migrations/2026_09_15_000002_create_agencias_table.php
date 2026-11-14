@@ -9,14 +9,17 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void {
-    Schema::create('agencias', function (Blueprint $table) {
-        $table->id();
-        $table->string('nome');
-        $table->foreignId('plano_id')->constrained('planos'); // Relacionamento com a tabela planos (constrained para limitar a somente planos existentes)
-        $table->string('id_plataforma_pagamento')->nullable();
-        $table->enum('status_pagamento', ['pendente', 'ativo', 'suspenso', 'cancelado'])->default('pendente');
-        $table->timestamps();
+    public function up(): void
+    {
+        Schema::create('agencias', function (Blueprint $table) {
+            $table->id();
+            $table->string('nome');
+            $table->foreignId('plano_id')->nullable()->constrained('planos')->nullOnDelete();
+            $table->string('id_transacao')->nullable();
+            $table->text('url_checkout')->nullable();
+            $table->enum('status_pagamento', ['pendente', 'ativo', 'suspenso', 'cancelado'])->default('pendente');
+            $table->timestamp('pagamento_expira_em')->nullable();
+            $table->timestamps();
         });
     }
 

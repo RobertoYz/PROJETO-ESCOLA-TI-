@@ -36,7 +36,7 @@ class KanbanController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => 'Erro ao carregar o quadro Kanban.',
+                'message' => 'Erro ao carregar o quadro Kanban.',
                 'detalhe' => $e->getMessage()
             ], 500);
         }
@@ -60,7 +60,7 @@ class KanbanController extends Controller
         if (empty($dados['title']) && empty($dados['edital_id'])) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => 'O título do card ou o edital_id deve ser informado.'
+                'message' => 'O título do card ou o edital_id deve ser informado.'
             ], 422);
         }
 
@@ -70,13 +70,13 @@ class KanbanController extends Controller
 
             return response()->json([
                 'status' => 'sucesso',
-                'mensagem' => 'Card criado com sucesso!',
+                'message' => 'Card criado com sucesso!',
                 'data' => $card
             ], 201);
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => 'Falha ao criar card no Kanban.',
+                'message' => 'Falha ao criar card no Kanban.',
                 'detalhe' => $e->getMessage()
             ], 500);
         }
@@ -103,13 +103,13 @@ class KanbanController extends Controller
 
             return response()->json([
                 'status' => 'sucesso',
-                'mensagem' => 'Card movimentado com sucesso!',
+                'message' => 'Card movimentado com sucesso!',
                 'data' => $card
             ]);
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => 'Falha ao movimentar card.',
+                'message' => 'Falha ao movimentar card.',
                 'detalhe' => $e->getMessage()
             ], 500);
         }
@@ -125,12 +125,12 @@ class KanbanController extends Controller
 
             return response()->json([
                 'status' => 'sucesso',
-                'mensagem' => 'Card removido com sucesso!'
+                'message' => 'Card removido com sucesso!'
             ]);
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => 'Falha ao remover card.',
+                'message' => 'Falha ao remover card.',
                 'detalhe' => $e->getMessage()
             ], 500);
         }
@@ -185,14 +185,14 @@ class KanbanController extends Controller
 
             return response()->json([
                 'status' => 'sucesso',
-                'mensagem' => 'Card atualizado com sucesso!',
+                'message' => 'Card atualizado com sucesso!',
                 'data' => $cardAtualizado,
                 'card' => $cardAtualizado
             ]);
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => 'Falha ao atualizar card.',
+                'message' => 'Falha ao atualizar card.',
                 'detalhe' => $e->getMessage()
             ], 500);
         }

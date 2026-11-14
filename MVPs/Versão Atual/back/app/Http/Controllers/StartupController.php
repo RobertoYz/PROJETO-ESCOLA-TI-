@@ -54,7 +54,7 @@ class StartupController extends Controller
 
         if ($jaExiste) {
             return response()->json([
-                'mensagem' => 'Esta startup (CNPJ) já está cadastrada na sua consultoria.'
+                'message' => 'Esta startup (CNPJ) já está cadastrada na sua consultoria.'
             ], 422);
         }
 
@@ -63,7 +63,7 @@ class StartupController extends Controller
         $startup = Startup::create($dadosValidados);
 
         return response()->json([
-            'mensagem' => 'Startup cadastrada com sucesso.',
+            'message' => 'Startup cadastrada com sucesso.',
             'startup' => $startup
         ], 201);
     }
@@ -108,7 +108,7 @@ class StartupController extends Controller
 
         return response()->json([
             'sucesso' => true,
-            'mensagem' => 'Perfil da startup atualizado com sucesso.',
+            'message' => 'Perfil da startup atualizado com sucesso.',
             'startup' => $startup
         ], 200);
     }

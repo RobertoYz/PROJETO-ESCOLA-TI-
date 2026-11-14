@@ -101,7 +101,7 @@ export async function atualizarPerfilUsuario(dados) {
             });
             return {
                 status: 'sucesso',
-                mensagem: 'Perfil atualizado com sucesso!',
+                message: 'Perfil atualizado com sucesso!',
                 usuario: obterUsuarioLogado()
             };
         }
@@ -134,10 +134,10 @@ export async function registrarComPlano(dados) {
     if (dados?.email) {
         salvarEmailPendencia(dados.email);
     }
-    if (resposta?.agencia || resposta?.checkout_url || resposta?.url_checkout) {
+    if (resposta?.agencia || resposta?.url_checkout) {
         salvarAgenciaPendencia({
             ...(resposta.agencia || {}),
-            checkout_url: resposta.checkout_url || resposta.url_checkout || resposta.agencia?.checkout_url || null
+            url_checkout: resposta.url_checkout || resposta.agencia?.url_checkout || null
         });
     }
     return resposta;

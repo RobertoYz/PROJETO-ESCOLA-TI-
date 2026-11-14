@@ -42,7 +42,7 @@ class AuthApiTest extends TestCase
         $responseDisponivel->assertStatus(200)
             ->assertJson([
                 'disponivel' => true,
-                'mensagem' => 'E-mail disponível para cadastro.'
+                'message' => 'E-mail disponível para cadastro.'
             ]);
 
         // 2. Cria usuário
@@ -70,8 +70,8 @@ class AuthApiTest extends TestCase
     {
         $this->mock(AbacatePayService::class, function ($mock) {
             $mock->shouldReceive('gerarCobranca')->once()->andReturn([
-                'id' => 'bill_teste_789',
-                'url' => 'https://abacatepay.com/pay/bill_teste_789'
+                'id_transacao' => 'bill_teste_789',
+                'url_checkout' => 'https://abacatepay.com/pay/bill_teste_789'
             ]);
         });
 
@@ -87,8 +87,8 @@ class AuthApiTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonStructure([
-                'mensagem',
-                'checkout_url',
+                'message',
+                'url_checkout',
                 'token_pendencia',
                 'usuario' => ['id', 'name', 'email'],
                 'agencia' => ['id', 'nome', 'status_pagamento']
@@ -113,8 +113,7 @@ class AuthApiTest extends TestCase
         $agencia = Agencia::create([
             'nome' => 'Nexus Tech Hub',
             'plano_id' => $this->plano->id,
-            'status_pagamento' => 'ativo',
-            'pagamento_ativo' => true
+            'status_pagamento' => 'ativo'
         ]);
 
         $usuario = User::create([
@@ -133,7 +132,7 @@ class AuthApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'status' => 'sucesso',
-                'mensagem' => 'Login realizado com sucesso!'
+                'message' => 'Login realizado com sucesso!'
             ])
             ->assertJsonStructure([
                 'token',
@@ -160,7 +159,7 @@ class AuthApiTest extends TestCase
         $response->assertStatus(401)
             ->assertJson([
                 'status' => 'erro',
-                'mensagem' => 'Credenciais incorretas. Verifique seu e-mail e senha.'
+                'message' => 'Credenciais incorretas. Verifique seu e-mail e senha.'
             ]);
     }
 
@@ -172,8 +171,7 @@ class AuthApiTest extends TestCase
         $agencia = Agencia::create([
             'nome' => 'Startup Em Espera',
             'plano_id' => $this->plano->id,
-            'status_pagamento' => 'pendente',
-            'pagamento_ativo' => false
+            'status_pagamento' => 'pendente'
         ]);
 
         User::create([

@@ -117,9 +117,8 @@ botaoConsultarAnterior?.addEventListener('click', async () => {
             return;
         }
 
-        const urlCheckout = resposta.checkout_url
-            || resposta.url_checkout
-            || (resposta.dados && (resposta.dados.checkout_url || resposta.dados.url_checkout));
+        const urlCheckout = resposta.url_checkout
+            || (resposta.dados && resposta.dados.url_checkout);
 
         if (urlCheckout && urlCheckout.startsWith('http')) {
             exibirFeedback('Cobrança em aberto localizada. Redirecionando para a tela de pagamento...', 'alerta');
@@ -135,7 +134,7 @@ botaoConsultarAnterior?.addEventListener('click', async () => {
 
         // Fallback: caso a url esteja gravada em cache e o pagamento ainda esteja dentro do prazo
         if ((erro.status === 401 || mensagemErro.toLowerCase().includes('unauthenticated')) && agenciaPendencia) {
-            const urlSalva = agenciaPendencia.checkout_url || agenciaPendencia.url_checkout;
+            const urlSalva = agenciaPendencia.url_checkout;
             const expiraEm = agenciaPendencia.pagamento_expira_em ? new Date(agenciaPendencia.pagamento_expira_em) : null;
             const aindaValido = !expiraEm || expiraEm > new Date();
             if (urlSalva && aindaValido) {

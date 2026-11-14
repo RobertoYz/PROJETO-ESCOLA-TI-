@@ -64,7 +64,7 @@ class AlertaPrazoController extends Controller
 
             return response()->json([
                 'sucesso' => true,
-                'mensagem' => 'Varredura de prazos críticos concluída com sucesso.',
+                'message' => 'Varredura de prazos críticos concluída com sucesso.',
                 'total_gerados' => count($alertas),
                 'total_nao_lidos' => $totalNaoLidos,
                 'dados' => $alertas
@@ -72,7 +72,7 @@ class AlertaPrazoController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'sucesso' => false,
-                'mensagem' => 'Falha ao verificar prazos críticos: ' . $e->getMessage()
+                'message' => 'Falha ao verificar prazos críticos: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -104,13 +104,13 @@ class AlertaPrazoController extends Controller
 
             return response()->json([
                 'sucesso' => true,
-                'mensagem' => 'Alerta de prazo marcado como lido.',
+                'message' => 'Alerta de prazo marcado como lido.',
                 'alerta' => $alerta
             ]);
         } catch (Exception $e) {
             return response()->json([
                 'sucesso' => false,
-                'mensagem' => 'Alerta não encontrado ou não autorizado.'
+                'message' => 'Alerta não encontrado ou não autorizado.'
             ], 404);
         }
     }
@@ -130,12 +130,12 @@ class AlertaPrazoController extends Controller
 
             return response()->json([
                 'sucesso' => $enviado,
-                'mensagem' => $enviado ? 'E-mail de alerta de prazo enviado com sucesso.' : 'Falha ao despachar e-mail.'
+                'message' => $enviado ? 'E-mail de alerta de prazo enviado com sucesso.' : 'Falha ao despachar e-mail.'
             ]);
         } catch (Exception $e) {
             return response()->json([
                 'sucesso' => false,
-                'mensagem' => 'Alerta não encontrado ou não autorizado.'
+                'message' => 'Alerta não encontrado ou não autorizado.'
             ], 404);
         }
     }
@@ -153,7 +153,7 @@ class AlertaPrazoController extends Controller
 
         return response()->json([
             'sucesso' => true,
-            'mensagem' => "{$totalAtualizados} alertas de prazos marcados como lidos.",
+            'message' => "{$totalAtualizados} alertas de prazos marcados como lidos.",
             'total_atualizados' => $totalAtualizados
         ]);
     }

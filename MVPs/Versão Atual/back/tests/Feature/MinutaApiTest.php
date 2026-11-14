@@ -33,8 +33,7 @@ class MinutaApiTest extends TestCase
         $this->agencia = Agencia::create([
             'nome' => 'Agência de Inovação SC',
             'plano_id' => $plano->id,
-            'status_pagamento' => 'ativo',
-            'pagamento_ativo' => true
+            'status_pagamento' => 'ativo'
         ]);
 
         $this->usuario = User::create([
@@ -90,11 +89,11 @@ class MinutaApiTest extends TestCase
         $response->assertStatus(201)
             ->assertJson([
                 'sucesso' => true,
-                'mensagem' => 'Minuta gerada com sucesso pela Inteligência Artificial.'
+                'message' => 'Minuta gerada com sucesso pela Inteligência Artificial.'
             ])
             ->assertJsonStructure([
                 'sucesso',
-                'mensagem',
+                'message',
                 'dados' => [
                     'id',
                     'versao',
@@ -187,7 +186,7 @@ class MinutaApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'sucesso' => true,
-                'mensagem' => 'Proposta atualizada com sucesso para a versão v2.'
+                'message' => 'Proposta atualizada com sucesso para a versão v2.'
             ]);
 
         // A versão original 1 permanece intacta no banco

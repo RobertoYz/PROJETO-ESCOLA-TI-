@@ -32,8 +32,7 @@ class EditalFavoritoTest extends TestCase
         $agencia = Agencia::create([
             'nome' => 'Agência Piloto',
             'plano_id' => $plano->id,
-            'status_pagamento' => 'ativo',
-            'pagamento_ativo' => true
+            'status_pagamento' => 'ativo'
         ]);
 
         $this->usuario = User::create([
@@ -87,7 +86,7 @@ class EditalFavoritoTest extends TestCase
             ->assertJson([
                 'sucesso' => true,
                 'favorito' => true,
-                'mensagem' => 'Edital salvo nos favoritos com sucesso.'
+                'message' => 'Edital salvo nos favoritos com sucesso.'
             ]);
 
         $this->assertDatabaseHas('edital_favoritos', [
@@ -106,7 +105,7 @@ class EditalFavoritoTest extends TestCase
             ->assertJson([
                 'sucesso' => true,
                 'favorito' => false,
-                'mensagem' => 'Edital removido dos favoritos com sucesso.'
+                'message' => 'Edital removido dos favoritos com sucesso.'
             ]);
 
         $this->assertDatabaseMissing('edital_favoritos', [

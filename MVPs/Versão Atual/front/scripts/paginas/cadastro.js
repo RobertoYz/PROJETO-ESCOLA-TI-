@@ -1,6 +1,7 @@
 import { verificarEmail, limparDadosPendencia, salvarUsuarioLogado, salvarEmailPendencia } from '../servicos/servicoAutenticacao.js';
 
 const formulario = document.getElementById('formulario-cadastro');
+const campoNomeAgencia = document.getElementById('campo-nome-agencia');
 const campoNomeUsuario = document.getElementById('campo-nome-usuario');
 const campoEmail = document.getElementById('campo-email');
 const campoSenha = document.getElementById('campo-senha');
@@ -47,11 +48,14 @@ function limparErro() {
     divMensagemErro.hidden = true;
 }
 
-// Preenche automaticamente Nome e E-mail caso o usuário tenha retornado da seleção de plano
+// Preenche automaticamente Consultoria, Nome e E-mail caso o usuário tenha retornado da seleção de plano
 try {
     const dadosSalvos = sessionStorage.getItem('dados_pre_cadastro');
     if (dadosSalvos) {
         const dados = JSON.parse(dadosSalvos);
+        if (dados.nome_agencia && campoNomeAgencia) {
+            campoNomeAgencia.value = dados.nome_agencia;
+        }
         if (dados.name && campoNomeUsuario) {
             campoNomeUsuario.value = dados.name;
         }
@@ -64,7 +68,7 @@ try {
 }
 
 // Limpa erro ao digitar novamente
-[campoNomeUsuario, campoEmail, campoSenha].forEach((campo) => {
+[campoNomeAgencia, campoNomeUsuario, campoEmail, campoSenha].forEach((campo) => {
     campo?.addEventListener('input', () => {
         if (!divMensagemErro.hidden) {
             limparErro();
@@ -76,12 +80,13 @@ formulario.addEventListener('submit', async (evento) => {
     evento.preventDefault();
     limparErro();
 
+    const nomeAgencia = campoNomeAgencia ? campoNomeAgencia.value.trim() : '';
     const nomeUsuario = campoNomeUsuario.value.trim();
     const email = campoEmail.value.trim().toLowerCase();
     const senha = campoSenha.value;
 
-    if (!nomeUsuario || !email || !senha) {
-        exibirErro('Preencha todos os campos obrigatórios.');
+    if (!nomeAgencia || !nomeUsuario || !email || !senha) {
+        exibirErro('Preencha todos os campos obrigatórios, incluindo o nome da consultoria/agência.');
         return;
     }
 
@@ -106,6 +111,7 @@ formulario.addEventListener('submit', async (evento) => {
             limparDadosPendencia();
 
             const dadosPreCadastro = {
+                nome_agencia: nomeAgencia,
                 name: nomeUsuario,
                 email: email,
                 password: senha
@@ -115,7 +121,7 @@ formulario.addEventListener('submit', async (evento) => {
 
             window.location.href = 'selecionar-plano.html';
         } else {
-            const mensagem = resposta.mensagem || resposta.message || 'Este e-mail já está cadastrado.';
+            const mensagem = resposta.message || 'Este e-mail já está cadastrado.';
             const pendente = Boolean(resposta.pagamento_pendente);
             exibirErro(mensagem, { exibirLinkLogin: true, pagamentoPendente: pendente, email });
         }

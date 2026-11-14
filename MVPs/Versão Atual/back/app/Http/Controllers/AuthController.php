@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Adapters\AbacatePayAdapter;
 use App\Services\RegistroService;
 use App\Services\AbacatePayService;
 use App\Models\User;
@@ -18,11 +19,13 @@ use Exception;
 
 class AuthController extends Controller
 {
-    protected $registroService;
+    protected RegistroService $registroService;
+    protected AbacatePayAdapter $abacatePayAdapter;
 
-    public function __construct(RegistroService $registroService)
+    public function __construct(RegistroService $registroService, ?AbacatePayAdapter $abacatePayAdapter = null)
     {
         $this->registroService = $registroService;
+        $this->abacatePayAdapter = $abacatePayAdapter ?? new AbacatePayAdapter();
     }
 
     /**
@@ -42,7 +45,7 @@ class AuthController extends Controller
 
         if ($usuarioExistente) {
             $agencia = $usuarioExistente->agencia;
-            $pagamentoPendente = $agencia && (!$agencia->pagamento_ativo && $agencia->status_pagamento !== 'ativo');
+            $pagamentoPendente = $agencia && !$agencia->isPagamentoAtivo();
 
             return response()->json([
                 'disponivel' => false,
@@ -50,15 +53,12 @@ class AuthController extends Controller
                 'message' => $pagamentoPendente
                     ? 'Este e-mail já possui um cadastro com pagamento pendente. Conclua o pagamento para liberar seu acesso.'
                     : 'Este e-mail já está cadastrado. Faça login para acessar ou gerenciar sua conta.',
-                'mensagem' => $pagamentoPendente
-                    ? 'Este e-mail já possui um cadastro com pagamento pendente. Conclua o pagamento para liberar seu acesso.'
-                    : 'Este e-mail já está cadastrado. Faça login para acessar ou gerenciar sua conta.'
             ], 422);
         }
 
         return response()->json([
             'disponivel' => true,
-            'mensagem' => 'E-mail disponível para cadastro.'
+            'message' => 'E-mail disponível para cadastro.',
         ], 200);
     }
 
@@ -71,10 +71,9 @@ class AuthController extends Controller
         $emailNormalizado = strtolower(trim((string) $requisicao->input('email')));
         $usuarioExistente = $emailNormalizado ? User::with('agencia')->where('email', $emailNormalizado)->first() : null;
 
-        // Se o e-mail já existe mas pertence a uma conta que já está com pagamento ativo, bloqueia
-        if ($usuarioExistente && $usuarioExistente->agencia && ($usuarioExistente->agencia->pagamento_ativo || $usuarioExistente->agencia->status_pagamento === 'ativo')) {
+        if ($usuarioExistente && $usuarioExistente->agencia && $usuarioExistente->agencia->isPagamentoAtivo()) {
             return response()->json([
-                'mensagem' => 'Este e-mail já está cadastrado e possui assinatura ativa. Faça login para acessar sua conta.'
+                'message' => 'Este e-mail já está cadastrado e possui assinatura ativa. Faça login para acessar sua conta.',
             ], 422);
         }
 
@@ -87,7 +86,7 @@ class AuthController extends Controller
             'email' => $regraEmail,
             'password' => 'required|string|min:8',
             'plano_id' => 'required|exists:planos,id',
-            'nome_agencia' => 'nullable|string|max:255',
+            'nome_agencia' => 'required|string|max:255',
         ], [
             'name.required' => 'O nome é obrigatório.',
             'email.required' => 'O e-mail é obrigatório.',
@@ -97,19 +96,16 @@ class AuthController extends Controller
             'password.min' => 'A senha deve conter no mínimo 8 caracteres.',
             'plano_id.required' => 'Por favor, selecione um plano.',
             'plano_id.exists' => 'O plano selecionado não foi encontrado.',
+            'nome_agencia.required' => 'O nome da agência/consultoria é obrigatório.',
         ]);
 
         DB::beginTransaction();
 
         try {
             $plano = Plano::findOrFail($dadosValidados['plano_id']);
-
-            $nomeAgencia = !empty($dadosValidados['nome_agencia'])
-                ? $dadosValidados['nome_agencia']
-                : 'Consultoria de ' . $dadosValidados['name'];
+            $nomeAgencia = trim($dadosValidados['nome_agencia']);
 
             if ($usuarioExistente) {
-                // Reaproveita o usuário e agência pendentes sem duplicar registros
                 $usuario = $usuarioExistente;
                 $usuario->name = $dadosValidados['name'];
                 $usuario->password = Hash::make($dadosValidados['password']);
@@ -119,10 +115,8 @@ class AuthController extends Controller
                 if (!$agencia) {
                     $agencia = Agencia::create([
                         'nome' => $nomeAgencia,
-                        'nome_fantasia' => $nomeAgencia,
                         'plano_id' => $plano->id,
                         'status_pagamento' => 'pendente',
-                        'pagamento_ativo' => false,
                         'pagamento_expira_em' => Carbon::now()->addMinutes(60),
                     ]);
                     $usuario->agencia_id = $agencia->id;
@@ -131,22 +125,17 @@ class AuthController extends Controller
                     $agencia->nome = $nomeAgencia;
                     $agencia->plano_id = $plano->id;
                     $agencia->status_pagamento = 'pendente';
-                    $agencia->pagamento_ativo = false;
                     $agencia->pagamento_expira_em = Carbon::now()->addMinutes(60);
                     $agencia->save();
                 }
             } else {
-                // Criação da Agência com status de pagamento pendente
                 $agencia = Agencia::create([
                     'nome' => $nomeAgencia,
-                    'nome_fantasia' => $nomeAgencia,
                     'plano_id' => $plano->id,
                     'status_pagamento' => 'pendente',
-                    'pagamento_ativo' => false,
                     'pagamento_expira_em' => Carbon::now()->addMinutes(60),
                 ]);
 
-                // Criação do Usuário com perfil de consultor_admin
                 $usuario = User::create([
                     'name' => $dadosValidados['name'],
                     'email' => strtolower(trim($dadosValidados['email'])),
@@ -156,21 +145,17 @@ class AuthController extends Controller
                 ]);
             }
 
-            // Geração da cobrança real no AbacatePay
             $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano);
-            $urlCheckout = is_array($cobranca) ? ($cobranca['url'] ?? null) : $cobranca;
-            $idCobranca = is_array($cobranca) ? ($cobranca['id'] ?? null) : null;
+            $dadosCobranca = $this->abacatePayAdapter->normalizarRetornoCobranca($cobranca);
+            $urlCheckout = $dadosCobranca['url_checkout'];
+            $idTransacao = $dadosCobranca['id_transacao'];
 
             if (empty($urlCheckout) || !str_starts_with($urlCheckout, 'http') || !str_contains($urlCheckout, 'abacatepay.com')) {
                 throw new Exception('O gateway de pagamento AbacatePay não retornou uma URL de checkout válida.');
             }
 
-            // Salva link e identificador de cobrança na Agência
-            $agencia->checkout_url = $urlCheckout;
             $agencia->url_checkout = $urlCheckout;
-            $agencia->billing_id = $idCobranca;
-            $agencia->id_cobranca = $idCobranca;
-            $agencia->id_plataforma_pagamento = $idCobranca;
+            $agencia->id_transacao = $idTransacao;
             $agencia->save();
 
             $tokenPendencia = $usuario->createToken('token_pendencia', ['pagamento:gerenciar'])->plainTextToken;
@@ -178,8 +163,7 @@ class AuthController extends Controller
             DB::commit();
 
             return response()->json([
-                'mensagem' => 'Conta criada com pagamento pendente. Redirecionando para o pagamento...',
-                'checkout_url' => $urlCheckout,
+                'message' => 'Conta criada com pagamento pendente. Redirecionando para o pagamento...',
                 'url_checkout' => $urlCheckout,
                 'token_pendencia' => $tokenPendencia,
                 'access_token' => $tokenPendencia,
@@ -187,44 +171,45 @@ class AuthController extends Controller
                 'usuario' => [
                     'id' => $usuario->id,
                     'name' => $usuario->name,
-                    'email' => $usuario->email
+                    'email' => $usuario->email,
                 ],
                 'agencia' => [
                     'id' => $agencia->id,
                     'nome' => $agencia->nome,
                     'status_pagamento' => $agencia->status_pagamento,
-                    'checkout_url' => $agencia->checkout_url,
-                    'url_checkout' => $agencia->checkout_url,
+                    'url_checkout' => $agencia->url_checkout,
                     'pagamento_expira_em' => $agencia->pagamento_expira_em,
-                ]
+                ],
             ], 201);
 
         } catch (Exception $excecao) {
             DB::rollBack();
 
             return response()->json([
-                'mensagem' => 'Erro ao processar cadastro e geração de cobrança: ' . $excecao->getMessage()
+                'message' => 'Erro ao processar cadastro e geração de cobrança: ' . $excecao->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Cadastro legado mantido para compatibilidade
+     * Cadastro inicial de agência e usuário
      * POST /api/auth/registro
      */
-    public function registrar(Request $requisicao)
+    public function registrar(Request $requisicao): JsonResponse
     {
         $dadosValidados = $requisicao->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'nome_agencia' => 'nullable|string|max:255',
+            'nome_agencia' => 'required|string|max:255',
+        ], [
+            'nome_agencia.required' => 'O nome da agência/consultoria é obrigatório.',
         ]);
 
         $resultado = $this->registroService->registrarNovaAgenciaEUsuario($dadosValidados);
 
         return response()->json([
-            'mensagem' => 'Cadastro inicial realizado. Selecione o seu plano.',
+            'message' => 'Cadastro inicial realizado. Selecione o seu plano.',
             'token' => $resultado['token'],
             'usuario' => $resultado['usuario'],
             'agencia' => $resultado['agencia'],
@@ -251,45 +236,42 @@ class AuthController extends Controller
         if (!$usuario || !Hash::check($validacao['password'], $usuario->password)) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => 'Credenciais incorretas. Verifique seu e-mail e senha.'
+                'message' => 'Credenciais incorretas. Verifique seu e-mail e senha.',
             ], 401);
         }
 
         $agencia = $usuario->agencia;
 
-        // Se o usuário possui agência com pagamento NÃO realizado, bloqueia e emite token de pendência
-        if ($agencia && (!$agencia->pagamento_ativo && $agencia->status_pagamento !== 'ativo')) {
+        if ($agencia && !$agencia->isPagamentoAtivo()) {
             $tokenPendencia = $usuario->createToken('token_pendencia', ['pagamento:gerenciar'])->plainTextToken;
 
             return response()->json([
                 'codigo' => 'PAGAMENTO_PENDENTE',
                 'codigo_erro' => 'PAGAMENTO_PENDENTE',
-                'mensagem' => 'Seu cadastro possui um pagamento pendente.',
+                'message' => 'Seu cadastro possui um pagamento pendente.',
                 'access_token' => $tokenPendencia,
                 'token' => $tokenPendencia,
                 'token_pendencia' => $tokenPendencia,
                 'usuario' => [
                     'id' => $usuario->id,
                     'name' => $usuario->name,
-                    'email' => $usuario->email
+                    'email' => $usuario->email,
                 ],
                 'agencia' => [
                     'id' => $agencia->id,
                     'nome' => $agencia->nome,
                     'status_pagamento' => $agencia->status_pagamento,
-                    'checkout_url' => $agencia->checkout_url,
-                    'url_checkout' => $agencia->checkout_url,
+                    'url_checkout' => $agencia->url_checkout,
                     'pagamento_expira_em' => $agencia->pagamento_expira_em,
-                ]
+                ],
             ], 403);
         }
 
-        // Login aprovado com assinatura ativa
         $token = $usuario->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'status' => 'sucesso',
-            'mensagem' => 'Login realizado com sucesso!',
+            'message' => 'Login realizado com sucesso!',
             'token' => $token,
             'access_token' => $token,
             'dados' => [
@@ -303,9 +285,8 @@ class AuthController extends Controller
                     'id' => $agencia->id,
                     'nome' => $agencia->nome,
                     'status_pagamento' => $agencia->status_pagamento,
-                    'pagamento_ativo' => $agencia->pagamento_ativo,
                 ] : null,
-            ]
+            ],
         ], 200);
     }
 
@@ -319,7 +300,6 @@ class AuthController extends Controller
             ?: $requisicao->query('email')
             ?: $requisicao->header('X-Pending-Email');
 
-        // Prioriza o e-mail explícito da tela de pendência para nunca operar sobre token residual de outra conta
         if (!empty($email)) {
             $usuarioPorEmail = User::with('agencia')->where('email', strtolower(trim($email)))->first();
             if ($usuarioPorEmail) {
@@ -357,50 +337,45 @@ class AuthController extends Controller
         $agencia = $usuario ? $usuario->agencia : null;
 
         if (!$usuario || !$agencia) {
-            return response()->json(['mensagem' => 'Agência não vinculada a este usuário.'], 404);
+            return response()->json(['message' => 'Agência não vinculada a este usuário.'], 404);
         }
 
-        // Se já estiver pago localmente, confirma a liberação
-        if ($agencia->pagamento_ativo || $agencia->status_pagamento === 'ativo') {
+        if ($agencia->isPagamentoAtivo()) {
             return response()->json([
                 'expirado' => false,
                 'pago' => true,
-                'mensagem' => 'O pagamento já foi confirmado!'
+                'message' => 'O pagamento já foi confirmado!',
             ], 200);
         }
 
-        // Consulta em tempo real no gateway de pagamento
-        $idCobranca = $agencia->billing_id ?? $agencia->id_cobranca ?? $agencia->id_plataforma_pagamento;
-        if (!empty($idCobranca)) {
-            $statusGateway = $servicoAbacatePay->consultarStatusCobranca($idCobranca);
-            if ($statusGateway === 'PAID') {
-                $agencia->pagamento_ativo = true;
+        if (!empty($agencia->id_transacao)) {
+            $statusGateway = $servicoAbacatePay->consultarStatusCobranca($agencia->id_transacao);
+            if ($this->abacatePayAdapter->traduzirStatus($statusGateway) === 'ativo') {
                 $agencia->status_pagamento = 'ativo';
                 $agencia->save();
 
                 return response()->json([
                     'expirado' => false,
                     'pago' => true,
-                    'mensagem' => 'O pagamento foi confirmado com sucesso!'
+                    'message' => 'O pagamento foi confirmado com sucesso!',
                 ], 200);
             }
         }
 
-        $urlCheckout = $agencia->checkout_url ?? $agencia->url_checkout;
+        $urlCheckout = $agencia->url_checkout;
         $expirado = $servicoAbacatePay->estaExpirado($agencia);
 
         if ($expirado || empty($urlCheckout)) {
             return response()->json([
                 'expirado' => true,
-                'mensagem' => "O pagamento anterior expirou! Por favor, clique na opção 'Gerar uma nova cobrança' para escolher um plano novamente."
+                'message' => "O pagamento anterior expirou! Por favor, clique na opção 'Gerar uma nova cobrança' para escolher um plano novamente.",
             ], 400);
         }
 
         return response()->json([
             'expirado' => false,
-            'checkout_url' => $urlCheckout,
             'url_checkout' => $urlCheckout,
-            'mensagem' => 'Janela de pagamento ainda válida.'
+            'message' => 'Janela de pagamento ainda válida.',
         ], 200);
     }
 
@@ -421,40 +396,36 @@ class AuthController extends Controller
         $agencia = $usuario ? $usuario->agencia : null;
 
         if (!$usuario || !$agencia) {
-            return response()->json(['mensagem' => 'Agência não encontrada para este usuário.'], 404);
+            return response()->json(['message' => 'Agência não encontrada para este usuário.'], 404);
         }
 
         $plano = Plano::findOrFail($requisicao->plano_id);
 
         try {
             $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano);
-            $urlCheckout = is_array($cobranca) ? ($cobranca['url'] ?? null) : $cobranca;
-            $idCobranca = is_array($cobranca) ? ($cobranca['id'] ?? null) : null;
+            $dadosCobranca = $this->abacatePayAdapter->normalizarRetornoCobranca($cobranca);
+            $urlCheckout = $dadosCobranca['url_checkout'];
+            $idTransacao = $dadosCobranca['id_transacao'];
 
             if (empty($urlCheckout) || !str_starts_with($urlCheckout, 'http') || !str_contains($urlCheckout, 'abacatepay.com')) {
                 throw new Exception('O gateway de pagamento AbacatePay não retornou uma URL de checkout válida.');
             }
 
             $agencia->plano_id = $plano->id;
-            $agencia->checkout_url = $urlCheckout;
             $agencia->url_checkout = $urlCheckout;
-            $agencia->billing_id = $idCobranca;
-            $agencia->id_cobranca = $idCobranca;
-            $agencia->id_plataforma_pagamento = $idCobranca;
+            $agencia->id_transacao = $idTransacao;
             $agencia->pagamento_expira_em = Carbon::now()->addMinutes(60);
             $agencia->status_pagamento = 'pendente';
-            $agencia->pagamento_ativo = false;
             $agencia->save();
 
             return response()->json([
-                'checkout_url' => $urlCheckout,
                 'url_checkout' => $urlCheckout,
-                'mensagem' => 'Nova cobrança gerada com sucesso.'
+                'message' => 'Nova cobrança gerada com sucesso.',
             ], 200);
 
         } catch (Exception $excecao) {
             return response()->json([
-                'mensagem' => 'Erro ao gerar nova cobrança: ' . $excecao->getMessage()
+                'message' => 'Erro ao gerar nova cobrança: ' . $excecao->getMessage(),
             ], 500);
         }
     }
@@ -468,15 +439,14 @@ class AuthController extends Controller
         $usuario = $this->resolverUsuarioPendente($requisicao);
 
         if (!$usuario) {
-            return response()->json(['mensagem' => 'Usuário não autenticado.'], 401);
+            return response()->json(['message' => 'Usuário não autenticado.'], 401);
         }
 
         $agencia = $usuario->agencia;
 
-        // Por segurança, impede excluir se o pagamento já estiver aprovado
-        if ($agencia && ($agencia->pagamento_ativo || $agencia->status_pagamento === 'ativo')) {
+        if ($agencia && $agencia->isPagamentoAtivo()) {
             return response()->json([
-                'mensagem' => 'Não é permitido cancelar uma conta com assinatura ativa.'
+                'message' => 'Não é permitido cancelar uma conta com assinatura ativa.',
             ], 400);
         }
 
@@ -490,7 +460,6 @@ class AuthController extends Controller
                     $idsUsuarios = array_values(array_unique(array_merge($idsUsuarios, $idsDaAgencia)));
                 }
 
-                // Revoga todos os tokens Sanctum vinculados aos usuários da conta
                 if (class_exists(\Laravel\Sanctum\PersonalAccessToken::class)) {
                     \Laravel\Sanctum\PersonalAccessToken::where('tokenable_type', User::class)
                         ->whereIn('tokenable_id', $idsUsuarios)
@@ -499,11 +468,9 @@ class AuthController extends Controller
                     $usuario->tokens()->delete();
                 }
 
-                // Limpa eventuais tokens de redefinição de senha e sessões
                 DB::table('password_reset_tokens')->where('email', $emailUsuario)->delete();
                 DB::table('sessions')->whereIn('user_id', $idsUsuarios)->delete();
 
-                // Exclui startups, todos os usuários vinculados e a agência
                 if ($agencia) {
                     $agencia->startups()->delete();
                     User::whereIn('id', $idsUsuarios)->forceDelete();
@@ -514,12 +481,12 @@ class AuthController extends Controller
             });
 
             return response()->json([
-                'mensagem' => 'Pagamento cancelado e conta excluída com sucesso.'
+                'message' => 'Pagamento cancelado e conta excluída com sucesso.',
             ], 200);
 
         } catch (Exception $excecao) {
             return response()->json([
-                'mensagem' => 'Erro ao cancelar cadastro e excluir dados: ' . $excecao->getMessage()
+                'message' => 'Erro ao cancelar cadastro e excluir dados: ' . $excecao->getMessage(),
             ], 500);
         }
     }
@@ -527,7 +494,7 @@ class AuthController extends Controller
     /**
      * Solicita a recuperação de senha (apenas para e-mails já cadastrados no sistema).
      */
-    public function solicitarRecuperacaoSenha(Request $requisicao)
+    public function solicitarRecuperacaoSenha(Request $requisicao): JsonResponse
     {
         $requisicao->validate([
             'email' => 'required|string|email|max:255',
@@ -537,29 +504,24 @@ class AuthController extends Controller
         ]);
 
         $email = strtolower(trim($requisicao->email));
-
-        // Ferramenta de verificação estrita: verifica se o e-mail pertence a um usuário cadastrado
         $usuario = User::where('email', $email)->first();
 
         if (!$usuario) {
             return response()->json([
-                'mensagem' => 'Nenhuma conta foi encontrada com este endereço de e-mail. Verifique o e-mail digitado ou crie uma conta.',
-                'message' => 'Nenhuma conta foi encontrada com este endereço de e-mail. Verifique o e-mail digitado ou crie uma conta.'
+                'message' => 'Nenhuma conta foi encontrada com este endereço de e-mail. Verifique o e-mail digitado ou crie uma conta.',
             ], 404);
         }
 
-        // Gera token seguro e grava na tabela password_reset_tokens
         $tokenPuro = Str::random(64);
 
         DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $usuario->email],
             [
                 'token' => Hash::make($tokenPuro),
-                'created_at' => Carbon::now()
+                'created_at' => Carbon::now(),
             ]
         );
 
-        // Descobre a URL base do Front-end (Live Server ou Produção) a partir do cabeçalho X-Frontend-Url
         $urlOrigemFront = $requisicao->header('X-Frontend-Url') ?: $requisicao->header('Referer');
         if ($urlOrigemFront && str_contains($urlOrigemFront, '/paginas/')) {
             $urlBasePaginas = substr($urlOrigemFront, 0, strpos($urlOrigemFront, '/paginas/') + 9);
@@ -569,7 +531,6 @@ class AuthController extends Controller
 
         $linkRedefinicao = $urlBasePaginas . 'redefinir-senha.html?token=' . urlencode($tokenPuro) . '&email=' . urlencode($usuario->email);
 
-        // Monta o corpo do e-mail em HTML com a identidade visual do Anjo Nexus
         $htmlEmail = "
         <div style='font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background-color: #0d0f1a; color: #f8fafc; padding: 32px; border-radius: 12px; border: 1px solid #2e364f;'>
             <h2 style='color: #818cf8; margin-top: 0;'>Recuperação de Senha — Anjo Nexus</h2>
@@ -591,20 +552,19 @@ class AuthController extends Controller
             });
         } catch (\Exception $erro) {
             return response()->json([
-                'mensagem' => 'Falha ao enviar o e-mail de recuperação: ' . $erro->getMessage(),
-                'message' => 'Falha ao enviar o e-mail de recuperação: ' . $erro->getMessage()
+                'message' => 'Falha ao enviar o e-mail de recuperação: ' . $erro->getMessage(),
             ], 500);
         }
 
         return response()->json([
-            'mensagem' => 'Enviamos um link de recuperação para o seu e-mail! Verifique sua caixa de entrada e o spam.'
+            'message' => 'Enviamos um link de recuperação para o seu e-mail! Verifique sua caixa de entrada e o spam.',
         ], 200);
     }
 
     /**
      * Valida o token recebido e redefine a senha do usuário no banco de dados.
      */
-    public function redefinirSenha(Request $requisicao)
+    public function redefinirSenha(Request $requisicao): JsonResponse
     {
         $requisicao->validate([
             'email' => 'required|string|email',
@@ -620,7 +580,7 @@ class AuthController extends Controller
         $usuario = User::where('email', $email)->first();
         if (!$usuario) {
             return response()->json([
-                'mensagem' => 'Conta de usuário não encontrada.'
+                'message' => 'Conta de usuário não encontrada.',
             ], 404);
         }
 
@@ -630,33 +590,30 @@ class AuthController extends Controller
 
         if (!$registroToken) {
             return response()->json([
-                'mensagem' => 'Solicitação de redefinição inválida ou já utilizada. Solicite um novo link.'
+                'message' => 'Solicitação de redefinição inválida ou já utilizada. Solicite um novo link.',
             ], 400);
         }
 
-        // Verifica expiração de 60 minutos
         if (Carbon::parse($registroToken->created_at)->addMinutes(60)->isPast()) {
             DB::table('password_reset_tokens')->where('email', $email)->delete();
             return response()->json([
-                'mensagem' => 'O link de recuperação expirou (validade de 60 minutos). Solicite um novo link.'
+                'message' => 'O link de recuperação expirou (validade de 60 minutos). Solicite um novo link.',
             ], 400);
         }
 
-        // Verifica se o token da URL corresponde ao hash salvo
         if (!Hash::check($requisicao->token, $registroToken->token)) {
             return response()->json([
-                'mensagem' => 'Token de recuperação inválido. Verifique se abriu o último e-mail enviado.'
+                'message' => 'Token de recuperação inválido. Verifique se abriu o último e-mail enviado.',
             ], 400);
         }
 
-        // Atualiza a senha do usuário e remove o token utilizado
         $usuario->password = Hash::make($requisicao->password);
         $usuario->save();
 
         DB::table('password_reset_tokens')->where('email', $email)->delete();
 
         return response()->json([
-            'mensagem' => 'Sua senha foi redefinida com sucesso! Redirecionando para o login...'
+            'message' => 'Sua senha foi redefinida com sucesso! Redirecionando para o login...',
         ], 200);
     }
 
@@ -669,7 +626,7 @@ class AuthController extends Controller
         $usuario = $requisicao->user();
 
         if (!$usuario) {
-            return response()->json(['mensagem' => 'Usuário não autenticado.'], 401);
+            return response()->json(['message' => 'Usuário não autenticado.'], 401);
         }
 
         return response()->json([
@@ -679,7 +636,7 @@ class AuthController extends Controller
                 'name' => $usuario->name,
                 'email' => $usuario->email,
                 'perfil_acesso' => $usuario->perfil_acesso,
-            ]
+            ],
         ], 200);
     }
 
@@ -692,7 +649,7 @@ class AuthController extends Controller
         $usuario = $requisicao->user();
 
         if (!$usuario) {
-            return response()->json(['mensagem' => 'Usuário não autenticado.'], 401);
+            return response()->json(['message' => 'Usuário não autenticado.'], 401);
         }
 
         $dadosValidados = $requisicao->validate([
@@ -718,13 +675,13 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => 'sucesso',
-            'mensagem' => 'Perfil atualizado com sucesso!',
+            'message' => 'Perfil atualizado com sucesso!',
             'usuario' => [
                 'id' => $usuario->id,
                 'name' => $usuario->name,
                 'email' => $usuario->email,
                 'perfil_acesso' => $usuario->perfil_acesso,
-            ]
+            ],
         ], 200);
     }
 }

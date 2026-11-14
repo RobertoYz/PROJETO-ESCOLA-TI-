@@ -105,7 +105,7 @@ class EditalController extends Controller
             return response()->json([
                 'sucesso' => true,
                 'favorito' => false,
-                'mensagem' => 'Edital removido dos favoritos com sucesso.'
+                'message' => 'Edital removido dos favoritos com sucesso.'
             ], 200);
         }
 
@@ -118,7 +118,7 @@ class EditalController extends Controller
         return response()->json([
             'sucesso' => true,
             'favorito' => true,
-            'mensagem' => 'Edital salvo nos favoritos com sucesso.'
+            'message' => 'Edital salvo nos favoritos com sucesso.'
         ], 200);
     }
 

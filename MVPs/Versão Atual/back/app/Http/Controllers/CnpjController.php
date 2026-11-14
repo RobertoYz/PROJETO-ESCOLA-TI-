@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Adapters\BrasilApiCnpjAdapter;
 use App\Services\CnpjService;
 use App\Rules\CnpjValidationRule;
 use App\Exceptions\CnpjNotFoundException;
@@ -14,10 +15,12 @@ use Exception;
 class CnpjController extends Controller
 {
     protected CnpjService $cnpjService;
+    protected BrasilApiCnpjAdapter $adapter;
 
-    public function __construct(CnpjService $cnpjService)
+    public function __construct(CnpjService $cnpjService, ?BrasilApiCnpjAdapter $adapter = null)
     {
         $this->cnpjService = $cnpjService;
+        $this->adapter = $adapter ?? new BrasilApiCnpjAdapter();
     }
 
     /**
@@ -35,17 +38,17 @@ class CnpjController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'cnpj' => ['required', 'string', new CnpjValidationRule()],
-            'refresh' => ['nullable', 'boolean']
+            'refresh' => ['nullable', 'boolean'],
         ], [
             'cnpj.required' => 'O campo CNPJ é obrigatório para realizar a consulta.',
-            'cnpj.string' => 'O CNPJ deve ser informado como texto.'
+            'cnpj.string' => 'O CNPJ deve ser informado como texto.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => $validator->errors()->first('cnpj'),
-                'erros' => $validator->errors()
+                'message' => $validator->errors()->first('cnpj'),
+                'erros' => $validator->errors(),
             ], 422);
         }
 
@@ -57,39 +60,34 @@ class CnpjController extends Controller
      */
     protected function processarConsulta(string $cnpj, bool $refresh = false): JsonResponse
     {
-        // Validação inicial matemática
         if (!CnpjValidationRule::isValid($cnpj)) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => 'O CNPJ informado possui dígitos verificadores ou formato inválido.'
+                'message' => 'O CNPJ informado possui dígitos verificadores ou formato inválido.',
             ], 422);
         }
 
         try {
             $dados = $this->cnpjService->consultar($cnpj, $refresh);
 
-            return response()->json([
-                'status' => 'sucesso',
-                'mensagem' => 'Dados da empresa obtidos com sucesso na Receita Federal.',
-                'dados' => $dados
-            ], 200);
+            return response()->json($this->adapter->paraRespostaApi($dados), 200);
 
         } catch (CnpjNotFoundException $e) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 404);
 
         } catch (InvalidArgumentException $e) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
 
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'erro',
-                'mensagem' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 503);
         }
     }

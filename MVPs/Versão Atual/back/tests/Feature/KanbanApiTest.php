@@ -76,7 +76,7 @@ class KanbanApiTest extends TestCase
         $response->assertStatus(201)
             ->assertJson([
                 'status' => 'sucesso',
-                'mensagem' => 'Card criado com sucesso!'
+                'message' => 'Card criado com sucesso!'
             ]);
 
         $this->assertDatabaseHas('kanban_cards', [
@@ -129,7 +129,7 @@ class KanbanApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'status' => 'sucesso',
-                'mensagem' => 'Card movimentado com sucesso!'
+                'message' => 'Card movimentado com sucesso!'
             ]);
 
         $this->assertDatabaseHas('kanban_cards', [
@@ -194,7 +194,7 @@ class KanbanApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'status' => 'sucesso',
-                'mensagem' => 'Card removido com sucesso!'
+                'message' => 'Card removido com sucesso!'
             ]);
 
         $this->assertDatabaseMissing('kanban_cards', [

@@ -2,42 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Adapters\AbacatePayAdapter;
 use Illuminate\Http\Request;
 use App\Services\AbacatePayService;
 
 class PagamentoController extends Controller
 {
-    public function recuperarLinkPagamento(Request $requisicao, AbacatePayService $servicoAbacatePay)
+    public function recuperarLinkPagamento(Request $requisicao, AbacatePayService $servicoAbacatePay, AbacatePayAdapter $adapter)
     {
         $usuario = $requisicao->user();
         $agencia = $usuario ? $usuario->agencia : null;
 
         if (!$agencia) {
-            return response()->json(['erro' => 'Agência não encontrada para este usuário.'], 404);
+            return response()->json(['message' => 'Agência não encontrada para este usuário.', 'erro' => 'Agência não encontrada para este usuário.'], 404);
         }
 
-        if ($agencia->pagamento_ativo || $agencia->status_pagamento === 'ativo') {
-            return response()->json(['erro' => 'Sua assinatura já está ativa.'], 400);
+        if ($agencia->isPagamentoAtivo()) {
+            return response()->json(['message' => 'Sua assinatura já está ativa.', 'erro' => 'Sua assinatura já está ativa.'], 400);
         }
 
         $plano = $agencia->plano;
 
         $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano);
-        $urlCheckout = is_array($cobranca) ? $cobranca['url'] : $cobranca;
-        $idCobranca = is_array($cobranca) ? ($cobranca['id'] ?? null) : null;
+        $dadosCobranca = $adapter->normalizarRetornoCobranca($cobranca);
 
-        $agencia->checkout_url = $urlCheckout;
-        $agencia->url_checkout = $urlCheckout;
-        if ($idCobranca) {
-            $agencia->billing_id = $idCobranca;
-            $agencia->id_cobranca = $idCobranca;
-            $agencia->id_plataforma_pagamento = $idCobranca;
+        $agencia->url_checkout = $dadosCobranca['url_checkout'];
+        if ($dadosCobranca['id_transacao']) {
+            $agencia->id_transacao = $dadosCobranca['id_transacao'];
         }
         $agencia->save();
 
         return response()->json([
-            'checkout_url' => $urlCheckout,
-            'url_checkout' => $urlCheckout,
+            'url_checkout' => $dadosCobranca['url_checkout'],
         ], 200);
     }
 }
