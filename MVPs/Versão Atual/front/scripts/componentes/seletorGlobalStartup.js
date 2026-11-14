@@ -659,6 +659,199 @@ function injetarEstilosHeaderGlobal() {
             filter: grayscale(0.4);
             box-shadow: none !important;
         }
+
+        /* Modal Minha Assinatura (EDTAN-160 - Dark Mode B2B SaaS) */
+        .modal-assinatura-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 6, 12, 0.82);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10020;
+            padding: 1rem;
+        }
+
+        .modal-assinatura-overlay.active {
+            display: flex !important;
+        }
+
+        .modal-assinatura-card {
+            background: #131722;
+            border: 1px solid #2a3142;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 520px;
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.15rem;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.88);
+            color: #f8fafc;
+        }
+
+        .assinatura-bloco-plano {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(124, 58, 237, 0.14));
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .assinatura-plano-nome {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .assinatura-plano-preco {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+
+        .assinatura-grid-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .assinatura-info-item {
+            background: #0d1017;
+            border: 1px solid #222836;
+            border-radius: 10px;
+            padding: 11px 13px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .assinatura-info-label {
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .assinatura-info-valor {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge-metodo-pix {
+            background: rgba(16, 185, 129, 0.16);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.45);
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 999px;
+            letter-spacing: 0.6px;
+        }
+
+        .badge-status-assinatura {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .badge-status-assinatura.ativa {
+            background: rgba(16, 185, 129, 0.16);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.45);
+        }
+
+        .badge-status-assinatura.proxima {
+            background: rgba(245, 158, 11, 0.16);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.45);
+        }
+
+        .badge-status-assinatura.vencida {
+            background: rgba(239, 68, 68, 0.16);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.45);
+        }
+
+        .assinatura-consumo-box {
+            background: #0d1017;
+            border: 1px solid #222836;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .assinatura-consumo-linha {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .assinatura-consumo-linha:last-child {
+            border-bottom: none;
+        }
+
+        .assinatura-aviso-renovacao {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 10px;
+            padding: 10px 13px;
+            font-size: 0.82rem;
+            line-height: 1.45;
+            color: #bfdbfe;
+        }
+
+        .btn-renovar-assinatura-pix {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: 1px solid #34d399;
+            color: #ffffff;
+            padding: 11px 18px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-renovar-assinatura-pix:hover:not(:disabled) {
+            background: linear-gradient(135deg, #059669, #047857);
+            box-shadow: 0 4px 18px rgba(16, 185, 129, 0.38);
+        }
+
+        .btn-renovar-assinatura-pix:disabled {
+            background: #1e2433 !important;
+            border-color: #334155 !important;
+            color: #64748b !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+        }
     `;
     document.head.appendChild(style);
 }
@@ -1003,9 +1196,291 @@ function abrirModalEditarPerfil() {
     if (overlay) overlay.classList.add('active');
 }
 
+function formatarDataPtBr(valorIsoOuData) {
+    if (!valorIsoOuData) return '--/--/----';
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(String(valorIsoOuData))) {
+        return String(valorIsoOuData);
+    }
+    const data = new Date(valorIsoOuData);
+    if (Number.isNaN(data.getTime())) return String(valorIsoOuData);
+    return data.toLocaleDateString('pt-BR');
+}
+
+function formatarMoedaBrl(valor) {
+    const numero = Number(valor ?? 0);
+    if (Number.isNaN(numero)) return 'R$ 0,00';
+    return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function garantirModalMinhaAssinatura() {
+    if (document.getElementById('modalMinhaAssinaturaOverlay')) return;
+
+    const modalHtml = `
+        <div class="modal-assinatura-overlay" id="modalMinhaAssinaturaOverlay">
+            <div class="modal-assinatura-card" role="dialog" aria-modal="true" aria-labelledby="tituloModalMinhaAssinatura">
+                <div class="modal-perfil-consultor-header">
+                    <div>
+                        <div class="modal-perfil-consultor-title" id="tituloModalMinhaAssinatura">Minha Assinatura</div>
+                        <div class="modal-perfil-consultor-subtitle">Detalhes do plano atual, limites da consultoria e ciclo de renovação</div>
+                    </div>
+                    <button type="button" class="modal-perfil-close" id="btnFecharModalMinhaAssinatura">&times;</button>
+                </div>
+
+                <!-- Plano Atual -->
+                <div class="assinatura-bloco-plano">
+                    <div>
+                        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: #93c5fd; font-weight: 700;">Plano Atual</div>
+                        <div class="assinatura-plano-nome" id="assinaturaPlanoNome">Carregando...</div>
+                    </div>
+                    <div class="assinatura-plano-preco" id="assinaturaPlanoPreco">R$ --,--/mês</div>
+                </div>
+
+                <!-- Forma de Pagamento + Vencimento e Ciclo -->
+                <div class="assinatura-grid-info">
+                    <div class="assinatura-info-item">
+                        <span class="assinatura-info-label">Forma de Pagamento Atual</span>
+                        <div class="assinatura-info-valor">
+                            <span class="badge-metodo-pix" id="assinaturaFormaPagamentoBadge">PIX</span>
+                        </div>
+                    </div>
+                    <div class="assinatura-info-item">
+                        <span class="assinatura-info-label">Status do Ciclo</span>
+                        <div class="assinatura-info-valor">
+                            <span class="badge-status-assinatura ativa" id="assinaturaStatusBadge">Ativa</span>
+                        </div>
+                    </div>
+                    <div class="assinatura-info-item">
+                        <span class="assinatura-info-label">Vencimento da Assinatura</span>
+                        <div class="assinatura-info-valor" id="assinaturaDataVencimento">--/--/----</div>
+                    </div>
+                    <div class="assinatura-info-item">
+                        <span class="assinatura-info-label">Dias Restantes</span>
+                        <div class="assinatura-info-valor" id="assinaturaDiasRestantes">-- dias</div>
+                    </div>
+                </div>
+
+                <!-- Consumo Atual vs Limites -->
+                <div class="assinatura-consumo-box">
+                    <div style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 700;">Consumo Atual vs Limites do Plano</div>
+                    <div class="assinatura-consumo-linha">
+                        <span>Startups Cadastradas</span>
+                        <strong id="assinaturaUsoStartups">0 / 0</strong>
+                    </div>
+                    <div class="assinatura-consumo-linha">
+                        <span>Membros de Equipe</span>
+                        <strong id="assinaturaUsoMembros">0 / 0</strong>
+                    </div>
+                    <div class="assinatura-consumo-linha">
+                        <span>Minutas IA (Ciclo Mensal)</span>
+                        <strong id="assinaturaUsoMinutas">0 / 0</strong>
+                    </div>
+                </div>
+
+                <!-- Aviso da Janela de Renovação -->
+                <div class="assinatura-aviso-renovacao" id="assinaturaAvisoRenovacao" style="display: none;"></div>
+
+                <div id="feedbackMinhaAssinatura" class="perfil-feedback"></div>
+
+                <!-- Ação de Renovação Mensal -->
+                <div class="modal-perfil-actions" style="justify-content: space-between; align-items: center; gap: 12px;">
+                    <button type="button" class="btn-perfil-cancelar" id="btnFecharRodapeAssinatura">Fechar</button>
+                    <button type="button" class="btn-renovar-assinatura-pix" id="btnAcaoRenovarAssinaturaPix" disabled style="flex: 1;">
+                        Renovar Assinatura via PIX
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const overlay = document.getElementById('modalMinhaAssinaturaOverlay');
+    const btnFechar = document.getElementById('btnFecharModalMinhaAssinatura');
+    const btnFecharRodape = document.getElementById('btnFecharRodapeAssinatura');
+    const btnRenovar = document.getElementById('btnAcaoRenovarAssinaturaPix');
+    const feedback = document.getElementById('feedbackMinhaAssinatura');
+
+    const fecharModal = () => {
+        overlay.classList.remove('active');
+        if (feedback) {
+            feedback.className = 'perfil-feedback';
+            feedback.textContent = '';
+        }
+    };
+
+    btnFechar.addEventListener('click', fecharModal);
+    btnFecharRodape.addEventListener('click', fecharModal);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) fecharModal();
+    });
+
+    btnRenovar.addEventListener('click', async () => {
+        if (btnRenovar.disabled) return;
+
+        feedback.className = 'perfil-feedback';
+        feedback.textContent = '';
+
+        const usuarioAtual = obterUsuarioLogado();
+        const perfilAcesso = btnRenovar.dataset.perfilAcesso || usuarioAtual?.perfil_acesso || 'consultor_admin';
+
+        if (perfilAcesso === 'consultor_padrao') {
+            feedback.textContent = 'Apenas o administrador da consultoria pode gerar uma cobrança de renovação da assinatura.';
+            feedback.className = 'perfil-feedback erro';
+            return;
+        }
+
+        const textoOriginal = btnRenovar.textContent;
+        btnRenovar.disabled = true;
+        btnRenovar.textContent = 'Gerando pagamento PIX...';
+
+        try {
+            const resposta = await requisicaoApi('/assinatura/renovar', {
+                method: 'POST'
+            });
+
+            const urlCheckout = resposta?.url_checkout;
+            if (urlCheckout) {
+                btnRenovar.textContent = 'Abrir PIX de Renovação Pendente';
+                btnRenovar.disabled = false;
+                feedback.textContent = resposta?.message || 'Cobrança PIX pronta! Redirecionando para o pagamento...';
+                feedback.className = 'perfil-feedback sucesso';
+
+                const novaJanela = window.open(urlCheckout, '_blank');
+                if (!novaJanela) {
+                    window.location.href = urlCheckout;
+                }
+            } else {
+                throw new Error('Não foi possível obter o link de pagamento PIX.');
+            }
+        } catch (erro) {
+            feedback.textContent = erro.message || 'Erro ao gerar cobrança PIX de renovação.';
+            feedback.className = 'perfil-feedback erro';
+            btnRenovar.textContent = textoOriginal;
+            btnRenovar.disabled = false;
+        }
+    });
+}
+
+function preencherDadosModalAssinatura(dados) {
+    const plano = dados?.plano || {};
+    const uso = dados?.uso_atual || {};
+    const diasRestantes = Number(dados?.dias_restantes ?? 0);
+    const podeRenovar = Boolean(dados?.pode_renovar);
+    const cobrancaAberta = Boolean(dados?.cobranca_aberta);
+    const statusPagamento = dados?.status_pagamento || 'ativo';
+    const dataVencimentoFmt = dados?.assinatura_expira_em_formatada || formatarDataPtBr(dados?.assinatura_expira_em);
+    const dataLiberacaoFmt = dados?.data_liberacao_renovacao || '--/--/----';
+    const perfilAcesso = dados?.perfil_acesso || obterUsuarioLogado()?.perfil_acesso || 'consultor_admin';
+
+    const elNome = document.getElementById('assinaturaPlanoNome');
+    const elPreco = document.getElementById('assinaturaPlanoPreco');
+    const elMetodo = document.getElementById('assinaturaFormaPagamentoBadge');
+    const elStatus = document.getElementById('assinaturaStatusBadge');
+    const elVencimento = document.getElementById('assinaturaDataVencimento');
+    const elDias = document.getElementById('assinaturaDiasRestantes');
+    const elUsoStartups = document.getElementById('assinaturaUsoStartups');
+    const elUsoMembros = document.getElementById('assinaturaUsoMembros');
+    const elUsoMinutas = document.getElementById('assinaturaUsoMinutas');
+    const elAviso = document.getElementById('assinaturaAvisoRenovacao');
+    const btnRenovar = document.getElementById('btnAcaoRenovarAssinaturaPix');
+
+    if (elNome) elNome.textContent = plano.nome || 'Plano Anjo Nexus';
+    if (elPreco) {
+        const valorFmt = plano.preco_formatado
+            ? `R$ ${plano.preco_formatado}/mês`
+            : `${formatarMoedaBrl(plano.preco)}/mês`;
+        elPreco.textContent = valorFmt;
+    }
+    if (elMetodo) elMetodo.textContent = dados?.forma_pagamento || 'PIX';
+
+    if (elStatus) {
+        const vencida = statusPagamento !== 'ativo' || (dados?.assinatura_expira_em && diasRestantes <= 0 && !dados?.assinatura_ativa);
+        if (vencida) {
+            elStatus.textContent = 'Vencida';
+            elStatus.className = 'badge-status-assinatura vencida';
+        } else if (diasRestantes <= 5) {
+            elStatus.textContent = 'Próxima do Vencimento';
+            elStatus.className = 'badge-status-assinatura proxima';
+        } else {
+            elStatus.textContent = 'Ativa';
+            elStatus.className = 'badge-status-assinatura ativa';
+        }
+    }
+
+    if (elVencimento) elVencimento.textContent = dataVencimentoFmt || 'Sem vencimento';
+    if (elDias) elDias.textContent = `${diasRestantes} ${diasRestantes === 1 ? 'dia restante' : 'dias restantes'}`;
+
+    if (elUsoStartups) elUsoStartups.textContent = `${uso.startups_cadastradas ?? 0} / ${plano.limite_startups ?? 0}`;
+    if (elUsoMembros) elUsoMembros.textContent = `${uso.membros_equipe ?? 0} / ${plano.limite_membros_equipe ?? 0}`;
+    if (elUsoMinutas) elUsoMinutas.textContent = `${uso.minutas_ia ?? 0} / ${plano.limite_minutas_ia ?? 5}`;
+
+    if (btnRenovar) {
+        btnRenovar.dataset.perfilAcesso = perfilAcesso;
+
+        if (!podeRenovar) {
+            btnRenovar.disabled = true;
+            btnRenovar.textContent = 'Renovar Assinatura via PIX';
+            if (elAviso) {
+                elAviso.style.display = 'block';
+                elAviso.textContent = `A geração do próximo pagamento PIX será liberada 5 dias antes do vencimento (em ${dataLiberacaoFmt}).`;
+            }
+        } else {
+            btnRenovar.disabled = false;
+            btnRenovar.textContent = cobrancaAberta
+                ? 'Abrir PIX de Renovação Pendente'
+                : 'Gerar Novo Pagamento PIX';
+            if (elAviso) {
+                if (cobrancaAberta) {
+                    elAviso.style.display = 'block';
+                    elAviso.textContent = 'Você já possui uma cobrança PIX aberta dentro da validade de 60 minutos. Clique abaixo para concluir o pagamento (+30 dias acumulativos).';
+                } else {
+                    elAviso.style.display = 'block';
+                    elAviso.textContent = 'Renovação liberada! Ao confirmar o pagamento PIX, serão somados +30 dias ao seu ciclo atual sem perda dos dias restantes.';
+                }
+            }
+        }
+    }
+}
+
+async function abrirModalMinhaAssinatura() {
+    garantirModalMinhaAssinatura();
+    const overlay = document.getElementById('modalMinhaAssinaturaOverlay');
+    const feedback = document.getElementById('feedbackMinhaAssinatura');
+    const btnRenovar = document.getElementById('btnAcaoRenovarAssinaturaPix');
+
+    if (feedback) {
+        feedback.className = 'perfil-feedback';
+        feedback.textContent = '';
+    }
+    if (btnRenovar) {
+        btnRenovar.disabled = true;
+        btnRenovar.textContent = 'Carregando assinatura...';
+    }
+    if (overlay) {
+        overlay.classList.add('active');
+    }
+
+    try {
+        const dadosAssinatura = await requisicaoApi('/assinatura/atual', {
+            method: 'GET'
+        });
+        preencherDadosModalAssinatura(dadosAssinatura);
+    } catch (erro) {
+        if (feedback) {
+            feedback.textContent = erro.message || 'Não foi possível carregar os dados da assinatura.';
+            feedback.className = 'perfil-feedback erro';
+        }
+        if (btnRenovar) {
+            btnRenovar.disabled = true;
+            btnRenovar.textContent = 'Renovar Assinatura via PIX';
+        }
+    }
+}
+
 export async function inicializarSeletorGlobal(containerId, options = {}) {
     injetarEstilosHeaderGlobal();
     garantirModalEditarPerfil();
+    garantirModalMinhaAssinatura();
 
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -1079,6 +1554,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             </div>
             <div class="user-dropdown-global" id="mainDropdown">
                 <div class="user-dropdown-item" id="btnMenuEditarPerfil">Editar Perfil</div>
+                <div class="user-dropdown-item" id="btnMenuVisualizarAssinatura">Visualizar Assinatura</div>
                 <div class="user-dropdown-item" id="btnMenuConfiguracoesFake">Configurações</div>
                 <div class="user-dropdown-item logoff-item" id="btnMenuLogoff">Logoff</div>
             </div>
@@ -1094,6 +1570,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
     const userMenuBtn = document.getElementById('userMenuBtn');
     const mainDropdown = document.getElementById('mainDropdown');
     const btnEditarPerfil = document.getElementById('btnMenuEditarPerfil');
+    const btnVisualizarAssinatura = document.getElementById('btnMenuVisualizarAssinatura');
     const btnConfigFake = document.getElementById('btnMenuConfiguracoesFake');
     const btnLogoff = document.getElementById('btnMenuLogoff');
 
@@ -1143,6 +1620,14 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             e.stopPropagation();
             if (mainDropdown) mainDropdown.classList.remove('active');
             abrirModalEditarPerfil();
+        });
+    }
+
+    if (btnVisualizarAssinatura) {
+        btnVisualizarAssinatura.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (mainDropdown) mainDropdown.classList.remove('active');
+            abrirModalMinhaAssinatura();
         });
     }
 

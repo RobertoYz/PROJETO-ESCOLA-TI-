@@ -25,3 +25,15 @@ export async function gerarNovaCobranca(planoId) {
         })
     });
 }
+
+export async function obterAssinaturaAtual() {
+    return await requisicaoApi('/assinatura/atual', {
+        method: 'GET'
+    });
+}
+
+export async function renovarAssinaturaPix() {
+    return await requisicaoApi('/assinatura/renovar', {
+        method: 'POST'
+    });
+}

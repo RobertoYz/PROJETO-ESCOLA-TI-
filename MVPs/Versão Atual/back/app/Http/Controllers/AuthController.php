@@ -360,7 +360,13 @@ class AuthController extends Controller
             $statusGateway = $servicoAbacatePay->consultarStatusCobranca($agencia->id_transacao);
             if ($this->abacatePayAdapter->traduzirStatus($statusGateway) === 'ativo') {
                 $agencia->status_pagamento = 'ativo';
-                $agencia->assinatura_expira_em = now()->addDays(30);
+                if ($agencia->assinatura_expira_em && $agencia->assinatura_expira_em->isFuture()) {
+                    $agencia->assinatura_expira_em = $agencia->assinatura_expira_em->copy()->addDays(30);
+                } else {
+                    $agencia->assinatura_expira_em = now()->addDays(30);
+                }
+                $agencia->url_checkout = null;
+                $agencia->pagamento_expira_em = null;
                 $agencia->save();
 
                 return response()->json([

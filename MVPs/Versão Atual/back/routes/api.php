@@ -9,6 +9,7 @@ use App\Http\Controllers\KanbanController;
 use App\Http\Controllers\MinutaController;
 use App\Http\Controllers\CnpjController;
 use App\Http\Controllers\PlanoController;
+use App\Http\Controllers\AssinaturaController;
 use App\Http\Controllers\StartupController;
 use App\Http\Controllers\AlertaMatchController;
 use App\Http\Controllers\AlertaPrazoController;
@@ -65,6 +66,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // EDTAN-158: Cancelamento de Conta com Reautenticação de Senha e Aceite LGPD
     Route::match(['delete', 'post'], '/conta/cancelar', [AuthController::class, 'cancelarConta']);
+
+    // EDTAN-160: Visualização de Plano Atual e Renovação de Assinatura Recorrente via PIX
+    Route::get('/assinatura/atual', [AssinaturaController::class, 'atual']);
+    Route::post('/assinatura/renovar', [AssinaturaController::class, 'renovar']);
 
     // Rotas legadas de plano/pagamento mantidas por compatibilidade
     Route::get('/pagamento/recuperar', [PagamentoController::class, 'recuperarLinkPagamento']);
