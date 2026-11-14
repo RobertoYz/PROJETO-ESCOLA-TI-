@@ -8,8 +8,10 @@ import {
     obterUsuarioLogado,
     obterPerfilUsuario,
     atualizarPerfilUsuario,
+    cancelarContaDefinitivamente,
     removerToken
 } from '../servicos/servicoAutenticacao.js';
+import { requisicaoApi } from '../servicos/api.js';
 import { listarStartupsDaConsultoria } from '../servicos/servicoStartups.js';
 import {
     verificarAlertasMatch,
@@ -505,8 +507,343 @@ function injetarEstilosHeaderGlobal() {
         .btn-perfil-salvar:hover {
             opacity: 0.92;
         }
+
+        /* Zona de Perigo (Perfil do Consultor Admin) */
+        .zona-perigo-consultor {
+            margin-top: 0.4rem;
+            padding-top: 1rem;
+            border-top: 1px dashed rgba(239, 68, 68, 0.35);
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .zona-perigo-titulo {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #f87171;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .zona-perigo-descricao {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+
+        .btn-zona-perigo-cancelar {
+            background: rgba(239, 68, 68, 0.14);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-zona-perigo-cancelar:hover {
+            background: #dc2626;
+            border-color: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+        }
+
+        /* Modal Customizado de Cancelamento de Conta + Conformidade LGPD */
+        .modal-cancelar-conta-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 6, 12, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10050;
+            padding: 1rem;
+        }
+
+        .modal-cancelar-conta-overlay.active {
+            display: flex !important;
+        }
+
+        .modal-cancelar-conta-card {
+            background: #12151e;
+            border: 1px solid rgba(239, 68, 68, 0.45);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 520px;
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.15rem;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 24px rgba(239, 68, 68, 0.15);
+            color: #f8fafc;
+        }
+
+        .alerta-lgpd-irreversivel {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-left: 4px solid #ef4444;
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 0.84rem;
+            line-height: 1.55;
+            color: #fecaca;
+        }
+
+        .alerta-lgpd-irreversivel strong {
+            color: #ffffff;
+        }
+
+        .checkbox-lgpd-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #2e3440;
+            border-radius: 10px;
+            padding: 11px 13px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-lgpd-wrapper input[type="checkbox"] {
+            width: 18px !important;
+            height: 18px !important;
+            min-width: 18px !important;
+            margin-top: 2px;
+            accent-color: #ef4444;
+            cursor: pointer;
+            padding: 0 !important;
+        }
+
+        .checkbox-lgpd-label {
+            font-size: 0.83rem;
+            color: #e2e8f0;
+            line-height: 1.45;
+            cursor: pointer;
+        }
+
+        .btn-confirmar-encerramento {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            border: 1px solid #ef4444;
+            color: #ffffff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: auto;
+        }
+
+        .btn-confirmar-encerramento:hover:not(:disabled) {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 18px rgba(239, 68, 68, 0.45);
+        }
+
+        .btn-confirmar-encerramento:disabled {
+            opacity: 0.42 !important;
+            cursor: not-allowed !important;
+            filter: grayscale(0.4);
+            box-shadow: none !important;
+        }
     `;
     document.head.appendChild(style);
+}
+
+function atualizarVisibilidadeZonaPerigo(usuario) {
+    const secaoZonaPerigo = document.getElementById('secaoZonaPerigoConsultor');
+    if (!secaoZonaPerigo) return;
+
+    const perfil = usuario?.perfil_acesso;
+    if (perfil === 'consultor_admin') {
+        secaoZonaPerigo.style.display = 'flex';
+    } else {
+        secaoZonaPerigo.style.display = 'none';
+    }
+}
+
+function garantirModalCancelarConta() {
+    if (document.getElementById('modalCancelarContaOverlay')) return;
+
+    const modalCancelamentoHtml = `
+        <div class="modal-cancelar-conta-overlay" id="modalCancelarContaOverlay">
+            <div class="modal-cancelar-conta-card" role="dialog" aria-modal="true" aria-labelledby="tituloModalCancelarConta">
+                <div class="modal-perfil-consultor-header">
+                    <div>
+                        <div class="modal-perfil-consultor-title" id="tituloModalCancelarConta" style="color: #f87171;">
+                            ⚠️ Cancelar Conta e Assinatura
+                        </div>
+                        <div class="modal-perfil-consultor-subtitle">
+                            Confirmação de segurança e exclusão definitiva de dados (LGPD)
+                        </div>
+                    </div>
+                    <button type="button" class="modal-perfil-close" id="btnFecharModalCancelarConta">&times;</button>
+                </div>
+
+                <div class="alerta-lgpd-irreversivel">
+                    Em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018), todos os dados da consultoria, membros da equipe, startups cadastradas, documentos do Kanban e minutas geradas serão permanentemente eliminados dos nossos servidores, sendo <strong>impossível a recuperação</strong> após a confirmação. Sua assinatura mensal também será encerrada imediatamente.
+                </div>
+
+                <form id="formCancelarContaLgpd" novalidate style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="perfil-form-group">
+                        <label class="perfil-form-label" for="senha-confirmar-cancelamento">Confirme sua Senha Atual</label>
+                        <input
+                            type="password"
+                            id="senha-confirmar-cancelamento"
+                            class="perfil-form-input"
+                            placeholder="Digite sua senha atual para confirmar"
+                            required
+                        >
+                    </div>
+
+                    <label class="checkbox-lgpd-wrapper" for="checkbox-ciente-lgpd">
+                        <input type="checkbox" id="checkbox-ciente-lgpd">
+                        <span class="checkbox-lgpd-label">
+                            Estou ciente de que todos os meus dados serão permanentemente excluídos de acordo com a LGPD e que esta ação é irreversível.
+                        </span>
+                    </label>
+
+                    <div id="feedbackCancelamentoConta" class="perfil-feedback"></div>
+
+                    <div class="modal-perfil-actions" style="justify-content: space-between; flex-wrap: wrap;">
+                        <button type="button" class="btn-perfil-cancelar" id="btnVoltarManterConta">
+                            Voltar / Manter Conta
+                        </button>
+                        <button type="submit" class="btn-confirmar-encerramento" id="btnConfirmarEncerramentoConta" disabled>
+                            Sim, Encerrar Minha Conta
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalCancelamentoHtml);
+
+    const overlay = document.getElementById('modalCancelarContaOverlay');
+    const btnFechar = document.getElementById('btnFecharModalCancelarConta');
+    const btnVoltar = document.getElementById('btnVoltarManterConta');
+    const inputSenha = document.getElementById('senha-confirmar-cancelamento');
+    const checkboxLgpd = document.getElementById('checkbox-ciente-lgpd');
+    const btnConfirmar = document.getElementById('btnConfirmarEncerramentoConta');
+    const formCancelamento = document.getElementById('formCancelarContaLgpd');
+    const feedback = document.getElementById('feedbackCancelamentoConta');
+
+    const atualizarEstadoBotao = () => {
+        const senhaPreenchida = inputSenha && inputSenha.value.trim().length > 0;
+        const cienteMarcado = checkboxLgpd && checkboxLgpd.checked === true;
+        if (btnConfirmar) {
+            btnConfirmar.disabled = !(senhaPreenchida && cienteMarcado);
+        }
+    };
+
+    const limparEFecharModal = () => {
+        overlay.classList.remove('active');
+        if (inputSenha) inputSenha.value = '';
+        if (checkboxLgpd) checkboxLgpd.checked = false;
+        if (feedback) {
+            feedback.className = 'perfil-feedback';
+            feedback.textContent = '';
+        }
+        atualizarEstadoBotao();
+    };
+
+    inputSenha.addEventListener('input', atualizarEstadoBotao);
+    checkboxLgpd.addEventListener('change', atualizarEstadoBotao);
+
+    btnFechar.addEventListener('click', limparEFecharModal);
+    btnVoltar.addEventListener('click', limparEFecharModal);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) limparEFecharModal();
+    });
+
+    formCancelamento.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (btnConfirmar.disabled) return;
+
+        feedback.className = 'perfil-feedback';
+        feedback.textContent = '';
+
+        const password = inputSenha.value;
+        const ciente_lgpd = checkboxLgpd.checked;
+
+        if (!password || !ciente_lgpd) {
+            feedback.textContent = 'Preencha sua senha atual e marque a confirmação LGPD.';
+            feedback.className = 'perfil-feedback erro';
+            return;
+        }
+
+        btnConfirmar.disabled = true;
+        btnVoltar.disabled = true;
+        const textoOriginal = btnConfirmar.textContent;
+        btnConfirmar.textContent = 'Encerrando conta...';
+
+        try {
+            const resposta = await requisicaoApi('/conta/cancelar', {
+                method: 'DELETE',
+                body: JSON.stringify({
+                    password,
+                    ciente_lgpd: true
+                })
+            });
+
+            localStorage.clear();
+            sessionStorage.clear();
+
+            feedback.textContent = resposta?.message || 'Sua conta, assinatura e todos os dados vinculados foram permanentemente excluídos conforme a LGPD.';
+            feedback.className = 'perfil-feedback sucesso';
+
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1200);
+        } catch (erro) {
+            feedback.textContent = erro.message || 'Não foi possível encerrar a conta. Verifique sua senha.';
+            feedback.className = 'perfil-feedback erro';
+            btnVoltar.disabled = false;
+            btnConfirmar.textContent = textoOriginal;
+            atualizarEstadoBotao();
+        }
+    });
+}
+
+function abrirModalCancelarConta() {
+    garantirModalCancelarConta();
+    const overlayPerfil = document.getElementById('modalEditarPerfilConsultorOverlay');
+    if (overlayPerfil) overlayPerfil.classList.remove('active');
+
+    const inputSenha = document.getElementById('senha-confirmar-cancelamento');
+    const checkboxLgpd = document.getElementById('checkbox-ciente-lgpd');
+    const btnConfirmar = document.getElementById('btnConfirmarEncerramentoConta');
+    const btnVoltar = document.getElementById('btnVoltarManterConta');
+    const feedback = document.getElementById('feedbackCancelamentoConta');
+
+    if (inputSenha) inputSenha.value = '';
+    if (checkboxLgpd) checkboxLgpd.checked = false;
+    if (btnConfirmar) {
+        btnConfirmar.disabled = true;
+        btnConfirmar.textContent = 'Sim, Encerrar Minha Conta';
+    }
+    if (btnVoltar) btnVoltar.disabled = false;
+    if (feedback) {
+        feedback.className = 'perfil-feedback';
+        feedback.textContent = '';
+    }
+
+    const overlayCancelamento = document.getElementById('modalCancelarContaOverlay');
+    if (overlayCancelamento) overlayCancelamento.classList.add('active');
 }
 
 function garantirModalEditarPerfil() {
@@ -546,18 +883,37 @@ function garantirModalEditarPerfil() {
                         <button type="submit" class="btn-perfil-salvar" id="btnSalvarPerfilConsultor">Salvar Alterações</button>
                     </div>
                 </form>
+
+                <!-- Zona de Perigo (Exclusiva para consultor_admin) -->
+                <div class="zona-perigo-consultor" id="secaoZonaPerigoConsultor" style="display: none;">
+                    <div class="zona-perigo-titulo">⚠️ Zona de Perigo</div>
+                    <div class="zona-perigo-descricao">
+                        Encerre imediatamente sua assinatura e exclua permanentemente todos os dados da consultoria em conformidade com a LGPD.
+                    </div>
+                    <button type="button" class="btn-zona-perigo-cancelar" id="btnAbrirModalCancelarConta">
+                        Cancelar Conta e Assinatura
+                    </button>
+                </div>
             </div>
         </div>
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+    garantirModalCancelarConta();
 
     const overlay = document.getElementById('modalEditarPerfilConsultorOverlay');
     const btnFechar = document.getElementById('btnFecharModalPerfilConsultor');
     const btnCancelar = document.getElementById('btnCancelarPerfilConsultor');
+    const btnAbrirCancelarConta = document.getElementById('btnAbrirModalCancelarConta');
     const form = document.getElementById('formEditarPerfilConsultor');
     const feedback = document.getElementById('feedbackPerfilConsultor');
     const btnSalvar = document.getElementById('btnSalvarPerfilConsultor');
+
+    if (btnAbrirCancelarConta) {
+        btnAbrirCancelarConta.addEventListener('click', () => {
+            abrirModalCancelarConta();
+        });
+    }
 
     const fecharModal = () => {
         overlay.classList.remove('active');
@@ -640,6 +996,8 @@ function abrirModalEditarPerfil() {
         feedback.className = 'perfil-feedback';
         feedback.textContent = '';
     }
+
+    atualizarVisibilidadeZonaPerigo(usuario);
 
     const overlay = document.getElementById('modalEditarPerfilConsultorOverlay');
     if (overlay) overlay.classList.add('active');
@@ -811,6 +1169,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 nomeHeaderEl.textContent = usuarioApi.name;
             }
         }
+        atualizarVisibilidadeZonaPerigo(usuarioApi);
     });
 
     function renderizarItensDropdown(listaStartups) {

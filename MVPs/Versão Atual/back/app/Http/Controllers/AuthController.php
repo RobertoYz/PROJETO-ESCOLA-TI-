@@ -8,6 +8,14 @@ use App\Services\AbacatePayService;
 use App\Models\User;
 use App\Models\Agencia;
 use App\Models\Plano;
+use App\Models\Startup;
+use App\Models\Minuta;
+use App\Models\KanbanBoard;
+use App\Models\KanbanColumn;
+use App\Models\KanbanCard;
+use App\Models\EditalFavorito;
+use App\Models\AlertaMatch;
+use App\Models\AlertaPrazo;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
@@ -352,6 +360,7 @@ class AuthController extends Controller
             $statusGateway = $servicoAbacatePay->consultarStatusCobranca($agencia->id_transacao);
             if ($this->abacatePayAdapter->traduzirStatus($statusGateway) === 'ativo') {
                 $agencia->status_pagamento = 'ativo';
+                $agencia->assinatura_expira_em = now()->addDays(30);
                 $agencia->save();
 
                 return response()->json([
@@ -683,5 +692,164 @@ class AuthController extends Controller
                 'perfil_acesso' => $usuario->perfil_acesso,
             ],
         ], 200);
+    }
+
+    /**
+     * Encerra a conta da consultoria com reautenticação por senha e aceite LGPD (EDTAN-158)
+     * DELETE|POST /api/conta/cancelar
+     */
+    public function cancelarConta(Request $requisicao): JsonResponse
+    {
+        $usuario = $requisicao->user();
+
+        if (!$usuario) {
+            return response()->json(['message' => 'Usuário não autenticado.'], 401);
+        }
+
+        if ($usuario->perfil_acesso !== 'consultor_admin') {
+            return response()->json([
+                'message' => 'Apenas o administrador da consultoria pode encerrar a conta.',
+            ], 403);
+        }
+
+        $requisicao->validate([
+            'password' => 'required|string',
+            'ciente_lgpd' => 'required|accepted',
+        ], [
+            'password.required' => 'Informe sua senha atual para confirmar o cancelamento.',
+            'ciente_lgpd.required' => 'Você deve confirmar ciência sobre a exclusão irreversível de dados conforme a LGPD.',
+            'ciente_lgpd.accepted' => 'Você deve confirmar ciência sobre a exclusão irreversível de dados conforme a LGPD.',
+        ]);
+
+        if (!Hash::check($requisicao->password, $usuario->password)) {
+            return response()->json([
+                'message' => 'A senha informada está incorreta.',
+                'errors' => [
+                    'password' => ['A senha informada está incorreta.'],
+                ],
+            ], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($usuario) {
+                $agencia = $usuario->agencia;
+
+                $idsUsuarios = [$usuario->id];
+                if ($agencia) {
+                    $idsDaAgencia = User::where('agencia_id', $agencia->id)->pluck('id')->toArray();
+                    $idsUsuarios = array_values(array_unique(array_merge($idsUsuarios, $idsDaAgencia)));
+                }
+
+                $usuariosParaExcluir = User::whereIn('id', $idsUsuarios)->get();
+                $emailsUsuarios = $usuariosParaExcluir->pluck('email')->filter()->toArray();
+
+                foreach ($usuariosParaExcluir as $membro) {
+                    $membro->tokens()->delete();
+                }
+
+                if (class_exists(\Laravel\Sanctum\PersonalAccessToken::class)) {
+                    \Laravel\Sanctum\PersonalAccessToken::where('tokenable_type', User::class)
+                        ->whereIn('tokenable_id', $idsUsuarios)
+                        ->delete();
+                }
+
+                $idsStartups = $agencia
+                    ? Startup::where('agencia_id', $agencia->id)->pluck('id')->toArray()
+                    : [];
+
+                $idsBoards = $agencia
+                    ? KanbanBoard::where('agencia_id', $agencia->id)->pluck('id')->toArray()
+                    : [];
+
+                $idsColumns = !empty($idsBoards)
+                    ? KanbanColumn::whereIn('board_id', $idsBoards)->pluck('id')->toArray()
+                    : [];
+
+                $idsCards = (!empty($idsBoards) || !empty($idsColumns))
+                    ? KanbanCard::where(function ($query) use ($idsBoards, $idsColumns) {
+                        if (!empty($idsBoards)) {
+                            $query->whereIn('board_id', $idsBoards);
+                        }
+                        if (!empty($idsColumns)) {
+                            $query->orWhereIn('column_id', $idsColumns);
+                        }
+                    })->pluck('id')->toArray()
+                    : [];
+
+                // 1. Minutas
+                Minuta::where(function ($query) use ($idsStartups, $idsUsuarios, $idsCards) {
+                    $query->whereIn('user_id', $idsUsuarios);
+                    if (!empty($idsStartups)) {
+                        $query->orWhereIn('startup_id', $idsStartups);
+                    }
+                    if (!empty($idsCards)) {
+                        $query->orWhereIn('kanban_card_id', $idsCards);
+                    }
+                })->delete();
+
+                // 2. Alertas e Notificações
+                AlertaPrazo::where(function ($query) use ($idsUsuarios, $idsStartups, $idsCards) {
+                    $query->whereIn('user_id', $idsUsuarios);
+                    if (!empty($idsStartups)) {
+                        $query->orWhereIn('startup_id', $idsStartups);
+                    }
+                    if (!empty($idsCards)) {
+                        $query->orWhereIn('kanban_card_id', $idsCards);
+                    }
+                })->delete();
+
+                AlertaMatch::where(function ($query) use ($idsUsuarios, $idsStartups) {
+                    $query->whereIn('user_id', $idsUsuarios);
+                    if (!empty($idsStartups)) {
+                        $query->orWhereIn('startup_id', $idsStartups);
+                    }
+                })->delete();
+
+                // 3. Favoritos
+                EditalFavorito::where(function ($query) use ($idsUsuarios, $idsStartups) {
+                    $query->whereIn('user_id', $idsUsuarios);
+                    if (!empty($idsStartups)) {
+                        $query->orWhereIn('startup_id', $idsStartups);
+                    }
+                })->delete();
+
+                // 4. Kanban (Cards, Colunas e Boards)
+                if (!empty($idsCards)) {
+                    KanbanCard::whereIn('id', $idsCards)->delete();
+                }
+                if (!empty($idsColumns)) {
+                    KanbanColumn::whereIn('id', $idsColumns)->delete();
+                }
+                if (!empty($idsBoards)) {
+                    KanbanBoard::whereIn('id', $idsBoards)->delete();
+                }
+
+                // 5. Startups
+                if (!empty($idsStartups)) {
+                    Startup::whereIn('id', $idsStartups)->delete();
+                }
+
+                // 6. Tokens de recuperação de senha e sessões
+                if (!empty($emailsUsuarios)) {
+                    DB::table('password_reset_tokens')->whereIn('email', $emailsUsuarios)->delete();
+                }
+                DB::table('sessions')->whereIn('user_id', $idsUsuarios)->delete();
+
+                // 7. Usuários e Agência
+                User::whereIn('id', $idsUsuarios)->forceDelete();
+
+                if ($agencia) {
+                    $agencia->forceDelete();
+                }
+            });
+
+            return response()->json([
+                'message' => 'Sua conta, assinatura e todos os dados vinculados foram permanentemente excluídos conforme a LGPD.',
+            ], 200);
+        } catch (Exception $excecao) {
+            return response()->json([
+                'message' => 'Erro ao excluir conta e dados vinculados: ' . $excecao->getMessage(),
+            ], 500);
+        }
     }
 }
