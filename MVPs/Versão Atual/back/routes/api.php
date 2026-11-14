@@ -63,6 +63,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/perfil', [AuthController::class, 'obterPerfil']);
     Route::put('/auth/perfil', [AuthController::class, 'atualizarPerfil']);
 
+    // EDTAN-158: Cancelamento de Conta com Reautenticação de Senha e Aceite LGPD
+    Route::match(['delete', 'post'], '/conta/cancelar', [AuthController::class, 'cancelarConta']);
+
     // Rotas legadas de plano/pagamento mantidas por compatibilidade
     Route::get('/pagamento/recuperar', [PagamentoController::class, 'recuperarLinkPagamento']);
     Route::post('/planos/selecionar', [PlanoController::class, 'selecionarPlano']);

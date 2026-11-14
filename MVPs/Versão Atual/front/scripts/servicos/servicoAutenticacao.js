@@ -42,7 +42,7 @@ export function obterUsuarioLogado() {
     const nomeSalvo = localStorage.getItem(CHAVE_USUARIO_NOME);
     const emailSalvo = localStorage.getItem(CHAVE_USUARIO_EMAIL);
     if (nomeSalvo || emailSalvo) {
-        return { name: nomeSalvo || '', email: emailSalvo || '' };
+        return { name: nomeSalvo || '', email: emailSalvo || '', perfil_acesso: 'consultor_admin' };
     }
 
     try {
@@ -195,6 +195,16 @@ export async function cancelarCadastroPendente() {
         body: JSON.stringify({
             email: email || undefined,
             token_pendencia: tokenPend || undefined
+        })
+    });
+}
+
+export async function cancelarContaDefinitivamente({ password, ciente_lgpd = true }) {
+    return await requisicaoApi('/conta/cancelar', {
+        method: 'DELETE',
+        body: JSON.stringify({
+            password,
+            ciente_lgpd: Boolean(ciente_lgpd)
         })
     });
 }

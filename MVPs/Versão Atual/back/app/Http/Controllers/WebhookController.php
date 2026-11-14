@@ -45,6 +45,9 @@ class WebhookController extends Controller
 
             if ($dadosAdaptados['status_pagamento']) {
                 $agencia->status_pagamento = $dadosAdaptados['status_pagamento'];
+                if ($dadosAdaptados['status_pagamento'] === 'ativo') {
+                    $agencia->assinatura_expira_em = now()->addDays(30);
+                }
             }
 
             if ($dadosAdaptados['id_transacao']) {

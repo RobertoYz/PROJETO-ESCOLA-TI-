@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('url_checkout')->nullable();
             $table->enum('status_pagamento', ['pendente', 'ativo', 'suspenso', 'cancelado'])->default('pendente');
             $table->timestamp('pagamento_expira_em')->nullable();
+            $table->timestamp('assinatura_expira_em')->nullable();
             $table->timestamps();
         });
     }

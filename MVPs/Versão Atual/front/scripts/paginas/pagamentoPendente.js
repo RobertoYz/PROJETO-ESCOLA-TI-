@@ -192,8 +192,10 @@ botaoConfirmarExclusaoSim?.addEventListener('click', async () => {
         removerToken();
         sessionStorage.removeItem('dados_pre_cadastro');
 
-        alert('O cadastro pendente foi cancelado com sucesso. O e-mail corporativo está liberado para novo registro.');
-        window.location.href = 'cadastro.html';
+        exibirFeedback('O cadastro pendente foi cancelado com sucesso. O e-mail corporativo está liberado para novo registro.', 'sucesso');
+        setTimeout(() => {
+            window.location.href = 'cadastro.html';
+        }, 1200);
 
     } catch (erro) {
         exibirFeedback(erro.message || 'Erro ao cancelar cadastro pendente.');

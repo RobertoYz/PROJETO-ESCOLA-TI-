@@ -17,15 +17,18 @@ class Agencia extends Model
         'url_checkout',
         'status_pagamento',
         'pagamento_expira_em',
+        'assinatura_expira_em',
     ];
 
     protected $casts = [
         'pagamento_expira_em' => 'datetime',
+        'assinatura_expira_em' => 'datetime',
     ];
 
     public function isPagamentoAtivo(): bool
     {
-        return $this->status_pagamento === 'ativo';
+        return $this->status_pagamento === 'ativo'
+            && ($this->assinatura_expira_em === null || $this->assinatura_expira_em->isFuture());
     }
 
     public function plano(): BelongsTo
@@ -46,5 +49,10 @@ class Agencia extends Model
     public function startups(): HasMany
     {
         return $this->hasMany(Startup::class);
+    }
+
+    public function kanbanBoards(): HasMany
+    {
+        return $this->hasMany(KanbanBoard::class, 'agencia_id');
     }
 }
