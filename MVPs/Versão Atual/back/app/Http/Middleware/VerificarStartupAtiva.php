@@ -20,7 +20,7 @@ class VerificarStartupAtiva
 
             if (!$startup) {
                 return response()->json([
-                    'mensagem' => 'A startup selecionada não pertence à sua consultoria ou é inválida.'
+                    'message' => 'A startup selecionada não pertence à sua consultoria ou é inválida.',
                 ], 403);
             }
 

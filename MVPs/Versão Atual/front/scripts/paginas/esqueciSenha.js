@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ email })
             });
 
-            exibirMensagem(resposta.mensagem || 'Link enviado com sucesso! Verifique seu Gmail.', 'sucesso');
+            exibirMensagem(resposta.message || 'Link enviado com sucesso! Verifique seu Gmail.', 'sucesso');
             campoEmail.value = '';
         } catch (erro) {
             exibirMensagem(erro.message || 'Não foi possível enviar o e-mail de recuperação.');

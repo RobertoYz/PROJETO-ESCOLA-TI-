@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Adapters\AbacatePayAdapter;
 use App\Models\Plano;
 use App\Services\AbacatePayService;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ class PlanoController extends Controller
         return response()->json($planos, 200);
     }
 
-    public function selecionarPlano(Request $requisicao, AbacatePayService $servicoAbacatePay)
+    public function selecionarPlano(Request $requisicao, AbacatePayService $servicoAbacatePay, AbacatePayAdapter $adapter)
     {
         $requisicao->validate([
             'plano_id' => 'required|exists:planos,id',
@@ -35,7 +36,7 @@ class PlanoController extends Controller
         $agencia = $usuario ? $usuario->agencia : null;
 
         if (!$agencia) {
-            return response()->json(['mensagem' => 'Agência não encontrada para este usuário.'], 404);
+            return response()->json(['message' => 'Agência não encontrada para este usuário.'], 404);
         }
 
         $plano = Plano::findOrFail($requisicao->plano_id);
@@ -45,27 +46,22 @@ class PlanoController extends Controller
 
         try {
             $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano);
-            $urlCheckout = is_array($cobranca) ? $cobranca['url'] : $cobranca;
-            $idCobranca = is_array($cobranca) ? ($cobranca['id'] ?? null) : null;
+            $dadosCobranca = $adapter->normalizarRetornoCobranca($cobranca);
 
-            $agencia->checkout_url = $urlCheckout;
-            $agencia->url_checkout = $urlCheckout;
-            $agencia->billing_id = $idCobranca;
-            $agencia->id_cobranca = $idCobranca;
-            $agencia->id_plataforma_pagamento = $idCobranca;
+            $agencia->url_checkout = $dadosCobranca['url_checkout'];
+            $agencia->id_transacao = $dadosCobranca['id_transacao'];
             $agencia->pagamento_expira_em = Carbon::now()->addMinutes(60);
             $agencia->save();
 
             return response()->json([
-                'mensagem' => 'Plano selecionado com sucesso.',
+                'message' => 'Plano selecionado com sucesso.',
                 'plano' => $plano->nome,
-                'checkout_url' => $urlCheckout,
-                'url_checkout' => $urlCheckout,
+                'url_checkout' => $dadosCobranca['url_checkout'],
             ], 200);
         } catch (Exception $excecao) {
             return response()->json([
-                'mensagem' => 'Erro ao gerar link de pagamento para o plano selecionado.',
-                'detalhe' => $excecao->getMessage()
+                'message' => 'Erro ao gerar link de pagamento para o plano selecionado.',
+                'detalhe' => $excecao->getMessage(),
             ], 500);
         }
     }

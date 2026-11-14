@@ -2182,13 +2182,13 @@
                         atualizarBadgeCotaMinutas(data.consumo);
                     }
                 } else if (res.status === 403 && data.codigo === 'LIMITE_MINUTAS_ATINGIDO') {
-                    alert('⚠️ ' + data.mensagem);
+                    alert('⚠️ ' + data.message);
                     status.innerHTML = `<span style="color: #ef4444; font-weight: 600;">Limite do plano atingido (${data.consumo?.usadas}/${data.consumo?.limite}). Faça upgrade para gerar mais.</span>`;
                     if (data.consumo) {
                         atualizarBadgeCotaMinutas(data.consumo);
                     }
                 } else {
-                    alert('Falha ao elaborar minuta: ' + (data.mensagem || data.message || 'Erro desconhecido.'));
+                    alert('Falha ao elaborar minuta: ' + (data.message || 'Erro desconhecido.'));
                     status.textContent = 'Erro na geração.';
                 }
             } catch (err) {
@@ -2284,7 +2284,7 @@
                 if (res.ok && data.sucesso) {
                     currentMinutaData = data.dados;
                     renderizarEditorMinuta(currentMinutaData);
-                    alert(data.mensagem);
+                    alert(data.message);
                 } else {
                     alert('Erro ao salvar revisão.');
                 }
@@ -2685,7 +2685,7 @@
                     alert('Dados do card salvos com sucesso!');
                     fetchBoard();
                 } else {
-                    alert('Erro ao salvar informações do card: ' + (data.mensagem || 'Falha na requisição.'));
+                    alert('Erro ao salvar informações do card: ' + (data.message || 'Falha na requisição.'));
                 }
             } catch (err) {
                 console.error(err);
@@ -2740,7 +2740,7 @@
                     alert(`Arquivo "${file.name}" anexado com sucesso!`);
                     fetchBoard();
                 } else {
-                    alert('Falha no upload do arquivo: ' + (data.mensagem || 'Erro desconhecido'));
+                    alert('Falha no upload do arquivo: ' + (data.message || 'Erro desconhecido'));
                 }
             } catch (err) {
                 console.error(err);

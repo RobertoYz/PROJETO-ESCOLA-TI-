@@ -32,8 +32,7 @@ class AlertaMatchApiTest extends TestCase
         $agencia = Agencia::create([
             'nome' => 'Agência Inova',
             'plano_id' => $plano->id,
-            'status_pagamento' => 'ativo',
-            'pagamento_ativo' => true
+            'status_pagamento' => 'ativo'
         ]);
 
         $this->usuario = User::create([
@@ -202,7 +201,7 @@ class AlertaMatchApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'sucesso' => true,
-                'mensagem' => 'Alerta marcado como lido.'
+                'message' => 'Alerta marcado como lido.'
             ]);
 
         $this->assertTrue($alerta->fresh()->lido);

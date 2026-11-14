@@ -41,7 +41,7 @@ class MinutaController extends Controller
             return response()->json([
                 'sucesso' => false,
                 'codigo' => 'LIMITE_MINUTAS_ATINGIDO',
-                'mensagem' => "Você atingiu o limite de {$consumo['limite']} minutas geradas por IA do seu plano {$consumo['plano_nome']} neste mês ({$consumo['usadas']}/{$consumo['limite']}). Faça upgrade para continuar gerando.",
+                'message' => "Você atingiu o limite de {$consumo['limite']} minutas geradas por IA do seu plano {$consumo['plano_nome']} neste mês ({$consumo['usadas']}/{$consumo['limite']}). Faça upgrade para continuar gerando.",
                 'consumo' => $consumo
             ], 403);
         }
@@ -78,7 +78,7 @@ class MinutaController extends Controller
 
         return response()->json([
             'sucesso' => true,
-            'mensagem' => 'Minuta gerada com sucesso pela Inteligência Artificial.',
+            'message' => 'Minuta gerada com sucesso pela Inteligência Artificial.',
             'dados' => $minuta->load(['startup', 'edital', 'user']),
             'consumo' => $novoConsumo
         ], 201);
@@ -177,7 +177,7 @@ class MinutaController extends Controller
 
         return response()->json([
             'sucesso' => true,
-            'mensagem' => "Proposta atualizada com sucesso para a versão v{$novaVersao->versao}.",
+            'message' => "Proposta atualizada com sucesso para a versão v{$novaVersao->versao}.",
             'dados' => $novaVersao->load(['startup', 'edital', 'user'])
         ]);
     }

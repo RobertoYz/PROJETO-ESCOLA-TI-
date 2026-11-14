@@ -91,7 +91,7 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
     }
 
     if (!resposta.ok) {
-        let mensagemErro = dados.mensagem || dados.message || 'Ocorreu um erro na comunicação com o servidor.';
+        let mensagemErro = dados.message || 'Ocorreu um erro na comunicação com o servidor.';
         if (dados.errors) {
             const primeiroErro = Object.values(dados.errors)[0];
             if (Array.isArray(primeiroErro) && primeiroErro.length > 0) {

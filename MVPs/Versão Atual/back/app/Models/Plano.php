@@ -12,21 +12,19 @@ class Plano extends Model
     protected $fillable = [
         'nome',
         'preco',
-        'id_plataforma_pagamento',
-        'id_plano_mercado_pago',
+        'id_transacao',
         'limite_startups',
         'limite_membros_equipe',
-        'limite_minutas_ia'
+        'limite_minutas_ia',
     ];
 
     protected $casts = [
         'preco' => 'decimal:2',
         'limite_startups' => 'integer',
         'limite_membros_equipe' => 'integer',
-        'limite_minutas_ia' => 'integer'
+        'limite_minutas_ia' => 'integer',
     ];
 
-    //um plano tem muitas (hasMany) agencias
     public function agencias(): HasMany
     {
         return $this->hasMany(Agencia::class, 'plano_id');

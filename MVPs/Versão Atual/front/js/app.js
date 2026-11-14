@@ -73,7 +73,7 @@ function initUI() {
                         window.location.href = 'kanban.html';
                     }
                 } else {
-                    alert('Falha ao enviar edital ao Kanban: ' + (data.mensagem || 'Erro desconhecido.'));
+                    alert('Falha ao enviar edital ao Kanban: ' + (data.message || 'Erro desconhecido.'));
                 }
             } catch (err) {
                 console.error(err);

@@ -36,8 +36,7 @@ class AlertaPrazoApiTest extends TestCase
         $agencia = Agencia::create([
             'nome' => 'Agência Prazos',
             'plano_id' => $plano->id,
-            'status_pagamento' => 'ativo',
-            'pagamento_ativo' => true
+            'status_pagamento' => 'ativo'
         ]);
 
         $this->usuario = User::create([

@@ -58,8 +58,7 @@ class SecurityMiddlewareTest extends TestCase
         $agenciaPendente = Agencia::create([
             'nome' => 'Agência Inadimplente',
             'plano_id' => $this->plano->id,
-            'status_pagamento' => 'pendente',
-            'pagamento_ativo' => false
+            'status_pagamento' => 'pendente'
         ]);
 
         $usuario = User::create([
@@ -86,8 +85,7 @@ class SecurityMiddlewareTest extends TestCase
         $agenciaAtiva = Agencia::create([
             'nome' => 'Agência Regularizada',
             'plano_id' => $this->plano->id,
-            'status_pagamento' => 'ativo',
-            'pagamento_ativo' => true
+            'status_pagamento' => 'ativo'
         ]);
 
         $usuario = User::create([
@@ -117,8 +115,7 @@ class SecurityMiddlewareTest extends TestCase
         $agenciaAtiva = Agencia::create([
             'nome' => 'Agência Blindada',
             'plano_id' => $this->plano->id,
-            'status_pagamento' => 'ativo',
-            'pagamento_ativo' => true
+            'status_pagamento' => 'ativo'
         ]);
 
         $usuario = User::create([
@@ -135,7 +132,7 @@ class SecurityMiddlewareTest extends TestCase
 
         $response->assertStatus(400)
             ->assertJson([
-                'mensagem' => 'Não é permitido cancelar uma conta com assinatura ativa.'
+                'message' => 'Não é permitido cancelar uma conta com assinatura ativa.'
             ]);
     }
 }

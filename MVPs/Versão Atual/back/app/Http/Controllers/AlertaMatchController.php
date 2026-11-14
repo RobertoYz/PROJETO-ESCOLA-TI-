@@ -56,7 +56,7 @@ class AlertaMatchController extends Controller
 
             return response()->json([
                 'sucesso' => true,
-                'mensagem' => 'Verificação de match concluída com sucesso.',
+                'message' => 'Verificação de match concluída com sucesso.',
                 'total_gerados' => count($alertas),
                 'total_nao_lidos' => $totalNaoLidos,
                 'dados' => $alertas
@@ -64,7 +64,7 @@ class AlertaMatchController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'sucesso' => false,
-                'mensagem' => 'Erro ao processar alerta de match: ' . $e->getMessage()
+                'message' => 'Erro ao processar alerta de match: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -110,13 +110,13 @@ class AlertaMatchController extends Controller
         if (!$atualizado) {
             return response()->json([
                 'sucesso' => false,
-                'mensagem' => 'Alerta não encontrado ou não pertence ao usuário.'
+                'message' => 'Alerta não encontrado ou não pertence ao usuário.'
             ], 404);
         }
 
         return response()->json([
             'sucesso' => true,
-            'mensagem' => 'Alerta marcado como lido.'
+            'message' => 'Alerta marcado como lido.'
         ]);
     }
 
@@ -132,7 +132,7 @@ class AlertaMatchController extends Controller
 
         return response()->json([
             'sucesso' => true,
-            'mensagem' => 'Todos os alertas foram marcados como lidos.',
+            'message' => 'Todos os alertas foram marcados como lidos.',
             'total_afetados' => $afetados
         ]);
     }

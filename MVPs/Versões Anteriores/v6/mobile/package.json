@@ -1,0 +1,25 @@
+{
+  "name": "anjonexus-mobile",
+  "version": "1.0.0",
+  "description": "Aplicativo Mobile do Radar de Editais B2B AnjoNexus (RF-28 e RF-47)",
+  "main": "index.js",
+  "scripts": {
+    "cap:sync": "cap sync",
+    "cap:copy": "cap copy",
+    "cap:open": "cap open android",
+    "cap:run": "cap run android",
+    "serve": "npx serve www -p 3000"
+  },
+  "author": "Equipe AnjoNexus",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^7.0.1",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/cli": "^7.0.1",
+    "@capacitor/core": "^7.0.1",
+    "@capacitor/network": "^7.0.0",
+    "@capacitor/preferences": "^7.0.0",
+    "@capacitor/splash-screen": "^7.0.0",
+    "@capacitor/status-bar": "^7.0.0"
+  }
+}
