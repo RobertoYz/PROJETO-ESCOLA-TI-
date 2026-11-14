@@ -7,22 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const caixaMensagem = document.getElementById('mensagem-feedback');
 
     function exibirMensagem(texto, tipo = 'erro') {
-        caixaMensagem.style.display = 'block';
         caixaMensagem.textContent = texto;
-        if (tipo === 'sucesso') {
-            caixaMensagem.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
-            caixaMensagem.style.borderColor = '#10b981';
-            caixaMensagem.style.color = '#6ee7b7';
-        } else {
-            caixaMensagem.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
-            caixaMensagem.style.borderColor = '#ef4444';
-            caixaMensagem.style.color = '#fca5a5';
-        }
+        caixaMensagem.classList.remove('is-success', 'is-error');
+        caixaMensagem.classList.add(tipo === 'sucesso' ? 'is-success' : 'is-error');
+        caixaMensagem.hidden = false;
     }
 
     formulario.addEventListener('submit', async (evento) => {
         evento.preventDefault();
-        caixaMensagem.style.display = 'none';
+        caixaMensagem.hidden = true;
 
         const email = campoEmail.value.trim();
         if (!email) {

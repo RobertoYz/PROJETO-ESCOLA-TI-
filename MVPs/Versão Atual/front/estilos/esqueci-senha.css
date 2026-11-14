@@ -239,17 +239,32 @@ body {
     text-align: left;
 }
 
-/* Garante contraste acessível no Light Mode mantendo compatibilidade com os estilos inline do JS */
-body:not(.dark-mode) #mensagem-feedback[style*="16, 185, 129"] {
-    background-color: #ECFDF5 !important;
-    border-color: #6EE7B7 !important;
-    color: #065F46 !important;
+.alert-box[hidden] {
+    display: none;
 }
 
-body:not(.dark-mode) #mensagem-feedback[style*="239, 68, 68"] {
-    background-color: #FEF2F2 !important;
-    border-color: #FCA5A5 !important;
-    color: #B91C1C !important;
+.alert-box.is-success {
+    background-color: #ECFDF5;
+    border-color: #6EE7B7;
+    color: #065F46;
+}
+
+.alert-box.is-error {
+    background-color: #FEF2F2;
+    border-color: #FCA5A5;
+    color: var(--color-error);
+}
+
+body.dark-mode .alert-box.is-success {
+    background-color: rgba(16, 185, 129, 0.15);
+    border-color: #10B981;
+    color: #6EE7B7;
+}
+
+body.dark-mode .alert-box.is-error {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-color: #EF4444;
+    color: #FCA5A5;
 }
 
 .form-group {
