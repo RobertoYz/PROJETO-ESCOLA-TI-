@@ -7,7 +7,8 @@
     <title>Criar Nova Senha — Anjo Nexus</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="../estilos/esqueci-senha.css">
+    <link rel="stylesheet" href="../estilos/login.css">
+    <link rel="stylesheet" href="../estilos/redefinir-senha.css">
 </head>
 
 <body>
@@ -44,20 +45,20 @@
             </div>
 
             <div class="brand-statement">
-                <h1 class="brand-headline">Defina uma nova senha para sua conta</h1>
+                <h1 class="brand-headline">Segurança e continuidade no acesso à sua consultoria</h1>
                 <p class="brand-paragraph">
-                    Após salvar sua nova senha, seu acesso à plataforma será restabelecido imediatamente
-                    para gerenciar editais, startups e minutas técnicas.
+                    Defina uma nova senha para retomar o acompanhamento de editais,
+                    startups e minutas técnicas com proteção criptográfica.
                 </p>
 
                 <div class="brand-metrics">
                     <div class="metric-item">
-                        <span class="metric-title">Padrão de Segurança</span>
-                        <span class="metric-detail">Exigência mínima de 8 caracteres com validação em tempo real.</span>
+                        <span class="metric-title">Token de Uso Único</span>
+                        <span class="metric-detail">O link de recuperação é invalidado imediatamente após a alteração.</span>
                     </div>
                     <div class="metric-item">
-                        <span class="metric-title">Uso Único</span>
-                        <span class="metric-detail">O token de recuperação é invalidado automaticamente após o uso.</span>
+                        <span class="metric-title">Validade Temporária</span>
+                        <span class="metric-detail">Cada solicitação expira automaticamente em 60 minutos.</span>
                     </div>
                 </div>
             </div>
@@ -70,11 +71,9 @@
         <!-- Painel de Redefinição de Senha -->
         <main class="auth-form-panel">
             <div class="form-wrapper">
-                <a href="login.html" class="back-link">← Voltar para o login</a>
-
                 <div class="form-header">
                     <h2 class="form-title">Criar nova senha</h2>
-                    <p class="form-subtitle">Defina uma senha segura de no mínimo 8 caracteres</p>
+                    <p class="form-subtitle">Defina uma nova senha segura de no mínimo 8 caracteres</p>
                 </div>
 
                 <!-- Elemento de feedback consumido pelo redefinirSenha.js -->
@@ -83,27 +82,58 @@
                 <!-- Formulário integrado ao redefinirSenha.js -->
                 <form id="form-redefinir-senha" novalidate>
                     <div class="form-group">
-                        <label for="email">E-mail corporativo</label>
-                        <input type="email" id="email" name="email" placeholder="E-mail da conta" readonly>
+                        <label for="email">E-mail da conta</label>
+                        <input type="email" id="email" name="email" placeholder="E-mail" readonly>
                     </div>
 
                     <div class="form-group">
                         <label for="nova-senha">Nova senha</label>
-                        <input type="password" id="nova-senha" name="password" autocomplete="new-password"
-                            placeholder="Mínimo de 8 caracteres" required>
-                        <span class="field-hint">Utilize no mínimo 8 caracteres.</span>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="nova-senha" name="password" autocomplete="new-password"
+                                placeholder="Mínimo de 8 caracteres" required>
+                            <button type="button" class="btn-toggle-password" data-target="nova-senha"
+                                aria-label="Mostrar nova senha" aria-pressed="false">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label for="confirmar-senha">Confirmar nova senha</label>
-                        <input type="password" id="confirmar-senha" name="password_confirmation" autocomplete="new-password"
-                            placeholder="Repita a nova senha" required>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="confirmar-senha" name="password_confirmation" autocomplete="new-password"
+                                placeholder="Digite a nova senha novamente" required>
+                            <button type="button" class="btn-toggle-password" data-target="confirmar-senha"
+                                aria-label="Mostrar confirmação de senha" aria-pressed="false">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
+                    <ul class="password-requirements" aria-label="Requisitos da senha">
+                        <li id="req-tamanho" class="req-item">
+                            <span class="req-dot" aria-hidden="true"></span>
+                            Mínimo de 8 caracteres
+                        </li>
+                        <li id="req-coincidencia" class="req-item">
+                            <span class="req-dot" aria-hidden="true"></span>
+                            As senhas coincidem
+                        </li>
+                    </ul>
                     <button type="submit" class="btn-submit" id="botao-redefinir">
                         Salvar nova senha
                     </button>
                 </form>
+
+                <div id="acoes-link-invalido" class="invalid-link-actions" hidden>
+                    <a href="esqueci-senha.html" class="btn-secondary-link">Solicitar novo link de recuperação</a>
+                </div>
 
                 <footer class="form-footer">
                     <div>Precisa de um novo link? <a href="esqueci-senha.html">Solicitar recuperação</a></div>

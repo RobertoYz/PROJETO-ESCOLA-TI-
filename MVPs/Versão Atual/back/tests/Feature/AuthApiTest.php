@@ -227,5 +227,98 @@ class AuthApiTest extends TestCase
 
         $response->assertStatus(404);
     }
+
+    /**
+     * RF-06: Teste de redefinição de senha com token válido atualiza a senha e invalida o token.
+     */
+    public function test_redefinir_senha_com_token_valido_atualiza_senha_e_consome_token(): void
+    {
+        $usuario = User::create([
+            'name' => 'Eduardo Redefinir',
+            'email' => 'redefinir@nexus.com.br',
+            'password' => Hash::make('SenhaAntiga#123')
+        ]);
+
+        $tokenPuro = 'token-seguro-de-teste-com-tamanho-suficiente-64-caracteres-ok';
+        \Illuminate\Support\Facades\DB::table('password_reset_tokens')->insert([
+            'email' => $usuario->email,
+            'token' => Hash::make($tokenPuro),
+            'created_at' => now(),
+        ]);
+
+        $response = $this->postJson('/api/auth/redefinir-senha', [
+            'email' => $usuario->email,
+            'token' => $tokenPuro,
+            'password' => 'NovaSenhaForte#2026',
+            'password_confirmation' => 'NovaSenhaForte#2026',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonStructure(['message']);
+
+        $usuario->refresh();
+        $this->assertTrue(Hash::check('NovaSenhaForte#2026', $usuario->password));
+        $this->assertDatabaseMissing('password_reset_tokens', [
+            'email' => $usuario->email,
+        ]);
+    }
+
+    /**
+     * RF-06: Teste de redefinição de senha com token inválido retorna 400.
+     */
+    public function test_redefinir_senha_com_token_invalido_retorna_400(): void
+    {
+        $usuario = User::create([
+            'name' => 'Eduardo Token Invalido',
+            'email' => 'tokeninvalido@nexus.com.br',
+            'password' => Hash::make('SenhaAntiga#123')
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('password_reset_tokens')->insert([
+            'email' => $usuario->email,
+            'token' => Hash::make('token-verdadeiro'),
+            'created_at' => now(),
+        ]);
+
+        $response = $this->postJson('/api/auth/redefinir-senha', [
+            'email' => $usuario->email,
+            'token' => 'token-errado',
+            'password' => 'NovaSenhaForte#2026',
+            'password_confirmation' => 'NovaSenhaForte#2026',
+        ]);
+
+        $response->assertStatus(400);
+    }
+
+    /**
+     * RF-06: Teste de redefinição de senha com token expirado (> 60 min) retorna 400 e remove o token.
+     */
+    public function test_redefinir_senha_com_token_expirado_retorna_400(): void
+    {
+        $usuario = User::create([
+            'name' => 'Eduardo Expirado',
+            'email' => 'expirado@nexus.com.br',
+            'password' => Hash::make('SenhaAntiga#123')
+        ]);
+
+        $tokenPuro = 'token-expirado-teste';
+        \Illuminate\Support\Facades\DB::table('password_reset_tokens')->insert([
+            'email' => $usuario->email,
+            'token' => Hash::make($tokenPuro),
+            'created_at' => now()->subMinutes(61),
+        ]);
+
+        $response = $this->postJson('/api/auth/redefinir-senha', [
+            'email' => $usuario->email,
+            'token' => $tokenPuro,
+            'password' => 'NovaSenhaForte#2026',
+            'password_confirmation' => 'NovaSenhaForte#2026',
+        ]);
+
+        $response->assertStatus(400);
+        $this->assertDatabaseMissing('password_reset_tokens', [
+            'email' => $usuario->email,
+        ]);
+    }
 }
 
