@@ -12,6 +12,7 @@ const containerListaPlanos = document.getElementById('lista-planos');
 const divMensagemErro = document.getElementById('mensagem-erro');
 const linkVoltar = document.getElementById('link-voltar');
 const subtituloPagina = document.getElementById('subtitulo-pagina');
+const resumoPreCadastro = document.getElementById('resumo-pre-cadastro');
 
 const parametrosUrl = new URLSearchParams(window.location.search);
 const modoRenovacao = parametrosUrl.get('modo') === 'renovacao';
@@ -29,6 +30,24 @@ try {
 const tokenPendencia = obterTokenPendencia();
 const emailPendencia = obterEmailPendencia();
 
+function preencherResumoContexto(itens) {
+    if (!resumoPreCadastro || !itens.length) return;
+
+    resumoPreCadastro.innerHTML = '';
+    itens.forEach(({ rotulo, valor }) => {
+        if (!valor) return;
+        const item = document.createElement('span');
+        const textoRotulo = document.createTextNode(`${rotulo}: `);
+        const forte = document.createElement('strong');
+        forte.textContent = valor;
+        item.appendChild(textoRotulo);
+        item.appendChild(forte);
+        resumoPreCadastro.appendChild(item);
+    });
+
+    resumoPreCadastro.hidden = resumoPreCadastro.childElementCount === 0;
+}
+
 if (modoRenovacao && (tokenPendencia || emailPendencia)) {
     if (linkVoltar) {
         linkVoltar.href = 'pagamento-pendente.html';
@@ -37,8 +56,16 @@ if (modoRenovacao && (tokenPendencia || emailPendencia)) {
     if (subtituloPagina) {
         subtituloPagina.textContent = 'Escolha um plano para gerar uma nova cobrança e liberar o acesso à sua conta.';
     }
+    preencherResumoContexto([
+        { rotulo: 'Conta', valor: emailPendencia }
+    ]);
 } else if (!dadosPreCadastro || !dadosPreCadastro.nome_agencia) {
     window.location.replace('cadastro.html');
+} else {
+    preencherResumoContexto([
+        { rotulo: 'Consultoria', valor: dadosPreCadastro.nome_agencia },
+        { rotulo: 'E-mail', valor: dadosPreCadastro.email }
+    ]);
 }
 
 function exibirErro(mensagem) {
@@ -56,10 +83,28 @@ function limparErro() {
     }
 }
 
+function obterDescricaoPadrao(nomePlano) {
+    const nome = (nomePlano || '').toLowerCase();
+    if (nome.includes('enterprise')) {
+        return 'Solução completa para grandes consultorias e hubs de inovação.';
+    }
+    if (nome.includes('pro')) {
+        return 'Para consultorias em expansão gerenciarem múltiplas startups.';
+    }
+    return 'Ideal para consultores individuais iniciando no ecossistema.';
+}
+
+function obterLimiteMinutasPadrao(nomePlano) {
+    const nome = (nomePlano || '').toLowerCase();
+    if (nome.includes('enterprise')) return 50;
+    if (nome.includes('pro')) return 15;
+    return 3;
+}
+
 function formatarPreco(preco) {
     const numero = Number(preco);
     const valorValido = (!isNaN(numero) && numero > 0) ? numero : 49.90;
-    return `R$ ${valorValido.toFixed(2).replace('.', ',')}<span style="font-size: 0.85rem; font-weight: 400; color: var(--text-muted);">/mês</span>`;
+    return `R$ ${valorValido.toFixed(2).replace('.', ',')}`;
 }
 
 async function carregarPlanosNaTela() {
@@ -80,6 +125,7 @@ async function carregarPlanosNaTela() {
                 preco: 49.90,
                 limite_startups: 2,
                 limite_membros_equipe: 1,
+                limite_minutas_ia: 3,
                 descricao: 'Ideal para consultores individuais iniciando no ecossistema.'
             },
             {
@@ -88,6 +134,7 @@ async function carregarPlanosNaTela() {
                 preco: 99.90,
                 limite_startups: 10,
                 limite_membros_equipe: 5,
+                limite_minutas_ia: 15,
                 descricao: 'Para consultorias em expansão gerenciarem múltiplas startups.'
             },
             {
@@ -96,6 +143,7 @@ async function carregarPlanosNaTela() {
                 preco: 299.90,
                 limite_startups: 50,
                 limite_membros_equipe: 15,
+                limite_minutas_ia: 50,
                 descricao: 'Solução completa para grandes consultorias e hubs de inovação.'
             }
         ];
@@ -103,77 +151,73 @@ async function carregarPlanosNaTela() {
         containerListaPlanos.innerHTML = '';
 
         planosExibicao.forEach((plano) => {
-            const cartao = document.createElement('div');
-            cartao.className = 'bloco-plano';
-            cartao.style.position = 'relative';
+            const ehPro = (plano.nome || '').toLowerCase().includes('pro');
 
-            if (plano.nome.toLowerCase().includes('pro')) {
-                cartao.style.borderColor = 'var(--color-primary)';
-                cartao.style.boxShadow = '0 0 25px rgba(99, 102, 241, 0.25)';
-            }
+            const cartao = document.createElement('article');
+            cartao.className = ehPro ? 'plano-card plano-card--destaque' : 'plano-card';
 
             const cabecalho = document.createElement('div');
-            cabecalho.style.width = '100%';
+            cabecalho.className = 'plano-card-topo';
 
-            const distintivo = document.createElement('div');
-            if (plano.nome.toLowerCase().includes('pro')) {
-                distintivo.style.display = 'inline-block';
-                distintivo.style.fontSize = '0.75rem';
-                distintivo.style.fontWeight = '700';
-                distintivo.style.textTransform = 'uppercase';
-                distintivo.style.color = '#fff';
-                distintivo.style.background = 'linear-gradient(135deg, #6366f1, #8b5cf6)';
-                distintivo.style.padding = '3px 10px';
-                distintivo.style.borderRadius = '999px';
-                distintivo.style.marginBottom = '8px';
+            if (ehPro) {
+                const distintivo = document.createElement('span');
+                distintivo.className = 'plano-badge';
                 distintivo.textContent = 'Mais Popular';
+                cabecalho.appendChild(distintivo);
             }
 
-            const titulo = document.createElement('h2');
+            const titulo = document.createElement('h3');
+            titulo.className = 'plano-nome';
             titulo.textContent = plano.nome;
-            titulo.style.fontSize = '1.35rem';
-            titulo.style.fontWeight = '700';
-            titulo.style.color = 'var(--text-main)';
+
+            const descricao = document.createElement('p');
+            descricao.className = 'plano-descricao';
+            descricao.textContent = plano.descricao || obterDescricaoPadrao(plano.nome);
 
             const elementoPreco = document.createElement('div');
-            elementoPreco.style.fontSize = '1.75rem';
-            elementoPreco.style.fontWeight = '800';
-            elementoPreco.style.margin = '14px 0 8px 0';
-            elementoPreco.style.color = '#a5b4fc';
-            elementoPreco.innerHTML = formatarPreco(plano.preco ?? plano.preco_mensal);
+            elementoPreco.className = 'plano-preco';
+            elementoPreco.innerHTML = `
+                <span class="plano-preco-valor">${formatarPreco(plano.preco ?? plano.preco_mensal)}</span>
+                <span class="plano-preco-periodo">/mês</span>
+            `;
 
-            const detalhes = document.createElement('div');
-            detalhes.style.width = '100%';
-            detalhes.style.fontSize = '0.86rem';
-            detalhes.style.color = 'var(--text-muted)';
-            detalhes.style.display = 'flex';
-            detalhes.style.flexDirection = 'column';
-            detalhes.style.gap = '8px';
-            detalhes.style.margin = '16px 0';
-            detalhes.style.textAlign = 'left';
+            cabecalho.appendChild(titulo);
+            cabecalho.appendChild(descricao);
+            cabecalho.appendChild(elementoPreco);
 
             const limiteStartups = plano.limite_startups ?? 1;
             const limiteMembros = plano.limite_membros_equipe ?? plano.limite_usuarios ?? 1;
+            const limiteMinutas = plano.limite_minutas_ia ?? obterLimiteMinutasPadrao(plano.nome);
 
+            const detalhes = document.createElement('ul');
+            detalhes.className = 'plano-beneficios';
             detalhes.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: #10b981;">✔</span> Até <strong>${limiteStartups}</strong> startups
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: #10b981;">✔</span> Até <strong>${limiteMembros}</strong> membros na equipe
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: #10b981;">✔</span> Pipeline Kanban & Match IA
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: #10b981;">✔</span> Integração AbacatePay PIX
-                </div>
+                <li class="plano-beneficio">
+                    <span class="plano-beneficio-icone" aria-hidden="true">✔</span>
+                    <span>Até <strong>${limiteStartups}</strong> ${limiteStartups === 1 ? 'startup' : 'startups'} gerenciadas</span>
+                </li>
+                <li class="plano-beneficio">
+                    <span class="plano-beneficio-icone" aria-hidden="true">✔</span>
+                    <span>Até <strong>${limiteMembros}</strong> ${limiteMembros === 1 ? 'membro' : 'membros'} na equipe</span>
+                </li>
+                <li class="plano-beneficio">
+                    <span class="plano-beneficio-icone" aria-hidden="true">✔</span>
+                    <span>Até <strong>${limiteMinutas}</strong> minutas técnicas IA/mês</span>
+                </li>
+                <li class="plano-beneficio">
+                    <span class="plano-beneficio-icone" aria-hidden="true">✔</span>
+                    <span>Pipeline Kanban &amp; Match IA</span>
+                </li>
+                <li class="plano-beneficio">
+                    <span class="plano-beneficio-icone" aria-hidden="true">✔</span>
+                    <span>Integração AbacatePay PIX</span>
+                </li>
             `;
 
             const botao = document.createElement('button');
             botao.type = 'button';
+            botao.className = 'btn-selecionar-plano';
             botao.textContent = 'Selecionar Plano';
-            botao.style.marginTop = 'auto';
 
             botao.addEventListener('click', async () => {
                 limparErro();
@@ -227,12 +271,6 @@ async function carregarPlanosNaTela() {
                     botao.textContent = 'Selecionar Plano';
                 }
             });
-
-            if (plano.nome.toLowerCase().includes('pro')) {
-                cabecalho.appendChild(distintivo);
-            }
-            cabecalho.appendChild(titulo);
-            cabecalho.appendChild(elementoPreco);
 
             cartao.appendChild(cabecalho);
             cartao.appendChild(detalhes);
