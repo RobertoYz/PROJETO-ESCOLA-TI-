@@ -122,6 +122,8 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
                 const caminho = window.location.pathname.toLowerCase();
                 const ehTelaPublicaOuPendencia = caminho.includes('login')
                     || caminho.includes('cadastro')
+                    || caminho.includes('esqueci-senha')
+                    || caminho.includes('redefinir-senha')
                     || caminho.includes('selecionar-plano')
                     || caminho.includes('pagamento-pendente');
 
