@@ -76,8 +76,10 @@
                     <p class="form-subtitle">Defina uma nova senha segura de no mínimo 8 caracteres</p>
                 </div>
 
+                <!-- Elemento de feedback consumido pelo redefinirSenha.js -->
                 <div id="mensagem-feedback" class="alert-box" role="alert" aria-live="polite" hidden></div>
 
+                <!-- Formulário integrado ao redefinirSenha.js -->
                 <form id="form-redefinir-senha" novalidate>
                     <div class="form-group">
                         <label for="email">E-mail da conta</label>
@@ -124,7 +126,6 @@
                             As senhas coincidem
                         </li>
                     </ul>
-
                     <button type="submit" class="btn-submit" id="botao-redefinir">
                         Salvar nova senha
                     </button>
@@ -135,8 +136,24 @@
                 </div>
 
                 <footer class="form-footer">
-                    Lembrou sua senha? <a href="login.html">Voltar para o login</a>
+                    <div>Precisa de um novo link? <a href="esqueci-senha.html">Solicitar recuperação</a></div>
+                    <div>Lembrou sua senha? <a href="login.html">Fazer login</a></div>
                 </footer>
+
+                <!-- Banner Mobile -->
+                <div class="banner-mobile-app">
+                    <div class="banner-mobile-info">
+                        <div class="banner-mobile-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 2px;">
+                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                            </svg>
+                            Aplicativo Mobile Android
+                        </div>
+                        <div class="banner-mobile-desc">Baixe o APK para acompanhar prazos e editais no celular</div>
+                    </div>
+                    <a href="baixar-app.html" class="btn-banner-download">Baixar APK</a>
+                </div>
             </div>
         </main>
     </div>
@@ -174,6 +191,7 @@
         });
     </script>
 
+    <!-- Script modular oficial mantido -->
     <script type="module" src="../scripts/paginas/redefinirSenha.js"></script>
 </body>
 

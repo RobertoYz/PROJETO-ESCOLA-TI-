@@ -1,4 +1,4 @@
-import { requisicaoApi } from '../servicos/api.js';
+import { redefinirSenha } from '../servicos/servicoAutenticacao.js';
 
 const ICONE_OLHO_ABERTO = `
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -129,19 +129,16 @@ document.addEventListener('DOMContentLoaded', () => {
         botaoRedefinir.textContent = 'Salvando nova senha...';
 
         try {
-            const resposta = await requisicaoApi('/auth/redefinir-senha', {
-                method: 'POST',
-                body: JSON.stringify({
-                    email: emailUrl,
-                    token: token,
-                    password: novaSenha,
-                    password_confirmation: confirmarSenha
-                })
+            const resposta = await redefinirSenha({
+                email: emailUrl,
+                token: token,
+                password: novaSenha,
+                password_confirmation: confirmarSenha
             });
 
             definirEstadoCampos(true);
             botaoRedefinir.textContent = 'Senha atualizada!';
-            exibirMensagem(resposta.message || 'Senha atualizada com sucesso!', 'sucesso');
+            exibirMensagem(resposta.message || resposta.mensagem || 'Senha atualizada com sucesso!', 'sucesso');
             setTimeout(() => {
                 window.location.href = 'login.html';
             }, 2000);

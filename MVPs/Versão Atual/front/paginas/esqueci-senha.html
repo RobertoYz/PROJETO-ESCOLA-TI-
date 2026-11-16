@@ -73,11 +73,13 @@
             <div class="form-wrapper">
                 <div class="form-header">
                     <h2 class="form-title">Recuperar senha</h2>
-                    <p class="form-subtitle">Informe o e-mail cadastrado na sua conta para receber o link de redefinição</p>
+                    <p class="form-subtitle">Informe o e-mail corporativo cadastrado para receber o link de redefinição</p>
                 </div>
 
+                <!-- Elemento de feedback consumido pelo esqueciSenha.js -->
                 <div id="mensagem-feedback" class="alert-box" role="alert" aria-live="polite" hidden></div>
 
+                <!-- Formulário integrado ao esqueciSenha.js -->
                 <form id="form-esqueci-senha" novalidate>
                     <div class="form-group">
                         <label for="email">E-mail corporativo</label>
@@ -91,8 +93,24 @@
                 </form>
 
                 <footer class="form-footer">
-                    Lembrou sua senha? <a href="login.html">Voltar para o login</a>
+                    <div>Lembrou sua senha? <a href="login.html">Fazer login</a></div>
+                    <div>Ainda não possui conta? <a href="cadastro.html">Cadastrar agora</a></div>
                 </footer>
+
+                <!-- Banner Mobile -->
+                <div class="banner-mobile-app">
+                    <div class="banner-mobile-info">
+                        <div class="banner-mobile-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 2px;">
+                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                            </svg>
+                            Aplicativo Mobile Android
+                        </div>
+                        <div class="banner-mobile-desc">Baixe o APK para acompanhar prazos e editais no celular</div>
+                    </div>
+                    <a href="baixar-app.html" class="btn-banner-download">Baixar APK</a>
+                </div>
             </div>
         </main>
     </div>
@@ -130,6 +148,7 @@
         });
     </script>
 
+    <!-- Script modular oficial mantido -->
     <script type="module" src="../scripts/paginas/esqueciSenha.js"></script>
 </body>
 
