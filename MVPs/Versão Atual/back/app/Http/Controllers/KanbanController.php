@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use App\Services\KanbanService;
 use Exception;
 
 class KanbanController extends Controller
 {
+    public const MAX_ANEXO_KB = 10240; // 10 MB por arquivo
+    public const MAX_ANEXO_BYTES = 10 * 1024 * 1024;
+    public const MAX_ANEXOS_CARD_BYTES = 25 * 1024 * 1024; // 25 MB acumulados por card
+
     protected KanbanService $kanbanService;
 
     public function __construct(KanbanService $kanbanService)
@@ -148,7 +153,11 @@ class KanbanController extends Controller
                 'title' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
                 'metadata' => 'nullable|array',
-                'arquivo' => 'nullable|file|max:10240' // até 10MB
+                'arquivo' => 'nullable|file|max:' . self::MAX_ANEXO_KB . '|mimes:pdf,doc,docx,xls,xlsx,csv,txt,png,jpg,jpeg'
+            ], [
+                'arquivo.file' => 'O anexo enviado não é um arquivo válido.',
+                'arquivo.max' => 'O arquivo excede o limite máximo permitido de 10 MB por anexo.',
+                'arquivo.mimes' => 'Formato de arquivo não permitido. Envie PDF, DOC, DOCX, XLS, XLSX, CSV, TXT, PNG ou JPG.'
             ]);
 
             if (isset($dados['title'])) $card->title = $dados['title'];
@@ -164,15 +173,31 @@ class KanbanController extends Controller
             // Se fez upload de arquivo
             if ($request->hasFile('arquivo')) {
                 $file = $request->file('arquivo');
+                $anexosAtuais = $metaAtual['anexos'] ?? [];
+                $tamanhoAtualBytes = array_reduce($anexosAtuais, function ($carry, $item) {
+                    return $carry + (int) ($item['tamanho'] ?? 0);
+                }, 0);
+
+                $tamanhoNovo = (int) $file->getSize();
+                if (($tamanhoAtualBytes + $tamanhoNovo) > self::MAX_ANEXOS_CARD_BYTES) {
+                    $disponivelMb = max(0, (self::MAX_ANEXOS_CARD_BYTES - $tamanhoAtualBytes) / (1024 * 1024));
+                    return response()->json([
+                        'status' => 'erro',
+                        'message' => sprintf(
+                            'Limite total de documentação do card (25 MB) excedido. Espaço disponível: %.2f MB.',
+                            $disponivelMb
+                        )
+                    ], 422);
+                }
+
                 $nomeOriginal = $file->getClientOriginalName();
                 $caminho = $file->store('kanban_anexos', 'public');
 
-                $anexosAtuais = $metaAtual['anexos'] ?? [];
                 $anexosAtuais[] = [
                     'id' => uniqid(),
                     'nome' => $nomeOriginal,
                     'caminho' => '/storage/' . $caminho,
-                    'tamanho' => $file->getSize(),
+                    'tamanho' => $tamanhoNovo,
                     'enviado_em' => now()->toIso8601String()
                 ];
                 $metaAtual['anexos'] = $anexosAtuais;
@@ -189,6 +214,15 @@ class KanbanController extends Controller
                 'data' => $cardAtualizado,
                 'card' => $cardAtualizado
             ]);
+        } catch (ValidationException $e) {
+            $errors = $e->errors();
+            $firstMessage = collect($errors)->flatten()->first() ?? 'Dados inválidos para atualização do card.';
+
+            return response()->json([
+                'status' => 'erro',
+                'message' => $firstMessage,
+                'errors' => $errors
+            ], 422);
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'erro',

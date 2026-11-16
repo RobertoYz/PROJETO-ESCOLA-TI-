@@ -8,6 +8,8 @@ use App\Models\KanbanColumn;
 use App\Models\KanbanCard;
 use App\Models\Edital;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class KanbanApiTest extends TestCase
 {
@@ -200,5 +202,126 @@ class KanbanApiTest extends TestCase
         $this->assertDatabaseMissing('kanban_cards', [
             'id' => $card->id
         ]);
+    }
+
+    /**
+     * EDTAN-170: Upload válido de documentação dentro do limite de 10 MB é aceito.
+     */
+    public function test_upload_anexo_valido_dentro_do_limite(): void
+    {
+        Storage::fake('public');
+
+        $board = KanbanBoard::create(['title' => 'Pipeline Teste']);
+        $coluna = KanbanColumn::create(['board_id' => $board->id, 'title' => 'Triagem', 'slug' => 'triagem', 'position' => 1000.0]);
+        $card = KanbanCard::create([
+            'board_id' => $board->id,
+            'column_id' => $coluna->id,
+            'title' => 'Card Upload Válido',
+            'position' => 1000.0
+        ]);
+
+        $arquivo = UploadedFile::fake()->create('cnd_federal.pdf', 512, 'application/pdf');
+
+        $response = $this->post("/api/kanban/cards/{$card->id}/dados-anexos", [
+            'arquivo' => $arquivo
+        ], ['Accept' => 'application/json']);
+
+        $response->assertStatus(200)
+            ->assertJson(['status' => 'sucesso']);
+
+        $cardAtualizado = $card->fresh();
+        $this->assertCount(1, $cardAtualizado->metadata['anexos']);
+        $this->assertEquals('cnd_federal.pdf', $cardAtualizado->metadata['anexos'][0]['nome']);
+    }
+
+    /**
+     * EDTAN-170: Upload de arquivo maior que 10 MB deve retornar 422.
+     */
+    public function test_upload_anexo_maior_que_10mb_retorna_422(): void
+    {
+        Storage::fake('public');
+
+        $board = KanbanBoard::create(['title' => 'Pipeline Teste']);
+        $coluna = KanbanColumn::create(['board_id' => $board->id, 'title' => 'Triagem', 'slug' => 'triagem', 'position' => 1000.0]);
+        $card = KanbanCard::create([
+            'board_id' => $board->id,
+            'column_id' => $coluna->id,
+            'title' => 'Card Upload Grande',
+            'position' => 1000.0
+        ]);
+
+        // 10241 KB > 10240 KB (10 MB)
+        $arquivoGrande = UploadedFile::fake()->create('orcamento_pesado.pdf', 10241, 'application/pdf');
+
+        $response = $this->post("/api/kanban/cards/{$card->id}/dados-anexos", [
+            'arquivo' => $arquivoGrande
+        ], ['Accept' => 'application/json']);
+
+        $response->assertStatus(422)
+            ->assertJson(['status' => 'erro']);
+
+        $this->assertEmpty($card->fresh()->metadata['anexos'] ?? []);
+    }
+
+    /**
+     * EDTAN-170: Upload de formato não permitido deve retornar 422.
+     */
+    public function test_upload_anexo_formato_invalido_retorna_422(): void
+    {
+        Storage::fake('public');
+
+        $board = KanbanBoard::create(['title' => 'Pipeline Teste']);
+        $coluna = KanbanColumn::create(['board_id' => $board->id, 'title' => 'Triagem', 'slug' => 'triagem', 'position' => 1000.0]);
+        $card = KanbanCard::create([
+            'board_id' => $board->id,
+            'column_id' => $coluna->id,
+            'title' => 'Card Formato Inválido',
+            'position' => 1000.0
+        ]);
+
+        $arquivoInvalido = UploadedFile::fake()->create('script.exe', 100, 'application/octet-stream');
+
+        $response = $this->post("/api/kanban/cards/{$card->id}/dados-anexos", [
+            'arquivo' => $arquivoInvalido
+        ], ['Accept' => 'application/json']);
+
+        $response->assertStatus(422)
+            ->assertJson(['status' => 'erro']);
+    }
+
+    /**
+     * EDTAN-170: Upload que ultrapassa o limite acumulado de 25 MB no card deve retornar 422.
+     */
+    public function test_upload_anexo_excede_limite_total_do_card_retorna_422(): void
+    {
+        Storage::fake('public');
+
+        $board = KanbanBoard::create(['title' => 'Pipeline Teste']);
+        $coluna = KanbanColumn::create(['board_id' => $board->id, 'title' => 'Triagem', 'slug' => 'triagem', 'position' => 1000.0]);
+        $card = KanbanCard::create([
+            'board_id' => $board->id,
+            'column_id' => $coluna->id,
+            'title' => 'Card Limite Total',
+            'position' => 1000.0,
+            'metadata' => [
+                'anexos' => [
+                    ['id' => '1', 'nome' => 'doc1.pdf', 'caminho' => '/storage/a.pdf', 'tamanho' => 10 * 1024 * 1024],
+                    ['id' => '2', 'nome' => 'doc2.pdf', 'caminho' => '/storage/b.pdf', 'tamanho' => 10 * 1024 * 1024],
+                    ['id' => '3', 'nome' => 'doc3.pdf', 'caminho' => '/storage/c.pdf', 'tamanho' => 4 * 1024 * 1024],
+                ]
+            ]
+        ]);
+
+        // Card já tem 24 MB; enviar 2 MB ultrapassa os 25 MB permitidos
+        $arquivoExcedente = UploadedFile::fake()->create('doc4.pdf', 2048, 'application/pdf');
+
+        $response = $this->post("/api/kanban/cards/{$card->id}/dados-anexos", [
+            'arquivo' => $arquivoExcedente
+        ], ['Accept' => 'application/json']);
+
+        $response->assertStatus(422)
+            ->assertJson(['status' => 'erro']);
+
+        $this->assertCount(3, $card->fresh()->metadata['anexos']);
     }
 }
