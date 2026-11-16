@@ -30,12 +30,16 @@ const formulario = document.getElementById('formulario-cadastro-startup');
 const divMensagemErro = document.getElementById('mensagem-erro');
 const botaoConfirmar = document.getElementById('botao-confirmar');
 const campoCnpj = document.getElementById('campo-cnpj');
+const campoCep = document.getElementById('campo-cep');
 const botaoBuscarCnpj = document.getElementById('botao-buscar-cnpj');
 const avisoStatusCnpj = document.getElementById('aviso-status-cnpj');
+
+let ultimoCnpjBuscado = '';
 
 function exibirErro(mensagem) {
     divMensagemErro.textContent = mensagem;
     divMensagemErro.hidden = false;
+    divMensagemErro.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function formatarCnpj(valor) {
@@ -47,13 +51,24 @@ function formatarCnpj(valor) {
     return `${digitos.slice(0, 2)}.${digitos.slice(2, 5)}.${digitos.slice(5, 8)}/${digitos.slice(8, 12)}-${digitos.slice(12, 14)}`;
 }
 
+function formatarCep(valor) {
+    const digitos = valor.replace(/\D/g, '').slice(0, 8);
+    if (digitos.length <= 5) return digitos;
+    return `${digitos.slice(0, 5)}-${digitos.slice(5)}`;
+}
+
 // Máscara dinâmica de CNPJ
 campoCnpj.addEventListener('input', (e) => {
     e.target.value = formatarCnpj(e.target.value);
     const digitos = e.target.value.replace(/\D/g, '');
-    if (digitos.length === 14) {
+    if (digitos.length === 14 && digitos !== ultimoCnpjBuscado) {
         realizarBuscaCnpj(digitos);
     }
+});
+
+// Máscara dinâmica de CEP
+campoCep?.addEventListener('input', (e) => {
+    e.target.value = formatarCep(e.target.value);
 });
 
 // Ação do botão manual "Puxar Dados"
@@ -67,6 +82,7 @@ botaoBuscarCnpj.addEventListener('click', () => {
 });
 
 async function realizarBuscaCnpj(cnpj) {
+    ultimoCnpjBuscado = cnpj;
     divMensagemErro.hidden = true;
     avisoStatusCnpj.style.display = '';
     avisoStatusCnpj.className = 'aviso-status carregando';
@@ -134,6 +150,11 @@ formulario.addEventListener('submit', async (evento) => {
         return;
     }
 
+    if (cnpj.replace(/\D/g, '').length !== 14) {
+        exibirErro('Informe um CNPJ válido com 14 dígitos.');
+        return;
+    }
+
     const dadosStartup = {
         cnpj: cnpj,
         razao_social: razaoSocial,
@@ -158,7 +179,7 @@ formulario.addEventListener('submit', async (evento) => {
         await criarNovaStartup(dadosStartup);
         window.location.href = 'selecionar-startup.html';
     } catch (erro) {
-        exibirErro(erro.message);
+        exibirErro(erro.message || 'Erro ao cadastrar startup.');
         botaoConfirmar.disabled = false;
         botaoConfirmar.textContent = 'Concluir Cadastro da Startup';
     }
