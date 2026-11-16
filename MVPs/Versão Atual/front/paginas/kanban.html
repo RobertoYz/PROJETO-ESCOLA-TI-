@@ -10,954 +10,10 @@
             window.location.replace('login.html');
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="../estilos/kanban.css">
     <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
-    <style>
-        :root {
-            --bg-dark: #050505;
-            --sidebar-bg: #111418;
-            --navbar-bg: #0d0f12;
-            --column-bg: #111111;
-            --card-bg: #1a1d21;
-            --card-hover: #23272c;
-            --text-light: #ffffff;
-            --text-muted: #a0a0a0;
-            --menu-bg: #f5f5f5;
-            --menu-text: #333333;
-            --accent-blue: #1b36ff;
-            --accent-purple: #8b5cf6;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --tag-finep: #3b82f6;
-            --tag-fapesp: #10b981;
-            --tag-fapesc: #8b5cf6;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        svg {
-            fill: currentColor;
-        }
-
-        /* SIDEBAR */
-        .sidebar {
-            width: 250px;
-            background-color: var(--sidebar-bg);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid #222;
-            transition: width 0.3s ease;
-            position: relative;
-            z-index: 100;
-        }
-
-        .sidebar.collapsed {
-            width: 70px;
-        }
-
-        .sidebar-header {
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .toggle-btn {
-            background: none;
-            border: none;
-            color: var(--text-light);
-            cursor: pointer;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-            align-self: flex-start;
-        }
-
-        .toggle-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 600;
-            transition: opacity 0.3s;
-        }
-
-        .logo span {
-            font-weight: 400;
-        }
-
-        .sidebar.collapsed .logo {
-            opacity: 0;
-            pointer-events: none;
-            height: 0;
-            margin: 0;
-            overflow: hidden;
-        }
-
-        .nav-menu {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 1rem 0;
-            overflow: hidden;
-        }
-
-        .nav-item {
-            padding: 1rem 1.5rem;
-            color: var(--text-light);
-            text-decoration: none;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            transition: background-color 0.2s;
-            white-space: nowrap;
-        }
-
-        .nav-item:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .nav-item.active {
-            background-color: rgba(255, 255, 255, 0.05);
-            border-left: 3px solid var(--accent-blue);
-            color: var(--accent-blue);
-        }
-
-        .nav-item.active .nav-text {
-            font-weight: 600;
-        }
-
-        .nav-icon {
-            width: 20px;
-            height: 20px;
-            min-width: 20px;
-        }
-
-        .nav-text {
-            transition: opacity 0.3s;
-        }
-
-        .sidebar.collapsed .nav-text {
-            opacity: 0;
-            pointer-events: none;
-            width: 0;
-            overflow: hidden;
-        }
-
-        .sidebar-footer {
-            padding: 1rem 0;
-            border-top: 1px solid #222;
-        }
-
-        /* MAIN CONTENT */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .top-navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            background-color: var(--navbar-bg);
-            border-bottom: 1px solid #222;
-        }
-
-        .startup-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .startup-avatar {
-            width: 45px;
-            height: 45px;
-            background-color: #d9d9d9;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #666;
-        }
-
-        .startup-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .actions-section {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .kanban-top-bar {
-            padding: 1.25rem 2rem 0 2rem;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            flex-shrink: 0;
-        }
-
-        .kanban-actions-box {
-            background-color: var(--column-bg);
-            border: 1px solid #222;
-            border-radius: 12px;
-            padding: 0.7rem 1.1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 1rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        }
-
-        .btn-add-card {
-            background: var(--accent-blue);
-            color: #fff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: 0.2s;
-        }
-
-        .btn-add-card:hover {
-            background: #0d1ecc;
-        }
-
-        /* KANBAN BOARD CONTAINER */
-        .kanban-container {
-            flex: 1;
-            min-height: 0;
-            padding: 1.25rem 2rem 1.5rem 2rem;
-            display: flex;
-            gap: 1.5rem;
-            overflow-x: auto;
-            overflow-y: hidden;
-            align-items: flex-start;
-        }
-
-        .kanban-container::-webkit-scrollbar {
-            height: 8px;
-        }
-
-        .kanban-container::-webkit-scrollbar-track {
-            background: var(--bg-dark);
-        }
-
-        .kanban-container::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 10px;
-        }
-
-        .kanban-container::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-
-        /* COLUNAS */
-        .kanban-column {
-            background-color: var(--column-bg);
-            border-radius: 14px;
-            min-width: 320px;
-            width: 320px;
-            max-height: 100%;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #222;
-            transition: border-color 0.2s, background-color 0.2s;
-        }
-
-        .kanban-column.drag-over {
-            border-color: var(--accent-blue);
-            background-color: #16181c;
-        }
-
-        .column-header {
-            padding: 1.1rem 1.2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #222;
-        }
-
-        .column-title {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .column-count {
-            background-color: #333;
-            color: #ccc;
-            font-size: 0.8rem;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-        }
-
-        .column-body {
-            padding: 1rem;
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            min-height: 200px;
-        }
-
-        .column-body::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .column-body::-webkit-scrollbar-thumb {
-            background: #444;
-            border-radius: 10px;
-        }
-
-        /* CARDS */
-        .kanban-card {
-            background-color: var(--card-bg);
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 1rem;
-            cursor: grab;
-            display: flex;
-            flex-direction: column;
-            gap: 0.7rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-            transition: transform 0.1s, box-shadow 0.1s, border-color 0.2s;
-            position: relative;
-        }
-
-        .kanban-card:hover {
-            border-color: #555;
-            background-color: var(--card-hover);
-        }
-
-        .kanban-card:active {
-            cursor: grabbing;
-        }
-
-        .kanban-card.dragging {
-            opacity: 0.4;
-            transform: scale(0.98);
-            box-shadow: none;
-            border-color: var(--accent-purple);
-        }
-
-        .card-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-tags {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
-        .tag {
-            font-size: 0.7rem;
-            font-weight: 600;
-            padding: 3px 8px;
-            border-radius: 4px;
-            text-transform: uppercase;
-        }
-
-        .tag-finep {
-            background-color: rgba(59, 130, 246, 0.15);
-            color: var(--tag-finep);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        .tag-fapesp {
-            background-color: rgba(16, 185, 129, 0.15);
-            color: var(--tag-fapesp);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .tag-fapesc {
-            background-color: rgba(139, 92, 246, 0.15);
-            color: var(--tag-fapesc);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-        }
-
-        .tag-manual {
-            background-color: rgba(245, 158, 11, 0.15);
-            color: var(--warning-color);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        .btn-card-del {
-            background: none;
-            border: none;
-            color: #666;
-            cursor: pointer;
-            font-size: 0.9rem;
-            padding: 2px;
-            transition: 0.2s;
-        }
-
-        .btn-card-del:hover {
-            color: var(--danger-color);
-            transform: scale(1.1);
-        }
-
-        .card-title {
-            font-size: 0.95rem;
-            font-weight: 600;
-            line-height: 1.3;
-            color: #fff;
-        }
-
-        .card-desc {
-            font-size: 0.8rem;
-            color: #aaa;
-            line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 1px solid #2a2a2a;
-            padding-top: 0.6rem;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .card-budget {
-            font-family: monospace;
-            font-weight: 500;
-            color: #ddd;
-        }
-
-        .match-score {
-            font-weight: 700;
-            font-size: 0.8rem;
-        }
-
-        .match-high {
-            color: var(--success-color);
-        }
-
-        .match-medium {
-            color: var(--accent-purple);
-        }
-
-        .match-low {
-            color: var(--danger-color);
-        }
-
-        /* MODAL DE CRIAÇÃO */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            backdrop-filter: blur(6px);
-        }
-
-        .modal-overlay.active {
-            display: flex !important;
-        }
-
-        .modal-card {
-            background: var(--card-bg);
-            border: 1px solid #333;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 480px;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .modal-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .form-label {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .form-input,
-        .form-textarea,
-        .form-select {
-            background: #111418;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: #fff;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            outline: none;
-            width: 100%;
-            transition: all 0.2s;
-        }
-
-        .form-select {
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
-            cursor: pointer;
-            padding-right: 24px;
-        }
-
-        .form-select option {
-            background: #111418;
-            color: #fff;
-            padding: 8px;
-            white-space: normal;
-            word-wrap: break-word;
-        }
-
-        .form-input:focus,
-        .form-textarea:focus,
-        .form-select:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .btn-cancel {
-            background: transparent;
-            border: 1px solid #444;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .btn-save {
-            background: var(--accent-blue);
-            border: none;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* MODAL MÓDULO DE IA (MINUTA & PROPOSTA) */
-        .modal-minuta-card {
-            background: linear-gradient(145deg, #12151b 0%, #0c0e12 100%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            width: 95%;
-            max-width: 1040px;
-            max-height: 88vh;
-            margin: auto;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 40px rgba(27, 54, 255, 0.12);
-            backdrop-filter: blur(12px);
-            animation: modalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.97) translateY(8px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .modal-minuta-header {
-            padding: 1.25rem 1.75rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(17, 20, 24, 0.85);
-        }
-
-        .modal-minuta-body {
-            padding: 1.5rem 1.75rem;
-            overflow-y: auto;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-            scrollbar-width: thin;
-            scrollbar-color: #333 transparent;
-        }
-
-        .modal-minuta-body::-webkit-scrollbar {
-            width: 6px;
-        }
-        .modal-minuta-body::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 4px;
-        }
-
-        .minuta-tabs-container {
-            background: #111418;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 10px 1.75rem;
-            width: 100%;
-            flex-shrink: 0;
-        }
-
-        .minuta-tabs {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            scrollbar-width: none;
-            white-space: nowrap;
-            align-items: center;
-        }
-
-        .minuta-tabs::-webkit-scrollbar {
-            display: none;
-        }
-
-        .minuta-tab-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #94a3b8;
-            font-size: 0.88rem;
-            font-weight: 500;
-            padding: 9px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            flex-shrink: 0;
-            line-height: 1.2;
-        }
-
-        .minuta-tab-btn:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .minuta-tab-btn.active {
-            background: linear-gradient(135deg, rgba(27, 54, 255, 0.35), rgba(139, 92, 246, 0.25));
-            color: #fff;
-            font-weight: 600;
-            border: 1px solid rgba(99, 102, 241, 0.55);
-            box-shadow: 0 4px 15px rgba(27, 54, 255, 0.25);
-        }
-
-        /* Grid Responsiva para a Aba de Anexos */
-        .anexos-grid {
-            display: grid;
-            grid-template-columns: 1.15fr 1fr;
-            gap: 1.25rem;
-            width: 100%;
-        }
-
-        @media (max-width: 820px) {
-            .anexos-grid {
-                grid-template-columns: 1fr;
-            }
-            .modal-minuta-card {
-                width: 98%;
-                max-height: 94vh;
-                border-radius: 12px;
-            }
-            .modal-minuta-body {
-                padding: 1rem;
-            }
-        }
-
-        .anexos-panel {
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 12px;
-            padding: 1.25rem;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(8px);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .anexos-panel-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .upload-dropzone {
-            border: 2px dashed rgba(59, 130, 246, 0.35);
-            border-radius: 10px;
-            padding: 1.5rem 1rem;
-            text-align: center;
-            margin-bottom: 1rem;
-            background: rgba(59, 130, 246, 0.03);
-            transition: all 0.2s;
-        }
-
-        .upload-dropzone:hover {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.08);
-            transform: translateY(-1px);
-        }
-
-        .anexo-item-card {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            padding: 10px 14px;
-            border-radius: 8px;
-            transition: all 0.15s;
-        }
-
-        .anexo-item-card:hover {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(255, 255, 255, 0.15);
-        }
-
-        .minuta-editor-area {
-            width: 100%;
-            min-height: 380px;
-            background: #090b0e;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            color: #e2e8f0;
-            font-family: 'Consolas', monospace;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            padding: 1.2rem;
-            resize: vertical;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .minuta-editor-area:focus {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 2px rgba(27, 54, 255, 0.2);
-        }
-
-        .btn-ai-sparkle {
-            background: linear-gradient(135deg, #1b36ff, #8b5cf6);
-            color: #fff;
-            border: none;
-            padding: 9px 18px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.88rem;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.35);
-        }
-
-        .btn-ai-sparkle:hover {
-            opacity: 0.95;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
-        }
-
-        .btn-ai-secondary {
-            background: #222;
-            color: #fff;
-            border: 1px solid #444;
-            padding: 7px 12px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: 0.2s;
-        }
-
-        .btn-ai-secondary:hover {
-            background: #333;
-            border-color: #666;
-        }
-
-        .audit-info {
-            font-size: 0.8rem;
-            color: #888;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .fit-card {
-            background: #121418;
-            border: 1px solid #292d34;
-            border-radius: 8px;
-            padding: 12px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .fit-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .fit-score {
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        /* MODAL DETALHES DO EDITAL */
-        .modal-detalhes-card {
-            background: var(--card-bg);
-            border: 1px solid #333;
-            border-radius: 14px;
-            width: 95%;
-            max-width: 820px;
-            max-height: 88vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-        }
-
-        .modal-detalhes-header {
-            padding: 1.2rem 1.5rem;
-            border-bottom: 1px solid #222;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            background: #111418;
-        }
-
-        .modal-detalhes-body {
-            padding: 1.5rem;
-            overflow-y: auto;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-        }
-
-        .detalhes-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-        }
-
-        .detalhes-box {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid #282828;
-            border-radius: 8px;
-            padding: 10px 14px;
-        }
-
-        .detalhes-box-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: #888;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .detalhes-box-val {
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: #fff;
-            margin-top: 4px;
-        }
-
-        .detalhes-objetivo-box {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid #282828;
-            border-radius: 8px;
-            padding: 14px;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            color: #ddd;
-            max-height: 250px;
-            overflow-y: auto;
-            white-space: pre-line;
-        }
-
-        .mobile-menu-trigger {
-            display: none;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid #333;
-            color: #fff;
-            font-size: 1.25rem;
-            width: 38px;
-            height: 38px;
-            border-radius: 8px;
-            cursor: pointer;
-            align-items: center;
-            justify-content: center;
-            margin-right: 8px;
-        }
-
-        /* Estilos responsivos centralizados em mobile-adaptive.css */
-    </style>
 </head>
 
 <body>
@@ -1041,6 +97,33 @@
         <header class="top-navbar">
             <div class="header-left-slot">
                 <button id="btnMobileMenu" class="mobile-menu-trigger" aria-label="Abrir Menu">☰</button>
+                <div class="page-brand-context">
+                    <div class="brand-symbol-mini" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                    </div>
+                    <span class="page-brand-title">Pipeline Kanban</span>
+                    <span class="page-brand-badge">Editais</span>
+                </div>
+                <button id="btnAlternarTema" class="theme-toggle-btn" type="button" aria-label="Alternar tema claro e escuro" title="Alternar tema">
+                    <svg id="iconeSol" style="display: none;" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg id="iconeLua" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
             </div>
             <div id="container-seletor-global-kanban"></div>
         </header>
@@ -1111,7 +194,7 @@
                         </svg>
                         Elaboração de Propostas e Análise de Elegibilidade
                     </h2>
-                    <span style="font-size: 0.8rem; color: #888;">Geração estruturada de minutas técnicas, índice de
+                    <span class="modal-minuta-subtitle">Geração estruturada de minutas técnicas, índice de
                         aderência e exportação oficial</span>
                 </div>
                 <button class="btn-cancel" id="btnCloseMinutaModal" style="padding: 4px 10px;">&times;</button>
@@ -1162,11 +245,11 @@
                             </svg>
                             Estruturar Minuta Técnica
                         </button>
-                        <div id="cotaMinutasContainer" style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; background: rgba(255,255,255,0.03); border: 1px solid #2e3440; padding: 4px 10px; border-radius: 6px;">
-                            <span style="color: #94a3b8;">Cota do Plano:</span>
-                            <strong id="badgeCotaMinutas" style="color: #38bdf8;">--/--</strong>
+                        <div id="cotaMinutasContainer" class="cota-minutas-pill">
+                            <span>Cota do Plano:</span>
+                            <strong id="badgeCotaMinutas">--/--</strong>
                         </div>
-                        <span id="aiGenerationStatus" style="font-size: 0.85rem; color: #aaa;"></span>
+                        <span id="aiGenerationStatus" style="font-size: 0.85rem; color: var(--text-muted);"></span>
                     </div>
 
                     <!-- EDITOR DE MINUTA -->
@@ -1241,8 +324,8 @@
                 <div id="tabContentAnexos" style="display: none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
                         <div>
-                            <h3 style="font-size: 1.05rem; font-weight: 600; color: #fff; margin-bottom: 4px;">Documentação e Anotações da Proposta</h3>
-                            <span style="font-size: 0.82rem; color: #94a3b8;">Anexe planilhas de custos, certidões negativas (CNDs), declarações e anotações internas da submissão.</span>
+                            <h3 style="font-size: 1.05rem; font-weight: 600; color: var(--text-main); margin-bottom: 4px;">Documentação e Anotações da Proposta</h3>
+                            <span style="font-size: 0.82rem; color: var(--text-muted);">Anexe planilhas de custos, certidões negativas (CNDs), declarações e anotações internas da submissão.</span>
                         </div>
                     </div>
 
@@ -1279,12 +362,24 @@
                                 📁 Anexos & Documentos do Projeto
                             </h4>
 
+                            <div class="upload-limit-box" id="barraLimiteAnexosCard">
+                                <div class="upload-limit-meta">
+                                    <span>Armazenamento do card: <strong id="textoUsoAnexosCard">0,00 MB / 25 MB</strong></span>
+                                    <span>Máx. <strong>10 MB</strong> por arquivo</span>
+                                </div>
+                                <div class="upload-limit-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                    <div class="upload-limit-fill" id="progressoUsoAnexosCard"></div>
+                                </div>
+                            </div>
+
+                            <div id="alertaLimiteUploadCard" class="upload-limit-alert" role="alert" aria-live="polite"></div>
+
                             <div class="upload-dropzone">
-                                <input type="file" id="inputUploadArquivoCard" style="display: none;" onchange="handleUploadArquivoCard(event)">
+                                <input type="file" id="inputUploadArquivoCard" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg" style="display: none;" onchange="handleUploadArquivoCard(event)">
                                 <label for="inputUploadArquivoCard" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#3b82f6"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
-                                    <span style="font-size: 0.88rem; color: #f1f5f9; font-weight: 600;">Clique para anexar arquivo</span>
-                                    <span style="font-size: 0.75rem; color: #94a3b8;">PDF, DOCX, XLSX, PNG (Até 10MB)</span>
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="var(--accent-action)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                                    <span class="upload-dropzone-title">Clique para anexar arquivo</span>
+                                    <span class="upload-dropzone-hint">PDF, DOC/DOCX, XLS/XLSX, CSV, TXT, PNG/JPG (Até 10 MB/arquivo • 25 MB/card)</span>
                                 </label>
                             </div>
 
@@ -1346,8 +441,7 @@
                 </div>
 
                 <!-- BOTÕES DE AÇÃO -->
-                <div
-                    style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #222; padding-top: 14px; margin-top: 5px;">
+                <div class="detalhes-footer-actions">
                     <a href="#" id="detModalLinkOficial" target="_blank" class="btn-ai-secondary"
                         style="text-decoration: none;">
                         Abrir Edital Oficial ↗
@@ -2403,10 +1497,10 @@
                         </div>
                         <span class="fit-score" style="color: ${scoreColor};">${item.match_percentual}% Fit</span>
                     </div>
-                    <div style="font-size: 0.85rem; color: #ccc; line-height: 1.4;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
                         ${item.justificativa_fit}
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #222; padding-top: 6px; font-size: 0.8rem; color: #888;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 6px; font-size: 0.8rem; color: var(--text-subtle);">
                         <span>Prazo: ${item.prazo} | Teto: R$ ${Number(item.orcamento_maximo || 0).toLocaleString('pt-BR')}</span>
                         <button class="btn-ai-secondary" style="padding: 3px 8px; font-size: 0.75rem;" onclick="selecionarEditalParaMinuta(${item.edital_id})">
                             Elaborar Proposta Deste Edital &rarr;
@@ -2491,10 +1585,10 @@
                         </div>
                         <span style="font-size: 0.8rem; color: #888;">Status: ${m.status.toUpperCase()}</span>
                     </div>
-                    <div style="font-size: 0.85rem; color: #aaa;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
                         Startup: <strong>${m.startup?.nome_fantasia || m.startup?.razao_social || 'N/A'}</strong> | Edital: <strong>${m.edital?.title?.substring(0, 50) || 'N/A'}...</strong>
                     </div>
-                    <div style="font-size: 0.8rem; color: #777;">
+                    <div style="font-size: 0.8rem; color: var(--text-subtle);">
                         Auditado em <strong>${dataFmt}</strong> por <strong>${m.autor_nome || 'Consultor'}</strong> (${m.modelo_ia_usado || 'IA'})
                     </div>
                     <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px;">
@@ -2575,6 +1669,46 @@
             }
         }
 
+        const LIMITE_ARQUIVO_BYTES = 10 * 1024 * 1024; // 10 MB por arquivo
+        const LIMITE_TOTAL_CARD_BYTES = 25 * 1024 * 1024; // 25 MB acumulados por card
+        const EXTENSOES_DOCUMENTACAO_PERMITIDAS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'png', 'jpg', 'jpeg'];
+
+        function exibirAlertaLimiteUpload(mensagem) {
+            const alerta = document.getElementById('alertaLimiteUploadCard');
+            if (!alerta) return;
+            if (!mensagem) {
+                alerta.textContent = '';
+                alerta.classList.remove('active');
+                return;
+            }
+            alerta.textContent = mensagem;
+            alerta.classList.add('active');
+        }
+
+        function atualizarBarraLimiteAnexos(anexos = []) {
+            const textoUso = document.getElementById('textoUsoAnexosCard');
+            const barraProgresso = document.getElementById('progressoUsoAnexosCard');
+            const totalBytes = (anexos || []).reduce((acc, arq) => acc + (Number(arq.tamanho) || 0), 0);
+            const totalMb = (totalBytes / (1024 * 1024)).toFixed(2).replace('.', ',');
+            const percentual = Math.min(100, Math.round((totalBytes / LIMITE_TOTAL_CARD_BYTES) * 100));
+
+            if (textoUso) {
+                textoUso.textContent = `${totalMb} MB / 25 MB`;
+            }
+            if (barraProgresso) {
+                barraProgresso.style.width = `${percentual}%`;
+                barraProgresso.classList.remove('is-warning', 'is-danger');
+                if (percentual >= 95) {
+                    barraProgresso.classList.add('is-danger');
+                } else if (percentual >= 75) {
+                    barraProgresso.classList.add('is-warning');
+                }
+                if (barraProgresso.parentElement) {
+                    barraProgresso.parentElement.setAttribute('aria-valuenow', String(percentual));
+                }
+            }
+        }
+
         function limparCamposAnexos() {
             const inputValor = document.getElementById('inputValorProjetoCard');
             const txtNotas = document.getElementById('txtNotasInternasCard');
@@ -2582,9 +1716,12 @@
             if (inputValor) inputValor.value = '';
             if (txtNotas) txtNotas.value = '';
             if (listaAnexos) listaAnexos.innerHTML = '<div style="color: #666; font-size: 0.85rem; text-align: center; padding: 1rem;">Nenhum card selecionado.</div>';
+            exibirAlertaLimiteUpload('');
+            atualizarBarraLimiteAnexos([]);
         }
 
         function carregarDadosCardSelecionado() {
+            exibirAlertaLimiteUpload('');
             const selectCard = document.getElementById('selectCardAnexo');
             if (!selectCard || !selectCard.value) {
                 limparCamposAnexos();
@@ -2606,6 +1743,7 @@
         }
 
         function renderizarListaAnexos(anexos) {
+            atualizarBarraLimiteAnexos(anexos || []);
             const container = document.getElementById('listaAnexosCard');
             if (!container) return;
             container.innerHTML = '';
@@ -2632,7 +1770,7 @@
                             <span style="font-size: 0.75rem; color: #64748b; margin-left: 6px;">${tamanhoFmt}</span>
                         </div>
                     </div>
-                    <a href="${linkCompleto}" download target="_blank" style="color: #cbd5e1; text-decoration: none; font-size: 0.8rem; padding: 4px 10px; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; background: rgba(255,255,255,0.05); display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" title="Baixar">
+                    <a href="${linkCompleto}" download target="_blank" style="color: var(--text-main); text-decoration: none; font-size: 0.8rem; padding: 4px 10px; border: 1px solid var(--border-field); border-radius: 6px; background: var(--bg-surface-hover); display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" title="Baixar">
                         ⬇ Baixar
                     </a>
                 `;
@@ -2702,20 +1840,46 @@
             const file = event.target.files[0];
             if (!file) return;
 
+            exibirAlertaLimiteUpload('');
+
             const selectCard = document.getElementById('selectCardAnexo');
             if (!selectCard || !selectCard.value) {
-                alert('Selecione um card no seletor antes de anexar arquivos.');
+                exibirAlertaLimiteUpload('Selecione um card no seletor antes de anexar arquivos.');
+                event.target.value = '';
+                return;
+            }
+
+            const extensao = (file.name.split('.').pop() || '').toLowerCase();
+            if (!EXTENSOES_DOCUMENTACAO_PERMITIDAS.includes(extensao)) {
+                exibirAlertaLimiteUpload(`Formato ".${extensao}" não permitido. Envie PDF, DOC/DOCX, XLS/XLSX, CSV, TXT, PNG ou JPG.`);
+                event.target.value = '';
+                return;
+            }
+
+            if (file.size > LIMITE_ARQUIVO_BYTES) {
+                const tamanhoMb = (file.size / (1024 * 1024)).toFixed(2).replace('.', ',');
+                exibirAlertaLimiteUpload(`O arquivo "${file.name}" (${tamanhoMb} MB) excede o limite máximo de 10 MB por anexo.`);
                 event.target.value = '';
                 return;
             }
 
             const cardId = selectCard.value;
+            const cardSelecionado = todosCardsKanban.find(c => c.id === parseInt(cardId));
+            const anexosAtuais = cardSelecionado?.metadata?.anexos || [];
+            const usoAtualBytes = anexosAtuais.reduce((acc, arq) => acc + (Number(arq.tamanho) || 0), 0);
+            if ((usoAtualBytes + file.size) > LIMITE_TOTAL_CARD_BYTES) {
+                const disponivelMb = Math.max(0, (LIMITE_TOTAL_CARD_BYTES - usoAtualBytes) / (1024 * 1024)).toFixed(2).replace('.', ',');
+                exibirAlertaLimiteUpload(`Limite total do card (25 MB) excedido. Espaço disponível: ${disponivelMb} MB.`);
+                event.target.value = '';
+                return;
+            }
+
             const formData = new FormData();
             formData.append('arquivo', file);
 
             const container = document.getElementById('listaAnexosCard');
             if (container) {
-                container.insertAdjacentHTML('afterbegin', `<div id="uploadingNotice" style="color: #3b82f6; font-size: 0.85rem; padding: 6px;">Enviando ${file.name}...</div>`);
+                container.insertAdjacentHTML('afterbegin', `<div id="uploadingNotice" style="color: var(--accent-action); font-size: 0.85rem; padding: 6px;">Enviando ${file.name}...</div>`);
             }
 
             try {
@@ -2737,14 +1901,16 @@
                         card.metadata = cardAtualizado.metadata;
                         renderizarListaAnexos(card.metadata?.anexos || []);
                     }
+                    exibirAlertaLimiteUpload('');
                     alert(`Arquivo "${file.name}" anexado com sucesso!`);
                     fetchBoard();
                 } else {
-                    alert('Falha no upload do arquivo: ' + (data.message || 'Erro desconhecido'));
+                    const msgErro = data.message || 'Erro desconhecido';
+                    exibirAlertaLimiteUpload('Falha no upload: ' + msgErro);
                 }
             } catch (err) {
                 console.error(err);
-                alert('Erro de comunicação durante o upload do arquivo.');
+                exibirAlertaLimiteUpload('Erro de comunicação durante o upload do arquivo.');
             } finally {
                 const notice = document.getElementById('uploadingNotice');
                 if (notice) notice.remove();
@@ -2757,6 +1923,39 @@
         window.handleSalvarDadosCard = handleSalvarDadosCard;
         window.handleUploadArquivoCard = handleUploadArquivoCard;
         window.selecionarCardParaAnexos = selecionarCardParaAnexos;
+    </script>
+
+    <!-- Script de Alternância de Tema (Claro / Escuro) -->
+    <script>
+        (function () {
+            const btnTema = document.getElementById('btnAlternarTema');
+            const iconeSol = document.getElementById('iconeSol');
+            const iconeLua = document.getElementById('iconeLua');
+
+            function aplicarTema(escuro) {
+                if (escuro) {
+                    document.body.classList.add('dark-mode');
+                    if (iconeSol) iconeSol.style.display = 'block';
+                    if (iconeLua) iconeLua.style.display = 'none';
+                    localStorage.setItem('tema_preferido', 'dark');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    if (iconeSol) iconeSol.style.display = 'none';
+                    if (iconeLua) iconeLua.style.display = 'block';
+                    localStorage.setItem('tema_preferido', 'light');
+                }
+            }
+
+            if (localStorage.getItem('tema_preferido') === 'dark') {
+                aplicarTema(true);
+            }
+
+            if (btnTema) {
+                btnTema.addEventListener('click', () => {
+                    aplicarTema(!document.body.classList.contains('dark-mode'));
+                });
+            }
+        })();
     </script>
 
 </body>
