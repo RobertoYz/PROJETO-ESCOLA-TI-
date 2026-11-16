@@ -1513,7 +1513,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             <div class="startup-dropdown-menu" id="startupDropdownMenu">
                 <div class="startup-dropdown-header">Selecionar ou Configurar Startup</div>
                 <div class="startup-dropdown-lista" id="startupDropdownLista"></div>
-                <a href="nova-startup-painel.html" class="startup-dropdown-criar" id="btnHeaderCriarStartup">
+                <a href="cadastrar-startup.html" class="startup-dropdown-criar" id="btnHeaderCriarStartup">
                     <span>+ Criar Startup</span>
                 </a>
             </div>

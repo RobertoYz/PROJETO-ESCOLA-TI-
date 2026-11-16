@@ -1,8 +1,29 @@
-import { usuarioEstaAutenticado } from '../servicos/servicoAutenticacao.js';
+import {
+    usuarioEstaAutenticado,
+    obterUsuarioLogado,
+    removerToken
+} from '../servicos/servicoAutenticacao.js';
 import { criarNovaStartup, consultarDadosCnpj } from '../servicos/servicoStartups.js';
 
 if (!usuarioEstaAutenticado()) {
     window.location.href = 'login.html';
+}
+
+const badgeConsultor = document.getElementById('consultor-identificacao');
+const nomeConsultorTopbar = document.getElementById('nome-consultor-topbar');
+const botaoSairSessao = document.getElementById('botao-sair-sessao');
+
+const usuarioLogado = obterUsuarioLogado();
+if (usuarioLogado && (usuarioLogado.name || usuarioLogado.email) && badgeConsultor && nomeConsultorTopbar) {
+    nomeConsultorTopbar.textContent = usuarioLogado.name || usuarioLogado.email;
+    badgeConsultor.hidden = false;
+}
+
+if (botaoSairSessao) {
+    botaoSairSessao.addEventListener('click', () => {
+        removerToken();
+        window.location.href = 'login.html';
+    });
 }
 
 const formulario = document.getElementById('formulario-cadastro-startup');
@@ -47,6 +68,7 @@ botaoBuscarCnpj.addEventListener('click', () => {
 
 async function realizarBuscaCnpj(cnpj) {
     divMensagemErro.hidden = true;
+    avisoStatusCnpj.style.display = '';
     avisoStatusCnpj.className = 'aviso-status carregando';
     avisoStatusCnpj.textContent = '⏳ Consultando Receita Federal e bases públicas...';
 
