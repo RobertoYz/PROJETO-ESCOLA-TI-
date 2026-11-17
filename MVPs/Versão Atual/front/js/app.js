@@ -2,37 +2,45 @@ import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalSt
 import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
 import { obterStartupAtiva, usuarioEstaAutenticado } from '../scripts/servicos/servicoAutenticacao.js';
 import { exibirModalAlerta, exibirModalConfirmacao } from '../scripts/componentes/modalGlobal.js';
+import {
+    listarEditais,
+    alternarFavoritoEdital,
+    enviarEditalParaKanban,
+    normalizarTextoBusca,
+    extrairValorOrcamento,
+    extrairTimestampPrazo,
+    calcularDiasRestantes,
+    obterClasseAgencia,
+    obterClasseMatch,
+    editalCorrespondeATermo,
+    inicializarAlternadorTema,
+    escapeHtml,
+    resolverBadgePrazo,
+    renderizarDocumentosNoPainel,
+    renderizarDiagnosticoNoPainel,
+    configurarBotaoUrlOficial,
+    exibirToastFeedback
+} from '../scripts/servicos/servicoEditais.js';
 
-// Guard de autenticação: redireciona para login se não houver token
 if (!usuarioEstaAutenticado()) {
     window.location.replace('login.html');
 }
 
-let mockEditais = [];
+let editaisCarregados = [];
+let editaisExibidos = [];
 let selectedId = null;
 
-const ehDevNavegadorLocal = typeof window !== 'undefined' &&
-    window.location.protocol === 'http:' &&
-    (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') &&
-    (window.location.port !== '');
-
-const URL_PADRAO = ehDevNavegadorLocal
-    ? 'http://127.0.0.1:8000/api'
-    : 'https://anjonexus.intalenti.com.br/api';
-
-const API_BASE_URL = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
-
-// ==========================================
-// INICIALIZAÇÃO DA APLICAÇÃO
-// ==========================================
 function inicializarAplicacao() {
+    inicializarAlternadorTema();
     initUI();
     inicializarSidebarGlobal('radar');
     inicializarSeletorGlobal('container-seletor-global', {
-        onTrocarStartup: (id, nome) => {
+        onTrocarStartup: () => {
+            atualizarSubtituloStartup();
             fetchEditais();
         }
     });
+    atualizarSubtituloStartup();
     fetchEditais();
 }
 
@@ -42,164 +50,199 @@ if (document.readyState === 'loading') {
     inicializarAplicacao();
 }
 
-function initUI() {
-    const btnFavDetail = document.getElementById('btnFavDetail');
-    if (btnFavDetail) {
-        btnFavDetail.addEventListener('click', () => {
-            if (selectedId) toggleFavorite(selectedId);
-        });
-    }
-
-    const btnSendToKanban = document.getElementById('btnSendToKanban');
-    if (btnSendToKanban) {
-        btnSendToKanban.addEventListener('click', async () => {
-            if (!selectedId) {
-                await exibirModalAlerta({
-                    titulo: 'Seleção Necessária',
-                    mensagem: 'Por favor, selecione um edital na lista antes de enviar para o Kanban.',
-                    tipo: 'aviso'
-                });
-                return;
-            }
-
-            const originalText = btnSendToKanban.textContent;
-            btnSendToKanban.textContent = 'Enviando ao Kanban...';
-            const startupAtiva = obterStartupAtiva();
-            const nomeStartup = startupAtiva ? startupAtiva.nome : 'Startup Assessorada';
-
-            try {
-                const res = await fetch(`${API_BASE_URL}/kanban/cards`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
-                    },
-                    body: JSON.stringify({
-                        edital_id: selectedId,
-                        startup_name: nomeStartup
-                    })
-                });
-
-                const data = await res.json();
-                if (res.ok) {
-                    const irParaKanban = await exibirModalConfirmacao({
-                        titulo: 'Edital Enviado com Sucesso!',
-                        mensagem: `O edital foi vinculado à <strong>${nomeStartup}</strong> e adicionado na coluna <strong>Backlog</strong> do Pipeline Kanban. Deseja abrir o quadro agora?`,
-                        textoConfirmar: 'Abrir Kanban',
-                        textoCancelar: 'Continuar no Radar',
-                        corConfirmar: '#10b981',
-                        icone: '📋'
-                    });
-
-                    if (irParaKanban) {
-                        window.location.href = 'kanban.html';
-                    }
-                } else {
-                    await exibirModalAlerta({
-                        titulo: 'Não Foi Possível Enviar',
-                        mensagem: data.message || 'Ocorreu um erro ao vincular o edital ao Kanban.',
-                        tipo: 'erro'
-                    });
-                }
-            } catch (err) {
-                console.error(err);
-                await exibirModalAlerta({
-                    titulo: 'Erro de Conexão',
-                    mensagem: 'Falha de comunicação com o servidor ao tentar enviar para o Kanban. Verifique sua conexão.',
-                    tipo: 'erro'
-                });
-            } finally {
-                btnSendToKanban.textContent = originalText;
-                btnSendToKanban.disabled = false;
-            }
-        });
-    }
+function atualizarSubtituloStartup() {
+    const subEl = document.getElementById('radarStartupSub');
+    if (!subEl) return;
+    const startupAtiva = obterStartupAtiva();
+    subEl.textContent = startupAtiva?.nome
+        ? `Monitoramento ativo para ${startupAtiva.nome} — FINEP, FAPESC, FAPESP e FAPEMIG`
+        : 'Monitoramento contínuo das chamadas da FINEP, FAPESC, FAPESP e FAPEMIG';
 }
 
-// ==========================================
-// SERVIÇOS DE API (Busca de Dados)
-// ==========================================
+function initUI() {
+    const btnFavDetail = document.getElementById('btnFavDetail');
+    btnFavDetail?.addEventListener('click', () => {
+        if (selectedId) toggleFavorite(selectedId);
+    });
+
+    const radarFilterEl = document.getElementById('radarFilter');
+    const lensButtons = document.querySelectorAll('.lens-pill');
+    lensButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const valor = btn.dataset.lens ?? '';
+            lensButtons.forEach((b) => b.classList.toggle('active', b === btn));
+            if (radarFilterEl) {
+                radarFilterEl.value = valor;
+            }
+            fetchEditais();
+        });
+    });
+
+    document.getElementById('radarSearchInput')?.addEventListener('input', () => {
+        aplicarFiltrosLocaisEOrdenacao();
+    });
+
+    document.getElementById('radarSortSelect')?.addEventListener('change', () => {
+        aplicarFiltrosLocaisEOrdenacao();
+    });
+
+    const btnSendToKanban = document.getElementById('btnSendToKanban');
+    btnSendToKanban?.addEventListener('click', async () => {
+        if (!selectedId) {
+            await exibirModalAlerta({
+                titulo: 'Seleção necessária',
+                mensagem: 'Por favor, selecione um edital na lista antes de enviar para o Kanban.',
+                tipo: 'aviso'
+            });
+            return;
+        }
+
+        const originalText = btnSendToKanban.textContent;
+        btnSendToKanban.disabled = true;
+        btnSendToKanban.textContent = 'Enviando para o Kanban...';
+
+        const startupAtiva = obterStartupAtiva();
+        const nomeStartup = startupAtiva ? startupAtiva.nome : 'Startup Assessorada';
+
+        try {
+            await enviarEditalParaKanban(selectedId, nomeStartup);
+            const irParaKanban = await exibirModalConfirmacao({
+                titulo: 'Edital enviado com sucesso',
+                mensagem: `O edital foi vinculado à <strong>${escapeHtml(nomeStartup)}</strong> e adicionado na coluna <strong>Backlog</strong> do Pipeline Kanban. Deseja abrir o quadro agora?`,
+                textoConfirmar: 'Abrir Kanban',
+                textoCancelar: 'Continuar no Radar',
+                corConfirmar: '#10b981',
+                icone: '📋'
+            });
+
+            if (irParaKanban) {
+                window.location.href = 'kanban.html';
+            }
+        } catch (err) {
+            console.error(err);
+            await exibirModalAlerta({
+                titulo: 'Não foi possível enviar',
+                mensagem: err.message || 'Falha de comunicação com o servidor ao tentar enviar para o Kanban.',
+                tipo: 'erro'
+            });
+        } finally {
+            btnSendToKanban.textContent = originalText;
+            btnSendToKanban.disabled = false;
+        }
+    });
+}
+
 export async function fetchEditais() {
     showLoadingState();
 
     try {
         const radarFilterEl = document.getElementById('radarFilter');
-        const token = localStorage.getItem('token_autenticacao');
+        const filtroValor = radarFilterEl ? radarFilterEl.value : '';
         const startupAtiva = obterStartupAtiva();
 
-        const params = new URLSearchParams();
-        if (radarFilterEl && radarFilterEl.value) {
-            if (radarFilterEl.value === 'FAVORITOS') {
-                params.append('favoritos', '1');
-            } else {
-                params.append('fonte', radarFilterEl.value);
-            }
-        }
-        if (startupAtiva && startupAtiva.id) {
-            params.append('startup_id', startupAtiva.id);
-        }
+        sincronizarPillsComSelect(filtroValor);
 
-        const queryString = params.toString() ? `?${params.toString()}` : '';
-        const url = `${API_BASE_URL}/editais${queryString}`;
+        editaisCarregados = await listarEditais({
+            fonte: filtroValor === 'FAVORITOS' ? '' : filtroValor,
+            apenasFavoritos: filtroValor === 'FAVORITOS',
+            startupId: startupAtiva?.id || null
+        });
 
-        const headers = {
-            'Accept': 'application/json'
-        };
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const response = await fetch(url, { headers });
-
-        if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // O PHP JsonResource / Collection às vezes devolve Objeto indexado quando filtramos.
-        mockEditais = Array.isArray(data) ? data : Object.values(data);
-
-        if (mockEditais.length > 0) {
-            renderTable();
-            const urlParams = new URLSearchParams(window.location.search);
-            const editalUrlId = urlParams.get('edital_id');
-            const editalAlvo = editalUrlId ? mockEditais.find(e => String(e.id) === String(editalUrlId)) : null;
-
-            if (editalAlvo) {
-                selectEdital(editalAlvo.id);
-            } else if (window.innerWidth > 900) {
-                selectEdital(mockEditais[0].id);
-            }
-        } else {
-            showEmptyState();
-        }
-
+        atualizarMetricasPulso();
+        aplicarFiltrosLocaisEOrdenacao(true);
     } catch (error) {
         console.error('Falha ao buscar os editais da API:', error);
         showErrorState();
     }
 }
 
-// Expõe no escopo global para o onchange do select de filtro funcionar com ES modules
+function sincronizarPillsComSelect(valor) {
+    document.querySelectorAll('.lens-pill').forEach((btn) => {
+        btn.classList.toggle('active', (btn.dataset.lens ?? '') === valor);
+    });
+}
+
+function atualizarMetricasPulso() {
+    const totalEl = document.getElementById('metricTotalRadar');
+    const matchEl = document.getElementById('metricAltoMatch');
+    const favEl = document.getElementById('metricFavoritos');
+
+    const total = editaisCarregados.length;
+    const altoMatch = editaisCarregados.filter((e) => Number(e.match || 0) >= 75).length;
+    const favoritos = editaisCarregados.filter((e) => Boolean(e.favorite)).length;
+
+    if (totalEl) totalEl.textContent = String(total);
+    if (matchEl) matchEl.textContent = String(altoMatch);
+    if (favEl) favEl.textContent = String(favoritos);
+}
+
+function aplicarFiltrosLocaisEOrdenacao(verificarUrl = false) {
+    const termo = normalizarTextoBusca(document.getElementById('radarSearchInput')?.value || '');
+    const ordenacao = document.getElementById('radarSortSelect')?.value || 'match_desc';
+
+    editaisExibidos = editaisCarregados.filter((edital) => editalCorrespondeATermo(edital, termo));
+
+    editaisExibidos.sort((a, b) => {
+        if (ordenacao === 'prazo_asc') {
+            const ta = extrairTimestampPrazo(a.deadline) ?? Number.MAX_SAFE_INTEGER;
+            const tb = extrairTimestampPrazo(b.deadline) ?? Number.MAX_SAFE_INTEGER;
+            return ta - tb;
+        }
+        if (ordenacao === 'orcamento_desc') {
+            return extrairValorOrcamento(b.budget) - extrairValorOrcamento(a.budget);
+        }
+        return Number(b.match || 0) - Number(a.match || 0);
+    });
+
+    const countEl = document.getElementById('radarListCount');
+    if (countEl) {
+        countEl.textContent = editaisExibidos.length === 1 ? '1 edital' : `${editaisExibidos.length} editais`;
+    }
+
+    if (editaisExibidos.length === 0) {
+        showEmptyState(termo);
+        return;
+    }
+
+    renderTable();
+
+    if (verificarUrl) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const editalUrlId = urlParams.get('edital_id');
+        const editalAlvo = editalUrlId
+            ? editaisExibidos.find((e) => String(e.id) === String(editalUrlId))
+            : null;
+
+        if (editalAlvo) {
+            selectEdital(editalAlvo.id);
+            return;
+        }
+    }
+
+    const selecionadoAindaExiste = editaisExibidos.some((e) => String(e.id) === String(selectedId));
+    if (selecionadoAindaExiste) {
+        selectEdital(selectedId);
+    } else if (window.innerWidth > 900) {
+        selectEdital(editaisExibidos[0].id);
+    } else {
+        fecharDetalhesMobile();
+    }
+}
+
 window.fetchEditais = fetchEditais;
 window.toggleFavorite = toggleFavorite;
 window.selectEdital = selectEdital;
 
-// ==========================================
-// RENDERIZAÇÃO DA INTERFACE (Componentes)
-// ==========================================
 function renderTable() {
     const tbody = document.getElementById('tableBody');
     if (!tbody) return;
 
     tbody.innerHTML = '';
 
-    mockEditais.forEach(edital => {
+    editaisExibidos.forEach((edital) => {
         const tr = document.createElement('tr');
         tr.id = `row-${edital.id}`;
-        if (edital.id === selectedId) tr.classList.add('selected');
+        if (String(edital.id) === String(selectedId)) tr.classList.add('selected');
 
         tr.addEventListener('click', (e) => {
             if (!e.target.closest('.btn-icon')) selectEdital(edital.id);
@@ -208,34 +251,36 @@ function renderTable() {
         const starIcon = edital.favorite ? '#icon-star-filled' : '#icon-star';
         const starActive = edital.favorite ? 'active' : '';
 
-        // Fallbacks simples para valores undefined (clean code)
         const name = edital.name || '--';
-        const org = edital.org || '--';
-        const budget = edital.budget || '--';
-        const deadline = edital.deadline || '--';
-        const status = edital.status || '--';
-        const statusClass = edital.statusClass || '';
-        const matchValue = edital.match || 0;
+        const org = edital.org || 'FINEP';
+        const budget = edital.budget || 'A definir';
+        const deadline = edital.deadline || 'Sem data';
+        const matchValue = Number(edital.match || 0);
+        const diasRestantes = calcularDiasRestantes(deadline);
+        const statusInfo = resolverBadgePrazo(edital.status, edital.statusClass, diasRestantes);
 
         tr.innerHTML = `
             <td class="cell-main">
                 <div class="card-mobile-top">
-                    <span class="badge ${statusClass}">${status}</span>
-                    <span class="match-pill ${getMatchColorClass(matchValue)}">⚡ ${matchValue}% Match</span>
-                    <button class="btn-icon btn-fav-card ${starActive}" onclick="toggleFavorite(${edital.id})" title="Favoritar">
-                        <svg width="20" height="20"><use href="${starIcon}"></use></svg>
+                    <span class="badge ${statusInfo.classe}">${statusInfo.texto}</span>
+                    <span class="match-pill ${obterClasseMatch(matchValue)}">${matchValue}% match</span>
+                    <button type="button" class="btn-icon btn-fav-card ${starActive}" onclick="toggleFavorite(${edital.id})" title="Favoritar" aria-label="Favoritar edital">
+                        <svg width="19" height="19"><use href="${starIcon}"></use></svg>
                     </button>
                 </div>
-                <div class="edital-name">${name}</div>
-                <div class="edital-org">${org}</div>
+                <div class="edital-name">${escapeHtml(name)}</div>
+                <div class="edital-org-row">
+                    <span class="agency-chip ${obterClasseAgencia(org)}">${escapeHtml(org)}</span>
+                    ${edital.nicho ? `<span class="edital-org">${escapeHtml(edital.nicho)}</span>` : ''}
+                </div>
             </td>
-            <td class="budget cell-budget"><span class="meta-label">Orçamento: </span><span class="meta-val">${budget}</span></td>
-            <td class="deadline cell-deadline"><span class="meta-label">Prazo: </span><span class="meta-val">${deadline}</span></td>
-            <td class="cell-status-desktop"><span class="badge ${statusClass}">${status}</span></td>
-            <td class="cell-match-desktop ${getMatchColorClass(matchValue)}">${matchValue}%</td>
+            <td class="budget cell-budget"><span class="meta-label">Orçamento: </span><span class="meta-val">${escapeHtml(budget)}</span></td>
+            <td class="deadline cell-deadline"><span class="meta-label">Prazo: </span><span class="meta-val">${escapeHtml(deadline)}</span></td>
+            <td class="cell-status-desktop"><span class="badge ${statusInfo.classe}">${statusInfo.texto}</span></td>
+            <td class="cell-match-desktop tabular ${obterClasseMatch(matchValue)}">${matchValue}%</td>
             <td class="cell-fav-desktop">
-                <button class="btn-icon ${starActive}" onclick="toggleFavorite(${edital.id})">
-                    <svg width="20" height="20"><use href="${starIcon}"></use></svg>
+                <button type="button" class="btn-icon ${starActive}" onclick="toggleFavorite(${edital.id})" title="Favoritar" aria-label="Favoritar edital">
+                    <svg width="19" height="19"><use href="${starIcon}"></use></svg>
                 </button>
             </td>
         `;
@@ -246,16 +291,13 @@ function renderTable() {
 function selectEdital(id) {
     selectedId = id;
 
-    // Atualiza marcação visual na tabela
-    document.querySelectorAll('#tableBody tr').forEach(row => row.classList.remove('selected'));
+    document.querySelectorAll('#tableBody tr').forEach((row) => row.classList.remove('selected'));
     const selectedRow = document.getElementById(`row-${id}`);
     if (selectedRow) selectedRow.classList.add('selected');
 
-    // Recupera dados
-    const edital = mockEditais.find(e => e.id === id);
+    const edital = editaisCarregados.find((e) => String(e.id) === String(id));
     if (!edital) return;
 
-    // Exibe painel lateral
     const detailPanel = document.getElementById('detailPanel');
     if (detailPanel) {
         detailPanel.style.display = 'flex';
@@ -264,7 +306,6 @@ function selectEdital(id) {
         }
     }
 
-    // Preenche campos de texto simples
     updateElementText('detOrg', edital.org);
     updateElementText('detName', edital.name);
     updateElementText('detObjetivo', edital.objetivo);
@@ -277,18 +318,13 @@ function selectEdital(id) {
     updateElementText('detClose', edital.closeDate);
     updateElementText('detResult', edital.resultDate);
 
-    // Atualiza o link do botão oficial
-    const detUrlBtn = document.getElementById('detUrl');
-    if (detUrlBtn) {
-        detUrlBtn.href = edital.url || '#';
-    }
+    configurarBotaoUrlOficial(document.getElementById('detUrl'), edital.url);
 
-    // Preenche barra de match
-    const matchVal = edital.match || 0;
+    const matchVal = Number(edital.match || 0);
     const matchValEl = document.getElementById('detMatchVal');
     if (matchValEl) {
         matchValEl.textContent = `${matchVal}%`;
-        matchValEl.className = `info-value ${getMatchColorClass(matchVal)}`;
+        matchValEl.className = `info-value ${obterClasseMatch(matchVal)}`;
     }
 
     const matchBar = document.getElementById('detMatchBar');
@@ -296,182 +332,105 @@ function selectEdital(id) {
         matchBar.style.width = `${matchVal}%`;
         matchBar.style.backgroundColor = getMatchHexColor(matchVal);
     }
-    
-    // Atualiza icone de favorito no painel
+
     atualizarBotaoFavoritoPainel(edital);
-
-    // Renderiza blocos complexos
-    renderDocuments(edital.documentos);
-    renderDiagnosis(edital.diagnosis);
+    renderizarDocumentosNoPainel(document.getElementById('detDocs'), edital.documentos);
+    renderizarDiagnosticoNoPainel(document.getElementById('detDiag'), edital.diagnosis);
 }
 
-function renderDocuments(documentos) {
-    const docList = document.getElementById('detDocs');
-    if (!docList) return;
-
-    docList.innerHTML = '';
-
-    if (Array.isArray(documentos) && documentos.length > 0) {
-        documentos.forEach(doc => {
-            const div = document.createElement('div');
-            div.className = 'doc-item';
-            div.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; color: #e0e0e0;';
-            div.innerHTML = `
-                <div class="doc-info" style="display: flex; align-items: center; gap: 10px;">
-                    <span style="color: #10b981; font-weight: bold;">✔</span>
-                    <span class="doc-title">${doc.titulo || 'Documento Exigido'}</span>
-                </div>
-                ${doc.link && doc.link !== '#' ? `<a href="${doc.link}" target="_blank" style="color: var(--accent-purple); text-decoration: none; font-size: 0.8rem;">Ver anexo ↗</a>` : ''}
-            `;
-            docList.appendChild(div);
-        });
-    } else {
-        docList.innerHTML = '<div style="color: #888; font-size: 0.9rem; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 6px;">Nenhum documento específico exigido no resumo.</div>';
-    }
-}
-
-function renderDiagnosis(diagnosisList) {
-    const diagUl = document.getElementById('detDiag');
-    if (!diagUl) return;
-
-    diagUl.innerHTML = '';
-
-    if (Array.isArray(diagnosisList) && diagnosisList.length > 0) {
-        diagnosisList.forEach(item => {
-            const li = document.createElement('li');
-            li.className = `diag-item diag-${item.type}`;
-            li.textContent = item.text;
-            diagUl.appendChild(li);
-        });
-    }
-}
-
-// ==========================================
-// FUNÇÕES UTILITÁRIAS E ESTADOS
-// ==========================================
 function updateElementText(elementId, text) {
     const el = document.getElementById(elementId);
     if (el) el.textContent = text || '--';
 }
 
-function getMatchColorClass(match) {
-    const value = match || 0;
-    if (value >= 80) return 'match-high';
-    if (value >= 50) return 'match-medium';
-    return 'match-low';
-}
-
 function getMatchHexColor(match) {
-    const value = match || 0;
-    if (value >= 80) return 'var(--success-color)';
-    if (value >= 50) return 'var(--accent-purple)';
+    const value = Number(match || 0);
+    if (value >= 75) return 'var(--success-color)';
+    if (value >= 50) return 'var(--warning-color)';
     return 'var(--danger-color)';
 }
 
 function atualizarBotaoFavoritoPainel(edital) {
-    if (!edital || edital.id !== selectedId) return;
+    if (!edital || String(edital.id) !== String(selectedId)) return;
     const btnFavDetail = document.getElementById('btnFavDetail');
-    if (btnFavDetail) {
-        const useTag = btnFavDetail.querySelector('use');
-        if (edital.favorite) {
-            btnFavDetail.classList.add('active');
-            if (useTag) useTag.setAttribute('href', '#icon-star-filled');
-        } else {
-            btnFavDetail.classList.remove('active');
-            if (useTag) useTag.setAttribute('href', '#icon-star');
-        }
-    }
+    if (!btnFavDetail) return;
+
+    const useTag = btnFavDetail.querySelector('use');
+    btnFavDetail.classList.toggle('active', Boolean(edital.favorite));
+    if (useTag) useTag.setAttribute('href', edital.favorite ? '#icon-star-filled' : '#icon-star');
 }
 
 async function toggleFavorite(id) {
-    const edital = mockEditais.find(e => e.id === id);
+    const edital = editaisCarregados.find((e) => String(e.id) === String(id));
     if (!edital) return;
 
     const estadoAnterior = !!edital.favorite;
-    // Atualização otimista imediata na interface
     edital.favorite = !estadoAnterior;
+    atualizarMetricasPulso();
     renderTable();
     atualizarBotaoFavoritoPainel(edital);
 
-    const token = localStorage.getItem('token_autenticacao');
-    if (!token) {
-        return; // Usuário não autenticado mantém em memória na sessão
-    }
-
     try {
         const startupAtiva = obterStartupAtiva();
-        const res = await fetch(`${API_BASE_URL}/editais/${id}/favoritar`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                startup_id: startupAtiva ? startupAtiva.id : null
-            })
-        });
-
-        if (!res.ok) {
-            throw new Error(`Erro status: ${res.status}`);
-        }
-
-        const json = await res.json();
+        const json = await alternarFavoritoEdital(id, startupAtiva?.id || null);
         edital.favorite = !!json.favorito;
-        renderTable();
-        atualizarBotaoFavoritoPainel(edital);
+        atualizarMetricasPulso();
 
-        // Se estiver filtrando apenas por favoritos e o usuário desfavoritou, remove da listagem
         const radarFilterEl = document.getElementById('radarFilter');
         if (radarFilterEl && radarFilterEl.value === 'FAVORITOS' && !edital.favorite) {
-            mockEditais = mockEditais.filter(e => e.id !== id);
-            renderTable();
-            if (mockEditais.length > 0) {
-                selectEdital(mockEditais[0].id);
-            } else {
-                showEmptyState();
-            }
+            editaisCarregados = editaisCarregados.filter((e) => String(e.id) !== String(id));
+            atualizarMetricasPulso();
+            aplicarFiltrosLocaisEOrdenacao();
+            return;
         }
+
+        renderTable();
+        atualizarBotaoFavoritoPainel(edital);
     } catch (err) {
         console.error('Falha ao persistir favorito no backend:', err);
         edital.favorite = estadoAnterior;
+        atualizarMetricasPulso();
         renderTable();
         atualizarBotaoFavoritoPainel(edital);
+        exibirToastFeedback('Não foi possível salvar o favorito agora.', { tipo: 'erro' });
     }
 }
 
 function showLoadingState() {
     const tbody = document.getElementById('tableBody');
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: #a0a0a0;">Carregando editais...</td></tr>`;
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 48px 20px; color: var(--text-muted); cursor: default;">Carregando oportunidades...</td></tr>';
     }
 }
 
 function showErrorState() {
     const tbody = document.getElementById('tableBody');
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: #ff4d4d;">Falha ao comunicar com a API. Tente novamente mais tarde.</td></tr>`;
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 48px 20px; color: var(--danger-color); cursor: default;">Não foi possível carregar os editais. Verifique sua conexão e tente novamente.</td></tr>';
     }
 }
 
-function showEmptyState() {
+function showEmptyState(termo = '') {
     const tbody = document.getElementById('tableBody');
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: #a0a0a0;">Nenhum edital encontrado.</td></tr>`;
+        const msg = termo
+            ? 'Nenhum edital corresponde ao termo digitado nesta lente.'
+            : 'Nenhum edital encontrado para este filtro.';
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 48px 20px; color: var(--text-muted); cursor: default;">${msg}</td></tr>`;
     }
+    const detailPanel = document.getElementById('detailPanel');
+    if (detailPanel) detailPanel.style.display = 'none';
 }
 
-// Função para fechar painel de detalhes no mobile
 function fecharDetalhesMobile() {
     const detailPanel = document.getElementById('detailPanel');
     if (detailPanel) {
         detailPanel.style.display = 'none';
-        document.querySelectorAll('#tableBody tr').forEach(row => row.classList.remove('selected'));
+        document.querySelectorAll('#tableBody tr').forEach((row) => row.classList.remove('selected'));
     }
 }
 window.fecharDetalhesMobile = fecharDetalhesMobile;
 
-// Detecção Capacitor
 if (window.Capacitor || window.location.protocol === 'capacitor:' || (window.location.hostname === 'localhost' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent))) {
     document.body.classList.add('is-capacitor');
 }
