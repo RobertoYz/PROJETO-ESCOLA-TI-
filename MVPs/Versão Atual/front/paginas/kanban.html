@@ -467,8 +467,21 @@
     <script type="module">
         import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
         import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
+        import { exibirModalAlerta, exibirModalConfirmacao } from '../scripts/componentes/modalGlobal.js';
 
-        const API_BASE = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
+        // Substitui os alert e confirm nativos pelo modal institucional
+        window.alert = (msg) => exibirModalAlerta({ titulo: 'Aviso', mensagem: msg, tipo: 'info' });
+
+        const ehDevNavegadorLocal = typeof window !== 'undefined' &&
+            window.location.protocol === 'http:' &&
+            (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') &&
+            (window.location.port !== '');
+
+        const URL_PADRAO = ehDevNavegadorLocal
+            ? 'http://127.0.0.1:8000/api'
+            : 'https://anjonexus.intalenti.com.br/api';
+
+        const API_BASE = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
         let currentBoard = null;
         let todosCardsKanban = [];
 
