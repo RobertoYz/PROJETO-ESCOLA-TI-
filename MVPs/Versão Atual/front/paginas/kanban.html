@@ -1031,14 +1031,22 @@
                 const btnGerar = document.getElementById('detModalBtnGerarMinuta');
                 if (btnGerar) {
                     btnGerar.onclick = () => {
+                        const editalIdAlvo = edital.id || card.edital_id || meta.edital_id;
                         modalEditalDetalhesOverlay.classList.remove('active');
                         modalMinutaOverlay.classList.add('active');
                         switchMinutaTab('gerador');
                         carregarStartupsEEditaisMinuta().then(() => {
-                            if (edital && edital.id) {
+                            if (editalIdAlvo) {
                                 const selE = document.getElementById('selectMinutaEdital');
                                 if (selE) {
-                                    selE.value = edital.id;
+                                    // Se o edital não estiver na lista por qualquer motivo, cria a option dinamicamente
+                                    if (!Array.from(selE.options).some(o => String(o.value) === String(editalIdAlvo))) {
+                                        const optNovo = document.createElement('option');
+                                        optNovo.value = editalIdAlvo;
+                                        optNovo.textContent = `[${org}] ${titulo}`;
+                                        selE.appendChild(optNovo);
+                                    }
+                                    selE.value = editalIdAlvo;
                                     handleTrocarEditalMinuta();
                                 }
                             }
@@ -1191,7 +1199,7 @@
                 }
 
                 if (Array.isArray(listE) && listE.length > 0) {
-                    cachedEditais = listE.slice(0, 80);
+                    cachedEditais = listE;
                 } else if (!cachedEditais || cachedEditais.length === 0) {
                     cachedEditais = [{ id: 1, name: 'EDITAL DE CHAMADA PÚBLICA FAPESC/SED N.º 54/2026', org: 'FAPESC' }];
                 }
