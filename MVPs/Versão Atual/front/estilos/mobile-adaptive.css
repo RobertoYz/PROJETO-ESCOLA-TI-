@@ -227,7 +227,12 @@ body.is-capacitor .link-download-app-header {
         width: auto !important;
         display: flex !important;
         align-items: center !important;
+        gap: 8px !important;
         flex-shrink: 0 !important;
+    }
+
+    .page-brand-context {
+        display: none !important;
     }
 
     .header-right-group,
