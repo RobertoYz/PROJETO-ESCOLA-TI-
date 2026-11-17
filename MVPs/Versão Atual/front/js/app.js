@@ -10,7 +10,16 @@ if (!usuarioEstaAutenticado()) {
 let mockEditais = [];
 let selectedId = null;
 
-const API_BASE_URL = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
+const ehDevNavegadorLocal = typeof window !== 'undefined' &&
+    window.location.protocol === 'http:' &&
+    (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') &&
+    (window.location.port !== '');
+
+const URL_PADRAO = ehDevNavegadorLocal
+    ? 'http://127.0.0.1:8000/api'
+    : 'https://anjonexus.intalenti.com.br/api';
+
+const API_BASE_URL = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
 
 // ==========================================
 // INICIALIZAÇÃO DA APLICAÇÃO
