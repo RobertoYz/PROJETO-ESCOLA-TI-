@@ -955,7 +955,16 @@
 
                 const publico = edital.publico || meta.publico || 'Startups, Micro e Pequenas Empresas';
                 const trlNicho = `${edital.ai_trl || meta.ai_trl || 'Geral'} | ${edital.ai_nicho || meta.ai_nicho || edital.nicho || 'Inovação'}`;
-                const objetivo = edital.conteudo_completo || meta.conteudo_completo || edital.objetivo || meta.objetivo || card.description || 'Diretrizes em conformidade com o regulamento oficial do edital.';
+                
+                // Prioriza o objetivo limpo e formatado da chamada pública em vez de despejo de HTML/CSS de página
+                let objetivo = edital.objetivo || meta.objetivo || card.description;
+                if (!objetivo || objetivo.trim().length === 0 || objetivo.includes('{"imports":') || objetivo.includes('--tw-')) {
+                    if (edital.conteudo_completo && !edital.conteudo_completo.includes('{"imports":')) {
+                        objetivo = edital.conteudo_completo;
+                    } else {
+                        objetivo = 'Diretrizes em conformidade com o regulamento oficial do edital.';
+                    }
+                }
                 const link = edital.source_url || meta.source_url || edital.url || meta.url || '#';
 
                 const elOrg = document.getElementById('detModalOrgTag');
