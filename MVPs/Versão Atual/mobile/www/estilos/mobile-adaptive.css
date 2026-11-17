@@ -167,8 +167,10 @@ body.is-capacitor .link-download-app-header {
         background-color: #0b0f19 !important;
         border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
         box-shadow: 12px 0 35px rgba(0, 0, 0, 0.85) !important;
-        z-index: 999 !important;
-        transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        z-index: 9999 !important;
+        transition: left 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        will-change: left;
+        transform: translateZ(0);
         padding-top: max(40px, calc(var(--safe-area-top) + 16px)) !important;
         padding-bottom: max(20px, var(--safe-area-bottom)) !important;
         overflow-y: auto !important;
@@ -225,7 +227,12 @@ body.is-capacitor .link-download-app-header {
         width: auto !important;
         display: flex !important;
         align-items: center !important;
+        gap: 8px !important;
         flex-shrink: 0 !important;
+    }
+
+    .page-brand-context {
+        display: none !important;
     }
 
     .header-right-group,

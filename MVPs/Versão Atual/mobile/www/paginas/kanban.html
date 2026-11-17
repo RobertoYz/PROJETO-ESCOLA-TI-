@@ -467,8 +467,21 @@
     <script type="module">
         import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
         import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
+        import { exibirModalAlerta, exibirModalConfirmacao } from '../scripts/componentes/modalGlobal.js';
 
-        const API_BASE = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
+        // Substitui os alert e confirm nativos pelo modal institucional
+        window.alert = (msg) => exibirModalAlerta({ titulo: 'Aviso', mensagem: msg, tipo: 'info' });
+
+        const ehDevNavegadorLocal = typeof window !== 'undefined' &&
+            window.location.protocol === 'http:' &&
+            (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') &&
+            (window.location.port !== '');
+
+        const URL_PADRAO = ehDevNavegadorLocal
+            ? 'http://127.0.0.1:8000/api'
+            : 'https://anjonexus.intalenti.com.br/api';
+
+        const API_BASE = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
         let currentBoard = null;
         let todosCardsKanban = [];
 
@@ -624,6 +637,7 @@
             if (f.includes('FINEP')) return 'tag-finep';
             if (f.includes('FAPESP')) return 'tag-fapesp';
             if (f.includes('FAPESC')) return 'tag-fapesc';
+            if (f.includes('FAPEMIG')) return 'tag-fapemig';
             return 'tag-manual';
         }
 
@@ -941,7 +955,16 @@
 
                 const publico = edital.publico || meta.publico || 'Startups, Micro e Pequenas Empresas';
                 const trlNicho = `${edital.ai_trl || meta.ai_trl || 'Geral'} | ${edital.ai_nicho || meta.ai_nicho || edital.nicho || 'Inovação'}`;
-                const objetivo = edital.conteudo_completo || meta.conteudo_completo || edital.objetivo || meta.objetivo || card.description || 'Diretrizes em conformidade com o regulamento oficial do edital.';
+                
+                // Prioriza o objetivo limpo e formatado da chamada pública em vez de despejo de HTML/CSS de página
+                let objetivo = edital.objetivo || meta.objetivo || card.description;
+                if (!objetivo || objetivo.trim().length === 0 || objetivo.includes('{"imports":') || objetivo.includes('--tw-')) {
+                    if (edital.conteudo_completo && !edital.conteudo_completo.includes('{"imports":')) {
+                        objetivo = edital.conteudo_completo;
+                    } else {
+                        objetivo = 'Diretrizes em conformidade com o regulamento oficial do edital.';
+                    }
+                }
                 const link = edital.source_url || meta.source_url || edital.url || meta.url || '#';
 
                 const elOrg = document.getElementById('detModalOrgTag');
@@ -984,17 +1007,18 @@
                         docsList.innerHTML = '';
                         docs.forEach(d => {
                             const docItem = document.createElement('div');
-                            docItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; color: #e0e0e0;';
+                            docItem.className = 'modal-doc-item';
+                            docItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface-hover); border: 1px solid var(--border-subtle); padding: 9px 14px; border-radius: 8px; font-size: 0.88rem; color: var(--text-main); font-weight: 500;';
 
                             const tituloDoc = typeof d === 'string' ? d : (d.titulo || d.nome || d.title || d.texto || 'Documento Exigido');
                             const linkDoc = typeof d === 'object' && d.link && d.link !== '#' ? d.link : null;
 
                             docItem.innerHTML = `
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="color: #10b981; font-weight: bold;">✔</span>
-                                    <span>${tituloDoc}</span>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="color: #10b981; font-weight: bold; font-size: 1rem;">✔</span>
+                                    <span style="color: var(--text-main);">${tituloDoc}</span>
                                 </div>
-                                ${linkDoc ? `<a href="${linkDoc}" target="_blank" style="color: var(--accent-purple); text-decoration: none; font-size: 0.8rem; margin-left: 10px;">Ver anexo ↗</a>` : ''}
+                                ${linkDoc ? `<a href="${linkDoc}" target="_blank" style="color: var(--accent-action); font-weight: 600; text-decoration: none; font-size: 0.82rem;">Baixar / Ver ↗</a>` : ''}
                             `;
                             docsList.appendChild(docItem);
                         });
@@ -1007,14 +1031,22 @@
                 const btnGerar = document.getElementById('detModalBtnGerarMinuta');
                 if (btnGerar) {
                     btnGerar.onclick = () => {
+                        const editalIdAlvo = edital.id || card.edital_id || meta.edital_id;
                         modalEditalDetalhesOverlay.classList.remove('active');
                         modalMinutaOverlay.classList.add('active');
                         switchMinutaTab('gerador');
                         carregarStartupsEEditaisMinuta().then(() => {
-                            if (edital && edital.id) {
+                            if (editalIdAlvo) {
                                 const selE = document.getElementById('selectMinutaEdital');
                                 if (selE) {
-                                    selE.value = edital.id;
+                                    // Se o edital não estiver na lista por qualquer motivo, cria a option dinamicamente
+                                    if (!Array.from(selE.options).some(o => String(o.value) === String(editalIdAlvo))) {
+                                        const optNovo = document.createElement('option');
+                                        optNovo.value = editalIdAlvo;
+                                        optNovo.textContent = `[${org}] ${titulo}`;
+                                        selE.appendChild(optNovo);
+                                    }
+                                    selE.value = editalIdAlvo;
                                     handleTrocarEditalMinuta();
                                 }
                             }
@@ -1167,7 +1199,7 @@
                 }
 
                 if (Array.isArray(listE) && listE.length > 0) {
-                    cachedEditais = listE.slice(0, 80);
+                    cachedEditais = listE;
                 } else if (!cachedEditais || cachedEditais.length === 0) {
                     cachedEditais = [{ id: 1, name: 'EDITAL DE CHAMADA PÚBLICA FAPESC/SED N.º 54/2026', org: 'FAPESC' }];
                 }
@@ -1946,7 +1978,11 @@
                 }
             }
 
-            if (localStorage.getItem('tema_preferido') === 'dark') {
+            // Padrão escuro por padrão alinhado ao RadarEditais
+            const temaSalvo = localStorage.getItem('tema_preferido');
+            if (temaSalvo === 'light') {
+                aplicarTema(false);
+            } else {
                 aplicarTema(true);
             }
 

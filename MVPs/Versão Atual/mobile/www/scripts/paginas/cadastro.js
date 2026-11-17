@@ -1,18 +1,40 @@
-import { verificarEmail, limparDadosPendencia, salvarUsuarioLogado } from '../servicos/servicoAutenticacao.js';
+import { verificarEmail, limparDadosPendencia, salvarUsuarioLogado, salvarEmailPendencia } from '../servicos/servicoAutenticacao.js';
 
 const formulario = document.getElementById('formulario-cadastro');
+const campoNomeAgencia = document.getElementById('campo-nome-agencia');
 const campoNomeUsuario = document.getElementById('campo-nome-usuario');
 const campoEmail = document.getElementById('campo-email');
 const campoSenha = document.getElementById('campo-senha');
 const divMensagemErro = document.getElementById('mensagem-erro');
 const botaoConfirmar = document.getElementById('botao-confirmar');
 
-function exibirErro(mensagem, exibirLinkLogin = false) {
-    if (exibirLinkLogin) {
+function exibirErro(mensagem, opcoes = {}) {
+    const configuracao = typeof opcoes === 'object' && opcoes !== null
+        ? opcoes
+        : { exibirLinkLogin: Boolean(opcoes) };
+
+    const { exibirLinkLogin = false, pagamentoPendente = false, email = '' } = configuracao;
+
+    if (pagamentoPendente) {
+        if (email) {
+            salvarEmailPendencia(email);
+        }
+        divMensagemErro.innerHTML = `
+            <div>${mensagem}</div>
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                <a href="pagamento-pendente.html" class="alert-link" style="font-weight: 700; color: #818cf8; text-decoration: underline;">
+                    Regularizar ou consultar pagamento pendente →
+                </a>
+                <a href="login.html" class="alert-link" style="font-size: 0.85rem; color: var(--text-muted);">
+                    Ou entrar com sua senha na tela de Login →
+                </a>
+            </div>
+        `;
+    } else if (exibirLinkLogin) {
         divMensagemErro.innerHTML = `
             <div>${mensagem}</div>
             <div style="margin-top: 8px;">
-                <a href="login.html" class="alert-link" style="color: #a5b4fc; font-weight: 600; text-decoration: underline;">Ir para a tela de Login →</a>
+                <a href="login.html" class="alert-link">Ir para a tela de Login →</a>
             </div>
         `;
     } else {
@@ -26,11 +48,14 @@ function limparErro() {
     divMensagemErro.hidden = true;
 }
 
-// Preenche automaticamente Nome e E-mail caso o usuário tenha retornado da seleção de plano
+// Preenche automaticamente Consultoria, Nome e E-mail caso o usuário tenha retornado da seleção de plano
 try {
     const dadosSalvos = sessionStorage.getItem('dados_pre_cadastro');
     if (dadosSalvos) {
         const dados = JSON.parse(dadosSalvos);
+        if (dados.nome_agencia && campoNomeAgencia) {
+            campoNomeAgencia.value = dados.nome_agencia;
+        }
         if (dados.name && campoNomeUsuario) {
             campoNomeUsuario.value = dados.name;
         }
@@ -43,23 +68,25 @@ try {
 }
 
 // Limpa erro ao digitar novamente
-[campoNomeUsuario, campoEmail, campoSenha].forEach((campo) => {
+[campoNomeAgencia, campoNomeUsuario, campoEmail, campoSenha].forEach((campo) => {
     campo?.addEventListener('input', () => {
         if (!divMensagemErro.hidden) {
             limparErro();
         }
     });
 });
+
 formulario.addEventListener('submit', async (evento) => {
     evento.preventDefault();
     limparErro();
 
+    const nomeAgencia = campoNomeAgencia ? campoNomeAgencia.value.trim() : '';
     const nomeUsuario = campoNomeUsuario.value.trim();
     const email = campoEmail.value.trim().toLowerCase();
     const senha = campoSenha.value;
 
-    if (!nomeUsuario || !email || !senha) {
-        exibirErro('Preencha todos os campos obrigatórios.');
+    if (!nomeAgencia || !nomeUsuario || !email || !senha) {
+        exibirErro('Preencha todos os campos obrigatórios, incluindo o nome da consultoria/agência.');
         return;
     }
 
@@ -84,6 +111,7 @@ formulario.addEventListener('submit', async (evento) => {
             limparDadosPendencia();
 
             const dadosPreCadastro = {
+                nome_agencia: nomeAgencia,
                 name: nomeUsuario,
                 email: email,
                 password: senha
@@ -93,12 +121,20 @@ formulario.addEventListener('submit', async (evento) => {
 
             window.location.href = 'selecionar-plano.html';
         } else {
-            const mensagem = resposta.mensagem || resposta.message || 'Este e-mail já está cadastrado.';
-            exibirErro(mensagem, true);
+            const mensagem = resposta.message || 'Este e-mail já está cadastrado.';
+            const pendente = Boolean(resposta.pagamento_pendente);
+            exibirErro(mensagem, { exibirLinkLogin: true, pagamentoPendente: pendente, email });
         }
     } catch (erro) {
+        const dadosErro = erro.dados || {};
+        const pendente = Boolean(dadosErro.pagamento_pendente) || (erro.message && erro.message.toLowerCase().includes('pagamento pendente'));
         const jaCadastrado = erro.status === 422 || (erro.message && erro.message.toLowerCase().includes('cadastrado'));
-        exibirErro(erro.message || 'Erro ao validar e-mail. Tente novamente.', jaCadastrado);
+        
+        exibirErro(erro.message || 'Erro ao validar e-mail. Tente novamente.', {
+            exibirLinkLogin: jaCadastrado,
+            pagamentoPendente: pendente,
+            email
+        });
     } finally {
         botaoConfirmar.disabled = false;
         botaoConfirmar.textContent = 'Continuar para Escolha de Plano';
