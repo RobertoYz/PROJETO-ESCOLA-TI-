@@ -1,0 +1,398 @@
+classDiagram
+    direction TB
+
+    %% ====================================================
+    %% 1. MODELS ELOQUENT (DOMÍNIO DO SISTEMA)
+    %% ====================================================
+
+    class Plano {
+        -BigInt id
+        -String nome
+        -Decimal preco
+        -String id_transacao
+        -Int limite_startups
+        -Int limite_membros_equipe
+        -Int limite_minutas_ia
+        -Timestamp created_at
+        -Timestamp updated_at
+        +agencias() HasMany
+    }
+
+    class Agencia {
+        -BigInt id
+        -BigInt plano_id
+        -String nome
+        -String id_transacao
+        -Text url_checkout
+        -Enum status_pagamento
+        -Timestamp pagamento_expira_em
+        -Timestamp assinatura_expira_em
+        -Timestamp created_at
+        -Timestamp updated_at
+        +plano() BelongsTo
+        +users() HasMany
+        +startups() HasMany
+        +kanbanBoards() HasMany
+        +isPagamentoAtivo() Boolean
+        +assinaturaVencida() Boolean
+        +diasRestantesAssinatura() Integer
+        +atingiuLimiteStartups() Boolean
+        +atingiuLimiteEquipe() Boolean
+    }
+
+    class User {
+        -BigInt id
+        -BigInt agencia_id
+        -Enum perfil_acesso
+        -String name
+        -String email
+        -Timestamp email_verified_at
+        -String password
+        -String remember_token
+        -Timestamp created_at
+        -Timestamp updated_at
+        +agencia() BelongsTo
+        +tokens() MorphMany
+        +favoritos() HasMany
+        +alertaMatches() HasMany
+        +alertaPrazos() HasMany
+        +createToken(String name) Token
+        +isConsultorAdmin() Boolean
+        +isConsultorPadrao() Boolean
+        +isStartup() Boolean
+        +isAdminGlobal() Boolean
+    }
+
+    class Startup {
+        -BigInt id
+        -BigInt agencia_id
+        -String cnpj
+        -String razao_social
+        -String nome_fantasia
+        -Date data_abertura
+        -String email
+        -String telefone
+        -String cep
+        -String logradouro
+        -String numero
+        -String bairro
+        -String cidade
+        -String estado
+        -String porte
+        -String regime_tributario
+        -String nicho_atuacao
+        -Text pitch
+        -Timestamp created_at
+        -Timestamp updated_at
+        +agencia() BelongsTo
+        +minutas() HasMany
+        +alertaMatches() HasMany
+        +alertaPrazos() HasMany
+        +favoritos() HasMany
+    }
+
+    class Edital {
+        -BigInt id
+        -String external_id
+        -String title
+        -Text source_url
+        -Text original_file_path
+        -Decimal min_budget
+        -Decimal max_budget
+        -DateTime deadline
+        -DateTime open_date
+        -DateTime result_date
+        -DateTime published_at
+        -Enum status
+        -Boolean ai_analyzed
+        -Int ai_match
+        -String ai_trl
+        -String ai_faturamento
+        -String ai_nicho
+        -Json ai_diagnosis
+        -Text objetivo
+        -LongText conteudo_completo
+        -String condicao_financiamento
+        -String operacao
+        -String publico
+        -String fonte
+        -Json documentos
+        -String regiao
+        -String nicho_tema
+        -Timestamp created_at
+        -Timestamp updated_at
+        +favoritos() HasMany
+        +alertaMatches() HasMany
+        +alertaPrazos() HasMany
+        +kanbanCards() HasMany
+        +minutas() HasMany
+    }
+
+    class KanbanBoard {
+        -BigInt id
+        -BigInt agencia_id
+        -String title
+        -Timestamp created_at
+        -Timestamp updated_at
+        +agencia() BelongsTo
+        +columns() HasMany
+        +cards() HasMany
+    }
+
+    class KanbanColumn {
+        -BigInt id
+        -BigInt board_id
+        -String title
+        -Double position
+        -String slug
+        -Timestamp created_at
+        -Timestamp updated_at
+        +board() BelongsTo
+        +cards() HasMany
+    }
+
+    class KanbanCard {
+        -BigInt id
+        -BigInt board_id
+        -BigInt column_id
+        -BigInt edital_id
+        -String title
+        -Text description
+        -String startup_name
+        -Double position
+        -Json metadata
+        -Timestamp created_at
+        -Timestamp updated_at
+        +board() BelongsTo
+        +column() BelongsTo
+        +edital() BelongsTo
+        +minutas() HasMany
+        +alertaPrazos() HasMany
+    }
+
+    class Minuta {
+        -BigInt id
+        -BigInt startup_id
+        -BigInt edital_id
+        -BigInt user_id
+        -BigInt kanban_card_id
+        -BigInt parent_minuta_id
+        -Int versao
+        -String titulo_projeto
+        -Text ideia_projeto
+        -LongText conteudo_gerado
+        -Json secoes_estruturadas
+        -String status
+        -String modelo_ia_usado
+        -String autor_nome
+        -Timestamp created_at
+        -Timestamp updated_at
+        +startup() BelongsTo
+        +edital() BelongsTo
+        +user() BelongsTo
+        +kanbanCard() BelongsTo
+        +parentMinuta() BelongsTo
+        +versoesFilhas() HasMany
+    }
+
+    class EditalFavorito {
+        -BigInt id
+        -BigInt user_id
+        -BigInt edital_id
+        -BigInt startup_id
+        -Timestamp created_at
+        -Timestamp updated_at
+        +user() BelongsTo
+        +edital() BelongsTo
+        +startup() BelongsTo
+    }
+
+    class AlertaMatch {
+        -BigInt id
+        -BigInt user_id
+        -BigInt startup_id
+        -BigInt edital_id
+        -Int score_match
+        -String titulo
+        -Text mensagem
+        -Json criterios
+        -Boolean lido
+        -Timestamp created_at
+        -Timestamp updated_at
+        +user() BelongsTo
+        +startup() BelongsTo
+        +edital() BelongsTo
+    }
+
+    class AlertaPrazo {
+        -BigInt id
+        -BigInt user_id
+        -BigInt startup_id
+        -BigInt edital_id
+        -BigInt kanban_card_id
+        -String tipo_prazo
+        -DateTime data_limite
+        -Int dias_restantes
+        -String nivel_urgencia
+        -String titulo
+        -Text mensagem
+        -Boolean lido
+        -Boolean email_enviado
+        -DateTime email_enviado_em
+        -Timestamp created_at
+        -Timestamp updated_at
+        +user() BelongsTo
+        +startup() BelongsTo
+        +edital() BelongsTo
+        +kanbanCard() BelongsTo
+    }
+
+    %% ====================================================
+    %% RELACIONAMENTOS ENTRE MODELOS DE DOMÍNIO
+    %% ====================================================
+    Plano "1" -- "*" Agencia : assina
+    Agencia "1" *-- "*" User : possui_membros
+    Agencia "1" *-- "*" Startup : gerencia
+    Agencia "1" *-- "*" KanbanBoard : possui_quadro
+
+    KanbanBoard "1" *-- "*" KanbanColumn : contem_etapas
+    KanbanColumn "1" *-- "*" KanbanCard : organiza
+    KanbanBoard "1" *-- "*" KanbanCard : agrupa
+    Edital "0..1" -- "*" KanbanCard : vinculado_a
+
+    Startup "1" *-- "*" Minuta : proponente
+    Edital "1" *-- "*" Minuta : alvo_de
+    User "0..1" -- "*" Minuta : elaborada_por
+    KanbanCard "0..1" -- "*" Minuta : associada_a
+    Minuta "0..1" *-- "*" Minuta : versao_anterior
+
+    User "1" *-- "*" EditalFavorito : registra
+    Edital "1" *-- "*" EditalFavorito : favoritado
+    Startup "0..1" -- "*" EditalFavorito : contexto
+
+    User "1" *-- "*" AlertaMatch : notificado
+    Startup "1" *-- "*" AlertaMatch : alvo
+    Edital "1" *-- "*" AlertaMatch : edital_alvo
+
+    User "1" *-- "*" AlertaPrazo : notificado
+    Edital "1" *-- "*" AlertaPrazo : edital_prazo
+    Startup "0..1" -- "*" AlertaPrazo : startup_prazo
+    KanbanCard "0..1" -- "*" AlertaPrazo : card_prazo
+
+    %% ====================================================
+    %% 2. CAMADA DE ADAPTERS (ISOLAMENTO DE APIs EXTERNAS)
+    %% ====================================================
+
+    class AbacatePayAdapter {
+        +paraPayloadCriacao(Agencia agencia, Plano plano) Array
+        +deRespostaCriacao(Array resposta) Array
+        +deWebhookPayload(Array payload) Array
+        +traduzirStatus(String statusExterno) String
+    }
+
+    class BrasilApiCnpjAdapter {
+        +deBrasilApi(Array dados) Array
+        +deReceitaWs(Array dados) Array
+        +padronizarPorte(String porteBruto) String
+    }
+
+    %% ====================================================
+    %% 3. CAMADA DE SERVICES (REGRAS DE NEGÓCIO E ORQUESTRAÇÃO)
+    %% ====================================================
+
+    class AbacatePayService {
+        +gerarCobranca(Agencia agencia, Plano plano) Array
+        +consultarStatusCobranca(String billingId) Array
+        +estaExpirado(Agencia agencia) Boolean
+        +processarWebhook(Array payload) Boolean
+    }
+
+    class CnpjService {
+        +consultar(String cnpj, Boolean forcarAtualizacao) Array
+        -consultarBrasilApi(String cnpj) Array
+        -consultarReceitaWs(String cnpj) Array
+    }
+
+    class MinutaLimitService {
+        +obterConsumoMinutas(Agencia agencia) Integer
+        +atingiuLimite(Agencia agencia) Boolean
+    }
+
+    class MinutaAiService {
+        +gerarMinuta(Startup startup, Edital edital, String pitch) Minuta
+        +calcularMatchEditais(Startup startup, Edital edital) Array
+        -callGemini(String prompt) String
+        -callDeepSeek(String prompt) String
+        -callGroq(String prompt) String
+        -gerarMinutaFallback(Startup startup, Edital edital, String pitch) String
+    }
+
+    class DocumentExportService {
+        +gerarDocx(Minuta minuta) String
+        +gerarPdf(Minuta minuta) String
+        -compilarOpenXml(Minuta minuta) BinaryStream
+    }
+
+    class PdfExtractorService {
+        +extrairTexto(String caminhoPdf) String
+        +parseDatasRegex(String texto) Array
+        +parseOrcamentoRegex(String texto) Decimal
+        +gerarChecklistDocumentos(String texto) Array
+    }
+
+    class AlertaMatchService {
+        +processarMatchEdital(Edital edital) void
+        +obterAlertasNaoLidos(User user) Collection
+        +marcarComoLido(BigInt id) Boolean
+    }
+
+    class AlertaPrazoService {
+        +verificarPrazosCriticos() void
+        +enviarAlertasEmail() void
+        +obterAlertasUsuario(User user) Collection
+    }
+
+    class KanbanService {
+        +obterQuadroCompleto(BigInt agenciaId, String startupNome) Array
+        +criarCard(Array dados) KanbanCard
+        +moverCard(BigInt cardId, BigInt colunaId, Double position) KanbanCard
+        +anexarDocumento(BigInt cardId, File arquivo) KanbanCard
+    }
+
+    class CardMovementService {
+        +calcularNovaPosicao(Double anterior, Double posterior) Double
+        +reordenarColuna(BigInt colunaId) void
+    }
+
+    %% ====================================================
+    %% DEPENDÊNCIAS DE SERVICES E ADAPTERS
+    %% ====================================================
+    AbacatePayService ..> AbacatePayAdapter : utiliza_conversao
+    AbacatePayService ..> Agencia : gerencia_assinatura
+    AbacatePayService ..> Plano : consulta_valores
+
+    CnpjService ..> BrasilApiCnpjAdapter : utiliza_conversao
+    CnpjService ..> Startup : enriquece_cadastro
+
+    MinutaLimitService ..> Agencia : verifica_tenant
+    MinutaLimitService ..> Plano : consulta_cota_ia
+    MinutaLimitService ..> Minuta : quantifica_geradas_mes
+
+    MinutaAiService ..> Minuta : instancia_e_persiste
+    MinutaAiService ..> Startup : extrai_contexto
+    MinutaAiService ..> Edital : extrai_regras
+
+    DocumentExportService ..> Minuta : compila_documento
+    PdfExtractorService ..> Edital : extrai_texto_e_checklist
+
+    AlertaMatchService ..> AlertaMatch : cria_e_persiste
+    AlertaMatchService ..> Startup : analisa_compatibilidade
+    AlertaMatchService ..> Edital : analisa_criterios
+
+    AlertaPrazoService ..> AlertaPrazo : cria_e_dispara
+    AlertaPrazoService ..> Edital : monitora_data_encerramento
+    AlertaPrazoService ..> KanbanCard : monitora_marcos
+
+    KanbanService ..> KanbanBoard : localiza_quadro
+    KanbanService ..> KanbanCard : cria_e_atualiza
+    KanbanService ..> CardMovementService : delega_calculo_posicao

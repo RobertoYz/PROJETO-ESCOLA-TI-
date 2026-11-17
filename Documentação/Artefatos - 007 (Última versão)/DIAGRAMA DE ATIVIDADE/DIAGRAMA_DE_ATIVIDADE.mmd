@@ -1,0 +1,204 @@
+flowchart TD
+    %% ------------------------------------------------------------------------
+    %% DIAGRAMA DE ATIVIDADES - ANJO NEXUS (VERSÃO 007 - ARQUITETURA COMPLETA)
+    %% ------------------------------------------------------------------------
+
+    Start([Início: Acesso à Plataforma]) --> CheckAuth{Possui Conta Registrada?}
+
+    %% ========================================================================
+    %% 1. ACESSO, REGISTRO EM 2 ETAPAS, PLANOS E ASSINATURA
+    %% ========================================================================
+    subgraph SG_Acesso ["1. Acesso, Registro em 2 Etapas, Planos e Assinatura"]
+        CheckAuth -- Não --> PreCadastro["Pré-Cadastro: Nome da Consultoria, Titular, E-mail, Senha e Aceite LGPD"]
+        PreCadastro --> ValidarEmail["Validar Disponibilidade e Enviar Confirmação de E-mail"]
+        ValidarEmail --> SelecionarPlano["Selecionar Plano SaaS (Standard, Pro ou Enterprise)"]
+        SelecionarPlano --> EscolherPagamento["Escolher Forma de Pagamento (PIX ou Cartão de Crédito)"]
+        EscolherPagamento --> GerarCobranca["Gerar Cobrança (Validade de 60 min e Controle de Idempotência)"]
+        GerarCobranca --> CheckPagamento{"Pagamento Confirmado pelo Gateway?"}
+        
+        CheckPagamento -- Sim --> AtivarAssinatura["Ativar Assinatura: Ciclo Mensal de 30 Dias (+30d Acumulativos)"]
+        AtivarAssinatura --> CriarSessao["Gerar Sessão Autenticada e Credencial de Acesso"]
+        
+        CheckPagamento -- Não --> TelaPendente["Tela de Pagamento Pendente"]
+        TelaPendente --> OpcoesPendencia{"Opção na Pendência"}
+        OpcoesPendencia -- 1. Consultar Pagamento --> ConsultarAnterior["Consultar Pagamento Anterior / Conciliação Ativa"]
+        ConsultarAnterior --> CheckPagamento
+        OpcoesPendencia -- 2. Trocar Plano / Recobrar --> TrocarPlanoPend["Trocar Plano e Gerar Nova Cobrança de 60 min"]
+        TrocarPlanoPend --> GerarCobranca
+        OpcoesPendencia -- 3. Cancelar Cadastro --> CancelarCadastro["Cancelar Cadastro Pendente e Excluir Registro Inicial"]
+        CancelarCadastro --> TelaLogin["Retornar à Tela Inicial com E-mail Liberado"]
+
+        CheckAuth -- Sim --> TelaLogin
+        TelaLogin --> EsqueciSenha{"Esqueceu a Senha?"}
+        EsqueciSenha -- Sim --> SolicitarRecuperacao["Solicitar Link Temporário por E-mail (Validade 60 min)"]
+        SolicitarRecuperacao --> RedefinirSenha["Validar Token e Cadastrar Nova Senha"]
+        RedefinirSenha --> TelaLogin
+        EsqueciSenha -- Não --> ValidarCredenciais{"Credenciais Válidas?"}
+        ValidarCredenciais -- Não --> ErroLogin["Exibir Alerta de Credenciais Inválidas"]
+        ErroLogin --> TelaLogin
+        ValidarCredenciais -- Sim --> CheckAssinaturaVigente{"Assinatura de 30 Dias Ativa?"}
+        CheckAssinaturaVigente -- Não / Vencida --> TelaPendente
+        CheckAssinaturaVigente -- Sim --> CriarSessao
+
+        CriarSessao --> RoteadorPerfil{"Roteamento por Perfil (RBAC)"}
+        RoteadorPerfil -- Administrador Global --> PainelADM["Acessar Painel Back-Office ADM (Métricas Globais e Faturamento)"]
+        RoteadorPerfil -- Startup Cliente --> PortalWhiteLabel["Acessar Portal White-Label Somente Leitura (Kanban e Minutas)"]
+        RoteadorPerfil -- Consultor --> CheckTemStartup{"Possui Startup Cadastrada?"}
+    end
+
+    %% ========================================================================
+    %% 2. CONTEXTO MULTI-TENANCY E GESTÃO DA CARTEIRA DE STARTUPS
+    %% ========================================================================
+    subgraph SG_Startup ["2. Contexto Multi-Tenancy e Gestão da Carteira de Startups"]
+        CheckTemStartup -- Não --> OnboardingStartup["Onboarding: Cadastrar Primeira Startup"]
+        CheckTemStartup -- Sim --> PainelPrincipal["Acessar Painel / Dashboard Principal"]
+
+        OnboardingStartup --> VerificarCotaStartup{"Cota de Startups Disponível?\n(Standard: 2, Pro: 10, Enterprise: 50)"}
+        VerificarCotaStartup -- Limite Atingido --> BloquearCotaStartup["Bloquear Criação e Sugerir Upgrade de Plano"]
+        BloquearCotaStartup --> PainelPrincipal
+        VerificarCotaStartup -- Cota Disponível --> OpcaoCadastroCNPJ{"Consultar CNPJ na Receita Federal?"}
+        OpcaoCadastroCNPJ -- Sim --> ConsultaCNPJ["Consulta Automática: Validação Módulo 11 + BrasilAPI/ReceitaWS e Cache 7 Dias"]
+        OpcaoCadastroCNPJ -- Não --> PreencherManual["Preenchimento Manual dos Dados Cadastrais"]
+        ConsultaCNPJ --> SalvarStartup["Salvar Startup e Consumir 1 Vaga da Cota do Plano"]
+        PreencherManual --> SalvarStartup
+        SalvarStartup --> PainelPrincipal
+
+        PainelPrincipal --> SeletorGlobal["Seletor Global de Startups (Alternância Dinâmica sem Novo Login)"]
+        SeletorGlobal --> AcaoGestaoStartup{"Ação de Gestão de Startups"}
+        AcaoGestaoStartup -- Cadastrar Nova Startup --> NovaStartup["Cadastrar Nova Startup pela Carteira"]
+        NovaStartup --> VerificarCotaStartup
+        AcaoGestaoStartup -- Editar Perfil / Pitch --> EditarPerfil["Atualizar Porte, Nicho, TRL e Pitch Institucional"]
+        EditarPerfil --> PainelPrincipal
+        AcaoGestaoStartup -- Sincronizar Receita --> SincronizarReceita["Ressincronização Sob Demanda com a Receita Federal"]
+        SincronizarReceita --> PainelPrincipal
+        AcaoGestaoStartup -- Alternar Empresa Ativa --> TrocarContexto["Definir Nova Startup Ativa em Memória"]
+        TrocarContexto --> PainelPrincipal
+        AcaoGestaoStartup -- Operar Sistema --> EscolhaModulo{"Escolher Módulo Operacional"}
+    end
+
+    %% ========================================================================
+    %% 3. RADAR NACIONAL/ESTADUAL DE EDITAIS, FAVORITOS E MATCH INTELIGENTE
+    %% ========================================================================
+    subgraph SG_Radar ["3. Radar Nacional/Estadual de Editais, Favoritos e Match Inteligente"]
+        EscolhaModulo -- Radar de Editais --> AcessarRadar["Acessar Radar de Editais de Fomento"]
+        AcessarRadar --> ScrapingIngestao["Mineração Autônoma em Segundo Plano: Portais Nacionais e Estaduais (FINEP e FAPs)"]
+        ScrapingIngestao --> ExtracaoPDF["Extração Textual de Anexos PDF e Geração de Checklist de até 15 Documentos"]
+        ExtracaoPDF --> ExecutarMatch["Executar Algoritmo de Match Inteligente"]
+        ExecutarMatch --> MatchPontuacao["Calcular Score Ponderado: Nicho (+20), Porte (+15), Orçamento (+10)"]
+        MatchPontuacao --> ExibirCards["Exibir Oportunidades com % de Compatibilidade, Pontos Fortes e Pontos de Atenção"]
+        MatchPontuacao --> CheckAlertaMatch{"Score >= 70%?"}
+        CheckAlertaMatch -- Sim --> DispararAlertaMatch["Disparar Alerta Automático de Match (Painel, E-mail e WhatsApp)"]
+        CheckAlertaMatch -- Não --> ExibirCards
+        ExibirCards --> FiltrarEditais["Aplicar Filtros Combinados (Região, Órgão Emissor, Status, Orçamento Explícito)"]
+        FiltrarEditais --> VerDetalhes["Visualizar Detalhes do Edital, Checklist e Justificativa de Compatibilidade"]
+        VerDetalhes --> AcoesEdital{"Ação no Edital"}
+        AcoesEdital -- Favoritar --> FavoritarEdital["Favoritar Edital Vinculado Exclusivamente à Startup Ativa"]
+        FavoritarEdital --> ExibirCards
+        AcoesEdital -- Enviar ao Kanban --> InserirKanban["Criar Card do Edital na Coluna Backlog do Kanban da Startup"]
+    end
+
+    %% ========================================================================
+    %% 4. ESTEIRA PIPELINE KANBAN, LIMITES DE UPLOAD E ALERTAS DE PRAZO
+    %% ========================================================================
+    subgraph SG_Kanban ["4. Esteira Pipeline Kanban, Limites de Upload e Alertas de Prazo"]
+        EscolhaModulo -- Pipeline Kanban --> AcessarKanban["Acessar Quadro Kanban da Startup Ativa"]
+        InserirKanban --> AcessarKanban
+        AcessarKanban --> Visualizar6Colunas["Visualizar 6 Colunas Oficiais: Backlog | A fazer | Em elaboração | Bloqueado | Pronto para Submissão | Submetido"]
+        Visualizar6Colunas --> MoverCard["Mover Card entre Fases com Ordenação Fracionária"]
+        MoverCard --> PersistirOrdem["Persistir Nova Coluna e Ordenação Fracionária"]
+        PersistirOrdem --> Visualizar6Colunas
+
+        Visualizar6Colunas --> MonitorarPrazos["Monitoramento Contínuo de Prazos em Janela de 15 Dias"]
+        MonitorarPrazos --> ClassificarPrazos["Classificação Escalonada: Atenção (8-15d), Urgente (4-7d), Crítico (72h e 24h)"]
+        ClassificarPrazos --> DispararAlertasPrazo["Disparar Notificações Multicanal: Sino do Painel, E-mail e WhatsApp"]
+
+        Visualizar6Colunas --> AbrirCardModal["Abrir Modal de Detalhes do Card"]
+        AbrirCardModal --> AcoesCard{"Ação no Card"}
+        AcoesCard -- Upload de Anexos --> ValidarUpload{"Validar Tamanho (Max 10 MB) e Cota de Armazenamento do Plano"}
+        ValidarUpload -- Limite Excedido --> BloquearUpload["Recusar Envio e Alertar Espaço Insuficiente / Upgrade"]
+        BloquearUpload --> AbrirCardModal
+        ValidarUpload -- Arquivo Válido --> SalvarAnexo["Salvar Arquivo com Segurança e Vincular Metadados ao Card"]
+        SalvarAnexo --> AbrirCardModal
+        AcoesCard -- Gerar Minuta Técnica --> IrParaMinuta["Iniciar Elaboração da Proposta Técnica"]
+    end
+
+    %% ========================================================================
+    %% 5. MOTOR DE MINUTAS TÉCNICAS IA, CONTROLE DE COTA E VERSIONAMENTO
+    %% ========================================================================
+    subgraph SG_MinutaIA ["5. Motor de Minutas Técnicas IA, Controle de Cota e Versionamento"]
+        EscolhaModulo -- Minutas Diretas --> ListarMinutas["Acessar Histórico de Minutas da Startup Ativa"]
+        IrParaMinuta --> CheckCotaMinuta{"Verificar Cota Mensal de Minutas IA\n(Standard: 3, Pro: 15, Enterprise: 50)"}
+        CheckCotaMinuta -- Cota Atingida --> BloquearMinuta["Bloquear Geração e Sugerir Upgrade de Plano"]
+        BloquearMinuta --> ListarMinutas
+        CheckCotaMinuta -- Cota Disponível --> ConfirmarContexto["Confirmar/Revisar Pitch + Contexto da Startup + Regras do Edital"]
+        ConfirmarContexto --> DebitarCotaIA["Debitar 1 Minuta da Cota Mensal e Disparar Roteador Inteligente Multi-LLM"]
+        DebitarCotaIA --> RoteadorIA["Roteador Inteligente Multi-LLM com Sorteio Aleatório de Chaves e Cascata de 4 Níveis"]
+        
+        RoteadorIA --> TryGemini{"1º Nível: Google Gemini"}
+        TryGemini -- Sucesso --> Formatar11Secoes["Estruturar 11 Seções Oficiais (Contrapartida 5% e Cronograma 12 Meses)"]
+        TryGemini -- Falha/RateLimit --> TryDeepSeek{"2º Nível: DeepSeek"}
+        TryDeepSeek -- Sucesso --> Formatar11Secoes
+        TryDeepSeek -- Falha/RateLimit --> TryGroq{"3º Nível: Groq"}
+        TryGroq -- Sucesso --> Formatar11Secoes
+        TryGroq -- Falha/Offline --> MotorLocal["4º Nível: Motor Determinístico Local de Emergência"]
+        MotorLocal --> Formatar11Secoes
+
+        Formatar11Secoes --> EditorMinuta["Editor Rich-Text Interativo com Abas de Seções"]
+        EditorMinuta --> EditarTexto["Edição Manual Livre no Texto da Proposta"]
+        EditarTexto --> SalvarVersao["Salvar Nova Versão Encadeada Imutável (Sem Descontar Cota de IA)"]
+        ListarMinutas --> CarregarVersao["Visualizar / Carregar Versão Anterior do Histórico"]
+        CarregarVersao --> EditorMinuta
+    end
+
+    %% ========================================================================
+    %% 6. EXPORTAÇÃO DOCUMENTAL NATIVA (.DOCX E .PDF A4)
+    %% ========================================================================
+    subgraph SG_Export ["6. Exportação Documental Nativa (.DOCX e .PDF A4)"]
+        SalvarVersao --> OpcaoExport{"Deseja Exportar a Proposta?"}
+        OpcaoExport -- Não --> VoltarKanban["Retornar ao Pipeline Kanban para Acompanhamento"]
+        VoltarKanban --> AcessarKanban
+        OpcaoExport -- Sim --> EscolherFormato{"Escolher Formato de Saída"}
+        EscolherFormato -- Word (.docx) --> GerarDocx["Geração Nativa OpenXML Formatada em Padrão Profissional"]
+        EscolherFormato -- PDF --> GerarPDF["Renderização e Geração de Documento PDF em Padrão A4"]
+        GerarDocx --> DownloadDocumento["Download Imediato do Arquivo Oficial"]
+        GerarPDF --> DownloadDocumento
+        DownloadDocumento --> FimProcesso([Fim: Proposta Pronta para Submissão ao Órgão de Fomento])
+    end
+
+    %% ========================================================================
+    %% 7. GESTÃO DE EQUIPE, CICLO DE ASSINATURA (30 DIAS) E ENCERRAMENTO LGPD
+    %% ========================================================================
+    subgraph SG_AdminLGPD ["7. Gestão de Equipe, Ciclo de Assinatura (30 Dias) e Encerramento LGPD"]
+        PainelPrincipal --> AcoesAdmin{"Ações Administrativas do Consultor Administrador"}
+        
+        AcoesAdmin -- Gestão de Equipe (RBAC) --> GestaoEquipe["Gerenciar Equipe: Consultores Padrão e Acessos de Startups"]
+        GestaoEquipe --> CheckCotaEquipe{"Assentos Disponíveis no Plano?\n(Standard: 1, Pro: 5, Enterprise: 15)"}
+        CheckCotaEquipe -- Cota Atingida --> BloquearEquipe["Bloquear Inclusão de Novo Usuário e Sugerir Upgrade"]
+        BloquearEquipe --> PainelPrincipal
+        CheckCotaEquipe -- Cota Disponível --> SalvarUsuarioSec["Cadastrar / Editar / Excluir Usuário Secundário"]
+        SalvarUsuarioSec --> PainelPrincipal
+
+        AcoesAdmin -- Assinatura e Planos --> VerAssinatura["Visualizar Consumo de Cotas e Contagem Regressiva dos 30 Dias"]
+        VerAssinatura --> CheckJanelaRenovacao{"Restam <= 5 Dias para o Vencimento ou Está Vencida?"}
+        CheckJanelaRenovacao -- Mais de 5 Dias --> ManterAssinatura["Manter Assinatura Ativa (Botão de Renovação Bloqueado)"]
+        ManterAssinatura --> OpcaoMudancaPlano{"Deseja Trocar de Plano?"}
+        OpcaoMudancaPlano -- Upgrade --> ProcessarUpgrade["Solicitar Upgrade (Cálculo Pró-rata e Expansão Imediata)"]
+        ProcessarUpgrade --> GerarCobranca
+        OpcaoMudancaPlano -- Downgrade --> ValidarDowngrade{"Uso Atual Cabe na Cota do Plano Inferior?"}
+        ValidarDowngrade -- Não --> BloquearDowngrade["Bloquear Downgrade até Exclusão dos Cadastros Excedentes"]
+        BloquearDowngrade --> PainelPrincipal
+        ValidarDowngrade -- Sim --> AjustarDowngrade["Ajustar Contratação e Redefinir Limites do Novo Plano"]
+        AjustarDowngrade --> PainelPrincipal
+        CheckJanelaRenovacao -- <= 5 Dias / Vencida --> LiberarRenovacao["Disparar Alerta de Vencimento e Liberar Renovação Antecipada"]
+        LiberarRenovacao --> GerarRenovacao["Gerar Cobrança de Renovação (PIX ou Cartão) Mantendo Acesso Ativo"]
+        GerarRenovacao --> GerarCobranca
+
+        AcoesAdmin -- Cancelar Conta (LGPD) --> IniciarCancelamento["Acessar Zona de Perigo: Cancelamento Voluntário de Conta"]
+        IniciarCancelamento --> ModalTermoLGPD["Exibir Modal Próprio com Termo de Ciência e Reautenticação"]
+        ModalTermoLGPD --> ValidarSenhaLGPD{"Senha Atual Correta e Termo Marcado?"}
+        ValidarSenhaLGPD -- Não --> BloquearCancelamento["Bloquear Operação e Manter Dados Íntegros"]
+        BloquearCancelamento --> PainelPrincipal
+        ValidarSenhaLGPD -- Sim --> ExclusaoFisicaCascata["Executar Exclusão Física Transacional em Cascata de Todos os Dados"]
+        ExclusaoFisicaCascata --> RevogarCredenciais["Revogar Imediatamente Todas as Sessões e Liberar E-mail e CNPJs"]
+        RevogarCredenciais --> TelaInicial([Conta Encerrada Definitivamente sob a LGPD])
+    end
