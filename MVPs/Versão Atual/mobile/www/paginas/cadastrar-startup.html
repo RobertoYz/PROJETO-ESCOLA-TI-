@@ -1,147 +1,245 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Cadastrar Startup - Anjo Nexus</title>
-    <link rel="stylesheet" href="../estilos/layout.css">
-    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
-    <style>
-        .container-formulario {
-            max-width: 650px;
-        }
-        .grupo-cnpj {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-        }
-        .grupo-cnpj input {
-            flex: 1;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-        .grupo-cnpj button {
-            width: auto;
-            padding: 12px 18px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            white-space: nowrap;
-            transition: 0.2s;
-        }
-        .grupo-cnpj button:hover {
-            filter: brightness(1.1);
-        }
-        .grupo-cnpj button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .aviso-status {
-            width: 100%;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            display: none;
-        }
-        .aviso-status.carregando {
-            display: block;
-            background: rgba(59, 130, 246, 0.15);
-            color: #93c5fd;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-        .aviso-status.sucesso {
-            display: block;
-            background: rgba(16, 185, 129, 0.15);
-            color: #6ee7b7;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-        .linha-dupla {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-        }
-        .linha-tripla {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-        }
-        .separador-secao {
-            width: 100%;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: #818cf8;
-            margin-top: 14px;
-            margin-bottom: 2px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding-bottom: 6px;
-        }
-        .campo-destaque {
-            background: #111827;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-        }
-        .campo-auto {
-            background-color: #0c101a;
-            color: #cbd5e1;
-        }
-    </style>
+    <title>Cadastrar Startup — Anjo Nexus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="../estilos/cadastrar-startup.css">
 </head>
+
 <body>
-    <div id="container-cabecalho" class="container-cabecalho">
-        <h1>Nova Startup Assessorada</h1>
-        <p style="color: #64748b; font-size: 14px;">Preencha o CNPJ para carregar os dados cadastrais oficiais automaticamente.</p>
-        <a href="selecionar-startup.html">← Voltar para Minhas Startups</a>
-    </div>
-
-    <div id="container-formulario" class="container-formulario">
-        <form id="formulario-cadastro-startup" novalidate>
-            <div class="separador-secao">1. Identificação Fiscal & Consulta Automática</div>
-            
-            <div class="grupo-cnpj">
-                <input type="text" id="campo-cnpj" placeholder="CNPJ (00.000.000/0000-00)" maxlength="18" required autocomplete="off">
-                <button type="button" id="botao-buscar-cnpj">🔍 Puxar Dados</button>
+    <!-- Cabeçalho Institucional -->
+    <header class="topbar-institucional">
+        <div class="topbar-brand">
+            <div class="brand-symbol" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
             </div>
+            <span class="brand-title">Anjo Nexus</span>
+            <span class="brand-divider" aria-hidden="true"></span>
+            <span class="brand-context">Cadastro de Startup</span>
+        </div>
 
-            <div id="aviso-status-cnpj" class="aviso-status"></div>
+        <div class="topbar-actions">
+            <span class="consultor-badge" id="consultor-identificacao" hidden>
+                Consultor: <strong id="nome-consultor-topbar"></strong>
+            </span>
 
-            <input type="text" id="campo-razao-social" class="campo-auto" placeholder="Razão Social (obrigatório)" required>
-            <input type="text" id="campo-nome-fantasia" class="campo-auto" placeholder="Nome Fantasia">
-            
-            <div class="linha-dupla">
-                <input type="date" id="campo-data-abertura" class="campo-auto" title="Data de Abertura">
-                <input type="text" id="campo-porte" class="campo-auto" placeholder="Porte (ex: ME, EPP)">
-            </div>
+            <button type="button" id="botao-sair-sessao" class="btn-topbar-sair" title="Encerrar sessão">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                Sair
+            </button>
 
-            <input type="text" id="campo-regime-tributario" class="campo-auto" placeholder="Regime Tributário (ex: Simples Nacional)">
+            <!-- Botão de Alternância de Tema (Sol / Lua) -->
+            <button id="btnAlternarTema" class="theme-toggle-btn" type="button" aria-label="Alternar tema claro e escuro" title="Alternar tema">
+                <svg id="iconeSol" style="display: none;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg id="iconeLua" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
 
-            <div class="separador-secao">2. Localização da Empresa</div>
-            
-            <div class="linha-tripla">
-                <input type="text" id="campo-cep" class="campo-auto" placeholder="CEP" maxlength="9">
-                <input type="text" id="campo-cidade" class="campo-auto" placeholder="Cidade" style="flex: 2;">
-                <input type="text" id="campo-estado" class="campo-auto" placeholder="UF" maxlength="2" style="max-width: 65px; text-transform: uppercase;">
-            </div>
+    <!-- Área Principal -->
+    <main class="pagina-conteudo">
+        <a href="selecionar-startup.html" class="link-voltar">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Voltar para Minhas Startups
+        </a>
 
-            <div class="linha-dupla">
-                <input type="text" id="campo-logradouro" class="campo-auto" placeholder="Logradouro / Rua" style="flex: 3;">
-                <input type="text" id="campo-numero" class="campo-auto" placeholder="Nº" style="max-width: 90px;">
-            </div>
+        <section class="cabecalho-secao">
+            <span class="cabecalho-kicker">Gestão de Carteira</span>
+            <h1>Nova Startup Assessorada</h1>
+            <p>
+                Informe o CNPJ para preencher automaticamente os dados fiscais e cadastrais da empresa
+                e complete o perfil de inovação para qualificar o match com editais.
+            </p>
+        </section>
 
-            <input type="text" id="campo-bairro" class="campo-auto" placeholder="Bairro">
+        <section class="form-surface">
+            <form id="formulario-cadastro-startup" novalidate>
+                <!-- Seção 1 -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h2 class="section-title">1. Identificação Fiscal e Consulta Automática</h2>
+                        <p class="section-desc">Os campos abaixo são preenchidos via consulta pública pelo CNPJ.</p>
+                    </div>
 
-            <div class="separador-secao">3. Perfil de Inovação & Subvenção</div>
-            
-            <input type="text" id="campo-nicho-atuacao" class="campo-destaque" placeholder="Nicho de Atuação (ex: Inteligência Artificial, Agrotech, Saúde)">
-            <textarea id="campo-pitch" class="campo-destaque" placeholder="Pitch / Resumo Tecnológico: Descreva os projetos de P&D, produtos inovadores e proposta de valor da startup para enriquecer o Match com Editais e a Minuta por IA."></textarea>
+                    <div class="form-grid">
+                        <div class="form-group col-12">
+                            <label for="campo-cnpj">CNPJ <span class="obrigatorio">*</span></label>
+                            <div class="grupo-cnpj">
+                                <input type="text" id="campo-cnpj" placeholder="00.000.000/0000-00" maxlength="18" required autocomplete="off">
+                                <button type="button" id="botao-buscar-cnpj" class="btn-buscar-cnpj">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    Puxar Dados
+                                </button>
+                            </div>
+                        </div>
 
-            <div id="mensagem-erro" class="texto-erro" hidden></div>
-            <button type="submit" id="botao-confirmar" style="background: #2563eb; color: #fff; font-weight: bold; padding: 12px; margin-top: 8px;">Concluir Cadastro da Startup</button>
-        </form>
-    </div>
+                        <div id="aviso-status-cnpj" class="aviso-status col-12" aria-live="polite"></div>
+
+                        <div class="form-group col-12">
+                            <label for="campo-razao-social">Razão Social <span class="obrigatorio">*</span></label>
+                            <input type="text" id="campo-razao-social" placeholder="Razão social conforme Receita Federal" required>
+                        </div>
+
+                        <div class="form-group col-12">
+                            <label for="campo-nome-fantasia">Nome Fantasia</label>
+                            <input type="text" id="campo-nome-fantasia" placeholder="Nome comercial da startup">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label for="campo-data-abertura">Data de Abertura</label>
+                            <input type="date" id="campo-data-abertura" title="Data de Abertura">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label for="campo-porte">Porte</label>
+                            <input type="text" id="campo-porte" placeholder="Ex: ME, EPP">
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label for="campo-regime-tributario">Regime Tributário</label>
+                            <input type="text" id="campo-regime-tributario" placeholder="Ex: Simples Nacional">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção 2 -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h2 class="section-title">2. Localização da Empresa</h2>
+                        <p class="section-desc">Endereço sede utilizado para elegibilidade regional de editais.</p>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group col-3">
+                            <label for="campo-cep">CEP</label>
+                            <input type="text" id="campo-cep" placeholder="00000-000" maxlength="9">
+                        </div>
+
+                        <div class="form-group col-7">
+                            <label for="campo-cidade">Cidade</label>
+                            <input type="text" id="campo-cidade" placeholder="Município">
+                        </div>
+
+                        <div class="form-group col-2">
+                            <label for="campo-estado">UF</label>
+                            <input type="text" id="campo-estado" placeholder="UF" maxlength="2" style="text-transform: uppercase;">
+                        </div>
+
+                        <div class="form-group col-9">
+                            <label for="campo-logradouro">Logradouro</label>
+                            <input type="text" id="campo-logradouro" placeholder="Rua, avenida ou rodovia">
+                        </div>
+
+                        <div class="form-group col-3">
+                            <label for="campo-numero">Número</label>
+                            <input type="text" id="campo-numero" placeholder="Nº">
+                        </div>
+
+                        <div class="form-group col-12">
+                            <label for="campo-bairro">Bairro</label>
+                            <input type="text" id="campo-bairro" placeholder="Bairro ou distrito">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção 3 -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h2 class="section-title">3. Perfil de Inovação e Subvenção</h2>
+                        <p class="section-desc">Contexto tecnológico usado pelo Radar de Editais e pela geração de minutas.</p>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group col-12">
+                            <label for="campo-nicho-atuacao">Nicho de Atuação</label>
+                            <input type="text" id="campo-nicho-atuacao" placeholder="Ex: Inteligência Artificial, Agrotech, Healthtech">
+                        </div>
+
+                        <div class="form-group col-12">
+                            <label for="campo-pitch">Pitch e Resumo Tecnológico</label>
+                            <textarea id="campo-pitch" placeholder="Descreva os projetos de P&D, produtos inovadores e proposta de valor da startup..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="mensagem-erro" class="alert-box" role="alert" aria-live="polite" hidden></div>
+
+                <div class="form-actions">
+                    <a href="selecionar-startup.html" class="btn-secundario">Cancelar</a>
+                    <button type="submit" id="botao-confirmar" class="btn-submit">Concluir Cadastro da Startup</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <footer class="rodape-institucional">
+        Anjo Nexus &copy; 2026. Plataforma técnica para captação de recursos e subvenção.
+    </footer>
+
+    <!-- Script de Alternância de Tema -->
+    <script>
+        const btnTema = document.getElementById('btnAlternarTema');
+        const iconeSol = document.getElementById('iconeSol');
+        const iconeLua = document.getElementById('iconeLua');
+
+        function aplicarTema(escuro) {
+            if (escuro) {
+                document.body.classList.add('dark-mode');
+                iconeSol.style.display = 'block';
+                iconeLua.style.display = 'none';
+                localStorage.setItem('tema_preferido', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                iconeSol.style.display = 'none';
+                iconeLua.style.display = 'block';
+                localStorage.setItem('tema_preferido', 'light');
+            }
+        }
+
+        const temaSalvo = localStorage.getItem('tema_preferido');
+        if (temaSalvo === 'dark' || (!temaSalvo && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            aplicarTema(true);
+        } else {
+            aplicarTema(false);
+        }
+
+        btnTema.addEventListener('click', () => {
+            const estaEscuro = document.body.classList.contains('dark-mode');
+            aplicarTema(!estaEscuro);
+        });
+    </script>
 
     <script type="module" src="../scripts/paginas/cadastrarStartup.js"></script>
 </body>
+
 </html>

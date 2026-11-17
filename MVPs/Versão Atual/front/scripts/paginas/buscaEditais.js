@@ -1,6 +1,7 @@
 import { inicializarSeletorGlobal } from '../componentes/seletorGlobalStartup.js';
 import { inicializarSidebarGlobal } from '../componentes/sidebarGlobal.js';
 import { obterStartupAtiva, usuarioEstaAutenticado } from '../servicos/servicoAutenticacao.js';
+import { exibirModalAlerta, exibirModalConfirmacao } from '../componentes/modalGlobal.js';
 import {
     listarEditais,
     alternarFavoritoEdital,
@@ -206,7 +207,7 @@ async function carregarCatalogo() {
 }
 
 function atualizarContadoresLaterais() {
-    const porFonte = { FINEP: 0, FAPESC: 0, FAPESP: 0 };
+    const porFonte = { FINEP: 0, FAPESC: 0, FAPESP: 0, FAPEMIG: 0 };
     let totalFav = 0;
 
     catalogoEditais.forEach((ed) => {
@@ -214,17 +215,20 @@ function atualizarContadoresLaterais() {
         if (org.includes('FINEP')) porFonte.FINEP += 1;
         else if (org.includes('FAPESC')) porFonte.FAPESC += 1;
         else if (org.includes('FAPESP')) porFonte.FAPESP += 1;
+        else if (org.includes('FAPEMIG')) porFonte.FAPEMIG += 1;
         if (ed.favorite) totalFav += 1;
     });
 
     const elFinep = document.getElementById('countFonteFINEP');
     const elFapesc = document.getElementById('countFonteFAPESC');
     const elFapesp = document.getElementById('countFonteFAPESP');
+    const elFapemig = document.getElementById('countFonteFAPEMIG');
     const elFav = document.getElementById('countFavoritosBusca');
 
     if (elFinep) elFinep.textContent = String(porFonte.FINEP);
     if (elFapesc) elFapesc.textContent = String(porFonte.FAPESC);
     if (elFapesp) elFapesp.textContent = String(porFonte.FAPESP);
+    if (elFapemig) elFapemig.textContent = String(porFonte.FAPEMIG);
     if (elFav) elFav.textContent = String(totalFav);
 }
 
@@ -552,13 +556,25 @@ async function enviarParaKanbanComFeedback(editalId, botao) {
 
     try {
         await enviarEditalParaKanban(editalId, nomeStartup);
-        exibirToastFeedback('Edital enviado para o Backlog do Kanban.', {
-            linkHref: 'kanban.html',
-            linkTexto: 'Abrir Kanban'
+        const irParaKanban = await exibirModalConfirmacao({
+            titulo: 'Edital enviado com sucesso',
+            mensagem: `O edital foi vinculado à <strong>${escapeHtml(nomeStartup)}</strong> e adicionado na coluna <strong>Backlog</strong> do Pipeline Kanban. Deseja abrir o quadro agora?`,
+            textoConfirmar: 'Abrir Kanban',
+            textoCancelar: 'Continuar na Busca',
+            corConfirmar: '#10b981',
+            icone: '📋'
         });
+
+        if (irParaKanban) {
+            window.location.href = 'kanban.html';
+        }
     } catch (err) {
         console.error(err);
-        exibirToastFeedback(err.message || 'Falha ao enviar edital para o Kanban.', { tipo: 'erro' });
+        await exibirModalAlerta({
+            titulo: 'Não foi possível enviar',
+            mensagem: err.message || 'Falha ao enviar edital para o Kanban.',
+            tipo: 'erro'
+        });
     } finally {
         if (botao) {
             botao.disabled = false;

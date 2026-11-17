@@ -78,7 +78,13 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
     // Toggle expand/collapse e suporte a drawer no mobile
     const toggleBtn = document.getElementById('toggleSidebar');
     if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
+        // Remove listeners duplicados se houver
+        const novoToggleBtn = toggleBtn.cloneNode(true);
+        toggleBtn.parentNode.replaceChild(novoToggleBtn, toggleBtn);
+
+        novoToggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             if (window.innerWidth <= 900) {
                 abrirOuAlternarMenuMobile();
             } else {
@@ -94,14 +100,18 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
 
     const btnMobileMenu = document.getElementById('btnMobileMenu') || document.getElementById('mobileMenuBtn');
     if (btnMobileMenu) {
-        btnMobileMenu.addEventListener('click', (e) => {
+        const novoBtnMobile = btnMobileMenu.cloneNode(true);
+        btnMobileMenu.parentNode.replaceChild(novoBtnMobile, btnMobileMenu);
+
+        novoBtnMobile.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
             abrirOuAlternarMenuMobile();
         });
     }
 
     // Fechar ao tocar no backdrop
-    backdrop.addEventListener('click', fecharMenuMobile);
+    backdrop.onclick = fecharMenuMobile;
 
     // Fechar ao tocar fora no mobile
     document.addEventListener('click', (e) => {

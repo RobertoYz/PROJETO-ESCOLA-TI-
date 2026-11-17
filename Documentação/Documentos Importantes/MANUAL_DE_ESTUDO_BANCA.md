@@ -245,16 +245,40 @@ AuthController::login valida via Hash::check e gera token pessoal.
 Toda rota subsequente valida o cabeçalho Authorization: Bearer <token>.
 Billing: Integração via AbacatePayService para geração e liquidação de Pix em tempo real, liberando acessos às funcionalidades do painel.
 5.2 Motor de Web Scraping Híbrido com Custo Zero de IA
-Como a FINEP é minerada (FinepSpider.php):
-O portal da FINEP utiliza o CMS corporativo Liferay com renderização assíncrona.
-A Solução: Ao invés de raspar HTML visual sujeito a falhas de paginação, usamos o Browsershot (Puppeteer/Chromium) para injetar um script que invoca a API interna /o/c/chamadapublicas.
-Resultado: Captura limpa de mais de 470 editais em formato JSON nativo com 100% de precisão de datas e links.
-Como FAPESP e FAPESC são mineradas (FapespSpider.php e FapeScSpider.php):
-Estendem a classe abstrata BaseSpider.
-Utilizam seletores semânticos XPath:
 
-$nodes = $response->filterXPath('//div[contains(@class, "chamada-item")]');
-Justificativa para a Banca: O XPath navega na árvore hierárquica do DOM independentemente de regras visuais de CSS, garantindo imunidade a mudanças de estilo do portal do governo.
+A coleta automatizada de editais é executada pela camada de Spiders (baseada no framework RoachPHP e arquitetura em Pipeline de Processamento). Cada agência de fomento pública adota uma tecnologia de portal web distinta, demandando estratégias de engenharia de raspagem sob medida:
+
+1. FINEP (FinepSpider.php) — Abordagem Híbrida: API REST Liferay + Fallback Headless Chrome:
+   - Desafio Técnico: O portal oficial da FINEP roda sobre o CMS Liferay corporativo, que renderiza dados de forma assíncrona.
+   - Solução em Código:
+     a) Rota Primária (Ultra Rápida): O Spider realiza requisições diretas à API REST Liferay (`https://www.finep.gov.br/o/c/chamadapublicas?sort=dataDePublicacao:desc&pageSize=250`) com paginação automática.
+     b) Rota de Contingência (Headless Chrome): Caso a chamada direta seja bloqueada por WAF ou desafios de sessão, o Spider aciona o `Browsershot::url($url)` (Puppeteer / Chromium sem interface visual), injetando uma Promise JavaScript no contexto do navegador com headers da sessão para retornar o JSON compilado.
+   - Resultado: Mais de 470 chamadas públicas indexadas com 100% de integridade estrutural em segundos.
+
+2. FAPEMIG - Minas Gerais (FapemigSpider.php) — SSR Nuxt.js, Regex e Subpáginas:
+   - Desafio Técnico: O novo portal da FAPEMIG (`fapemig.br`) foi construído com Vue.js / Nuxt.js com renderização Server-Side (SSR) e hidratação dinâmica no cliente. Os anexos (PDFs oficiais) residem em um subdomínio de backend WordPress (`api.site.fapemig.br/wp-content/uploads/`) com URLs codificadas em Unicode (`\\u002F`).
+   - Solução em Código:
+     a) Captura e desduplicação de slugs das chamadas através de expressões regulares avançadas no HTML inicial.
+     b) Navegação profunda (Deep Crawling): O Spider dispara requisições HTTP individuais para cada chamada (`/oportunidades/chamadas-e-editais/{slug}`), extraindo com Regex o título oficial, valor máximo em R$ (com multiplicadores "milhões" e "mil"), datas de lançamento, submissão e previsão de resultado.
+     c) Decodificação e saneamento de URLs de anexos: Normaliza caracteres Unicode (`\u002F` ➔ `/`), filtra extensões (`.pdf`, `.docx`), remove hashes de upload e identifica automaticamente o PDF principal do edital.
+     d) Normalizador de Datas em Português Extenso (`converterDataExtensoOuBr`): Converte formatos como "12 de fev. de 2027" ou "16 de novembro de 2026" para o padrão ISO `Y-m-d` do banco de dados MySQL.
+
+3. FAPESC (FapeScSpider.php) e FAPESP (FapespSpider.php) — DomCrawler & Seleção Semântica XPath:
+   - Desafio Técnico: Portais baseados em CMS tradicionais (WordPress / Elementor / listas HTML estáticas).
+   - Solução em Código:
+     - Utilizam o componente `Symfony\Component\DomCrawler\Crawler` navegando por XPath semântico (`filterXPath('//ul[contains(@class, "list")]/li')` e `filterXPath('//div[contains(@class, "upk-item")]')`).
+     - Imunidade visual: O XPath mapeia a hierarquia lógica dos nós DOM independentemente de regras de layout ou classes cosméticas de CSS.
+
+4. Pipeline de Processamento e Idempotência (SalvarNoBancoProcessor.php):
+   - Cada Spider emite dados via `yield $this->item([...])` (PHP Generator lazy, que consome memória próxima de zero).
+   - O item passa pelo `SalvarNoBancoProcessor`, que executa:
+     ```php
+     Edital::updateOrCreate(
+         ['external_id' => $item->get('external_id')],
+         $item->all()
+     );
+     ```
+   - O `external_id` é computado como um hash criptográfico determinístico `md5(titulo + url)` (ou ID nativo do órgão). Isso garante idempotência matemática estrita: reexecutar a sincronização 100 vezes atualiza editais vigentes sem criar uma única duplicata no banco.
 5.3 Extração e Processamento de PDFs de Editais (PdfExtractorService.php)
 Desafio: Editais de inovação são PDFs de 30 a 120 páginas.
 Solução Custo Zero: Leitura do fluxo de bytes usando smalot/pdfparser. O texto bruto passa por Expressões Regulares (Regex) compiladas para identificar:
@@ -342,16 +366,49 @@ Resposta Ideal:
 "Adotamos a arquitetura de Multi-tenancy Lógico via chave estrangeira startup_id. O frontend dispõe de um módulo unificado de contexto de startup (seletorGlobalStartup.js) que sincroniza a empresa ativa e valida a existência desse contexto no carregamento das views. Todas as chamadas ao Kanban, pipeline de oportunidades, histórico de minutas e cálculo de aderência passam obrigatoriamente pelo identificador da startup ativa. No backend, as consultas Eloquent filtram com cláusulas where('startup_id', ...) garantindo que um consultor ou empresa nunca acesse minutas ou cards de outros clientes."
 P8: "Como os diferentes Spiders funcionam codicamente na prática? Como o código lida com portais tão distintos?"
 Resposta Ideal (com detalhes de código):
-"Nossos robôs de coleta herdam do framework RoachPHP (BasicSpider / AbstractSpider) e resolvem a heterogeneidade da web com estratégias sob medida no código:
-FINEP (FinepSpider.php) — Browsershot & Context Injection:
-O desafio de código: O portal da FINEP roda sobre Liferay, gerando tokens de sessão CSRF dinâmicos e carregando dados via SPA assíncrona. Uma chamada HTTP padrão (cURL/Guzzle) recebe erro 403 Forbidden.
-A solução em código: Instanciamos o Browsershot::url($url) (Headless Chrome via Puppeteer). Injetamos um script JavaScript assíncrono (new Promise(async (resolve) => ...)) que executa dentro do contexto do navegador autenticado, dispara os fetch() das APIs internas da FINEP paginadas e retorna um JSON unificado com os editais já resolvidos.
-FAPESC (FapeScSpider.php) e FAPESP (FapespSpider.php) — DomCrawler & Seleção Semântica:
-O desafio de código: São portais baseados em CMS (ex: WordPress com Elementor/Ultimate Post Kit), com marcação HTML direta sem necessidade de rodar JavaScript pesado.
-A solução em código: O método parse(Response $response) recebe a resposta e utiliza o componente Symfony\Component\DomCrawler\Crawler. Realiza queries estruturadas como $response->filter('.upk-list-wrap .upk-item'). Em seguida, itera nó a nó (new Crawler($node)) extraindo título, link (attr('href')) e metadados de forma defensiva, validando nós com ->count() antes de tentar a leitura para evitar quebras em nós vazios.
-Pipeline de Persistência e Idempotência (SalvarNoBancoProcessor.php):
-Quando cada Spider faz o yield $this->item([...]), ele emite um Generator lazy (sem sobrecarregar a memória RAM).
-O Roach encaminha o item para o SalvarNoBancoProcessor, que executa o Edital::updateOrCreate(['external_id' => $dados['external_id']], [...]), onde o external_id é gerado como um hash md5(título + link). Isso garante idempotência matemática estrita: rodar o spider 10 vezes atualiza dados sem criar duplicatas no banco de dados."
+"Nossos robôs de coleta herdam da classe abstrata BaseSpider (framework RoachPHP / BasicSpider) e resolvem a heterogeneidade da web com estratégias de engenharia de dados sob medida no código:
+
+1. FINEP (FinepSpider.php) — API REST Direta com Fallback em Headless Chrome (Browsershot):
+- O desafio: O portal da FINEP roda sobre Liferay corporativo, com dados carregados dinamicamente via chamadas assíncronas.
+- A solução em código: O spider tenta primeiramente uma requisição HTTP direta à API interna REST (`/o/c/chamadapublicas?sort=dataDePublicacao:desc&pageSize=250`). Se a chamada direta falhar ou exigir sessão ativa, o spider ativa o fallback com `Browsershot::url($url)` (Headless Chrome via Puppeteer). Ele injeta uma Promise assíncrona JavaScript diretamente no navegador que consome as APIs internas com os cookies da sessão e retorna o JSON paginado pronto.
+
+2. FAPEMIG - Minas Gerais (FapemigSpider.php) — SSR Nuxt.js, Regex de Extração e Crawling Profundo:
+- O desafio: O portal oficial de MG (`fapemig.br`) foi construído com Vue/Nuxt.js com SSR. Os anexos (PDFs oficiais) ficam hospedados em um subdomínio de backend WordPress (`api.site.fapemig.br/wp-content/uploads/`) com links em Unicode escapado (`\\u002F`).
+- A solução em código:
+  a) Captura os slugs das oportunidades a partir do HTML ou do estado SSR (`preg_match_all`).
+  b) Para cada slug, dispara um `Http::timeout(15)->get(...)` individual para a página da chamada (Deep Crawling).
+  c) Extrai com Regex compiladas: orçamento máximo em R$ (tratando sufixos 'milhões' ou 'mil'), datas de abertura, encerramento e resultado, público-alvo e objetivo.
+  d) Decodifica URLs de anexos Unicode (`\u002F` -> `/`), sanitiza o nome dos arquivos e identifica o PDF principal do edital.
+  e) O método `converterDataExtensoOuBr` traduz datas textuais em português (ex: '12 de fev. de 2027') para `Y-m-d` compatível com o MySQL.
+
+3. FAPESC (FapeScSpider.php) e FAPESP (FapespSpider.php) — DomCrawler & Seleção Semântica XPath:
+- O desafio: São portais de CMS tradicional (WordPress / Elementor) com HTML estático renderizado diretamente no servidor.
+- A solução em código: O método `parse(Response $response)` recebe a resposta e utiliza o componente `Symfony\Component\DomCrawler\Crawler`. Realiza queries estruturadas como `$response->filterXPath('//ul[contains(@class, "list")]/li')` e `$response->filterXPath('//div[contains(@class, "upk-item")]')`. Em seguida, itera nó a nó (`new Crawler($node)`) extraindo título, link (`attr('href')`) e metadados de forma defensiva, validando nós com `->count()` antes de tentar a leitura para evitar quebras em nós vazios.
+
+4. Pipeline de Persistência e Idempotência (SalvarNoBancoProcessor.php):
+- Quando cada Spider faz o `yield $this->item([...])`, ele emite um Generator lazy (sem sobrecarregar a memória RAM).
+- O Roach encaminha o item para o `SalvarNoBancoProcessor`, que executa:
+  `Edital::updateOrCreate(['external_id' => $dados['external_id']], $item->all());`
+  onde o `external_id` é gerado como um hash `md5(título + link)` ou ID oficial. Isso garante idempotência matemática estrita: rodar o spider 10 vezes atualiza dados sem criar duplicatas no banco de dados."
+
+P8.1: "Se o portal da agência (FAPESC, FINEP ou FAPEMIG) mudar o layout do site, o que acontece com o sistema? Como tratar manutenibilidade?"
+Resposta Ideal:
+"Esta é uma questão clássica de engenharia de raspagem. Adotamos 4 salvaguardas arquiteturais:
+1. Desacoplamento via BaseSpider: Toda a lógica de higienização de texto, normalização de datas e persistência idempotente reside em `BaseSpider` e `SalvarNoBancoProcessor`. Se um site mudar de layout, apenas o Spider específico daquela agência precisa ter seu seletor ajustado; o restante do sistema permanece 100% operacional.
+2. Fallback Híbrido: Na FINEP, alternamos entre API REST e Puppeteer. Na FAPEMIG, alternamos entre regex de HTML, captura de JSON de hidratação do Nuxt e crawling de subpáginas.
+3. Tratamento Defensivo com `try/catch` por item: Se um edital específico dentro da listagem estiver com marcação quebrada, o spider captura a exceção (`\Throwable`), registra no log e continua o loop para os demais 50 editais sem abortar a sincronização.
+4. Camada de Enriquecimento por PDF (`ProcessarPdfEditaisCommand`): Mesmo que o portal web traga apenas um resumo superficial, o extrator de PDF do backend baixa o edital na íntegra e extrai prazos, valores e anexos diretamente do arquivo oficial usando Regex no texto original."
+
+P8.2: "O Web Scraping de editais públicos é legal? Não viola termos de uso ou a LGPD?"
+Resposta Ideal:
+"Sim, é 100% legal e amparado pela legislação brasileira. De acordo com a Lei de Acesso à Informação (Lei nº 12.527/2011 - LAI) e o Princípio Constitucional da Publicidade (Art. 37 da CF/88), editais e chamadas públicas de fomento são atos administrativos governamentais de domínio estritamente público e transparência ativa. O sistema não raspa dados pessoais de cidadãos nem viola credenciais de acesso fechado (não há quebra de autenticação privada). Além disso, nossos Spiders operam com concorrência baixa (`$concurrency = 1`) e respeitam intervalos de requisição, não causando nenhuma sobrecarga de Denial of Service (DoS) aos servidores governamentais."
+
+P8.3: "Por que usar o RoachPHP ao invés de simplesmente usar `file_get_contents` ou cURL direto?"
+Resposta Ideal:
+"Usar cURL avulso em scripts soltos cria código espaguete e viola princípios fundamentais de engenharia de software (Clean Code e SOLID). O RoachPHP é um framework inspirado no Scrapy do Python, que nos fornece:
+1. Arquitetura de Pipelines de Dados: Separação clara entre Coleta (`Spider`), Transformação/Middleware e Persistência (`ItemProcessor`).
+2. Gerenciamento Assíncrono com Generators do PHP: O uso de `yield` permite iterar por centenas de editais sem alocar arrays gigantescos na memória RAM do servidor.
+3. Injeção de Dependências e Integração Nativa com Laravel: Permite acionar spiders via comandos de console (`php artisan roach:run FapemigSpider`) ou agendá-los no cron (`app/Console/Kernel.php`) com monitoramento integrado."
 P9: "No diagrama de classes e ER, por que MINUTAS tem um auto-relacionamento (parent_minuta_id) e usa colunas JSON em vez de tabelas normalizadas para as seções?"
 Resposta Ideal (Engenharia de Dados e Diagramas):
 "Essa decisão de modelagem foi tomada para equilibrar integridade relacional com flexibilidade e auditoria jurídica estrita:
@@ -417,7 +474,9 @@ Mecanismo de Auto-recuperação (Self-Healing): Diante de oscilações na entreg
 
 1.5 Padrão Adapter e Resiliência na Integração de Terceiros
 Padrão Adapter (CnpjService): Normaliza payloads heterogêneos originados de múltiplos provedores públicos (BrasilAPI e ReceitaWS) em um DTO canônico perfeitamente compatível com o domínio da aplicação.
-Resiliência com Fallback Automático: Em cenários de degradação da API primária (erros HTTP 5xx ou timeout superior a 8 segundos), a camada de serviço redireciona a requisição instantaneamente para o provedor secundário de contingência.
+Resiliência com Fallback Automático: Em cenários de degradação da API primária (erros HTTP 5xx ou tim
+
+eout superior a 8 segundos), a camada de serviço redireciona a requisição instantaneamente para o provedor secundário de contingência.
 
 1.6 Otimizações de Desempenho: Fail-Fast e Cache-Aside
 Validação Local Fail-Fast: A regra customizada CnpjValidationRule realiza a verificação aritmética matemática dos dígitos verificadores (Módulo 11) diretamente em memória, descartando padrões inválidos antes de realizar requisições desnecessárias aos webservices públicos.

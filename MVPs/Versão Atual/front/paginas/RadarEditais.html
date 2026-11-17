@@ -37,7 +37,7 @@
                         </svg>
                     </div>
                     <span class="page-brand-title">Radar de Editais</span>
-                    <span class="page-brand-badge">Monitoramento</span>
+                    <span class="page-brand-badge">Oportunidades</span>
                 </div>
                 <button id="btnAlternarTema" class="theme-toggle-btn" type="button" aria-label="Alternar tema claro e escuro" title="Alternar tema">
                     <svg id="iconeSol" style="display: none;" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -64,7 +64,7 @@
             <div class="radar-pulse-strip">
                 <div class="radar-heading-group">
                     <h1 class="radar-heading-title">Radar de oportunidades</h1>
-                    <p class="radar-heading-sub" id="radarStartupSub">Monitoramento contínuo das chamadas da FINEP, FAPESC e FAPESP</p>
+                    <p class="radar-heading-sub" id="radarStartupSub">Monitoramento contínuo das chamadas da FINEP, FAPESC, FAPESP e FAPEMIG</p>
                 </div>
                 <div class="radar-pulse-metrics" aria-label="Resumo numérico do radar">
                     <div class="pulse-metric-item">
@@ -90,6 +90,7 @@
                         <button type="button" class="lens-pill" data-lens="FINEP">FINEP</button>
                         <button type="button" class="lens-pill" data-lens="FAPESC">FAPESC</button>
                         <button type="button" class="lens-pill" data-lens="FAPESP">FAPESP</button>
+                        <button type="button" class="lens-pill" data-lens="FAPEMIG">FAPEMIG</button>
                     </div>
 
                     <select id="radarFilter" class="sr-only-select" aria-label="Filtro de fonte do radar" onchange="fetchEditais()">
@@ -98,6 +99,7 @@
                         <option value="FINEP">FINEP</option>
                         <option value="FAPESC">FAPESC</option>
                         <option value="FAPESP">FAPESP</option>
+                        <option value="FAPEMIG">FAPEMIG (Minas Gerais)</option>
                     </select>
 
                     <div class="radar-controls-right">

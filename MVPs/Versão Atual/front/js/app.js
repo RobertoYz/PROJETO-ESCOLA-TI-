@@ -1,6 +1,7 @@
 import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
 import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
 import { obterStartupAtiva, usuarioEstaAutenticado } from '../scripts/servicos/servicoAutenticacao.js';
+import { exibirModalAlerta, exibirModalConfirmacao } from '../scripts/componentes/modalGlobal.js';
 import {
     listarEditais,
     alternarFavoritoEdital,
@@ -54,8 +55,8 @@ function atualizarSubtituloStartup() {
     if (!subEl) return;
     const startupAtiva = obterStartupAtiva();
     subEl.textContent = startupAtiva?.nome
-        ? `Monitoramento ativo para ${startupAtiva.nome} — FINEP, FAPESC e FAPESP`
-        : 'Monitoramento contínuo das chamadas da FINEP, FAPESC e FAPESP';
+        ? `Monitoramento ativo para ${startupAtiva.nome} — FINEP, FAPESC, FAPESP e FAPEMIG`
+        : 'Monitoramento contínuo das chamadas da FINEP, FAPESC, FAPESP e FAPEMIG';
 }
 
 function initUI() {
@@ -88,7 +89,11 @@ function initUI() {
     const btnSendToKanban = document.getElementById('btnSendToKanban');
     btnSendToKanban?.addEventListener('click', async () => {
         if (!selectedId) {
-            exibirToastFeedback('Selecione um edital antes de enviar para o Kanban.', { tipo: 'erro' });
+            await exibirModalAlerta({
+                titulo: 'Seleção necessária',
+                mensagem: 'Por favor, selecione um edital na lista antes de enviar para o Kanban.',
+                tipo: 'aviso'
+            });
             return;
         }
 
@@ -101,13 +106,25 @@ function initUI() {
 
         try {
             await enviarEditalParaKanban(selectedId, nomeStartup);
-            exibirToastFeedback('Edital adicionado ao Backlog do Kanban.', {
-                linkHref: 'kanban.html',
-                linkTexto: 'Abrir Kanban'
+            const irParaKanban = await exibirModalConfirmacao({
+                titulo: 'Edital enviado com sucesso',
+                mensagem: `O edital foi vinculado à <strong>${escapeHtml(nomeStartup)}</strong> e adicionado na coluna <strong>Backlog</strong> do Pipeline Kanban. Deseja abrir o quadro agora?`,
+                textoConfirmar: 'Abrir Kanban',
+                textoCancelar: 'Continuar no Radar',
+                corConfirmar: '#10b981',
+                icone: '📋'
             });
+
+            if (irParaKanban) {
+                window.location.href = 'kanban.html';
+            }
         } catch (err) {
             console.error(err);
-            exibirToastFeedback(err.message || 'Não foi possível enviar o edital ao Kanban.', { tipo: 'erro' });
+            await exibirModalAlerta({
+                titulo: 'Não foi possível enviar',
+                mensagem: err.message || 'Falha de comunicação com o servidor ao tentar enviar para o Kanban.',
+                tipo: 'erro'
+            });
         } finally {
             btnSendToKanban.textContent = originalText;
             btnSendToKanban.disabled = false;

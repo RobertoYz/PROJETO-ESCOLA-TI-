@@ -100,6 +100,7 @@ export function obterClasseAgencia(org) {
     if (sigla.includes('FINEP')) return 'agency-finep';
     if (sigla.includes('FAPESP')) return 'agency-fapesp';
     if (sigla.includes('FAPESC')) return 'agency-fapesc';
+    if (sigla.includes('FAPEMIG')) return 'agency-fapemig';
     return 'agency-default';
 }
 
@@ -154,7 +155,7 @@ export function inicializarAlternadorTema() {
     }
 
     const temaSalvo = localStorage.getItem('tema_preferido');
-    aplicarTema(temaSalvo === 'dark');
+    aplicarTema(temaSalvo !== 'light');
 
     btnTema?.addEventListener('click', () => {
         aplicarTema(!document.body.classList.contains('dark-mode'));

@@ -37,6 +37,8 @@
     --tag-fapesp-bg: rgba(5, 150, 105, 0.1);
     --tag-fapesc: #6D28D9;
     --tag-fapesc-bg: rgba(109, 40, 217, 0.1);
+    --tag-fapemig: #B45309;
+    --tag-fapemig-bg: rgba(180, 83, 9, 0.1);
 
     --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
     --shadow-drawer: -12px 0 40px rgba(15, 23, 42, 0.14);
@@ -80,6 +82,8 @@ body.dark-mode {
     --tag-fapesp-bg: rgba(52, 211, 153, 0.13);
     --tag-fapesc: #A78BFA;
     --tag-fapesc-bg: rgba(167, 139, 250, 0.14);
+    --tag-fapemig: #FBBF24;
+    --tag-fapemig-bg: rgba(251, 191, 36, 0.14);
 
     --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.28);
     --shadow-drawer: -16px 0 48px rgba(0, 0, 0, 0.65);
@@ -451,6 +455,11 @@ body:not(.dark-mode) .user-section-global .avatar {
 .agency-fapesc {
     color: var(--tag-fapesc);
     background: var(--tag-fapesc-bg);
+}
+
+.agency-fapemig {
+    color: var(--tag-fapemig);
+    background: var(--tag-fapemig-bg);
 }
 
 .agency-default {
@@ -1724,6 +1733,10 @@ tr.selected td:first-child {
 @media (max-width: 900px) {
     .radar-shell-head {
         padding: 12px 12px 0 12px;
+    }
+
+    .radar-shell-head .radar-top-bar {
+        padding: 0 !important;
     }
 
     .radar-pulse-metrics {
