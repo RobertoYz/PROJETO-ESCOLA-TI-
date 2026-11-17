@@ -1,6 +1,7 @@
 import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
 import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
 import { obterStartupAtiva, usuarioEstaAutenticado } from '../scripts/servicos/servicoAutenticacao.js';
+import { exibirModalAlerta, exibirModalConfirmacao } from '../scripts/componentes/modalGlobal.js';
 
 // Guard de autenticação: redireciona para login se não houver token
 if (!usuarioEstaAutenticado()) {
@@ -10,7 +11,16 @@ if (!usuarioEstaAutenticado()) {
 let mockEditais = [];
 let selectedId = null;
 
-const API_BASE_URL = localStorage.getItem('api_base_url_custom') || 'https://anjonexus.intalenti.com.br/api';
+const ehDevNavegadorLocal = typeof window !== 'undefined' &&
+    window.location.protocol === 'http:' &&
+    (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') &&
+    (window.location.port !== '');
+
+const URL_PADRAO = ehDevNavegadorLocal
+    ? 'http://127.0.0.1:8000/api'
+    : 'https://anjonexus.intalenti.com.br/api';
+
+const API_BASE_URL = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
 
 // ==========================================
 // INICIALIZAÇÃO DA APLICAÇÃO
@@ -44,7 +54,11 @@ function initUI() {
     if (btnSendToKanban) {
         btnSendToKanban.addEventListener('click', async () => {
             if (!selectedId) {
-                alert('Selecione um edital primeiro para enviar ao Kanban.');
+                await exibirModalAlerta({
+                    titulo: 'Seleção Necessária',
+                    mensagem: 'Por favor, selecione um edital na lista antes de enviar para o Kanban.',
+                    tipo: 'aviso'
+                });
                 return;
             }
 
@@ -69,15 +83,32 @@ function initUI() {
 
                 const data = await res.json();
                 if (res.ok) {
-                    if (confirm('Edital enviado com sucesso para a coluna Backlog do Kanban! Deseja abrir o quadro agora?')) {
+                    const irParaKanban = await exibirModalConfirmacao({
+                        titulo: 'Edital Enviado com Sucesso!',
+                        mensagem: `O edital foi vinculado à <strong>${nomeStartup}</strong> e adicionado na coluna <strong>Backlog</strong> do Pipeline Kanban. Deseja abrir o quadro agora?`,
+                        textoConfirmar: 'Abrir Kanban',
+                        textoCancelar: 'Continuar no Radar',
+                        corConfirmar: '#10b981',
+                        icone: '📋'
+                    });
+
+                    if (irParaKanban) {
                         window.location.href = 'kanban.html';
                     }
                 } else {
-                    alert('Falha ao enviar edital ao Kanban: ' + (data.message || 'Erro desconhecido.'));
+                    await exibirModalAlerta({
+                        titulo: 'Não Foi Possível Enviar',
+                        mensagem: data.message || 'Ocorreu um erro ao vincular o edital ao Kanban.',
+                        tipo: 'erro'
+                    });
                 }
             } catch (err) {
                 console.error(err);
-                alert('Erro de comunicação com a API ao enviar ao Kanban.');
+                await exibirModalAlerta({
+                    titulo: 'Erro de Conexão',
+                    mensagem: 'Falha de comunicação com o servidor ao tentar enviar para o Kanban. Verifique sua conexão.',
+                    tipo: 'erro'
+                });
             } finally {
                 btnSendToKanban.textContent = originalText;
                 btnSendToKanban.disabled = false;

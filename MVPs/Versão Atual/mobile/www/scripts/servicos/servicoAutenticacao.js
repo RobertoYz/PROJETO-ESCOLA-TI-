@@ -42,7 +42,7 @@ export function obterUsuarioLogado() {
     const nomeSalvo = localStorage.getItem(CHAVE_USUARIO_NOME);
     const emailSalvo = localStorage.getItem(CHAVE_USUARIO_EMAIL);
     if (nomeSalvo || emailSalvo) {
-        return { name: nomeSalvo || '', email: emailSalvo || '' };
+        return { name: nomeSalvo || '', email: emailSalvo || '', perfil_acesso: 'consultor_admin' };
     }
 
     try {
@@ -101,7 +101,7 @@ export async function atualizarPerfilUsuario(dados) {
             });
             return {
                 status: 'sucesso',
-                mensagem: 'Perfil atualizado com sucesso!',
+                message: 'Perfil atualizado com sucesso!',
                 usuario: obterUsuarioLogado()
             };
         }
@@ -134,10 +134,10 @@ export async function registrarComPlano(dados) {
     if (dados?.email) {
         salvarEmailPendencia(dados.email);
     }
-    if (resposta?.agencia || resposta?.checkout_url || resposta?.url_checkout) {
+    if (resposta?.agencia || resposta?.url_checkout) {
         salvarAgenciaPendencia({
             ...(resposta.agencia || {}),
-            checkout_url: resposta.checkout_url || resposta.url_checkout || resposta.agencia?.checkout_url || null
+            url_checkout: resposta.url_checkout || resposta.agencia?.url_checkout || null
         });
     }
     return resposta;
@@ -195,6 +195,16 @@ export async function cancelarCadastroPendente() {
         body: JSON.stringify({
             email: email || undefined,
             token_pendencia: tokenPend || undefined
+        })
+    });
+}
+
+export async function cancelarContaDefinitivamente({ password, ciente_lgpd = true }) {
+    return await requisicaoApi('/conta/cancelar', {
+        method: 'DELETE',
+        body: JSON.stringify({
+            password,
+            ciente_lgpd: Boolean(ciente_lgpd)
         })
     });
 }
@@ -287,4 +297,18 @@ export function limparStartupAtiva() {
 
 export function possuiStartupSelecionada() {
     return Boolean(localStorage.getItem(CHAVE_STARTUP_ID));
+}
+
+export async function solicitarRecuperacaoSenha(email) {
+    return await requisicaoApi('/auth/esqueci-senha', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+    });
+}
+
+export async function redefinirSenha(dados) {
+    return await requisicaoApi('/auth/redefinir-senha', {
+        method: 'POST',
+        body: JSON.stringify(dados)
+    });
 }

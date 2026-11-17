@@ -7,6 +7,7 @@ use RoachPHP\Roach;
 use App\Spiders\FinepSpider;
 use App\Spiders\FapespSpider;
 use App\Spiders\FapeScSpider;
+use App\Spiders\FapemigSpider;
 use App\Models\Edital;
 
 class SyncAllEditais extends Command
@@ -16,14 +17,14 @@ class SyncAllEditais extends Command
      *
      * @var string
      */
-    protected $signature = 'editais:sync {--fonte= : Especifica a fonte para sincronizar (FINEP, FAPESP, FAPESC)}';
+    protected $signature = 'editais:sync {--fonte= : Especifica a fonte para sincronizar (FINEP, FAPESP, FAPESC, FAPEMIG)}';
 
     /**
      * A descrição do comando de console.
      *
      * @var string
      */
-    protected $description = 'Sincroniza os editais dos portais FINEP, FAPESP e FAPESC no banco de dados';
+    protected $description = 'Sincroniza os editais dos portais FINEP, FAPESP, FAPESC e FAPEMIG no banco de dados';
 
     /**
      * Executa o comando de console.
@@ -62,12 +63,23 @@ class SyncAllEditais extends Command
 
         // 3. FAPESC
         if (empty($fonte) || $fonte === 'FAPESC') {
-            $this->warn("\n[3/3] Rodando Spider FAPESC...");
+            $this->warn("\n[3/4] Rodando Spider FAPESC...");
             try {
                 Roach::startSpider(FapeScSpider::class);
                 $this->info("✔ FAPESC sincronizado com sucesso!");
             } catch (\Throwable $e) {
                 $this->error("✖ Erro ao sincronizar FAPESC: " . $e->getMessage());
+            }
+        }
+
+        // 4. FAPEMIG
+        if (empty($fonte) || $fonte === 'FAPEMIG') {
+            $this->warn("\n[4/4] Rodando Spider FAPEMIG...");
+            try {
+                Roach::startSpider(FapemigSpider::class);
+                $this->info("✔ FAPEMIG sincronizado com sucesso!");
+            } catch (\Throwable $e) {
+                $this->error("✖ Erro ao sincronizar FAPEMIG: " . $e->getMessage());
             }
         }
 
