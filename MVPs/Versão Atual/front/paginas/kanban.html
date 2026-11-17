@@ -1007,17 +1007,18 @@
                         docsList.innerHTML = '';
                         docs.forEach(d => {
                             const docItem = document.createElement('div');
-                            docItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; color: #e0e0e0;';
+                            docItem.className = 'modal-doc-item';
+                            docItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface-hover); border: 1px solid var(--border-subtle); padding: 9px 14px; border-radius: 8px; font-size: 0.88rem; color: var(--text-main); font-weight: 500;';
 
                             const tituloDoc = typeof d === 'string' ? d : (d.titulo || d.nome || d.title || d.texto || 'Documento Exigido');
                             const linkDoc = typeof d === 'object' && d.link && d.link !== '#' ? d.link : null;
 
                             docItem.innerHTML = `
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="color: #10b981; font-weight: bold;">✔</span>
-                                    <span>${tituloDoc}</span>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="color: #10b981; font-weight: bold; font-size: 1rem;">✔</span>
+                                    <span style="color: var(--text-main);">${tituloDoc}</span>
                                 </div>
-                                ${linkDoc ? `<a href="${linkDoc}" target="_blank" style="color: var(--accent-purple); text-decoration: none; font-size: 0.8rem; margin-left: 10px;">Ver anexo ↗</a>` : ''}
+                                ${linkDoc ? `<a href="${linkDoc}" target="_blank" style="color: var(--accent-action); font-weight: 600; text-decoration: none; font-size: 0.82rem;">Baixar / Ver ↗</a>` : ''}
                             `;
                             docsList.appendChild(docItem);
                         });
