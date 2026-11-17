@@ -13,20 +13,29 @@
 
 ---
 
-## ⏱️ Minuto 2: A Arquitetura em 3 Pilares
-> *"Tecnicamente, o sistema foi estruturado sobre três pilares de engenharia de software:*
+## ⏱️ Minuto 2: A Arquitetura em 4 Pilares Técnicos (com Explicação de Código)
+> *"Tecnicamente, o sistema foi estruturado sobre quatro pilares sólidos de engenharia de software:*
 >
-> 1. **Coleta Inteligente com Custo Zero de IA (Web Scraping):**
->    - *Spiders automatizados em RoachPHP minerando mais de 580 editais ativos (FINEP, FAPESC, FAPESP e FAPEMIG).*
->    - *Uso de API REST interna e Puppeteer (Browsershot) para portais assíncronos e seletores XPath para páginas em CMS.*
->    - *Parser local determinístico de PDFs que extrai orçamentos, datas e anexos sem gastar tokens de IA.*
+> 1. **Coleta Inteligente com Custo Zero de IA (Web Scraping com Spiders):**
+>    - *Herança de `BaseSpider` (framework RoachPHP / Scrapy do PHP), minerando mais de 580 editais ativos (FINEP, FAPESC, FAPESP e FAPEMIG).*
+>    - **FINEP (`FinepSpider.php`):** *Faz requisições diretas à API REST Liferay (`/o/c/chamadapublicas`) com paginação; possui fallback com `Browsershot::url($url)` (Puppeteer / Headless Chrome) injetando script JS autenticado no navegador quando há bloqueio de sessão.*
+>    - **FAPEMIG (`FapemigSpider.php`):** *Lida com SSR Nuxt.js. Captura slugs de chamadas por Regex, faz Deep Crawling nas subpáginas e decodifica URLs de anexos em Unicode (`\\u002F` ➔ `/`). O método `converterDataExtensoOuBr` converte datas textuais (ex: '12 de fev. de 2027') para o padrão ISO `Y-m-d` do MySQL.*
+>    - **FAPESC e FAPESP (`FapeScSpider.php` / `FapespSpider.php`):** *Utilizam `Symfony\Component\DomCrawler\Crawler` com XPath semântico (`filterXPath('//ul[contains(@class, "list")]/li')`). O XPath mapeia a hierarquia dos nós do DOM, sendo imune a mudanças de layout ou CSS.*
+>    - **Pipeline e Idempotência (`SalvarNoBancoProcessor.php`):** *Usa PHP Generators (`yield $this->item(...)`) para consumo mínimo de memória RAM. O processador executa `Edital::updateOrCreate(['external_id' => $hash], $dados)`, onde o hash `md5(titulo + url)` garante que rodar o spider 100 vezes atualiza os registros sem duplicatas no banco.*
 >
-> 2. **Gestão Visual e Operacional (Pipeline Kanban & Multi-tenancy):**
+> 2. **Canal Mobile Nativo com Capacitor (`Capacitor 7 + Android Studio/Gradle`):**
+>    - *Como funciona o Capacitor:* *O Capacitor atua como uma ponte (bridge nativa) entre o código Web desacoplado (HTML5/CSS3/Vanilla JS) e os runtimes nativos (Android WebView / Java / Kotlin).*
+>    - *Configuração (`capacitor.config.json`):* *Mapeia o diretório web `webDir: "www"`, apontando para a pasta sincronizada do front.*
+>    - *Sincronização (`npx @capacitor/cli sync android`):* *Copia os assets web para `android/app/src/main/assets/public` e atualiza plugins nativos.*
+>    - *Pipeline de CI/CD (GitHub Actions `.github/workflows/build-apk.yml`):* *Compila automaticamente em container Ubuntu (Node.js 20 + Java JDK 21 Zulu + Android SDK 35) via `./gradlew assembleDebug`, gerando o binário `anjonexus.apk` sem exigir que os desenvolvedores tenham máquinas pesadas com Android Studio instalado.*
+>    - *Ergonomia Mobile (`mobile-adaptive.css`):* *Uso de variáveis CSS para entalhe de câmera e barra de status (`--safe-area-top: env(safe-area-inset-top)`), cards touch com feedback tátil e gaveta lateral de menu com backdrop.*
+>
+> 3. **Gestão Visual e Operacional (Pipeline Kanban & Multi-tenancy):**
 >    - *Esteira Kanban em tempo real para gerenciar o ciclo da proposta (Backlog $\rightarrow$ Em Análise $\rightarrow$ Minuta $\rightarrow$ Submetido).*
->    - *Segregação lógica Multi-Tenant por consultoria (`agencia_id` e `startup_id`), garantindo isolamento total dos dados de clientes.*
->    - *Anexos de arquivos e notas operacionais persistidos de forma leve em colunas JSON.*
+>    - *Segregação lógica Multi-Tenant por consultoria (`agencia_id` e `startup_id`), garantindo isolamento total dos dados de clientes via middleware e escopos do Eloquent.*
+>    - *Anexos de arquivos (PDF, DOCX) e notas operacionais persistidos de forma leve em colunas JSON (`metadata` em `kanban_cards`).*
 >
-> 3. **Co-Piloto de IA com Fallback em Cascata:**
+> 4. **Co-Piloto de IA com Fallback em Cascata:**
 >    - *Algoritmo de Match Inteligente (0% a 100%) cruzando nicho, porte e contrapartida financeira.*
 >    - *Geração automatizada de Minutas Técnicas estruturadas nas 11 seções oficiais exigidas pelos órgãos de fomento.*
 >    - *Resiliência com Fallback em 3 níveis: Google Gemini $\rightarrow$ DeepSeek $\rightarrow$ Motor Determinístico Local, garantindo que o sistema nunca falhe."*
@@ -46,6 +55,8 @@
 
 | Pergunta Típica da Banca | Resposta Direta e Firme |
 | :--- | :--- |
+| **Por que usar o framework RoachPHP nos Spiders e não cURL avulso?** | *O RoachPHP implementa a arquitetura de Pipelines de Dados (como o Scrapy em Python). Ele separa coleta (`Spider`), transformação/filtro e persistência (`SalvarNoBancoProcessor`), usando `yield` (Generators assíncronos) que não estouram a memória RAM ao raspar centenas de editais.* |
+| **Como o Capacitor compila o APK a partir do código Web?** | *O Capacitor não converte HTML em código nativo, ele empacota a aplicação Web em uma WebView de alta performance gerenciada por uma casca nativa em Java/Kotlin (Android). Nossa esteira do GitHub Actions roda `npx @capacitor/cli sync` para sincronizar os arquivos para `android/app/src/main/assets/public` e dispara `./gradlew assembleDebug`, gerando o `.apk` em nuvem.* |
 | **Por que não usaram IA para raspar os sites?** | *Custo proibitivo e risco de alucinação em datas e valores legais. Usamos scraping determinístico para a coleta e reservamos os LLMs apenas para a redação da proposta onde agregam valor real.* |
 | **Por que Vanilla JS e não React?** | *Arquitetura desacoplada e API-First. O backend Laravel 12 é 100% RESTful e stateless. O Vanilla JS garantiu performance máxima, zero overhead de build e facilidade para empacotar como app mobile nativo via Capacitor.* |
 | **E se a API da IA cair ou atingir o limite?** | *Implementamos Fallback em Cascata: se a API primária falhar, aciona a secundária; se não houver internet, nosso motor local gera a proposta com base nas regras de negócio e dados do banco.* |
