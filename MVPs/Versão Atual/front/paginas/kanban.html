@@ -1960,7 +1960,11 @@
                 }
             }
 
-            if (localStorage.getItem('tema_preferido') === 'dark') {
+            // Padrão escuro por padrão alinhado ao RadarEditais
+            const temaSalvo = localStorage.getItem('tema_preferido');
+            if (temaSalvo === 'light') {
+                aplicarTema(false);
+            } else {
                 aplicarTema(true);
             }
 
