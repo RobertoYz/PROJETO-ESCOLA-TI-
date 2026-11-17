@@ -123,6 +123,18 @@ export function editalCorrespondeATermo(edital, termoNormalizado) {
         ? edital.documentos.map((d) => d?.titulo || '').join(' ')
         : '';
 
+    const orgUpper = String(edital.org || '').toUpperCase();
+    const sinonimosRegionais = [];
+    if (orgUpper.includes('FAPEMIG') || String(edital.region || '').toUpperCase() === 'MG') {
+        sinonimosRegionais.push('minas gerais mg estadual');
+    }
+    if (orgUpper.includes('FAPESC') || String(edital.region || '').toUpperCase() === 'SC') {
+        sinonimosRegionais.push('santa catarina sc estadual');
+    }
+    if (orgUpper.includes('FAPESP') || String(edital.region || '').toUpperCase() === 'SP') {
+        sinonimosRegionais.push('sao paulo sp estadual');
+    }
+
     const indice = normalizarTextoBusca([
         edital.name,
         edital.org,
@@ -132,7 +144,8 @@ export function editalCorrespondeATermo(edital, termoNormalizado) {
         edital.nicho,
         edital.trl,
         edital.faturamento,
-        docsTexto
+        docsTexto,
+        sinonimosRegionais.join(' ')
     ].join(' '));
 
     const palavras = termoNormalizado.split(/\s+/).filter(Boolean);

@@ -256,7 +256,20 @@ function aplicarFiltrosERenderizar() {
 
         if (estadoFiltros.abrangencia) {
             const regiaoNorm = normalizarTextoBusca(edital.region || '');
-            if (!regiaoNorm.includes(estadoFiltros.abrangencia)) return false;
+            const orgUpper = String(edital.org || '').toUpperCase();
+            if (estadoFiltros.abrangencia === 'mg') {
+                const ehMg = regiaoNorm === 'mg' || regiaoNorm.includes('minas gerais') || orgUpper.includes('FAPEMIG');
+                if (!ehMg) return false;
+            } else if (estadoFiltros.abrangencia === 'estadual') {
+                const ehEstadual = regiaoNorm.includes('estadual')
+                    || ['mg', 'sp', 'sc'].includes(regiaoNorm)
+                    || orgUpper.includes('FAPEMIG')
+                    || orgUpper.includes('FAPESC')
+                    || orgUpper.includes('FAPESP');
+                if (!ehEstadual) return false;
+            } else if (!regiaoNorm.includes(estadoFiltros.abrangencia)) {
+                return false;
+            }
         }
 
         return true;
@@ -352,7 +365,10 @@ function renderizarChipsAtivos() {
     }
 
     if (estadoFiltros.abrangencia) {
-        adicionarChip(`Abrangência: ${estadoFiltros.abrangencia}`, () => {
+        const rotuloAbrangencia = estadoFiltros.abrangencia === 'mg'
+            ? 'Minas Gerais (MG)'
+            : estadoFiltros.abrangencia;
+        adicionarChip(`Abrangência: ${rotuloAbrangencia}`, () => {
             estadoFiltros.abrangencia = '';
             const sel = document.getElementById('filterAbrangencia');
             if (sel) sel.value = '';
