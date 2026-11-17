@@ -27,7 +27,12 @@ class MinutaController extends Controller
 
         $startup = Startup::findOrFail($request->startup_id);
         $edital = Edital::findOrFail($request->edital_id);
-        $usuario = $request->user();
+        $usuario = $request->user('sanctum') ?? $request->user();
+
+        // Se o usuário não estiver autenticado via Sanctum, tenta recuperar através da startup vinculada à agência
+        if (!$usuario && $startup->agencia_id) {
+            $usuario = User::where('agencia_id', $startup->agencia_id)->first();
+        }
 
         // EDTAN-250: Controle de custos de IA - valida cota de minutas do plano antes de chamar o LLM
         $consumo = $limitService->obterConsumoMinutas($usuario, $startup);

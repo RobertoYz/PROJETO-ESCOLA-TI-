@@ -13,17 +13,17 @@ class MinutaLimitService
     /**
      * EDTAN-250: Calcula o consumo de minutas geradas por IA no ciclo atual pelo plano
      */
-    public function obterConsumoMinutas(User $usuario, ?Startup $startup = null): array
+    public function obterConsumoMinutas(?User $usuario = null, ?Startup $startup = null): array
     {
-        $agencia = $usuario->agencia ?? ($startup ? $startup->agencia : null);
+        $agencia = $usuario?->agencia ?? ($startup ? $startup->agencia : null);
         $plano = $agencia?->plano ?? Plano::find($agencia?->plano_id) ?? Plano::first();
 
         $limite = $plano?->limite_minutas_ia ?? 5;
         $agora = Carbon::now();
         $inicioMes = (clone $agora)->startOfMonth();
 
-        $userIds = $agencia ? $agencia->usuarios()->pluck('id')->toArray() : [$usuario->id];
-        if (empty($userIds)) {
+        $userIds = $agencia ? $agencia->usuarios()->pluck('id')->toArray() : ($usuario ? [$usuario->id] : []);
+        if (empty($userIds) && $usuario) {
             $userIds = [$usuario->id];
         }
 
