@@ -81,6 +81,17 @@ class AlertaPrazoService
             }
 
             // Persiste de forma idempotente: um alerta por usuário + edital + urgência
+            // IMPORTANTE: Não sobrescreve o campo 'lido' caso o usuário já tenha dispensado o alerta!
+            $alertaExistente = AlertaPrazo::where('user_id', $user->id)
+                ->where('edital_id', $edital->id)
+                ->where('nivel_urgencia', $urgencia)
+                ->first();
+
+            if ($alertaExistente && $alertaExistente->lido) {
+                // Usuário já leu/dispensou este alerta. Não incomoda novamente.
+                continue;
+            }
+
             $alerta = AlertaPrazo::updateOrCreate(
                 [
                     'user_id' => $user->id,
@@ -126,7 +137,7 @@ class AlertaPrazoService
                 ? "🚨 CRÍTICO — Restam {$dias} dia(s)"
                 : "⚠️ URGENTE — Restam {$dias} dia(s)";
 
-            $linkRadar = config('app.frontend_url', 'https://anjonexus.intalenti.com.br') . "/paginas/RadarEditais.html?edital_id={$alerta->edital_id}";
+            $linkRadar = config('app.frontend_url', 'https://anjonexus.intalenti.com.br') . "/paginas/busca-editais.html?edital_id={$alerta->edital_id}";
 
             $htmlEmail = "
             <div style='font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto; background-color: #0b0e14; color: #f8fafc; padding: 32px; border-radius: 14px; border: 1px solid #1e2430;'>

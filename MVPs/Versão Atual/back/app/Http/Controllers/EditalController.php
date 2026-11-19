@@ -51,12 +51,31 @@ class EditalController extends Controller
                 ? $edital->ai_diagnosis 
                 : [[ 'type' => 'info', 'text' => 'Edital Cadastrado - Dados Pré-Formatados' ]];
 
+            $formatarData = function($dataRaw) {
+                if (empty($dataRaw)) return '--';
+                try {
+                    $dt = \Carbon\Carbon::parse($dataRaw);
+                    // Se for o epoch padrão 1970 ou ano inválido (< 2000), descarta
+                    if ($dt->year < 2000) {
+                        return 'Fluxo contínuo';
+                    }
+                    return $dt->format('d/m/Y') . ' às ' . $dt->format('H:i');
+                } catch (\Throwable $e) {
+                    return '--';
+                }
+            };
+
+            $deadlineFormatada = $formatarData($edital->deadline);
+            if ($deadlineFormatada === '--' || $deadlineFormatada === 'Fluxo contínuo') {
+                $deadlineFormatada = 'Fluxo contínuo';
+            }
+
             return [
                 'id' => $edital->id,
                 'name' => $edital->title,
                 'org' => $edital->fonte ?? 'FINEP',
                 'budget' => $edital->max_budget ? 'R$ ' . number_format($edital->max_budget, 2, ',', '.') : 'A definir',
-                'deadline' => $edital->deadline ? \Carbon\Carbon::parse($edital->deadline)->format('d/m/Y') . ' às ' . \Carbon\Carbon::parse($edital->deadline)->format('H:i') : 'Sem data',
+                'deadline' => $deadlineFormatada,
                 'status' => 'Aberto',
                 'statusClass' => 'badge-aberto',
                 'match' => $edital->ai_match ?? 0,
@@ -67,9 +86,9 @@ class EditalController extends Controller
                 'trl' => $edital->ai_trl ?? 'Geral',
                 'nicho' => $edital->nicho ?? 'Multisetorial',
                 'faturamento' => $edital->faturamento ?? 'Não especificado',
-                'openDate' => $edital->open_date ? \Carbon\Carbon::parse($edital->open_date)->format('d/m/Y') . ' às ' . \Carbon\Carbon::parse($edital->open_date)->format('H:i') : '--',
-                'closeDate' => $edital->deadline ? \Carbon\Carbon::parse($edital->deadline)->format('d/m/Y') . ' às ' . \Carbon\Carbon::parse($edital->deadline)->format('H:i') : '--',
-                'resultDate' => $edital->result_date ? \Carbon\Carbon::parse($edital->result_date)->format('d/m/Y') . ' às ' . \Carbon\Carbon::parse($edital->result_date)->format('H:i') : '--',
+                'openDate' => $formatarData($edital->open_date),
+                'closeDate' => $deadlineFormatada,
+                'resultDate' => $formatarData($edital->result_date),
                 'url' => $edital->source_url ?? '#',
                 'favorite' => in_array($edital->id, $favoritosIds),
                 'diagnosis' => $diagnostico
