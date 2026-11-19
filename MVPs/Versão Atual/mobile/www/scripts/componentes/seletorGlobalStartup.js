@@ -1864,7 +1864,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 if (window.selectEdital) {
                     window.selectEdital(editalId);
                 } else {
-                    window.location.href = `RadarEditais.html?edital_id=${editalId}`;
+                    window.location.href = `busca-editais.html?edital_id=${editalId}`;
                 }
             }
         });
@@ -2013,7 +2013,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 if (window.selectEdital) {
                     window.selectEdital(editalId);
                 } else {
-                    window.location.href = `RadarEditais.html?edital_id=${editalId}`;
+                    window.location.href = `busca-editais.html?edital_id=${editalId}`;
                 }
             });
 

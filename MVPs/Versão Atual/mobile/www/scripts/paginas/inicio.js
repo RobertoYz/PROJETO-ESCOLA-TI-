@@ -20,7 +20,7 @@ if (startupAtiva && elementoTextoStartup) {
 }
 
 document.getElementById('botao-radar-editais').addEventListener('click', () => {
-    window.location.href = 'RadarEditais.html';
+    window.location.href = 'busca-editais.html';
 });
 
 document.getElementById('botao-kanban').addEventListener('click', () => {

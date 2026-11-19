@@ -2,7 +2,7 @@
   "name": "Anjo Nexus - Radar e Pipeline de Editais",
   "short_name": "AnjoNexus",
   "description": "Monitoramento de editais de inovação, pipeline kanban e minutas de propostas técnicas.",
-  "start_url": "/paginas/RadarEditais.html",
+  "start_url": "/paginas/busca-editais.html",
   "display": "standalone",
   "background_color": "#050505",
   "theme_color": "#1b36ff",
