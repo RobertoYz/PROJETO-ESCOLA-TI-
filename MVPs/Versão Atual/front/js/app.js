@@ -55,8 +55,8 @@ function atualizarSubtituloStartup() {
     if (!subEl) return;
     const startupAtiva = obterStartupAtiva();
     subEl.textContent = startupAtiva?.nome
-        ? `Monitoramento ativo para ${startupAtiva.nome} — FINEP, FAPESC, FAPESP e FAPEMIG`
-        : 'Monitoramento contínuo das chamadas da FINEP, FAPESC, FAPESP e FAPEMIG';
+        ? `Monitoramento ativo para ${startupAtiva.nome} — FINEP, FAPESC, FAPESP, FAPEMIG e FAPERJ`
+        : 'Monitoramento contínuo das chamadas da FINEP, FAPESC, FAPESP, FAPEMIG e FAPERJ';
 }
 
 function initUI() {

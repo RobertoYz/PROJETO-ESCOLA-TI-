@@ -100,7 +100,7 @@ btnSyncReceita?.addEventListener('click', async () => {
 
 // Botão Cancelar: retorna para a tela de Radar de Editais
 btnCancelar?.addEventListener('click', () => {
-    window.location.href = 'RadarEditais.html';
+    window.location.href = 'busca-editais.html';
 });
 
 // Salvar alterações e voltar para a tela de Radar de Editais
@@ -140,7 +140,7 @@ form?.addEventListener('submit', async (e) => {
         }
 
         // Retorna para a tela de Radar de Editais conforme solicitado
-        window.location.href = 'RadarEditais.html';
+        window.location.href = 'busca-editais.html';
     } catch (err) {
         exibirAlerta(`Erro ao salvar perfil: ${err.message}`, 'erro');
         btnSalvar.disabled = false;

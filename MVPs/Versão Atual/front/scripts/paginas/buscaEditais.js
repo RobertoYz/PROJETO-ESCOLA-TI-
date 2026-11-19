@@ -207,7 +207,7 @@ async function carregarCatalogo() {
 }
 
 function atualizarContadoresLaterais() {
-    const porFonte = { FINEP: 0, FAPESC: 0, FAPESP: 0, FAPEMIG: 0 };
+    const porFonte = { FINEP: 0, FAPESC: 0, FAPESP: 0, FAPEMIG: 0, FAPERJ: 0 };
     let totalFav = 0;
 
     catalogoEditais.forEach((ed) => {
@@ -216,6 +216,7 @@ function atualizarContadoresLaterais() {
         else if (org.includes('FAPESC')) porFonte.FAPESC += 1;
         else if (org.includes('FAPESP')) porFonte.FAPESP += 1;
         else if (org.includes('FAPEMIG')) porFonte.FAPEMIG += 1;
+        else if (org.includes('FAPERJ')) porFonte.FAPERJ += 1;
         if (ed.favorite) totalFav += 1;
     });
 
@@ -223,12 +224,14 @@ function atualizarContadoresLaterais() {
     const elFapesc = document.getElementById('countFonteFAPESC');
     const elFapesp = document.getElementById('countFonteFAPESP');
     const elFapemig = document.getElementById('countFonteFAPEMIG');
+    const elFaperj = document.getElementById('countFonteFAPERJ');
     const elFav = document.getElementById('countFavoritosBusca');
 
     if (elFinep) elFinep.textContent = String(porFonte.FINEP);
     if (elFapesc) elFapesc.textContent = String(porFonte.FAPESC);
     if (elFapesp) elFapesp.textContent = String(porFonte.FAPESP);
     if (elFapemig) elFapemig.textContent = String(porFonte.FAPEMIG);
+    if (elFaperj) elFaperj.textContent = String(porFonte.FAPERJ);
     if (elFav) elFav.textContent = String(totalFav);
 }
 

@@ -15,9 +15,9 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
         </div>
 
         <nav class="nav-menu" style="flex: 1; display: flex; flex-direction: column; padding: 1rem 0;">
-            <a href="RadarEditais.html" class="nav-item ${paginaAtiva === 'radar' ? 'active' : ''}" style="padding: 0.9rem 1.5rem; color: #e2e8f0; text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; gap: 14px; transition: 0.2s;">
+            <a href="busca-editais.html" class="nav-item ${paginaAtiva === 'busca' ? 'active' : ''}" style="padding: 0.9rem 1.5rem; color: #e2e8f0; text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; gap: 14px; transition: 0.2s;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                <span class="nav-text">Radar de Editais</span>
+                <span class="nav-text">Busca de Editais</span>
             </a>
 
             <a href="kanban.html" class="nav-item ${paginaAtiva === 'kanban' ? 'active' : ''}" style="padding: 0.9rem 1.5rem; color: #e2e8f0; text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; gap: 14px; transition: 0.2s;">
