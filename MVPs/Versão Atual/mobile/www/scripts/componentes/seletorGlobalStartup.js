@@ -24,6 +24,7 @@ import {
     marcarTodosAlertasPrazoComoLidos,
     dispararEmailAlertaPrazo
 } from '../servicos/servicoAlertas.js';
+import { listarEditais, calcularDiasRestantes } from '../servicos/servicoEditais.js';
 
 function injetarEstilosHeaderGlobal() {
     if (document.getElementById('estilos-header-global')) return;
@@ -346,6 +347,87 @@ function injetarEstilosHeaderGlobal() {
 
         .user-dropdown-item.logoff-item:hover {
             background-color: #fee2e2;
+        }
+
+        /* Central de Alertas e Notificações (Sino) */
+        .alerta-notificacoes-wrapper {
+            position: relative;
+        }
+
+        .btn-sino-alertas {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid #2a2e39;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .btn-sino-alertas:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #3b82f6;
+            color: #f1f5f9;
+        }
+
+        .badge-contador-alertas {
+            display: none;
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+        }
+
+        .alertas-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 46px;
+            width: 380px;
+            max-width: calc(100vw - 32px);
+            background: #0f131a;
+            border: 1px solid #262b36;
+            border-radius: 12px;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            overflow: hidden;
+            font-family: inherit;
+        }
+
+        .alertas-dropdown-menu.active {
+            display: flex !important;
+            flex-direction: column;
+        }
+
+        body:not(.dark-mode) .alertas-dropdown-menu {
+            background: #ffffff !important;
+            border-color: #e2e8f0 !important;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        body:not(.dark-mode) .alertas-dropdown-menu .alertas-header-box {
+            background: #f8fafc !important;
+            border-bottom-color: #e2e8f0 !important;
+            color: #0f172a !important;
+        }
+
+        body:not(.dark-mode) .alertas-dropdown-menu .alertas-abas-box {
+            background: #f1f5f9 !important;
+            border-bottom-color: #e2e8f0 !important;
         }
 
         /* Modal Editar Perfil do Consultor */
@@ -1499,11 +1581,11 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
     container.className = 'header-right-group';
     container.innerHTML = `
         <div class="seletor-startup-wrapper" id="seletorStartupWrapper">
-            <div style="width: 34px; height: 34px; min-width: 34px; border-radius: 8px; background: linear-gradient(135deg, #2563eb, #7c3aed); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); flex-shrink: 0;" id="avatar-startup-sigla">
+            <div style="width: 34px; height: 34px; min-width: 34px; border-radius: 8px; background: linear-gradient(135deg, #2563eb, #7c3aed); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); flex-shrink: 0;" id="avatar-startup-sigla" class="avatar-startup-sigla">
                 ${siglaInicial}
             </div>
-            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
-                <span style="font-size: 9px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;">Startup Assessorada:</span>
+            <div class="startup-trigger-col" style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                <span class="label-startup-header" style="font-size: 9px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;">Startup Assessorada:</span>
                 <div class="startup-trigger-box" id="startupTriggerBox">
                     <span class="startup-trigger-nome" id="startupTriggerNome">${startupAtiva.nome}</span>
                     <span class="startup-trigger-seta">▼</span>
@@ -1520,26 +1602,26 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         </div>
 
         <!-- Central de Alertas: Match Inteligente (EDTAN-172) & Prazos Críticos (EDTAN-171) -->
-        <div class="alerta-notificacoes-wrapper" id="alertaNotificacoesWrapper" style="position: relative;">
-            <button id="btnSinoAlertas" class="btn-sino-alertas" title="Central de Alertas e Prazos" style="background: rgba(255,255,255,0.04); border: 1px solid #2a2e39; width: 38px; height: 38px; border-radius: 10px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: 0.2s;">
+        <div class="alerta-notificacoes-wrapper" id="alertaNotificacoesWrapper">
+            <button id="btnSinoAlertas" class="btn-sino-alertas" type="button" aria-label="Central de Alertas e Prazos" title="Central de Alertas e Prazos">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
                 </svg>
-                <span id="badgeContadorAlertas" style="display: none; position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; align-items: center; justify-content: center; box-shadow: 0 0 8px rgba(239,68,68,0.6);">0</span>
+                <span id="badgeContadorAlertas" class="badge-contador-alertas">0</span>
             </button>
-            <div class="alertas-dropdown-menu" id="alertasDropdownMenu" style="display: none; position: absolute; right: 0; top: 46px; width: 370px; background: #0f131a; border: 1px solid #262b36; border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.85); z-index: 1000; overflow: hidden; font-family: inherit;">
-                <div style="padding: 10px 14px; border-bottom: 1px solid #1e2430; display: flex; justify-content: space-between; align-items: center; background: #131822;">
+            <div class="alertas-dropdown-menu" id="alertasDropdownMenu" role="region" aria-label="Notificações e Alertas">
+                <div class="alertas-header-box" style="padding: 10px 14px; border-bottom: 1px solid #1e2430; display: flex; justify-content: space-between; align-items: center; background: #131822;">
                     <span style="font-weight: 700; font-size: 13px; color: #f8fafc;">🔔 Central de Alertas</span>
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <button id="btnTestarNotificacaoPopUp" title="Testar Pop-up na Web e Mobile" style="background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.35); color: #a5b4fc; font-size: 10px; cursor: pointer; font-weight: 600; padding: 3px 8px; border-radius: 6px;">🔔 Pop-up</button>
-                        <button id="btnMarcarTodosLidos" style="background: none; border: none; color: #38bdf8; font-size: 11px; cursor: pointer; font-weight: 600;">Marcar lidos</button>
+                        <button id="btnTestarNotificacaoPopUp" type="button" title="Testar Pop-up na Web e Mobile" style="background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.35); color: #a5b4fc; font-size: 10px; cursor: pointer; font-weight: 600; padding: 3px 8px; border-radius: 6px;">🔔 Pop-up</button>
+                        <button id="btnMarcarTodosLidos" type="button" style="background: none; border: none; color: #38bdf8; font-size: 11px; cursor: pointer; font-weight: 600;">Marcar lidos</button>
                     </div>
                 </div>
                 <!-- Filtros por tipo de alerta -->
-                <div id="abasFiltroAlertas" style="display: flex; border-bottom: 1px solid #1e2430; background: #0b0e14; padding: 4px 8px; gap: 4px;">
-                    <button class="aba-alerta-btn ativa" data-tipo="todos" style="flex: 1; padding: 5px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: #1e293b; color: #f1f5f9; cursor: pointer;">Todos</button>
-                    <button class="aba-alerta-btn" data-tipo="prazos" style="flex: 1; padding: 5px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: transparent; color: #94a3b8; cursor: pointer;">⏳ Prazos</button>
-                    <button class="aba-alerta-btn" data-tipo="match" style="flex: 1; padding: 5px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: transparent; color: #94a3b8; cursor: pointer;">🎯 Matches</button>
+                <div id="abasFiltroAlertas" class="alertas-abas-box" style="display: flex; border-bottom: 1px solid #1e2430; background: #0b0e14; padding: 4px 8px; gap: 4px;">
+                    <button class="aba-alerta-btn ativa" data-tipo="todos" type="button" style="flex: 1; padding: 5px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: #1e293b; color: #f1f5f9; cursor: pointer;">Todos</button>
+                    <button class="aba-alerta-btn" data-tipo="prazos" type="button" style="flex: 1; padding: 5px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: transparent; color: #94a3b8; cursor: pointer;">⏳ Prazos</button>
+                    <button class="aba-alerta-btn" data-tipo="match" type="button" style="flex: 1; padding: 5px 8px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: transparent; color: #94a3b8; cursor: pointer;">🎯 Matches</button>
                 </div>
                 <div id="listaAlertasDropdown" style="max-height: 380px; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px;"></div>
             </div>
@@ -1579,6 +1661,10 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         if (seletorWrapper) seletorWrapper.classList.remove('open');
     };
 
+    const fecharMenuUsuario = () => {
+        if (mainDropdown) mainDropdown.classList.remove('active');
+    };
+
     if (seletorWrapper && startupDropdownMenu) {
         seletorWrapper.addEventListener('click', (e) => {
             if (e.target.closest('.btn-engrenagem-startup') || e.target.closest('.startup-dropdown-criar')) {
@@ -1589,8 +1675,9 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             }
             const abriu = startupDropdownMenu.classList.toggle('active');
             seletorWrapper.classList.toggle('open', abriu);
-            if (abriu && mainDropdown) {
-                mainDropdown.classList.remove('active');
+            if (abriu) {
+                if (mainDropdown) mainDropdown.classList.remove('active');
+                fecharDropdownAlertas();
             }
         });
     }
@@ -1602,6 +1689,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             const abriu = mainDropdown.classList.toggle('active');
             if (abriu) {
                 fecharDropdownStartups();
+                fecharDropdownAlertas();
             }
         });
     }
@@ -1845,6 +1933,10 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         document.body.appendChild(toast);
 
         const fechar = () => {
+            if (alerta.id) {
+                // Grava permanentemente que o usuário já fechou/dispensou este alerta
+                localStorage.setItem(`anjo_notif_dispensada_${alerta._tipo}_${alerta.id}`, '1');
+            }
             toast.style.animation = 'deslizarNotificacaoSaida 0.25s ease forwards';
             setTimeout(() => toast.remove(), 260);
         };
@@ -1852,6 +1944,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         toast.querySelector('#btnFecharToast')?.addEventListener('click', fechar);
         toast.querySelector('#btnDispensarToast')?.addEventListener('click', () => {
             if (alerta.id) {
+                localStorage.setItem(`anjo_notif_dispensada_${alerta._tipo}_${alerta.id}`, '1');
                 if (ehPrazo) marcarAlertaPrazoComoLido(alerta.id);
                 else marcarAlertaComoLido(alerta.id);
             }
@@ -1894,6 +1987,42 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 alertasPrazos = (resPrazos.value.dados || []).map(a => ({ ...a, _tipo: 'prazos' }));
             }
 
+            // Fallback robusto se a API de alertas não retornar dados ou se o banco estiver em sincronização
+            if (alertasMatch.length === 0 && alertasPrazos.length === 0) {
+                try {
+                    const editais = await listarEditais({ startupId: stId });
+                    if (Array.isArray(editais) && editais.length > 0) {
+                        const alertasCalculados = [];
+                        editais.forEach(ed => {
+                            const dias = calcularDiasRestantes(ed.deadline);
+                            if (dias !== null && dias >= 0 && dias <= 15) {
+                                let nivel = 'atencao';
+                                if (dias <= 3) nivel = 'critico';
+                                else if (dias <= 7) nivel = 'urgente';
+
+                                alertasCalculados.push({
+                                    id: `fallback_prazo_${ed.id}`,
+                                    edital_id: ed.id,
+                                    _tipo: 'prazos',
+                                    nivel_urgencia: nivel,
+                                    dias_restantes: dias,
+                                    titulo: `Prazo: ${ed.name || ed.title}`,
+                                    mensagem: dias === 0
+                                        ? `O edital encerra HOJE (${ed.deadline})! Conclua sua submissão.`
+                                        : `Faltam ${dias} dias para o encerramento das inscrições (${ed.deadline}).`,
+                                    lido: false,
+                                    edital: { title: ed.name || ed.title }
+                                });
+                            }
+                        });
+
+                        // Ordena por dias restantes mais próximos
+                        alertasCalculados.sort((a, b) => a.dias_restantes - b.dias_restantes);
+                        alertasPrazos = alertasCalculados.slice(0, 10);
+                    }
+                } catch (_) {}
+            }
+
             renderizarCentralAlertas();
 
             // Disparo automático do Pop-up Mobile / Web para o alerta mais crítico na sessão
@@ -1902,12 +2031,16 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 || alertasMatch.find(a => !a.lido && (a.score_match || 0) >= 85);
 
             if (alertaMaisCritico) {
-                const chaveSessao = `anjo_notif_visto_${alertaMaisCritico._tipo}_${alertaMaisCritico.id}`;
-                if (!sessionStorage.getItem(chaveSessao)) {
-                    sessionStorage.setItem(chaveSessao, '1');
-                    setTimeout(() => {
-                        exibirPopUpNotificacao(alertaMaisCritico);
-                    }, 1200);
+                // Guarda no localStorage permanente para nunca reaparecer após dispensado/fechado
+                const chaveDispensado = `anjo_notif_dispensada_${alertaMaisCritico._tipo}_${alertaMaisCritico.id}`;
+                if (!localStorage.getItem(chaveDispensado)) {
+                    const chaveSessao = `anjo_notif_visto_${alertaMaisCritico._tipo}_${alertaMaisCritico.id}`;
+                    if (!sessionStorage.getItem(chaveSessao)) {
+                        sessionStorage.setItem(chaveSessao, '1');
+                        setTimeout(() => {
+                            exibirPopUpNotificacao(alertaMaisCritico);
+                        }, 1200);
+                    }
                 }
             }
         } catch (e) {
@@ -2080,7 +2213,10 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
     }
 
     function fecharDropdownAlertas() {
-        if (alertasDropdown) alertasDropdown.style.display = 'none';
+        if (alertasDropdown) {
+            alertasDropdown.classList.remove('active');
+            alertasDropdown.style.display = 'none';
+        }
     }
 
     if (btnSinoAlertas) {
@@ -2089,7 +2225,13 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             fecharDropdownStartups();
             fecharMenuUsuario();
             if (alertasDropdown) {
-                alertasDropdown.style.display = alertasDropdown.style.display === 'block' ? 'none' : 'block';
+                const isOpen = alertasDropdown.classList.contains('active') || alertasDropdown.style.display === 'flex' || alertasDropdown.style.display === 'block';
+                if (isOpen) {
+                    fecharDropdownAlertas();
+                } else {
+                    alertasDropdown.classList.add('active');
+                    alertasDropdown.style.display = 'flex';
+                }
             }
         });
     }

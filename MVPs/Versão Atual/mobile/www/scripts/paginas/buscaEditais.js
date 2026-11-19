@@ -34,6 +34,7 @@ const estadoFiltros = {
     termo: '',
     fontes: new Set(),
     apenasFavoritos: false,
+    perfilBeneficiario: '',
     matchMinimo: 0,
     orcamentoMinimo: 0,
     abrangencia: '',
@@ -116,6 +117,11 @@ function configurarEventos() {
             }
             aplicarFiltrosERenderizar();
         });
+    });
+
+    document.getElementById('filterPerfilBeneficiario')?.addEventListener('change', (e) => {
+        estadoFiltros.perfilBeneficiario = e.target.value || '';
+        aplicarFiltrosERenderizar();
     });
 
     document.getElementById('filterApenasFavoritos')?.addEventListener('change', (e) => {
@@ -207,7 +213,7 @@ async function carregarCatalogo() {
 }
 
 function atualizarContadoresLaterais() {
-    const porFonte = { FINEP: 0, FAPESC: 0, FAPESP: 0, FAPEMIG: 0, FAPERJ: 0 };
+    const porFonte = { FINEP: 0, FAPESC: 0, FAPESP: 0, FAPEMIG: 0, FAPERJ: 0, FAPERGS: 0 };
     let totalFav = 0;
 
     catalogoEditais.forEach((ed) => {
@@ -217,6 +223,7 @@ function atualizarContadoresLaterais() {
         else if (org.includes('FAPESP')) porFonte.FAPESP += 1;
         else if (org.includes('FAPEMIG')) porFonte.FAPEMIG += 1;
         else if (org.includes('FAPERJ')) porFonte.FAPERJ += 1;
+        else if (org.includes('FAPERGS')) porFonte.FAPERGS += 1;
         if (ed.favorite) totalFav += 1;
     });
 
@@ -225,6 +232,7 @@ function atualizarContadoresLaterais() {
     const elFapesp = document.getElementById('countFonteFAPESP');
     const elFapemig = document.getElementById('countFonteFAPEMIG');
     const elFaperj = document.getElementById('countFonteFAPERJ');
+    const elFapergs = document.getElementById('countFonteFAPERGS');
     const elFav = document.getElementById('countFavoritosBusca');
 
     if (elFinep) elFinep.textContent = String(porFonte.FINEP);
@@ -232,6 +240,7 @@ function atualizarContadoresLaterais() {
     if (elFapesp) elFapesp.textContent = String(porFonte.FAPESP);
     if (elFapemig) elFapemig.textContent = String(porFonte.FAPEMIG);
     if (elFaperj) elFaperj.textContent = String(porFonte.FAPERJ);
+    if (elFapergs) elFapergs.textContent = String(porFonte.FAPERGS);
     if (elFav) elFav.textContent = String(totalFav);
 }
 
@@ -272,6 +281,42 @@ function aplicarFiltrosERenderizar() {
                 if (!ehEstadual) return false;
             } else if (!regiaoNorm.includes(estadoFiltros.abrangencia)) {
                 return false;
+            }
+        }
+
+        if (estadoFiltros.perfilBeneficiario) {
+            const ctx = `${edital.name || ''} ${edital.target || ''} ${edital.objetivo || ''}`.toLowerCase();
+            const perfil = estadoFiltros.perfilBeneficiario;
+
+            if (perfil === 'empresa_sozinha') {
+                const exigeIctObrig = (ctx.includes('obrigatoriamente') || ctx.includes('apenas')) && (ctx.includes('ict') || ctx.includes('pesquisador'));
+                const temEmpresa = ctx.includes('empresa') || ctx.includes('startup') || ctx.includes('sociedade') || ctx.includes('pdi');
+                if (exigeIctObrig || !temEmpresa) return false;
+            } else if (perfil === 'pesquisador_empresa') {
+                const ehContratacaoPesquisador = ctx.includes('inova talentos') 
+                    || ctx.includes('pesquisador na empresa') 
+                    || ctx.includes('fixação de doutor')
+                    || ctx.includes('rhae')
+                    || (ctx.includes('bolsa') && ctx.includes('empresa'))
+                    || ctx.includes('atracao') || ctx.includes('atração');
+                if (!ehContratacaoPesquisador) return false;
+            } else if (perfil === 'apenas_pesquisador') {
+                const ehApenasPesquisador = ctx.includes('pesquisador visitante')
+                    || ctx.includes('bolsa nota 10')
+                    || ctx.includes('recém-doutor')
+                    || ctx.includes('recém doutor')
+                    || ctx.includes('apenas ict')
+                    || ctx.includes('somente pesquisador')
+                    || (ctx.includes('pesquisador') && !ctx.includes('empresa') && !ctx.includes('startup'));
+                if (!ehApenasPesquisador) return false;
+            } else if (perfil === 'consorcio') {
+                const ehConsorcio = ctx.includes('consórcio') 
+                    || ctx.includes('consorcio') 
+                    || ctx.includes('cooperação internacional')
+                    || ctx.includes('eureka')
+                    || ctx.includes('chamada bilateral')
+                    || ctx.includes('parceria obrigatória');
+                if (!ehConsorcio) return false;
             }
         }
 
@@ -378,6 +423,22 @@ function renderizarChipsAtivos() {
             aplicarFiltrosERenderizar();
         });
     }
+
+    if (estadoFiltros.perfilBeneficiario) {
+        const nomesPerfil = {
+            'empresa_sozinha': 'Empresa pode concorrer sozinha',
+            'pesquisador_empresa': 'Bolsas/Atração para Empresas (Inova Talentos/RHAE)',
+            'apenas_pesquisador': 'Apenas Pesquisadores / ICTs',
+            'consorcio': 'Exige Parceria / Consórcio'
+        };
+        const rotulo = nomesPerfil[estadoFiltros.perfilBeneficiario] || estadoFiltros.perfilBeneficiario;
+        adicionarChip(`Perfil: ${rotulo}`, () => {
+            estadoFiltros.perfilBeneficiario = '';
+            const sel = document.getElementById('filterPerfilBeneficiario');
+            if (sel) sel.value = '';
+            aplicarFiltrosERenderizar();
+        });
+    }
 }
 
 function renderizarListaResultados() {
@@ -479,15 +540,108 @@ function abrirDrawerEdital(id) {
 
     setTexto('drawerDetOrg', edital.org);
     setTexto('drawerDetName', edital.name);
-    setTexto('drawerDetObjetivo', edital.objetivo);
+    // Formata o resumo do edital para texto limpo e natural
+    const formatarResumoLimpo = (texto) => {
+        if (!texto) return '<p style="color: var(--text-muted); font-style: italic; margin: 0;">Sem descrição disponível.</p>';
+        
+        let t = String(texto);
+        // Remove lixo técnico extraído de cabeçalhos/rodapés de PDF
+        t = t.replace(/^RESUMO EXTRA[ÍI]DO DO PDF OFICIAL:\s*/i, '');
+        t = t.replace(/---\s*OBJETIVOS\s*---\s*/gi, '');
+        t = t.replace(/ESPEC[ÍI]FICOS/gi, '');
+        t = t.replace(/P[áa]g\.\s*\d+\s*de\s*\d+[^.]*?\./gi, '');
+        t = t.replace(/Documento assinado digitalmente[^.]*?\./gi, '');
+        t = t.replace(/Para confer[êe]ncia,?\s*acesse o site[^.]*?\./gi, '');
+        t = t.replace(/https?:\/\/[^\s]+/gi, '');
+        t = t.replace(/e informe o processo[^.]*?\./gi, '');
+        t = t.replace(/portal\.sgpe\.sea\.sc\.gov\.br[^\s]*/gi, '');
+        t = t.replace(/c[óo]digo\s+[A-Z0-9]{5,}/gi, '');
+        t = t.replace(/\b\d{3}\s+2\.1\./gi, '2.1.');
+
+        // Normaliza espaços em branco
+        t = t.replace(/\s+/g, ' ').trim();
+
+        // Quebra em parágrafos limpos baseado em pontuação final e início de novos tópicos
+        const sentencas = t.split(/(?<=[.!?])\s+(?=[A-Z0-9])/);
+        const paragrafos = [];
+        let blocoAtual = '';
+
+        sentencas.forEach((s) => {
+            const limpa = s.trim();
+            if (!limpa || limpa.length < 4) return;
+            // Se for apenas número solto (ex: "2.", "163"), ignora
+            if (/^\d+\.?$/.test(limpa)) return;
+
+            if (blocoAtual.length + limpa.length > 250) {
+                paragrafos.push(blocoAtual.trim());
+                blocoAtual = limpa;
+            } else {
+                blocoAtual += (blocoAtual ? ' ' : '') + limpa;
+            }
+        });
+        if (blocoAtual) {
+            paragrafos.push(blocoAtual.trim());
+        }
+
+        if (paragrafos.length === 0) {
+            paragrafos.push(t);
+        }
+
+        return paragrafos
+            .map(p => `<p style="margin: 0 0 0.85rem 0; line-height: 1.65; color: var(--text-main); font-size: 0.92rem; text-align: justify;">${escapeHtml(p)}</p>`)
+            .join('');
+    };
+
+    const objetivoEl = document.getElementById('drawerDetObjetivo');
+    if (objetivoEl) {
+        objetivoEl.innerHTML = formatarResumoLimpo(edital.objetivo);
+    }
     setTexto('drawerDetTarget', edital.target);
     setTexto('drawerDetRegion', edital.region);
     setTexto('drawerDetNicho', edital.nicho);
     setTexto('drawerDetFaturamento', edital.faturamento);
     setTexto('drawerDetTrl', edital.trl);
     setTexto('drawerDetOpen', edital.openDate);
-    setTexto('drawerDetClose', edital.closeDate);
+    const closeStr = String(edital.closeDate || edital.deadline || '').trim();
+    if (closeStr.includes('1970') || closeStr.includes('0000') || !closeStr || closeStr === '--') {
+        setTexto('drawerDetClose', 'Fluxo contínuo');
+    } else {
+        setTexto('drawerDetClose', closeStr);
+    }
     setTexto('drawerDetResult', edital.resultDate);
+
+    // Análise determinística de Elegibilidade e Parcerias (Custo Zero de IA)
+    const textoContexto = `${edital.name || ''} ${edital.target || ''} ${edital.objetivo || ''}`.toLowerCase();
+    
+    // 1. Exigência de ICT
+    let exigeIct = 'Não obrigatório';
+    if (textoContexto.includes('obrigatoriamente') && (textoContexto.includes('ict') || textoContexto.includes('instituição de pesquisa') || textoContexto.includes('universidade'))) {
+        exigeIct = 'Sim, obrigatória';
+    } else if (textoContexto.includes('com ict') || textoContexto.includes('parceria com ict') || textoContexto.includes('em conjunto com ict') || textoContexto.includes('cooperação com ict')) {
+        exigeIct = 'Exigida na chamada';
+    } else if (textoContexto.includes('apenas ict') || textoContexto.includes('somente ict')) {
+        exigeIct = 'Sim (proponente ICT)';
+    }
+
+    // 2. Empresa pode concorrer sozinha?
+    let empresaSozinha = 'Sim (Executora única)';
+    if (exigeIct === 'Sim, obrigatória' || exigeIct === 'Sim (proponente ICT)' || textoContexto.includes('consórcio obrigatório') || textoContexto.includes('obrigatoriamente em parceria')) {
+        empresaSozinha = 'Não (Exige parceria)';
+    } else if (textoContexto.includes('apenas empresas') || textoContexto.includes('startups') || textoContexto.includes('microempresa') || textoContexto.includes('subvenção individual')) {
+        empresaSozinha = 'Sim (Independente)';
+    }
+
+    // 3. Parceria / Consórcio
+    let parceria = 'Opcional';
+    if (textoContexto.includes('cooperação internacional') || textoContexto.includes('rede eureka') || textoContexto.includes('chamada bilateral') || textoContexto.includes('consórcio')) {
+        parceria = 'Obrigatória / Consórcio';
+    } else if (textoContexto.includes('parceria recomendada') || textoContexto.includes('pontuação extra') || textoContexto.includes('cooperação')) {
+        parceria = 'Opcional (bonifica)';
+    }
+
+    setTexto('drawerDetExigeIct', exigeIct);
+    setTexto('drawerDetEmpresaSozinha', empresaSozinha);
+    setTexto('drawerDetParceria', parceria);
 
     configurarBotaoUrlOficial(document.getElementById('drawerDetUrl'), edital.url);
 

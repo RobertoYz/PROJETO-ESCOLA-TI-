@@ -270,25 +270,41 @@ body.is-capacitor .link-download-app-header {
 
     .seletor-startup-wrapper {
         flex: 1 !important;
-        max-width: 165px !important;
+        max-width: 140px !important;
         display: flex !important;
         align-items: center !important;
-        gap: 6px !important;
+        gap: 5px !important;
         min-width: 0 !important;
-        padding: 4px 6px !important;
+        padding: 3px 6px !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border-radius: 8px !important;
+    }
+
+    .label-startup-header {
+        display: none !important;
+    }
+
+    .startup-trigger-col {
+        display: flex !important;
+        flex-direction: column !important;
+        min-width: 0 !important;
+        flex: 1 !important;
     }
 
     .startup-trigger-box {
         min-width: 0 !important;
-        max-width: 110px !important;
-        padding: 4px 6px !important;
+        max-width: none !important;
+        width: 100% !important;
+        padding: 2px 4px !important;
         font-size: 11px !important;
-        gap: 4px !important;
+        gap: 3px !important;
+        background: transparent !important;
+        border: none !important;
     }
 
     .startup-trigger-nome {
         font-size: 11px !important;
-        max-width: 80px !important;
+        max-width: 65px !important;
         text-overflow: ellipsis !important;
         overflow: hidden !important;
         white-space: nowrap !important;
@@ -299,11 +315,13 @@ body.is-capacitor .link-download-app-header {
         height: 24px !important;
         min-width: 24px !important;
         font-size: 10px !important;
+        border-radius: 6px !important;
     }
 
     .user-section-global {
-        gap: 4px !important;
-        margin-left: 2px !important;
+        gap: 0 !important;
+        margin-left: 0 !important;
+        padding: 0 !important;
         flex-shrink: 0 !important;
     }
 
@@ -312,14 +330,41 @@ body.is-capacitor .link-download-app-header {
     }
 
     .user-section-global .avatar {
-        width: 34px !important;
-        height: 34px !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+    }
+
+    .alerta-notificacoes-wrapper {
+        position: relative !important;
+        flex-shrink: 0 !important;
     }
 
     .btn-sino-alertas {
-        width: 34px !important;
-        height: 34px !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        border-radius: 8px !important;
         flex-shrink: 0 !important;
+    }
+
+    .badge-contador-alertas {
+        width: 16px !important;
+        height: 16px !important;
+        font-size: 9px !important;
+        top: -3px !important;
+        right: -3px !important;
+    }
+
+    .alertas-dropdown-menu {
+        position: fixed !important;
+        top: max(56px, calc(var(--safe-area-top) + 20px)) !important;
+        right: 8px !important;
+        left: 8px !important;
+        width: auto !important;
+        max-width: calc(100vw - 16px) !important;
+        z-index: 10002 !important;
+        border-radius: 12px !important;
     }
 
     .anjo-toast-notificacao {
