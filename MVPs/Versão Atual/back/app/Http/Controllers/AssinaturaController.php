@@ -21,13 +21,13 @@ class AssinaturaController extends Controller
     }
 
     /**
-     * 1. Endpoint de Consulta da Assinatura Atual (EDTAN-160)
+     * 1. Endpoint de Consulta da Assinatura Atual (EDTAN-160 / EDTAN-311)
      * GET /api/assinatura/atual
      */
     public function atual(Request $requisicao, MinutaLimitService $limitService): JsonResponse
     {
         $usuario = $requisicao->user();
-        $agencia = $usuario ? $usuario->agencia : null;
+        $agencia = ($usuario && $usuario->agencia) ? $usuario->agencia->fresh() : null;
 
         if (!$usuario || !$agencia) {
             return response()->json([
@@ -58,6 +58,8 @@ class AssinaturaController extends Controller
             || $expiraVencida
             || ($diasRestantes <= 5);
 
+        $dataVencimentoFormatada = $expiraEm ? $expiraEm->format('d/m/Y') : null;
+        $dataRepeticaoFormatada = $expiraEm ? $expiraEm->format('d/m/Y') : null;
         $dataLiberacaoRenovacao = $expiraEm
             ? $expiraEm->copy()->subDays(5)->format('d/m/Y')
             : now()->format('d/m/Y');
@@ -67,6 +69,11 @@ class AssinaturaController extends Controller
             && $agencia->pagamento_expira_em->isFuture();
 
         $urlCheckout = $cobrancaAberta ? $agencia->url_checkout : null;
+
+        $formaPagamento = in_array(strtoupper((string) $agencia->forma_pagamento), ['PIX', 'CARD'], true)
+            ? strtoupper((string) $agencia->forma_pagamento)
+            : 'PIX';
+        $formaPagamentoLabel = $formaPagamento === 'CARD' ? 'Cartão de Crédito' : 'PIX';
 
         return response()->json([
             'plano' => [
@@ -83,15 +90,20 @@ class AssinaturaController extends Controller
                 'membros_equipe' => $membrosEquipe,
                 'minutas_ia' => $minutasUsadas,
             ],
-            'forma_pagamento' => 'PIX',
+            'forma_pagamento' => $formaPagamento,
+            'forma_pagamento_label' => $formaPagamentoLabel,
+            'em_carencia' => $agencia->emPeriodoCarencia(),
             'status_pagamento' => $statusEfetivo,
             'status_pagamento_real' => $statusReal,
             'assinatura_ativa' => $agencia->isPagamentoAtivo(),
             'assinatura_expira_em' => $expiraEm ? $expiraEm->toIso8601String() : null,
-            'assinatura_expira_em_formatada' => $expiraEm ? $expiraEm->format('d/m/Y') : null,
+            'assinatura_expira_em_formatada' => $dataVencimentoFormatada,
+            'data_vencimento_formatada' => $dataVencimentoFormatada,
+            'data_repeticao_formatada' => $dataRepeticaoFormatada,
             'dias_restantes' => $diasRestantes,
             'pode_renovar' => $podeRenovar,
             'data_liberacao_renovacao' => $dataLiberacaoRenovacao,
+            'data_liberacao_renovacao_formatada' => $dataLiberacaoRenovacao,
             'cobranca_aberta' => $cobrancaAberta,
             'url_checkout' => $urlCheckout,
             'pagamento_expira_em' => $cobrancaAberta ? $agencia->pagamento_expira_em->toIso8601String() : null,
@@ -100,7 +112,7 @@ class AssinaturaController extends Controller
     }
 
     /**
-     * 2. Geração Idempotente de Pagamento PIX para Renovação (EDTAN-160)
+     * 2. Geração Idempotente de Pagamento para Renovação (EDTAN-160 / EDTAN-311)
      * POST /api/assinatura/renovar
      */
     public function renovar(Request $requisicao, AbacatePayService $servicoAbacatePay): JsonResponse
@@ -119,7 +131,13 @@ class AssinaturaController extends Controller
             ], 403);
         }
 
-        $agencia = $usuario->agencia;
+        $dadosValidados = $requisicao->validate([
+            'forma_pagamento' => 'nullable|string|in:PIX,CARD',
+        ], [
+            'forma_pagamento.in' => 'A forma de pagamento deve ser PIX ou CARD.',
+        ]);
+
+        $agencia = $usuario->agencia ? $usuario->agencia->fresh() : null;
 
         if (!$agencia) {
             return response()->json([
@@ -149,15 +167,27 @@ class AssinaturaController extends Controller
             ], 422);
         }
 
-        // Idempotência: se já houver cobrança PIX válida na janela de 60 minutos, reaproveita sem chamar o gateway externo
+        $formaAtual = in_array(strtoupper((string) $agencia->forma_pagamento), ['PIX', 'CARD'], true)
+            ? strtoupper((string) $agencia->forma_pagamento)
+            : 'PIX';
+
+        $formaSolicitada = !empty($dadosValidados['forma_pagamento'])
+            ? strtoupper($dadosValidados['forma_pagamento'])
+            : $formaAtual;
+
+        $mesmaFormaPagamento = ($formaSolicitada === $formaAtual);
+
+        // Idempotência: só reaproveita a url_checkout aberta (60 min) se a forma_pagamento solicitada for igual à atual da agência
         if (
-            !empty($agencia->url_checkout)
+            $mesmaFormaPagamento
+            && !empty($agencia->url_checkout)
             && $agencia->pagamento_expira_em !== null
             && $agencia->pagamento_expira_em->isFuture()
         ) {
             return response()->json([
-                'message' => 'Cobrança PIX de renovação já está ativa e disponível para pagamento.',
+                'message' => 'Cobrança de renovação já está ativa e disponível para pagamento.',
                 'reaproveitada' => true,
+                'forma_pagamento' => $formaAtual,
                 'id_transacao' => $agencia->id_transacao,
                 'url_checkout' => $agencia->url_checkout,
                 'pagamento_expira_em' => $agencia->pagamento_expira_em->toIso8601String(),
@@ -165,7 +195,8 @@ class AssinaturaController extends Controller
         }
 
         try {
-            $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano);
+            $agencia->forma_pagamento = $formaSolicitada;
+            $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano, $formaSolicitada);
             $dadosCobranca = $this->adapter->normalizarRetornoCobranca($cobranca);
             $urlCheckout = $dadosCobranca['url_checkout'];
             $idTransacao = $dadosCobranca['id_transacao'];
@@ -174,6 +205,7 @@ class AssinaturaController extends Controller
                 throw new Exception('O gateway de pagamento AbacatePay não retornou uma URL de checkout válida.');
             }
 
+            $agencia->forma_pagamento = $formaSolicitada;
             $agencia->id_transacao = $idTransacao;
             $agencia->url_checkout = $urlCheckout;
             $agencia->pagamento_expira_em = Carbon::now()->addMinutes(60);
@@ -185,15 +217,120 @@ class AssinaturaController extends Controller
             $agencia->save();
 
             return response()->json([
-                'message' => 'Cobrança PIX de renovação gerada com sucesso.',
+                'message' => 'Cobrança de renovação gerada com sucesso.',
                 'reaproveitada' => false,
+                'forma_pagamento' => $agencia->forma_pagamento,
                 'id_transacao' => $agencia->id_transacao,
                 'url_checkout' => $agencia->url_checkout,
                 'pagamento_expira_em' => $agencia->pagamento_expira_em->toIso8601String(),
             ], 200);
         } catch (Exception $excecao) {
             return response()->json([
-                'message' => 'Erro ao gerar cobrança PIX de renovação: ' . $excecao->getMessage(),
+                'message' => 'Erro ao gerar cobrança de renovação: ' . $excecao->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * 3. Atualização de Forma de Pagamento (PIX <-> CARD) (EDTAN-311)
+     * POST /api/assinatura/atualizar-forma-pagamento
+     */
+    public function atualizarFormaPagamento(Request $requisicao, AbacatePayService $servicoAbacatePay): JsonResponse
+    {
+        $usuario = $requisicao->user();
+
+        if (!$usuario) {
+            return response()->json([
+                'message' => 'Usuário não autenticado.',
+            ], 401);
+        }
+
+        if ($usuario->perfil_acesso !== 'consultor_admin') {
+            return response()->json([
+                'message' => 'Apenas o administrador da consultoria pode atualizar a forma de pagamento da assinatura.',
+            ], 403);
+        }
+
+        $dadosValidados = $requisicao->validate([
+            'forma_pagamento' => 'required|string|in:PIX,CARD',
+        ], [
+            'forma_pagamento.required' => 'Selecione a forma de pagamento desejada (PIX ou Cartão de Crédito).',
+            'forma_pagamento.in' => 'A forma de pagamento deve ser PIX ou CARD.',
+        ]);
+
+        $agencia = $usuario->agencia ? $usuario->agencia->fresh() : null;
+
+        if (!$agencia) {
+            return response()->json([
+                'message' => 'Agência não vinculada a este usuário.',
+            ], 404);
+        }
+
+        $plano = $agencia->plano ?? Plano::find($agencia->plano_id) ?? Plano::first();
+
+        if (!$plano) {
+            return response()->json([
+                'message' => 'Nenhum plano vinculado à agência.',
+            ], 404);
+        }
+
+        $novaForma = strtoupper($dadosValidados['forma_pagamento']);
+        $novaFormaLabel = $novaForma === 'CARD' ? 'Cartão de Crédito' : 'PIX';
+
+        $expiraEm = $agencia->assinatura_expira_em;
+        $expiraNoFuturo = $expiraEm !== null && $expiraEm->isFuture();
+        $expiraVencida = $expiraEm !== null && $expiraEm->isPast();
+        $diasRestantes = $expiraNoFuturo
+            ? (int) max(0, ceil(now()->floatDiffInDays($expiraEm, false)))
+            : 0;
+
+        $deveGerarCheckoutAgora = ($agencia->status_pagamento !== 'ativo')
+            || $agencia->emPeriodoCarencia()
+            || $expiraVencida
+            || ($expiraNoFuturo && $diasRestantes <= 5);
+
+        if (!$deveGerarCheckoutAgora) {
+            $agencia->forma_pagamento = $novaForma;
+            $agencia->save();
+
+            return response()->json([
+                'message' => "Forma de pagamento atualizada para {$novaFormaLabel} com sucesso! A nova preferência será utilizada no próximo ciclo de renovação.",
+                'forma_pagamento' => $novaForma,
+                'forma_pagamento_label' => $novaFormaLabel,
+                'requer_checkout' => false,
+                'url_checkout' => null,
+            ], 200);
+        }
+
+        try {
+            $agencia->forma_pagamento = $novaForma;
+            $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano, $novaForma);
+            $dadosCobranca = $this->adapter->normalizarRetornoCobranca($cobranca);
+            $urlCheckout = $dadosCobranca['url_checkout'];
+            $idTransacao = $dadosCobranca['id_transacao'];
+
+            if (empty($urlCheckout) || !str_starts_with($urlCheckout, 'http') || !str_contains($urlCheckout, 'abacatepay.com')) {
+                throw new Exception('O gateway de pagamento AbacatePay não retornou uma URL de checkout válida.');
+            }
+
+            $agencia->forma_pagamento = $novaForma;
+            $agencia->id_transacao = $idTransacao;
+            $agencia->url_checkout = $urlCheckout;
+            $agencia->pagamento_expira_em = Carbon::now()->addMinutes(60);
+            $agencia->save();
+
+            return response()->json([
+                'message' => "Forma de pagamento atualizada para {$novaFormaLabel}. Redirecionando para o checkout...",
+                'forma_pagamento' => $novaForma,
+                'forma_pagamento_label' => $novaFormaLabel,
+                'requer_checkout' => true,
+                'id_transacao' => $agencia->id_transacao,
+                'url_checkout' => $agencia->url_checkout,
+                'pagamento_expira_em' => $agencia->pagamento_expira_em->toIso8601String(),
+            ], 200);
+        } catch (Exception $excecao) {
+            return response()->json([
+                'message' => 'Erro ao atualizar forma de pagamento e gerar cobrança: ' . $excecao->getMessage(),
             ], 500);
         }
     }

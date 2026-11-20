@@ -95,6 +95,7 @@ class AuthController extends Controller
             'password' => 'required|string|min:8',
             'plano_id' => 'required|exists:planos,id',
             'nome_agencia' => 'required|string|max:255',
+            'forma_pagamento' => 'nullable|string|in:PIX,CARD',
         ], [
             'name.required' => 'O nome é obrigatório.',
             'email.required' => 'O e-mail é obrigatório.',
@@ -105,7 +106,10 @@ class AuthController extends Controller
             'plano_id.required' => 'Por favor, selecione um plano.',
             'plano_id.exists' => 'O plano selecionado não foi encontrado.',
             'nome_agencia.required' => 'O nome da agência/consultoria é obrigatório.',
+            'forma_pagamento.in' => 'A forma de pagamento deve ser PIX ou CARD.',
         ]);
+
+        $formaPagamento = strtoupper($dadosValidados['forma_pagamento'] ?? 'PIX');
 
         DB::beginTransaction();
 
@@ -124,6 +128,7 @@ class AuthController extends Controller
                     $agencia = Agencia::create([
                         'nome' => $nomeAgencia,
                         'plano_id' => $plano->id,
+                        'forma_pagamento' => $formaPagamento,
                         'status_pagamento' => 'pendente',
                         'pagamento_expira_em' => Carbon::now()->addMinutes(60),
                     ]);
@@ -132,6 +137,7 @@ class AuthController extends Controller
                 } else {
                     $agencia->nome = $nomeAgencia;
                     $agencia->plano_id = $plano->id;
+                    $agencia->forma_pagamento = $formaPagamento;
                     $agencia->status_pagamento = 'pendente';
                     $agencia->pagamento_expira_em = Carbon::now()->addMinutes(60);
                     $agencia->save();
@@ -140,6 +146,7 @@ class AuthController extends Controller
                 $agencia = Agencia::create([
                     'nome' => $nomeAgencia,
                     'plano_id' => $plano->id,
+                    'forma_pagamento' => $formaPagamento,
                     'status_pagamento' => 'pendente',
                     'pagamento_expira_em' => Carbon::now()->addMinutes(60),
                 ]);
@@ -153,7 +160,7 @@ class AuthController extends Controller
                 ]);
             }
 
-            $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano);
+            $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano, $formaPagamento);
             $dadosCobranca = $this->abacatePayAdapter->normalizarRetornoCobranca($cobranca);
             $urlCheckout = $dadosCobranca['url_checkout'];
             $idTransacao = $dadosCobranca['id_transacao'];
@@ -184,6 +191,7 @@ class AuthController extends Controller
                 'agencia' => [
                     'id' => $agencia->id,
                     'nome' => $agencia->nome,
+                    'forma_pagamento' => $agencia->forma_pagamento,
                     'status_pagamento' => $agencia->status_pagamento,
                     'url_checkout' => $agencia->url_checkout,
                     'pagamento_expira_em' => $agencia->pagamento_expira_em,
@@ -367,6 +375,7 @@ class AuthController extends Controller
                 }
                 $agencia->url_checkout = null;
                 $agencia->pagamento_expira_em = null;
+                $agencia->alerta_falha_pagamento_enviado_em = null;
                 $agencia->save();
 
                 return response()->json([
@@ -400,11 +409,13 @@ class AuthController extends Controller
      */
     public function gerarNovaCobranca(Request $requisicao, AbacatePayService $servicoAbacatePay): JsonResponse
     {
-        $requisicao->validate([
+        $dadosValidados = $requisicao->validate([
             'plano_id' => 'required|exists:planos,id',
+            'forma_pagamento' => 'nullable|string|in:PIX,CARD',
         ], [
             'plano_id.required' => 'Por favor, selecione um plano.',
             'plano_id.exists' => 'O plano selecionado não existe.',
+            'forma_pagamento.in' => 'A forma de pagamento deve ser PIX ou CARD.',
         ]);
 
         $usuario = $this->resolverUsuarioPendente($requisicao);
@@ -414,10 +425,12 @@ class AuthController extends Controller
             return response()->json(['message' => 'Agência não encontrada para este usuário.'], 404);
         }
 
-        $plano = Plano::findOrFail($requisicao->plano_id);
+        $plano = Plano::findOrFail($dadosValidados['plano_id']);
+        $formaPagamento = strtoupper($dadosValidados['forma_pagamento'] ?? 'PIX');
 
         try {
-            $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano);
+            $agencia->forma_pagamento = $formaPagamento;
+            $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano, $formaPagamento);
             $dadosCobranca = $this->abacatePayAdapter->normalizarRetornoCobranca($cobranca);
             $urlCheckout = $dadosCobranca['url_checkout'];
             $idTransacao = $dadosCobranca['id_transacao'];
@@ -427,6 +440,7 @@ class AuthController extends Controller
             }
 
             $agencia->plano_id = $plano->id;
+            $agencia->forma_pagamento = $formaPagamento;
             $agencia->url_checkout = $urlCheckout;
             $agencia->id_transacao = $idTransacao;
             $agencia->pagamento_expira_em = Carbon::now()->addMinutes(60);
@@ -435,6 +449,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'url_checkout' => $urlCheckout,
+                'forma_pagamento' => $agencia->forma_pagamento,
                 'message' => 'Nova cobrança gerada com sucesso.',
             ], 200);
 

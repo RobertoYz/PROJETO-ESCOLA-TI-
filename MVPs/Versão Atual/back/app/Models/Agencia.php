@@ -13,22 +13,40 @@ class Agencia extends Model
     protected $fillable = [
         'nome',
         'plano_id',
+        'forma_pagamento',
         'id_transacao',
         'url_checkout',
         'status_pagamento',
         'pagamento_expira_em',
         'assinatura_expira_em',
+        'alerta_falha_pagamento_enviado_em',
     ];
 
     protected $casts = [
         'pagamento_expira_em' => 'datetime',
         'assinatura_expira_em' => 'datetime',
+        'alerta_falha_pagamento_enviado_em' => 'datetime',
     ];
 
     public function isPagamentoAtivo(): bool
     {
+        if ($this->status_pagamento !== 'ativo') {
+            return false;
+        }
+
+        if ($this->assinatura_expira_em === null) {
+            return true;
+        }
+
+        return $this->assinatura_expira_em->copy()->addDays(2)->isFuture();
+    }
+
+    public function emPeriodoCarencia(): bool
+    {
         return $this->status_pagamento === 'ativo'
-            && ($this->assinatura_expira_em === null || $this->assinatura_expira_em->isFuture());
+            && $this->assinatura_expira_em !== null
+            && $this->assinatura_expira_em->isPast()
+            && $this->assinatura_expira_em->copy()->addDays(2)->isFuture();
     }
 
     public function plano(): BelongsTo

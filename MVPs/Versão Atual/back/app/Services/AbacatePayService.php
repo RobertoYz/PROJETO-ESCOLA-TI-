@@ -23,7 +23,7 @@ class AbacatePayService
     /**
      * Gera cobrança real no AbacatePay e retorna os campos padronizados do domínio (`id_transacao`, `url_checkout`).
      */
-    public function gerarCobranca($agencia, $usuario, $plano): array
+    public function gerarCobranca($agencia, $usuario, $plano, string $formaPagamento = 'PIX'): array
     {
         if (empty($this->chaveApi)) {
             throw new Exception('Chave ABACATEPAY_API_KEY não configurada no arquivo .env.');
@@ -51,7 +51,12 @@ class AbacatePayService
 
         $urlLogin = rtrim($urlBaseFront, '/') . '/paginas/login.html';
 
-        $dadosEnvio = $this->adapter->paraPayloadCriacao($agencia, $usuario, $plano, $urlLogin);
+        $metodoPagamento = strtoupper(trim($formaPagamento));
+        if (!in_array($metodoPagamento, ['PIX', 'CARD'], true)) {
+            $metodoPagamento = 'PIX';
+        }
+
+        $dadosEnvio = $this->adapter->paraPayloadCriacao($agencia, $usuario, $plano, $urlLogin, $metodoPagamento);
 
         $resposta = Http::withToken($this->chaveApi)
             ->post("{$this->urlBase}/checkouts/create", $dadosEnvio);

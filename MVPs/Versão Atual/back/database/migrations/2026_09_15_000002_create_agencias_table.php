@@ -15,11 +15,13 @@ return new class extends Migration
             $table->id();
             $table->string('nome');
             $table->foreignId('plano_id')->nullable()->constrained('planos')->nullOnDelete();
+            $table->enum('forma_pagamento', ['PIX', 'CARD'])->default('PIX')->after('plano_id');
             $table->string('id_transacao')->nullable();
             $table->text('url_checkout')->nullable();
             $table->enum('status_pagamento', ['pendente', 'ativo', 'suspenso', 'cancelado'])->default('pendente');
             $table->timestamp('pagamento_expira_em')->nullable();
             $table->timestamp('assinatura_expira_em')->nullable();
+            $table->timestamp('alerta_falha_pagamento_enviado_em')->nullable()->after('assinatura_expira_em');
             $table->timestamps();
         });
     }

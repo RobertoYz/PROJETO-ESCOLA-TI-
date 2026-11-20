@@ -7,9 +7,13 @@ class AbacatePayAdapter
     /**
      * Converte entidades do domínio interno para o payload exigido pela API AbacatePay v2.
      */
-    public function paraPayloadCriacao($agencia, $usuario, $plano, string $urlRetorno): array
+    public function paraPayloadCriacao($agencia, $usuario, $plano, string $urlRetorno, string $formaPagamento = 'PIX'): array
     {
         $idProdutoAbacatePay = $plano->id_transacao ?? 'prod_sWfDg0eZXTLbtZEHYpqnMLKP';
+        $metodoNormalizado = strtoupper(trim($formaPagamento));
+        if (!in_array($metodoNormalizado, ['PIX', 'CARD'], true)) {
+            $metodoNormalizado = 'PIX';
+        }
 
         return [
             'frequency' => 'ONE_TIME',
@@ -26,7 +30,7 @@ class AbacatePayAdapter
             'externalId' => 'agencia_' . $agencia->id . '_' . uniqid(),
             'returnUrl' => $urlRetorno,
             'completionUrl' => $urlRetorno,
-            'methods' => ['PIX'],
+            'methods' => [$metodoNormalizado],
         ];
     }
 
