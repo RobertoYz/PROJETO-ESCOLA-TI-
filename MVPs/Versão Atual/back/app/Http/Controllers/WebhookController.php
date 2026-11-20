@@ -53,6 +53,7 @@ class WebhookController extends Controller
                     }
                     $agencia->url_checkout = null;
                     $agencia->pagamento_expira_em = null;
+                    $agencia->alerta_vencimento_proximo_enviado_em = null;
                     $agencia->alerta_falha_pagamento_enviado_em = null;
                 } elseif (in_array($dadosAdaptados['status_pagamento'], ['cancelado', 'suspenso'], true)) {
                     $agencia->url_checkout = null;

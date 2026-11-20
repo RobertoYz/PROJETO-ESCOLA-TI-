@@ -19,12 +19,14 @@ class Agencia extends Model
         'status_pagamento',
         'pagamento_expira_em',
         'assinatura_expira_em',
+        'alerta_vencimento_proximo_enviado_em',
         'alerta_falha_pagamento_enviado_em',
     ];
 
     protected $casts = [
         'pagamento_expira_em' => 'datetime',
         'assinatura_expira_em' => 'datetime',
+        'alerta_vencimento_proximo_enviado_em' => 'datetime',
         'alerta_falha_pagamento_enviado_em' => 'datetime',
     ];
 
@@ -47,6 +49,14 @@ class Agencia extends Model
             && $this->assinatura_expira_em !== null
             && $this->assinatura_expira_em->isPast()
             && $this->assinatura_expira_em->copy()->addDays(2)->isFuture();
+    }
+
+    public function emJanelaVencimentoProximo(): bool
+    {
+        return $this->status_pagamento === 'ativo'
+            && $this->assinatura_expira_em !== null
+            && $this->assinatura_expira_em->isFuture()
+            && $this->assinatura_expira_em->lte(now()->addDays(5));
     }
 
     public function plano(): BelongsTo

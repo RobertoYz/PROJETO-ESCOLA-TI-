@@ -75,6 +75,20 @@ class AssinaturaController extends Controller
             : 'PIX';
         $formaPagamentoLabel = $formaPagamento === 'CARD' ? 'Cartão de Crédito' : 'PIX';
 
+        $emCarencia = $agencia->emPeriodoCarencia();
+        $vencimentoProximo = $agencia->emJanelaVencimentoProximo();
+        $exibirAlertaAssinatura = $vencimentoProximo || $emCarencia;
+        $alertaAssinaturaNivel = $emCarencia
+            ? 'critico'
+            : ($vencimentoProximo ? 'atencao' : null);
+
+        $alertaAssinaturaMensagem = null;
+        if ($emCarencia) {
+            $alertaAssinaturaMensagem = 'Assinatura vencida em período de carência. Atualize sua forma de pagamento para evitar a pausa da conta.';
+        } elseif ($vencimentoProximo) {
+            $alertaAssinaturaMensagem = "Sua assinatura vence em {$diasRestantes} dia(s) ({$dataVencimentoFormatada}). Renove agora sem perder os dias restantes.";
+        }
+
         return response()->json([
             'plano' => [
                 'id' => $plano?->id,
@@ -92,7 +106,11 @@ class AssinaturaController extends Controller
             ],
             'forma_pagamento' => $formaPagamento,
             'forma_pagamento_label' => $formaPagamentoLabel,
-            'em_carencia' => $agencia->emPeriodoCarencia(),
+            'em_carencia' => $emCarencia,
+            'vencimento_proximo' => $vencimentoProximo,
+            'exibir_alerta_assinatura' => $exibirAlertaAssinatura,
+            'alerta_assinatura_nivel' => $alertaAssinaturaNivel,
+            'alerta_assinatura_mensagem' => $alertaAssinaturaMensagem,
             'status_pagamento' => $statusEfetivo,
             'status_pagamento_real' => $statusReal,
             'assinatura_ativa' => $agencia->isPagamentoAtivo(),

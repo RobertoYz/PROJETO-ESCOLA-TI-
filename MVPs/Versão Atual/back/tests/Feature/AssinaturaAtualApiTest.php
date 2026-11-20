@@ -84,6 +84,10 @@ class AssinaturaAtualApiTest extends TestCase
                 'forma_pagamento' => 'PIX',
                 'forma_pagamento_label' => 'PIX',
                 'em_carencia' => false,
+                'vencimento_proximo' => false,
+                'exibir_alerta_assinatura' => false,
+                'alerta_assinatura_nivel' => null,
+                'alerta_assinatura_mensagem' => null,
                 'status_pagamento' => 'ativo',
                 'assinatura_expira_em_formatada' => $vencimento->format('d/m/Y'),
                 'data_vencimento_formatada' => $vencimento->format('d/m/Y'),
@@ -295,6 +299,7 @@ class AssinaturaAtualApiTest extends TestCase
             'forma_pagamento' => 'CARD',
             'status_pagamento' => 'ativo',
             'assinatura_expira_em' => $vencimentoAtual,
+            'alerta_vencimento_proximo_enviado_em' => now()->subDays(2),
             'alerta_falha_pagamento_enviado_em' => now()->subDay(),
             'id_transacao' => 'bill_renovacao_acumulativa',
             'url_checkout' => 'https://abacatepay.com/pay/bill_renovacao_acumulativa',
@@ -319,6 +324,7 @@ class AssinaturaAtualApiTest extends TestCase
         $this->assertEquals('ativo', $agencia->status_pagamento);
         $this->assertNull($agencia->url_checkout);
         $this->assertNull($agencia->pagamento_expira_em);
+        $this->assertNull($agencia->alerta_vencimento_proximo_enviado_em);
         $this->assertNull($agencia->alerta_falha_pagamento_enviado_em);
         $this->assertEquals(
             $vencimentoEsperado->format('Y-m-d H:i:s'),
@@ -596,5 +602,77 @@ class AssinaturaAtualApiTest extends TestCase
         // B3) Conta vencida há 31 dias (> 30 dias) sofreu Hard Delete em cascata
         $this->assertDatabaseMissing('agencias', ['id' => $agenciaSuspensa31Dias->id]);
         $this->assertDatabaseMissing('users', ['id' => $userSuspenso31Dias->id]);
+    }
+
+    /**
+     * EDTAN-310 / RF-102 (9): Notificação preventiva de vencimento próximo (<= 5 dias):
+     * - Dispara e-mail preventivo no comando assinaturas:processar-ciclo e grava alerta_vencimento_proximo_enviado_em;
+     * - Idempotência: segunda execução no mesmo ciclo não reenvia o e-mail;
+     * - GET /api/assinatura/atual retorna vencimento_proximo, exibir_alerta_assinatura, alerta_assinatura_nivel ('atencao' / 'critico') e mensagem.
+     */
+    public function test_notificacao_preventiva_5_dias_idempotencia_scheduler_e_alerta_proativo_api(): void
+    {
+        Mail::fake();
+
+        $vencimento4Dias = now()->addDays(4);
+
+        $agenciaVencimentoProximo = Agencia::create([
+            'nome' => 'Consultoria Vencimento 4 Dias',
+            'plano_id' => $this->plano->id,
+            'forma_pagamento' => 'PIX',
+            'status_pagamento' => 'ativo',
+            'assinatura_expira_em' => $vencimento4Dias,
+            'alerta_vencimento_proximo_enviado_em' => null,
+        ]);
+
+        $admin = User::create([
+            'name' => 'Roberto Admin Preventivo',
+            'email' => 'preventivo@anjonexus.com.br',
+            'password' => Hash::make('SenhaSegura@2026'),
+            'agencia_id' => $agenciaVencimentoProximo->id,
+            'perfil_acesso' => 'consultor_admin',
+        ]);
+
+        // 1. Verifica payload de alerta proativo ('atencao') em GET /api/assinatura/atual
+        $resAtencao = $this->actingAs($admin, 'sanctum')
+            ->getJson('/api/assinatura/atual');
+
+        $resAtencao->assertStatus(200)
+            ->assertJson([
+                'vencimento_proximo' => true,
+                'em_carencia' => false,
+                'exibir_alerta_assinatura' => true,
+                'alerta_assinatura_nivel' => 'atencao',
+            ]);
+        $this->assertStringContainsString($vencimento4Dias->format('d/m/Y'), $resAtencao->json('alerta_assinatura_mensagem'));
+
+        // 2. 1ª execução do Scheduler: dispara o e-mail preventivo e preenche alerta_vencimento_proximo_enviado_em
+        $this->artisan('assinaturas:processar-ciclo')
+            ->expectsOutputToContain('1 alertas preventivos (5 dias) enviados')
+            ->assertExitCode(0);
+
+        $agenciaVencimentoProximo->refresh();
+        $timestampPrimeiroEnvio = $agenciaVencimentoProximo->alerta_vencimento_proximo_enviado_em;
+        $this->assertNotNull($timestampPrimeiroEnvio);
+
+        // 3. 2ª execução consecutiva do Scheduler no mesmo ciclo: idempotente (0 alertas preventivos enviados)
+        $this->artisan('assinaturas:processar-ciclo')
+            ->expectsOutputToContain('0 alertas preventivos (5 dias) enviados')
+            ->assertExitCode(0);
+
+        // 4. Quando entra em período de carência, o nível do alerta proativo passa para 'critico'
+        $agenciaVencimentoProximo->assinatura_expira_em = now()->subDay();
+        $agenciaVencimentoProximo->save();
+
+        $resCritico = $this->actingAs($admin, 'sanctum')
+            ->getJson('/api/assinatura/atual');
+
+        $resCritico->assertStatus(200)
+            ->assertJson([
+                'vencimento_proximo' => false,
+                'em_carencia' => true,
+                'exibir_alerta_assinatura' => true,
+                'alerta_assinatura_nivel' => 'critico',
+            ]);
     }
 }

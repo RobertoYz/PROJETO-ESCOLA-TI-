@@ -21,7 +21,8 @@ return new class extends Migration
             $table->enum('status_pagamento', ['pendente', 'ativo', 'suspenso', 'cancelado'])->default('pendente');
             $table->timestamp('pagamento_expira_em')->nullable();
             $table->timestamp('assinatura_expira_em')->nullable();
-            $table->timestamp('alerta_falha_pagamento_enviado_em')->nullable()->after('assinatura_expira_em');
+            $table->timestamp('alerta_vencimento_proximo_enviado_em')->nullable()->after('assinatura_expira_em');
+            $table->timestamp('alerta_falha_pagamento_enviado_em')->nullable()->after('alerta_vencimento_proximo_enviado_em');
             $table->timestamps();
         });
     }

@@ -853,6 +853,131 @@ function injetarEstilosHeaderGlobal() {
             color: #ffffff;
         }
 
+        /* Alerta Proativo de Vencimento de Assinatura (EDTAN-310 / RF-102) */
+        .badge-alerta-assinatura-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            border: 2px solid #0d0f12;
+            display: none;
+        }
+
+        .badge-alerta-assinatura-dot.atencao {
+            display: inline-block;
+            background-color: #f59e0b;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
+        }
+
+        .badge-alerta-assinatura-dot.critico {
+            display: inline-block;
+            background-color: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+        }
+
+        .badge-alerta-assinatura-pill {
+            margin-left: auto;
+            font-size: 0.68rem;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: none;
+        }
+
+        .badge-alerta-assinatura-pill.atencao {
+            display: inline-flex;
+            background: rgba(245, 158, 11, 0.18);
+            color: #b45309;
+            border: 1px solid rgba(245, 158, 11, 0.55);
+        }
+
+        .badge-alerta-assinatura-pill.critico {
+            display: inline-flex;
+            background: rgba(239, 68, 68, 0.18);
+            color: #b91c1c;
+            border: 1px solid rgba(239, 68, 68, 0.55);
+        }
+
+        .banner-proativo-assinatura {
+            width: 100%;
+            background: linear-gradient(90deg, rgba(19, 23, 34, 0.98), rgba(15, 23, 42, 0.98));
+            border-bottom: 1px solid rgba(245, 158, 11, 0.4);
+            color: #f8fafc;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+            box-sizing: border-box;
+            z-index: 95;
+            font-size: 0.85rem;
+        }
+
+        .banner-proativo-assinatura.critico {
+            border-bottom-color: rgba(239, 68, 68, 0.55);
+            background: linear-gradient(90deg, rgba(40, 14, 18, 0.96), rgba(19, 23, 34, 0.98));
+        }
+
+        .banner-proativo-assinatura-texto {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #e2e8f0;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .banner-proativo-assinatura-acoes {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .btn-banner-gerenciar-assinatura {
+            background: #f59e0b;
+            color: #0b0e14;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 13px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.18s ease, transform 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .banner-proativo-assinatura.critico .btn-banner-gerenciar-assinatura {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        .btn-banner-gerenciar-assinatura:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        .btn-banner-fechar-assinatura {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.15rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .btn-banner-fechar-assinatura:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
         .badge-status-assinatura {
             font-size: 0.75rem;
             font-weight: 700;
@@ -1669,6 +1794,93 @@ function preencherDadosModalAssinatura(dados) {
             }
         }
     }
+
+    aplicarAlertaProativoAssinatura(dados);
+}
+
+function aplicarAlertaProativoAssinatura(dados) {
+    const badgeAvatar = document.getElementById('badgeAlertaAssinaturaAvatar');
+    const badgeMenu = document.getElementById('badgeAlertaAssinaturaMenu');
+    const bannerExistente = document.getElementById('bannerProativoAssinaturaGlobal');
+
+    const usuarioLocal = obterUsuarioLogado();
+    const perfilAcesso = dados?.perfil_acesso || usuarioLocal?.perfil_acesso || 'consultor_admin';
+    const exibirAlerta = Boolean(dados?.exibir_alerta_assinatura) && perfilAcesso === 'consultor_admin';
+
+    if (!exibirAlerta) {
+        if (badgeAvatar) badgeAvatar.className = 'badge-alerta-assinatura-dot';
+        if (badgeMenu) {
+            badgeMenu.className = 'badge-alerta-assinatura-pill';
+            badgeMenu.textContent = '';
+        }
+        if (bannerExistente) bannerExistente.remove();
+        return;
+    }
+
+    const nivel = dados?.alerta_assinatura_nivel === 'critico' ? 'critico' : 'atencao';
+    const diasRestantes = Number(dados?.dias_restantes ?? 0);
+    const textoPill = nivel === 'critico' ? 'Carência' : `${diasRestantes}d`;
+    const mensagemBanner = dados?.alerta_assinatura_mensagem
+        || (nivel === 'critico'
+            ? 'Assinatura vencida em período de carência. Atualize sua forma de pagamento para evitar a pausa da conta.'
+            : `Sua assinatura vence em ${diasRestantes} dia(s). Renove agora sem perder os dias restantes.`);
+
+    if (badgeAvatar) {
+        badgeAvatar.className = `badge-alerta-assinatura-dot ${nivel}`;
+        badgeAvatar.title = mensagemBanner;
+    }
+
+    if (badgeMenu) {
+        badgeMenu.className = `badge-alerta-assinatura-pill ${nivel}`;
+        badgeMenu.textContent = textoPill;
+    }
+
+    const chaveSessaoFechado = `anjo_banner_assinatura_fechado_${nivel}`;
+    if (sessionStorage.getItem(chaveSessaoFechado) === '1') {
+        return;
+    }
+
+    if (bannerExistente) {
+        bannerExistente.remove();
+    }
+
+    const banner = document.createElement('div');
+    banner.id = 'bannerProativoAssinaturaGlobal';
+    banner.className = `banner-proativo-assinatura ${nivel}`;
+    banner.setAttribute('role', 'region');
+    banner.setAttribute('aria-label', 'Alerta de vencimento da assinatura');
+
+    const icone = nivel === 'critico' ? '🚨' : '⚠️';
+    banner.innerHTML = `
+        <div class="banner-proativo-assinatura-texto">
+            <span>${icone}</span>
+            <span>${mensagemBanner}</span>
+        </div>
+        <div class="banner-proativo-assinatura-acoes">
+            <button type="button" class="btn-banner-gerenciar-assinatura" id="btnBannerGerenciarAssinatura">
+                Gerenciar Assinatura
+            </button>
+            <button type="button" class="btn-banner-fechar-assinatura" id="btnBannerFecharAssinatura" title="Ocultar aviso nesta sessão" aria-label="Fechar aviso">
+                &times;
+            </button>
+        </div>
+    `;
+
+    const navbar = document.querySelector('.top-navbar') || document.querySelector('header');
+    if (navbar && navbar.parentNode) {
+        navbar.insertAdjacentElement('afterend', banner);
+    } else {
+        document.body.insertAdjacentElement('afterbegin', banner);
+    }
+
+    banner.querySelector('#btnBannerGerenciarAssinatura')?.addEventListener('click', () => {
+        abrirModalMinhaAssinatura();
+    });
+
+    banner.querySelector('#btnBannerFecharAssinatura')?.addEventListener('click', () => {
+        sessionStorage.setItem(chaveSessaoFechado, '1');
+        banner.remove();
+    });
 }
 
 async function abrirModalMinhaAssinatura() {
@@ -1776,14 +1988,18 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
 
         <div class="user-section-global" id="userMenuBtn">
             <span class="user-name" id="headerUserName">${nomeInicialUsuario}</span>
-            <div class="avatar">
+            <div class="avatar" style="position: relative;">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                 </svg>
+                <span id="badgeAlertaAssinaturaAvatar" class="badge-alerta-assinatura-dot"></span>
             </div>
             <div class="user-dropdown-global" id="mainDropdown">
                 <div class="user-dropdown-item" id="btnMenuEditarPerfil">Editar Perfil</div>
-                <div class="user-dropdown-item" id="btnMenuVisualizarAssinatura">Visualizar Assinatura</div>
+                <div class="user-dropdown-item" id="btnMenuVisualizarAssinatura">
+                    <span>Minha Assinatura</span>
+                    <span id="badgeAlertaAssinaturaMenu" class="badge-alerta-assinatura-pill"></span>
+                </div>
                 <div class="user-dropdown-item logoff-item" id="btnMenuLogoff">Logoff</div>
             </div>
         </div>
@@ -1866,8 +2082,8 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         });
     }
 
-    // Sincroniza dados reais do usuário cadastrado a partir da API
-    obterPerfilUsuario().then((usuarioApi) => {
+    // Sincroniza dados reais do usuário cadastrado a partir da API e verifica alerta proativo de assinatura (EDTAN-310)
+    obterPerfilUsuario().then(async (usuarioApi) => {
         if (usuarioApi && usuarioApi.name) {
             const nomeHeaderEl = document.getElementById('headerUserName');
             if (nomeHeaderEl) {
@@ -1875,6 +2091,18 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             }
         }
         atualizarVisibilidadeZonaPerigo(usuarioApi);
+
+        const perfil = usuarioApi?.perfil_acesso || usuarioLocal?.perfil_acesso || 'consultor_admin';
+        if (perfil === 'consultor_admin') {
+            try {
+                const dadosAssinatura = await requisicaoApi('/assinatura/atual', { method: 'GET' });
+                aplicarAlertaProativoAssinatura(dadosAssinatura);
+            } catch (_) {
+                // Falha silenciosa caso offline
+            }
+        } else {
+            aplicarAlertaProativoAssinatura({ exibir_alerta_assinatura: false, perfil_acesso: perfil });
+        }
     });
 
     function renderizarItensDropdown(listaStartups) {
