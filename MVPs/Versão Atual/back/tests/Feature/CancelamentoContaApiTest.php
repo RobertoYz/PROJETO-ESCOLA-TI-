@@ -340,14 +340,24 @@ class CancelamentoContaApiTest extends TestCase
         ]);
         $this->assertTrue($agenciaSemExpiracao->isPagamentoAtivo());
 
-        // 3. Agência com status_pagamento = ativo mas assinatura_expira_em vencida -> false
-        $agenciaExpirada = Agencia::create([
-            'nome' => 'Agência Ciclo Expirado',
+        // 3. Agência com status_pagamento = ativo e dentro da carência de 2 dias -> true, e após 2 dias -> false
+        $agenciaEmCarencia = Agencia::create([
+            'nome' => 'Agência Em Carência 2 Dias',
             'plano_id' => $this->plano->id,
             'status_pagamento' => 'ativo',
             'assinatura_expira_em' => now()->subDay(),
         ]);
+        $this->assertTrue($agenciaEmCarencia->isPagamentoAtivo());
+        $this->assertTrue($agenciaEmCarencia->emPeriodoCarencia());
+
+        $agenciaExpirada = Agencia::create([
+            'nome' => 'Agência Ciclo Expirado Após Carência',
+            'plano_id' => $this->plano->id,
+            'status_pagamento' => 'ativo',
+            'assinatura_expira_em' => now()->subDays(3),
+        ]);
         $this->assertFalse($agenciaExpirada->isPagamentoAtivo());
+        $this->assertFalse($agenciaExpirada->emPeriodoCarencia());
 
         // 4. Webhook AbacatePay confirmando pagamento preenche assinatura_expira_em = now()->addDays(30)
         $agenciaPendente = Agencia::create([

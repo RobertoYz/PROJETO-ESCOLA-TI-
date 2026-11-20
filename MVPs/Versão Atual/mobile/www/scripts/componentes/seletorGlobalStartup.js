@@ -843,6 +843,223 @@ function injetarEstilosHeaderGlobal() {
             letter-spacing: 0.6px;
         }
 
+        .badge-metodo-card {
+            background: rgba(59, 130, 246, 0.16);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.45);
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 999px;
+            letter-spacing: 0.4px;
+        }
+
+        .badge-carencia-alerta {
+            background: rgba(245, 158, 11, 0.18);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+
+        .painel-atualizar-pagamento {
+            background: #0d1017;
+            border: 1px solid #2a3142;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .painel-atualizar-pagamento.active {
+            display: flex;
+        }
+
+        .opcoes-metodo-modal {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .opcao-metodo-btn {
+            background: #141923;
+            border: 1px solid #2e364f;
+            color: #cbd5e1;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.18s ease;
+        }
+
+        .opcao-metodo-btn:hover {
+            border-color: #60a5fa;
+            color: #ffffff;
+        }
+
+        .opcao-metodo-btn.selecionado {
+            background: rgba(37, 99, 235, 0.2);
+            border-color: #3b82f6;
+            color: #ffffff;
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-atualizar-forma-pagamento {
+            background: rgba(59, 130, 246, 0.14);
+            border: 1px solid rgba(59, 130, 246, 0.45);
+            color: #93c5fd;
+            padding: 9px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-atualizar-forma-pagamento:hover:not(:disabled) {
+            background: #2563eb;
+            border-color: #3b82f6;
+            color: #ffffff;
+        }
+
+        /* Alerta Proativo de Vencimento de Assinatura (EDTAN-310 / RF-102) */
+        .badge-alerta-assinatura-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            border: 2px solid #0d0f12;
+            display: none;
+        }
+
+        .badge-alerta-assinatura-dot.atencao {
+            display: inline-block;
+            background-color: #f59e0b;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
+        }
+
+        .badge-alerta-assinatura-dot.critico {
+            display: inline-block;
+            background-color: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+        }
+
+        .badge-alerta-assinatura-pill {
+            margin-left: auto;
+            font-size: 0.68rem;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            display: none;
+        }
+
+        .badge-alerta-assinatura-pill.atencao {
+            display: inline-flex;
+            background: rgba(245, 158, 11, 0.18);
+            color: #b45309;
+            border: 1px solid rgba(245, 158, 11, 0.55);
+        }
+
+        .badge-alerta-assinatura-pill.critico {
+            display: inline-flex;
+            background: rgba(239, 68, 68, 0.18);
+            color: #b91c1c;
+            border: 1px solid rgba(239, 68, 68, 0.55);
+        }
+
+        .banner-proativo-assinatura {
+            width: 100%;
+            background: linear-gradient(90deg, rgba(19, 23, 34, 0.98), rgba(15, 23, 42, 0.98));
+            border-bottom: 1px solid rgba(245, 158, 11, 0.4);
+            color: #f8fafc;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+            box-sizing: border-box;
+            z-index: 95;
+            font-size: 0.85rem;
+        }
+
+        .banner-proativo-assinatura.critico {
+            border-bottom-color: rgba(239, 68, 68, 0.55);
+            background: linear-gradient(90deg, rgba(40, 14, 18, 0.96), rgba(19, 23, 34, 0.98));
+        }
+
+        .banner-proativo-assinatura-texto {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #e2e8f0;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .banner-proativo-assinatura-acoes {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .btn-banner-gerenciar-assinatura {
+            background: #f59e0b;
+            color: #0b0e14;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 13px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.18s ease, transform 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .banner-proativo-assinatura.critico .btn-banner-gerenciar-assinatura {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        .btn-banner-gerenciar-assinatura:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        .btn-banner-fechar-assinatura {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.15rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .btn-banner-fechar-assinatura:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
         .badge-status-assinatura {
             font-size: 0.75rem;
             font-weight: 700;
@@ -1303,7 +1520,7 @@ function garantirModalMinhaAssinatura() {
                 <div class="modal-perfil-consultor-header">
                     <div>
                         <div class="modal-perfil-consultor-title" id="tituloModalMinhaAssinatura">Minha Assinatura</div>
-                        <div class="modal-perfil-consultor-subtitle">Detalhes do plano atual, limites da consultoria e ciclo de renovação</div>
+                        <div class="modal-perfil-consultor-subtitle">Detalhes do plano atual, forma de pagamento, datas e renovação</div>
                     </div>
                     <button type="button" class="modal-perfil-close" id="btnFecharModalMinhaAssinatura">&times;</button>
                 </div>
@@ -1317,7 +1534,7 @@ function garantirModalMinhaAssinatura() {
                     <div class="assinatura-plano-preco" id="assinaturaPlanoPreco">R$ --,--/mês</div>
                 </div>
 
-                <!-- Forma de Pagamento + Vencimento e Ciclo -->
+                <!-- Forma de Pagamento + Vencimento e Repetição (DD/MM/AAAA) -->
                 <div class="assinatura-grid-info">
                     <div class="assinatura-info-item">
                         <span class="assinatura-info-label">Forma de Pagamento Atual</span>
@@ -1331,13 +1548,41 @@ function garantirModalMinhaAssinatura() {
                             <span class="badge-status-assinatura ativa" id="assinaturaStatusBadge">Ativa</span>
                         </div>
                     </div>
-                    <div class="assinatura-info-item">
-                        <span class="assinatura-info-label">Vencimento da Assinatura</span>
+                    <div class="assinatura-info-item" id="assinaturaCardVencimento">
+                        <span class="assinatura-info-label">Vencimento do Ciclo</span>
                         <div class="assinatura-info-valor" id="assinaturaDataVencimento">--/--/----</div>
                     </div>
                     <div class="assinatura-info-item">
-                        <span class="assinatura-info-label">Dias Restantes</span>
-                        <div class="assinatura-info-valor" id="assinaturaDiasRestantes">-- dias</div>
+                        <span class="assinatura-info-label">Próximo Pagamento / Repetição</span>
+                        <div class="assinatura-info-valor" id="assinaturaDataRepeticao">--/--/----</div>
+                    </div>
+                </div>
+
+                <!-- Botão e Painel de Atualização de Forma de Pagamento (EDTAN-311) -->
+                <div>
+                    <button type="button" class="btn-atualizar-forma-pagamento" id="btnAbrirAtualizarFormaPagamento">
+                        💳 Atualizar Forma de Pagamento
+                    </button>
+                    <div class="painel-atualizar-pagamento" id="painelAtualizarFormaPagamento" style="margin-top: 8px;">
+                        <div style="font-size: 0.8rem; font-weight: 600; color: #e2e8f0;">
+                            Escolha a forma de pagamento desejada:
+                        </div>
+                        <div class="opcoes-metodo-modal">
+                            <button type="button" class="opcao-metodo-btn selecionado" id="btnOpcaoModalPix" data-forma="PIX">
+                                ⚡ PIX
+                            </button>
+                            <button type="button" class="opcao-metodo-btn" id="btnOpcaoModalCard" data-forma="CARD">
+                                💳 Cartão de Crédito
+                            </button>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                            <button type="button" class="btn-perfil-cancelar" id="btnCancelarTrocaFormaPagamento" style="padding: 7px 12px; font-size: 0.82rem;">
+                                Cancelar
+                            </button>
+                            <button type="button" class="btn-perfil-salvar" id="btnConfirmarTrocaFormaPagamento" style="padding: 7px 14px; font-size: 0.82rem;">
+                                Confirmar Forma de Pagamento
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1367,7 +1612,7 @@ function garantirModalMinhaAssinatura() {
                 <div class="modal-perfil-actions" style="justify-content: space-between; align-items: center; gap: 12px;">
                     <button type="button" class="btn-perfil-cancelar" id="btnFecharRodapeAssinatura">Fechar</button>
                     <button type="button" class="btn-renovar-assinatura-pix" id="btnAcaoRenovarAssinaturaPix" disabled style="flex: 1;">
-                        Renovar Assinatura via PIX
+                        Renovar Assinatura
                     </button>
                 </div>
             </div>
@@ -1382,8 +1627,79 @@ function garantirModalMinhaAssinatura() {
     const btnRenovar = document.getElementById('btnAcaoRenovarAssinaturaPix');
     const feedback = document.getElementById('feedbackMinhaAssinatura');
 
+    const btnAbrirAtualizar = document.getElementById('btnAbrirAtualizarFormaPagamento');
+    const painelAtualizar = document.getElementById('painelAtualizarFormaPagamento');
+    const btnOpcaoPix = document.getElementById('btnOpcaoModalPix');
+    const btnOpcaoCard = document.getElementById('btnOpcaoModalCard');
+    const btnCancelarTroca = document.getElementById('btnCancelarTrocaFormaPagamento');
+    const btnConfirmarTroca = document.getElementById('btnConfirmarTrocaFormaPagamento');
+
+    let formaEscolhidaModal = 'PIX';
+
+    const selecionarFormaModal = (forma) => {
+        formaEscolhidaModal = forma === 'CARD' ? 'CARD' : 'PIX';
+        if (btnOpcaoPix) btnOpcaoPix.classList.toggle('selecionado', formaEscolhidaModal === 'PIX');
+        if (btnOpcaoCard) btnOpcaoCard.classList.toggle('selecionado', formaEscolhidaModal === 'CARD');
+    };
+
+    btnOpcaoPix?.addEventListener('click', () => selecionarFormaModal('PIX'));
+    btnOpcaoCard?.addEventListener('click', () => selecionarFormaModal('CARD'));
+
+    btnAbrirAtualizar?.addEventListener('click', () => {
+        if (!painelAtualizar) return;
+        const formaAtual = btnAbrirAtualizar.dataset.formaAtual || 'PIX';
+        selecionarFormaModal(formaAtual);
+        painelAtualizar.classList.toggle('active');
+    });
+
+    btnCancelarTroca?.addEventListener('click', () => {
+        if (painelAtualizar) painelAtualizar.classList.remove('active');
+    });
+
+    btnConfirmarTroca?.addEventListener('click', async () => {
+        if (btnConfirmarTroca.disabled) return;
+
+        feedback.className = 'perfil-feedback';
+        feedback.textContent = '';
+
+        const textoOriginal = btnConfirmarTroca.textContent;
+        btnConfirmarTroca.disabled = true;
+        btnConfirmarTroca.textContent = 'Atualizando...';
+
+        try {
+            const resposta = await requisicaoApi('/assinatura/atualizar-forma-pagamento', {
+                method: 'POST',
+                body: JSON.stringify({
+                    forma_pagamento: formaEscolhidaModal
+                })
+            });
+
+            feedback.textContent = resposta?.message || 'Forma de pagamento atualizada com sucesso!';
+            feedback.className = 'perfil-feedback sucesso';
+
+            if (painelAtualizar) painelAtualizar.classList.remove('active');
+
+            const dadosAtualizados = await requisicaoApi('/assinatura/atual', { method: 'GET' });
+            preencherDadosModalAssinatura(dadosAtualizados);
+
+            if (resposta?.url_checkout) {
+                const novaJanela = window.open(resposta.url_checkout, '_blank');
+                if (!novaJanela) {
+                    window.location.href = resposta.url_checkout;
+                }
+            }
+        } catch (erro) {
+            feedback.textContent = erro.message || 'Não foi possível atualizar a forma de pagamento.';
+            feedback.className = 'perfil-feedback erro';
+        } finally {
+            btnConfirmarTroca.disabled = false;
+            btnConfirmarTroca.textContent = textoOriginal;
+        }
+    });
+
     const fecharModal = () => {
         overlay.classList.remove('active');
+        if (painelAtualizar) painelAtualizar.classList.remove('active');
         if (feedback) {
             feedback.className = 'perfil-feedback';
             feedback.textContent = '';
@@ -1404,6 +1720,7 @@ function garantirModalMinhaAssinatura() {
 
         const usuarioAtual = obterUsuarioLogado();
         const perfilAcesso = btnRenovar.dataset.perfilAcesso || usuarioAtual?.perfil_acesso || 'consultor_admin';
+        const formaAtual = btnRenovar.dataset.formaPagamento || 'PIX';
 
         if (perfilAcesso === 'consultor_padrao') {
             feedback.textContent = 'Apenas o administrador da consultoria pode gerar uma cobrança de renovação da assinatura.';
@@ -1413,18 +1730,19 @@ function garantirModalMinhaAssinatura() {
 
         const textoOriginal = btnRenovar.textContent;
         btnRenovar.disabled = true;
-        btnRenovar.textContent = 'Gerando pagamento PIX...';
+        btnRenovar.textContent = 'Gerando pagamento...';
 
         try {
             const resposta = await requisicaoApi('/assinatura/renovar', {
-                method: 'POST'
+                method: 'POST',
+                body: JSON.stringify({ forma_pagamento: formaAtual })
             });
 
             const urlCheckout = resposta?.url_checkout;
             if (urlCheckout) {
-                btnRenovar.textContent = 'Abrir PIX de Renovação Pendente';
+                btnRenovar.textContent = 'Abrir Pagamento de Renovação';
                 btnRenovar.disabled = false;
-                feedback.textContent = resposta?.message || 'Cobrança PIX pronta! Redirecionando para o pagamento...';
+                feedback.textContent = resposta?.message || 'Cobrança pronta! Redirecionando para o pagamento...';
                 feedback.className = 'perfil-feedback sucesso';
 
                 const novaJanela = window.open(urlCheckout, '_blank');
@@ -1432,10 +1750,10 @@ function garantirModalMinhaAssinatura() {
                     window.location.href = urlCheckout;
                 }
             } else {
-                throw new Error('Não foi possível obter o link de pagamento PIX.');
+                throw new Error('Não foi possível obter o link de pagamento.');
             }
         } catch (erro) {
-            feedback.textContent = erro.message || 'Erro ao gerar cobrança PIX de renovação.';
+            feedback.textContent = erro.message || 'Erro ao gerar cobrança de renovação.';
             feedback.className = 'perfil-feedback erro';
             btnRenovar.textContent = textoOriginal;
             btnRenovar.disabled = false;
@@ -1449,9 +1767,13 @@ function preencherDadosModalAssinatura(dados) {
     const diasRestantes = Number(dados?.dias_restantes ?? 0);
     const podeRenovar = Boolean(dados?.pode_renovar);
     const cobrancaAberta = Boolean(dados?.cobranca_aberta);
+    const emCarencia = Boolean(dados?.em_carencia);
     const statusPagamento = dados?.status_pagamento || 'ativo';
-    const dataVencimentoFmt = dados?.assinatura_expira_em_formatada || formatarDataPtBr(dados?.assinatura_expira_em);
-    const dataLiberacaoFmt = dados?.data_liberacao_renovacao || '--/--/----';
+    const formaPagamento = (dados?.forma_pagamento || 'PIX').toUpperCase();
+    const formaPagamentoLabel = dados?.forma_pagamento_label || (formaPagamento === 'CARD' ? 'Cartão de Crédito' : 'PIX');
+    const dataVencimentoFmt = dados?.data_vencimento_formatada || dados?.assinatura_expira_em_formatada || formatarDataPtBr(dados?.assinatura_expira_em);
+    const dataRepeticaoFmt = dados?.data_repeticao_formatada || dataVencimentoFmt;
+    const dataLiberacaoFmt = dados?.data_liberacao_renovacao_formatada || dados?.data_liberacao_renovacao || '--/--/----';
     const perfilAcesso = dados?.perfil_acesso || obterUsuarioLogado()?.perfil_acesso || 'consultor_admin';
 
     const elNome = document.getElementById('assinaturaPlanoNome');
@@ -1459,12 +1781,14 @@ function preencherDadosModalAssinatura(dados) {
     const elMetodo = document.getElementById('assinaturaFormaPagamentoBadge');
     const elStatus = document.getElementById('assinaturaStatusBadge');
     const elVencimento = document.getElementById('assinaturaDataVencimento');
-    const elDias = document.getElementById('assinaturaDiasRestantes');
+    const elCardVencimento = document.getElementById('assinaturaCardVencimento');
+    const elRepeticao = document.getElementById('assinaturaDataRepeticao');
     const elUsoStartups = document.getElementById('assinaturaUsoStartups');
     const elUsoMembros = document.getElementById('assinaturaUsoMembros');
     const elUsoMinutas = document.getElementById('assinaturaUsoMinutas');
     const elAviso = document.getElementById('assinaturaAvisoRenovacao');
     const btnRenovar = document.getElementById('btnAcaoRenovarAssinaturaPix');
+    const btnAbrirAtualizar = document.getElementById('btnAbrirAtualizarFormaPagamento');
 
     if (elNome) elNome.textContent = plano.nome || 'Plano Anjo Nexus';
     if (elPreco) {
@@ -1473,11 +1797,22 @@ function preencherDadosModalAssinatura(dados) {
             : `${formatarMoedaBrl(plano.preco)}/mês`;
         elPreco.textContent = valorFmt;
     }
-    if (elMetodo) elMetodo.textContent = dados?.forma_pagamento || 'PIX';
+
+    if (elMetodo) {
+        elMetodo.textContent = formaPagamentoLabel;
+        elMetodo.className = formaPagamento === 'CARD' ? 'badge-metodo-card' : 'badge-metodo-pix';
+    }
+
+    if (btnAbrirAtualizar) {
+        btnAbrirAtualizar.dataset.formaAtual = formaPagamento;
+        btnAbrirAtualizar.style.display = perfilAcesso === 'consultor_admin' ? 'inline-flex' : 'none';
+    }
 
     if (elStatus) {
-        const vencida = statusPagamento !== 'ativo' || (dados?.assinatura_expira_em && diasRestantes <= 0 && !dados?.assinatura_ativa);
-        if (vencida) {
+        if (emCarencia) {
+            elStatus.textContent = 'Em Carência (2 Dias)';
+            elStatus.className = 'badge-status-assinatura proxima';
+        } else if (statusPagamento !== 'ativo' || (dados?.assinatura_expira_em && diasRestantes <= 0 && !dados?.assinatura_ativa)) {
             elStatus.textContent = 'Vencida';
             elStatus.className = 'badge-status-assinatura vencida';
         } else if (diasRestantes <= 5) {
@@ -1489,8 +1824,23 @@ function preencherDadosModalAssinatura(dados) {
         }
     }
 
-    if (elVencimento) elVencimento.textContent = dataVencimentoFmt || 'Sem vencimento';
-    if (elDias) elDias.textContent = `${diasRestantes} ${diasRestantes === 1 ? 'dia restante' : 'dias restantes'}`;
+    if (elVencimento) {
+        if (emCarencia) {
+            elVencimento.innerHTML = `<span style="color: #fbbf24;">${dataVencimentoFmt || '--/--/----'}</span> <span class="badge-carencia-alerta">⚠️ Carência</span>`;
+            if (elCardVencimento) {
+                elCardVencimento.style.borderColor = 'rgba(245, 158, 11, 0.55)';
+            }
+        } else {
+            elVencimento.textContent = dataVencimentoFmt || '--/--/----';
+            if (elCardVencimento) {
+                elCardVencimento.style.borderColor = '#222836';
+            }
+        }
+    }
+
+    if (elRepeticao) {
+        elRepeticao.textContent = dataRepeticaoFmt || '--/--/----';
+    }
 
     if (elUsoStartups) elUsoStartups.textContent = `${uso.startups_cadastradas ?? 0} / ${plano.limite_startups ?? 0}`;
     if (elUsoMembros) elUsoMembros.textContent = `${uso.membros_equipe ?? 0} / ${plano.limite_membros_equipe ?? 0}`;
@@ -1498,30 +1848,121 @@ function preencherDadosModalAssinatura(dados) {
 
     if (btnRenovar) {
         btnRenovar.dataset.perfilAcesso = perfilAcesso;
+        btnRenovar.dataset.formaPagamento = formaPagamento;
 
         if (!podeRenovar) {
             btnRenovar.disabled = true;
-            btnRenovar.textContent = 'Renovar Assinatura via PIX';
+            btnRenovar.textContent = `Renovar Assinatura (${formaPagamentoLabel})`;
             if (elAviso) {
                 elAviso.style.display = 'block';
-                elAviso.textContent = `A geração do próximo pagamento PIX será liberada 5 dias antes do vencimento (em ${dataLiberacaoFmt}).`;
+                elAviso.textContent = `A geração do próximo pagamento será liberada 5 dias antes do vencimento (em ${dataLiberacaoFmt}).`;
             }
         } else {
             btnRenovar.disabled = false;
             btnRenovar.textContent = cobrancaAberta
-                ? 'Abrir PIX de Renovação Pendente'
-                : 'Gerar Novo Pagamento PIX';
+                ? `Abrir Pagamento Pendente (${formaPagamentoLabel})`
+                : `Renovar Assinatura (${formaPagamentoLabel})`;
             if (elAviso) {
-                if (cobrancaAberta) {
+                if (emCarencia) {
                     elAviso.style.display = 'block';
-                    elAviso.textContent = 'Você já possui uma cobrança PIX aberta dentro da validade de 60 minutos. Clique abaixo para concluir o pagamento (+30 dias acumulativos).';
+                    elAviso.textContent = '⚠️ Sua assinatura está no período de carência de 2 dias. Regularize o pagamento ou atualize sua forma de pagamento para evitar a pausa da conta.';
+                } else if (cobrancaAberta) {
+                    elAviso.style.display = 'block';
+                    elAviso.textContent = 'Você já possui uma cobrança aberta dentro da validade de 60 minutos. Clique abaixo para concluir o pagamento (+30 dias acumulativos).';
                 } else {
                     elAviso.style.display = 'block';
-                    elAviso.textContent = 'Renovação liberada! Ao confirmar o pagamento PIX, serão somados +30 dias ao seu ciclo atual sem perda dos dias restantes.';
+                    elAviso.textContent = 'Renovação liberada! Ao confirmar o pagamento, serão somados +30 dias ao seu ciclo atual sem perda dos dias restantes.';
                 }
             }
         }
     }
+
+    aplicarAlertaProativoAssinatura(dados);
+}
+
+function aplicarAlertaProativoAssinatura(dados) {
+    const badgeAvatar = document.getElementById('badgeAlertaAssinaturaAvatar');
+    const badgeMenu = document.getElementById('badgeAlertaAssinaturaMenu');
+    const bannerExistente = document.getElementById('bannerProativoAssinaturaGlobal');
+
+    const usuarioLocal = obterUsuarioLogado();
+    const perfilAcesso = dados?.perfil_acesso || usuarioLocal?.perfil_acesso || 'consultor_admin';
+    const exibirAlerta = Boolean(dados?.exibir_alerta_assinatura) && perfilAcesso === 'consultor_admin';
+
+    if (!exibirAlerta) {
+        if (badgeAvatar) badgeAvatar.className = 'badge-alerta-assinatura-dot';
+        if (badgeMenu) {
+            badgeMenu.className = 'badge-alerta-assinatura-pill';
+            badgeMenu.textContent = '';
+        }
+        if (bannerExistente) bannerExistente.remove();
+        return;
+    }
+
+    const nivel = dados?.alerta_assinatura_nivel === 'critico' ? 'critico' : 'atencao';
+    const diasRestantes = Number(dados?.dias_restantes ?? 0);
+    const textoPill = nivel === 'critico' ? 'Carência' : `${diasRestantes}d`;
+    const mensagemBanner = dados?.alerta_assinatura_mensagem
+        || (nivel === 'critico'
+            ? 'Assinatura vencida em período de carência. Atualize sua forma de pagamento para evitar a pausa da conta.'
+            : `Sua assinatura vence em ${diasRestantes} dia(s). Renove agora sem perder os dias restantes.`);
+
+    if (badgeAvatar) {
+        badgeAvatar.className = `badge-alerta-assinatura-dot ${nivel}`;
+        badgeAvatar.title = mensagemBanner;
+    }
+
+    if (badgeMenu) {
+        badgeMenu.className = `badge-alerta-assinatura-pill ${nivel}`;
+        badgeMenu.textContent = textoPill;
+    }
+
+    const chaveSessaoFechado = `anjo_banner_assinatura_fechado_${nivel}`;
+    if (sessionStorage.getItem(chaveSessaoFechado) === '1') {
+        return;
+    }
+
+    if (bannerExistente) {
+        bannerExistente.remove();
+    }
+
+    const banner = document.createElement('div');
+    banner.id = 'bannerProativoAssinaturaGlobal';
+    banner.className = `banner-proativo-assinatura ${nivel}`;
+    banner.setAttribute('role', 'region');
+    banner.setAttribute('aria-label', 'Alerta de vencimento da assinatura');
+
+    const icone = nivel === 'critico' ? '🚨' : '⚠️';
+    banner.innerHTML = `
+        <div class="banner-proativo-assinatura-texto">
+            <span>${icone}</span>
+            <span>${mensagemBanner}</span>
+        </div>
+        <div class="banner-proativo-assinatura-acoes">
+            <button type="button" class="btn-banner-gerenciar-assinatura" id="btnBannerGerenciarAssinatura">
+                Gerenciar Assinatura
+            </button>
+            <button type="button" class="btn-banner-fechar-assinatura" id="btnBannerFecharAssinatura" title="Ocultar aviso nesta sessão" aria-label="Fechar aviso">
+                &times;
+            </button>
+        </div>
+    `;
+
+    const navbar = document.querySelector('.top-navbar') || document.querySelector('header');
+    if (navbar && navbar.parentNode) {
+        navbar.insertAdjacentElement('afterend', banner);
+    } else {
+        document.body.insertAdjacentElement('afterbegin', banner);
+    }
+
+    banner.querySelector('#btnBannerGerenciarAssinatura')?.addEventListener('click', () => {
+        abrirModalMinhaAssinatura();
+    });
+
+    banner.querySelector('#btnBannerFecharAssinatura')?.addEventListener('click', () => {
+        sessionStorage.setItem(chaveSessaoFechado, '1');
+        banner.remove();
+    });
 }
 
 async function abrirModalMinhaAssinatura() {
@@ -1629,15 +2070,18 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
 
         <div class="user-section-global" id="userMenuBtn">
             <span class="user-name" id="headerUserName">${nomeInicialUsuario}</span>
-            <div class="avatar">
+            <div class="avatar" style="position: relative;">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                 </svg>
+                <span id="badgeAlertaAssinaturaAvatar" class="badge-alerta-assinatura-dot"></span>
             </div>
             <div class="user-dropdown-global" id="mainDropdown">
                 <div class="user-dropdown-item" id="btnMenuEditarPerfil">Editar Perfil</div>
-                <div class="user-dropdown-item" id="btnMenuVisualizarAssinatura">Visualizar Assinatura</div>
-                <div class="user-dropdown-item" id="btnMenuConfiguracoesFake">Configurações</div>
+                <div class="user-dropdown-item" id="btnMenuVisualizarAssinatura">
+                    <span>Minha Assinatura</span>
+                    <span id="badgeAlertaAssinaturaMenu" class="badge-alerta-assinatura-pill"></span>
+                </div>
                 <div class="user-dropdown-item logoff-item" id="btnMenuLogoff">Logoff</div>
             </div>
         </div>
@@ -1653,7 +2097,6 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
     const mainDropdown = document.getElementById('mainDropdown');
     const btnEditarPerfil = document.getElementById('btnMenuEditarPerfil');
     const btnVisualizarAssinatura = document.getElementById('btnMenuVisualizarAssinatura');
-    const btnConfigFake = document.getElementById('btnMenuConfiguracoesFake');
     const btnLogoff = document.getElementById('btnMenuLogoff');
 
     const fecharDropdownStartups = () => {
@@ -1719,13 +2162,6 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         });
     }
 
-    if (btnConfigFake) {
-        btnConfigFake.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (mainDropdown) mainDropdown.classList.remove('active');
-        });
-    }
-
     if (btnLogoff) {
         btnLogoff.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1734,8 +2170,8 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         });
     }
 
-    // Sincroniza dados reais do usuário cadastrado a partir da API
-    obterPerfilUsuario().then((usuarioApi) => {
+    // Sincroniza dados reais do usuário cadastrado a partir da API e verifica alerta proativo de assinatura (EDTAN-310)
+    obterPerfilUsuario().then(async (usuarioApi) => {
         if (usuarioApi && usuarioApi.name) {
             const nomeHeaderEl = document.getElementById('headerUserName');
             if (nomeHeaderEl) {
@@ -1743,6 +2179,18 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             }
         }
         atualizarVisibilidadeZonaPerigo(usuarioApi);
+
+        const perfil = usuarioApi?.perfil_acesso || usuarioLocal?.perfil_acesso || 'consultor_admin';
+        if (perfil === 'consultor_admin') {
+            try {
+                const dadosAssinatura = await requisicaoApi('/assinatura/atual', { method: 'GET' });
+                aplicarAlertaProativoAssinatura(dadosAssinatura);
+            } catch (_) {
+                // Falha silenciosa caso offline
+            }
+        } else {
+            aplicarAlertaProativoAssinatura({ exibir_alerta_assinatura: false, perfil_acesso: perfil });
+        }
     });
 
     function renderizarItensDropdown(listaStartups) {

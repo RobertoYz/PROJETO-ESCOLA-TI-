@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Escolha a Forma de Pagamento — Anjo Nexus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="../estilos/selecionar-plano.css">
+    <style>
+        .pagamento-resumo-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 4px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-card);
+        }
+
+        .pagamento-resumo-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .pagamento-resumo-etiqueta {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent-action);
+        }
+
+        body.dark-mode .pagamento-resumo-etiqueta {
+            color: #38BDF8;
+        }
+
+        .pagamento-resumo-titulo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .pagamento-resumo-detalhes {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .pagamento-resumo-direita {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+        }
+
+        .pagamento-resumo-preco {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .pagamento-resumo-preco span {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .metodos-pagamento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .metodo-pagamento-card {
+            background-color: var(--bg-surface);
+            border: 2px solid var(--border-subtle);
+            border-radius: 4px;
+            padding: 24px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            cursor: pointer;
+            position: relative;
+            box-shadow: var(--shadow-card);
+            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            user-select: none;
+        }
+
+        .metodo-pagamento-card:hover {
+            border-color: var(--border-field);
+            transform: translateY(-2px);
+        }
+
+        .metodo-pagamento-card.selecionado {
+            border-color: var(--accent-action);
+            box-shadow: var(--shadow-card-highlight);
+            background-color: var(--bg-surface-elevated);
+        }
+
+        body.dark-mode .metodo-pagamento-card.selecionado {
+            border-color: var(--border-focus);
+        }
+
+        .metodo-card-topo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .metodo-icone-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 6px;
+            background-color: var(--accent-soft);
+            color: var(--accent-action);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        body.dark-mode .metodo-icone-box {
+            color: #38BDF8;
+        }
+
+        .metodo-radio-indicador {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid var(--border-field);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .metodo-pagamento-card.selecionado .metodo-radio-indicador {
+            border-color: var(--accent-action);
+            background-color: var(--accent-action);
+        }
+
+        body.dark-mode .metodo-pagamento-card.selecionado .metodo-radio-indicador {
+            border-color: var(--border-focus);
+            background-color: var(--border-focus);
+        }
+
+        .metodo-radio-indicador::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #FFFFFF;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .metodo-pagamento-card.selecionado .metodo-radio-indicador::after {
+            opacity: 1;
+        }
+
+        .metodo-titulo {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .metodo-descricao {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .metodo-vantagens {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 4px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-subtle);
+            font-size: 12.5px;
+            color: var(--text-muted);
+        }
+
+        .metodo-vantagens li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .metodo-vantagens li span.check {
+            color: var(--color-success);
+            font-weight: 700;
+        }
+
+        .btn-finalizar-pagamento {
+            width: 100%;
+            height: 50px;
+            background-color: var(--accent-action);
+            color: #FFFFFF;
+            border: 1px solid var(--accent-action);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background-color 0.2s ease, transform 0.15s ease;
+            box-shadow: 0 6px 20px rgba(3, 105, 161, 0.25);
+        }
+
+        .btn-finalizar-pagamento:hover:not(:disabled) {
+            background-color: var(--accent-action-hover);
+            border-color: var(--accent-action-hover);
+        }
+
+        .btn-finalizar-pagamento:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 720px) {
+            .metodos-pagamento-grid {
+                grid-template-columns: 1fr;
+            }
+            .pagamento-resumo-direita {
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-container">
+        <!-- Botão de Alternância de Tema (Sol / Lua) -->
+        <button id="btnAlternarTema" class="theme-toggle-btn" type="button" aria-label="Alternar tema claro e escuro" title="Alternar tema">
+            <svg id="iconeSol" style="display: none;" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg id="iconeLua" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </button>
+
+        <!-- Painel Institucional (Esquerda) -->
+        <aside class="auth-brand-panel">
+            <div class="brand-logo-panel">
+                <div class="brand-symbol" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-title">Anjo Nexus</div>
+            </div>
+
+            <div class="brand-statement">
+                <h1 class="brand-headline">Flexibilidade e segurança na ativação da sua assinatura</h1>
+                <p class="brand-paragraph">
+                    Escolha como prefere realizar o pagamento do seu plano corporativo. Ambiente criptografado e homologado pelo gateway AbacatePay.
+                </p>
+
+                <div class="brand-metrics">
+                    <div class="metric-item">
+                        <span class="metric-title">PIX ou Cartão de Crédito</span>
+                        <span class="metric-detail">Checkout hospedado (PCI-DSS) com conciliação automática e liberação imediata do painel.</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-title">Troca Livre a Qualquer Momento</span>
+                        <span class="metric-detail">Altere entre PIX e Cartão diretamente no modal "Minha Assinatura" quando desejar.</span>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="brand-footer">
+                Anjo Nexus &copy; 2026. Todos os direitos reservados.
+            </footer>
+        </aside>
+
+        <!-- Painel de Escolha da Forma de Pagamento (Direita) -->
+        <main class="auth-form-panel">
+            <div class="planos-wrapper" style="max-width: 780px;">
+                <div class="planos-header">
+                    <a href="selecionar-plano.html" id="link-alterar-plano" class="planos-back-link">← Alterar plano</a>
+                    <h2 id="titulo-pagina" class="form-title">Escolha a Forma de Pagamento</h2>
+                    <p id="subtitulo-pagina" class="form-subtitle">Selecione entre PIX ou Cartão de Crédito para concluir sua assinatura</p>
+                    <div id="resumo-pre-cadastro" class="planos-contexto" hidden></div>
+                </div>
+
+                <div id="mensagem-erro" class="alert-box" role="alert" aria-live="polite" hidden></div>
+
+                <!-- Resumo do Plano Selecionado -->
+                <div class="pagamento-resumo-card">
+                    <div class="pagamento-resumo-info">
+                        <span class="pagamento-resumo-etiqueta">Plano Selecionado</span>
+                        <div class="pagamento-resumo-titulo" id="resumo-plano-nome">Plano Anjo Nexus</div>
+                        <div class="pagamento-resumo-detalhes" id="resumo-plano-cotas">Carregando benefícios do plano...</div>
+                    </div>
+                    <div class="pagamento-resumo-direita">
+                        <div class="pagamento-resumo-preco" id="resumo-plano-preco">R$ --,--<span>/mês</span></div>
+                        <a href="selecionar-plano.html" id="link-card-alterar-plano" class="planos-back-link" style="margin-bottom: 0;">← Alterar plano</a>
+                    </div>
+                </div>
+
+                <!-- Opções Selecionáveis: PIX e Cartão de Crédito -->
+                <div class="metodos-pagamento-grid" role="radiogroup" aria-label="Formas de pagamento disponíveis">
+                    <!-- Card PIX -->
+                    <article class="metodo-pagamento-card selecionado" id="card-metodo-pix" data-metodo="PIX" role="radio" aria-checked="true" tabindex="0">
+                        <div class="metodo-card-topo">
+                            <div class="metodo-icone-box" aria-hidden="true">⚡</div>
+                            <div class="metodo-radio-indicador"></div>
+                        </div>
+                        <div>
+                            <h3 class="metodo-titulo">PIX</h3>
+                            <p class="metodo-descricao">Liquidação instantânea via QR Code ou código Copia e Cola com confirmação em segundos.</p>
+                        </div>
+                        <ul class="metodo-vantagens">
+                            <li><span class="check">✔</span> Ativação imediata 24h por dia</li>
+                            <li><span class="check">✔</span> Janela de pagamento válida por 60 minutos</li>
+                            <li><span class="check">✔</span> Renovação acumulativa (+30 dias)</li>
+                        </ul>
+                    </article>
+
+                    <!-- Card Cartão de Crédito -->
+                    <article class="metodo-pagamento-card" id="card-metodo-card" data-metodo="CARD" role="radio" aria-checked="false" tabindex="0">
+                        <div class="metodo-card-topo">
+                            <div class="metodo-icone-box" aria-hidden="true">💳</div>
+                            <div class="metodo-radio-indicador"></div>
+                        </div>
+                        <div>
+                            <h3 class="metodo-titulo">Cartão de Crédito</h3>
+                            <p class="metodo-descricao">Pagamento seguro em ambiente criptografado AbacatePay sem armazenar dados sensíveis no servidor.</p>
+                        </div>
+                        <ul class="metodo-vantagens">
+                            <li><span class="check">✔</span> Aprovação automática na hora</li>
+                            <li><span class="check">✔</span> Carência de 2 dias com aviso por e-mail</li>
+                            <li><span class="check">✔</span> Ambiente seguro compatível com PCI-DSS</li>
+                        </ul>
+                    </article>
+                </div>
+
+                <button type="button" id="btn-finalizar-pagamento" class="btn-finalizar-pagamento">
+                    Finalizar e Ir para o Pagamento
+                </button>
+
+                <div class="planos-nota-rodape">
+                    <span>Pagamento processado com segurança via AbacatePay (PIX e Cartão de Crédito).</span>
+                    <span>Validade da assinatura: 30 dias por ciclo.</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script de Alternância de Tema -->
+    <script>
+        const btnTema = document.getElementById('btnAlternarTema');
+        const iconeSol = document.getElementById('iconeSol');
+        const iconeLua = document.getElementById('iconeLua');
+
+        function aplicarTema(escuro) {
+            if (escuro) {
+                document.body.classList.add('dark-mode');
+                iconeSol.style.display = 'block';
+                iconeLua.style.display = 'none';
+                localStorage.setItem('tema_preferido', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                iconeSol.style.display = 'none';
+                iconeLua.style.display = 'block';
+                localStorage.setItem('tema_preferido', 'light');
+            }
+        }
+
+        const temaSalvo = localStorage.getItem('tema_preferido');
+        if (temaSalvo === 'dark' || (!temaSalvo && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            aplicarTema(true);
+        } else {
+            aplicarTema(false);
+        }
+
+        btnTema.addEventListener('click', () => {
+            const estaEscuro = document.body.classList.contains('dark-mode');
+            aplicarTema(!estaEscuro);
+        });
+    </script>
+
+    <script type="module" src="../scripts/paginas/escolherPagamento.js"></script>
+</body>
+
+</html>

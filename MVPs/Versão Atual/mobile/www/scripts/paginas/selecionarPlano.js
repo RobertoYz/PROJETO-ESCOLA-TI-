@@ -1,12 +1,8 @@
 import {
-    registrarComPlano,
     obterTokenPendencia,
-    obterEmailPendencia,
-    salvarTokenPendencia,
-    salvarEmailPendencia,
-    salvarAgenciaPendencia
+    obterEmailPendencia
 } from '../servicos/servicoAutenticacao.js';
-import { buscarPlanos, gerarNovaCobranca } from '../servicos/servicoPlanos.js';
+import { buscarPlanos } from '../servicos/servicoPlanos.js';
 
 const containerListaPlanos = document.getElementById('lista-planos');
 const divMensagemErro = document.getElementById('mensagem-erro');
@@ -54,7 +50,7 @@ if (modoRenovacao && (tokenPendencia || emailPendencia)) {
         linkVoltar.textContent = '← Voltar para Pagamento Pendente';
     }
     if (subtituloPagina) {
-        subtituloPagina.textContent = 'Escolha um plano para gerar uma nova cobrança e liberar o acesso à sua conta.';
+        subtituloPagina.textContent = 'Escolha um plano para avançar à seleção da forma de pagamento e liberar o acesso à sua conta.';
     }
     preencherResumoContexto([
         { rotulo: 'Conta', valor: emailPendencia }
@@ -210,7 +206,7 @@ async function carregarPlanosNaTela() {
                 </li>
                 <li class="plano-beneficio">
                     <span class="plano-beneficio-icone" aria-hidden="true">✔</span>
-                    <span>Integração AbacatePay PIX</span>
+                    <span>Pagamento via PIX ou Cartão (AbacatePay)</span>
                 </li>
             `;
 
@@ -219,57 +215,25 @@ async function carregarPlanosNaTela() {
             botao.className = 'btn-selecionar-plano';
             botao.textContent = 'Selecionar Plano';
 
-            botao.addEventListener('click', async () => {
+            botao.addEventListener('click', () => {
                 limparErro();
-                const todosBotoes = containerListaPlanos.querySelectorAll('button');
-                todosBotoes.forEach(b => b.disabled = true);
-                botao.textContent = 'Gerando pagamento...';
 
-                try {
-                    if (modoRenovacao && (tokenPendencia || emailPendencia)) {
-                        const resposta = await gerarNovaCobranca(plano.id);
-                        const urlCheckout = resposta.url_checkout;
+                const planoParaSalvar = {
+                    id: plano.id,
+                    nome: plano.nome,
+                    preco: Number(plano.preco ?? plano.preco_mensal ?? 49.90),
+                    limite_startups: limiteStartups,
+                    limite_membros_equipe: limiteMembros,
+                    limite_minutas_ia: limiteMinutas,
+                    descricao: plano.descricao || obterDescricaoPadrao(plano.nome)
+                };
 
-                        if (urlCheckout && urlCheckout.startsWith('http')) {
-                            salvarAgenciaPendencia({ url_checkout: urlCheckout });
-                            sessionStorage.removeItem('dados_pre_cadastro');
-                            window.location.replace(urlCheckout);
-                        } else {
-                            throw new Error('Não foi possível gerar nova cobrança para este plano.');
-                        }
-                    } else if (dadosPreCadastro) {
-                        const resposta = await registrarComPlano({
-                            nome_agencia: dadosPreCadastro.nome_agencia,
-                            name: dadosPreCadastro.name,
-                            email: dadosPreCadastro.email,
-                            password: dadosPreCadastro.password,
-                            plano_id: plano.id
-                        });
+                sessionStorage.setItem('plano_selecionado', JSON.stringify(planoParaSalvar));
 
-                        const urlCheckout = resposta.url_checkout;
-                        const novoTokenPend = resposta.token_pendencia || resposta.access_token || resposta.token;
-                        if (novoTokenPend) {
-                            salvarTokenPendencia(novoTokenPend);
-                        }
-                        if (dadosPreCadastro.email) {
-                            salvarEmailPendencia(dadosPreCadastro.email);
-                        }
-
-                        if (urlCheckout && urlCheckout.startsWith('http')) {
-                            salvarAgenciaPendencia({ url_checkout: urlCheckout });
-                            sessionStorage.removeItem('dados_pre_cadastro');
-                            window.location.replace(urlCheckout);
-                        } else {
-                            throw new Error('Gateway de pagamento não retornou o link de checkout.');
-                        }
-                    } else {
-                        window.location.replace('cadastro.html');
-                    }
-                } catch (erro) {
-                    exibirErro(erro.message || 'Erro ao processar seleção de plano. Tente novamente.');
-                    todosBotoes.forEach(b => b.disabled = false);
-                    botao.textContent = 'Selecionar Plano';
-                }
+                const destino = modoRenovacao
+                    ? 'escolher-pagamento.html?modo=renovacao'
+                    : 'escolher-pagamento.html';
+                window.location.href = destino;
             });
 
             cartao.appendChild(cabecalho);
