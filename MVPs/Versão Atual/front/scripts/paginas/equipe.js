@@ -1,5 +1,5 @@
 import { inicializarSidebarGlobal } from '../componentes/sidebarGlobal.js';
-import { inicializarSeletorGlobal } from '../componentes/seletorGlobalStartup.js';
+import { inicializarSeletorGlobal, abrirModalMinhaAssinatura } from '../componentes/seletorGlobalStartup.js';
 import {
     usuarioEstaAutenticado,
     obterUsuarioLogado,
@@ -22,6 +22,19 @@ if (!usuarioEstaAutenticado()) {
 const containerListaMembros = document.getElementById('containerListaMembros');
 const alertaFeedbackEquipe = document.getElementById('alertaFeedbackEquipe');
 const btnAbrirModalConvidar = document.getElementById('btnAbrirModalConvidar');
+
+const cardCotaEquipe = document.getElementById('cardCotaEquipe');
+const bannerLimiteEquipe = document.getElementById('bannerLimiteEquipe');
+const cotaPlanoNome = document.getElementById('cotaPlanoNome');
+const cotaEquipeContador = document.getElementById('cotaEquipeContador');
+const cotaBarraProgresso = document.getElementById('cotaBarraProgresso');
+const cotaMetricaAtivos = document.getElementById('cotaMetricaAtivos');
+const cotaMetricaPendentes = document.getElementById('cotaMetricaPendentes');
+const cotaMetricaInativos = document.getElementById('cotaMetricaInativos');
+const bannerLimiteTitulo = document.getElementById('bannerLimiteTitulo');
+const bannerLimiteDescricao = document.getElementById('bannerLimiteDescricao');
+const bannerLimiteAcoes = document.getElementById('bannerLimiteAcoes');
+const btnUpgradePlanoEquipe = document.getElementById('btnUpgradePlanoEquipe');
 
 const modalFormOverlay = document.getElementById('modalFormularioMembroOverlay');
 const tituloModalForm = document.getElementById('tituloModalFormularioMembro');
@@ -50,7 +63,8 @@ let estadoEquipe = {
     membros: [],
     catalogo_permissoes: [],
     presets: [],
-    ator: { is_owner: false, permissoes: [] }
+    ator: { is_owner: false, permissoes: [] },
+    cota_equipe: null
 };
 
 let modoModal = 'convidar';
@@ -326,6 +340,16 @@ function coletarPermissoesMarcadas() {
 }
 
 function abrirModalConvidar() {
+    if (estadoEquipe.cota_equipe?.atingiu_limite) {
+        const atorEhOwner = Boolean(estadoEquipe.ator?.is_owner);
+        const limite = estadoEquipe.cota_equipe.limite || 1;
+        const msg = atorEhOwner
+            ? `Limite de ${limite} membro(s) atingido. Faça upgrade do plano ou inative um consultor.`
+            : `Limite de ${limite} membro(s) atingido. Inative um consultor ou solicite upgrade ao Titular.`;
+        exibirFeedbackGlobal(msg, 'erro');
+        return;
+    }
+
     modoModal = 'convidar';
     membroEmEdicao = null;
     if (tituloModalForm) tituloModalForm.textContent = 'Convidar Novo Consultor';
@@ -378,6 +402,93 @@ function exibirModalCredenciaisPosConvite({ nome, codigo_ativacao, link_convite 
     modalCredenciaisOverlay?.classList.add('active');
 }
 
+function renderizarCotaEquipe() {
+    const cota = estadoEquipe.cota_equipe;
+    if (!cota || !cardCotaEquipe) {
+        if (cardCotaEquipe) cardCotaEquipe.style.display = 'none';
+        if (bannerLimiteEquipe) bannerLimiteEquipe.style.display = 'none';
+        return;
+    }
+
+    cardCotaEquipe.style.display = 'flex';
+
+    if (cotaPlanoNome) {
+        cotaPlanoNome.textContent = cota.plano_nome || 'Standard';
+    }
+
+    if (cotaMetricaAtivos) cotaMetricaAtivos.textContent = `${cota.ativos || 0} ativo(s)`;
+    if (cotaMetricaPendentes) cotaMetricaPendentes.textContent = `${cota.pendentes || 0} pendente(s)`;
+    if (cotaMetricaInativos) cotaMetricaInativos.textContent = `${cota.inativos || 0} inativo(s)`;
+
+    const atingiu = Boolean(cota.atingiu_limite);
+    const ilimitado = Boolean(cota.ilimitado);
+
+    if (ilimitado) {
+        if (cotaEquipeContador) {
+            cotaEquipeContador.textContent = `${cota.usados || 0} membros utilizados • Ilimitado`;
+        }
+        if (cotaBarraProgresso) {
+            cotaBarraProgresso.style.width = '100%';
+            cotaBarraProgresso.classList.remove('limite-atingido');
+        }
+        cardCotaEquipe.classList.remove('limite-atingido');
+    } else {
+        const limite = Number(cota.limite || 1);
+        const usados = Number(cota.usados || 0);
+        const percentual = Math.min(100, Math.round((usados / limite) * 100));
+
+        if (cotaEquipeContador) {
+            cotaEquipeContador.textContent = `${usados} / ${limite} membros utilizados`;
+        }
+        if (cotaBarraProgresso) {
+            cotaBarraProgresso.style.width = `${percentual}%`;
+            cotaBarraProgresso.classList.toggle('limite-atingido', atingiu);
+        }
+        cardCotaEquipe.classList.toggle('limite-atingido', atingiu);
+    }
+
+    const atorEhOwner = Boolean(estadoEquipe.ator?.is_owner);
+
+    if (btnAbrirModalConvidar) {
+        btnAbrirModalConvidar.disabled = atingiu;
+        btnAbrirModalConvidar.classList.toggle('disabled', atingiu);
+        if (atingiu) {
+            btnAbrirModalConvidar.title = atorEhOwner
+                ? 'Limite de membros do plano atingido. Faça upgrade do seu plano ou inative um consultor.'
+                : 'Limite de membros do plano atingido. Inative um consultor ou solicite upgrade ao Titular.';
+        } else {
+            btnAbrirModalConvidar.removeAttribute('title');
+        }
+    }
+
+    if (bannerLimiteEquipe) {
+        if (atingiu) {
+            bannerLimiteEquipe.style.display = 'flex';
+            if (bannerLimiteTitulo) {
+                bannerLimiteTitulo.textContent = `Limite de ${cota.limite} membro(s) do plano ${cota.plano_nome} atingido`;
+            }
+            if (bannerLimiteDescricao) {
+                bannerLimiteDescricao.textContent = atorEhOwner
+                    ? `Sua consultoria atingiu a cota máxima contratada (${cota.usados}/${cota.limite}, incluindo o titular e convites pendentes). Inative um consultor ou faça upgrade do plano para convidar novos membros.`
+                    : `Sua consultoria atingiu a cota máxima contratada (${cota.usados}/${cota.limite}, incluindo o titular e convites pendentes). Inative um consultor ou solicite ao titular o upgrade do plano para liberar novas vagas.`;
+            }
+
+            if (atorEhOwner) {
+                if (bannerLimiteAcoes) bannerLimiteAcoes.style.display = 'flex';
+                if (btnUpgradePlanoEquipe) {
+                    btnUpgradePlanoEquipe.style.display = 'inline-block';
+                    btnUpgradePlanoEquipe.onclick = () => abrirModalMinhaAssinatura();
+                }
+            } else {
+                if (bannerLimiteAcoes) bannerLimiteAcoes.style.display = 'none';
+                if (btnUpgradePlanoEquipe) btnUpgradePlanoEquipe.style.display = 'none';
+            }
+        } else {
+            bannerLimiteEquipe.style.display = 'none';
+        }
+    }
+}
+
 async function carregarEquipe() {
     ocultarFeedbackGlobal();
     try {
@@ -386,8 +497,10 @@ async function carregarEquipe() {
             membros: dados.membros || [],
             catalogo_permissoes: dados.catalogo_permissoes || [],
             presets: dados.presets || [],
-            ator: dados.ator || { is_owner: usuarioEhTitular(), permissoes: [] }
+            ator: dados.ator || { is_owner: usuarioEhTitular(), permissoes: [] },
+            cota_equipe: dados.cota_equipe || null
         };
+        renderizarCotaEquipe();
         renderizarMembros();
     } catch (erro) {
         if (erro.status === 403) {

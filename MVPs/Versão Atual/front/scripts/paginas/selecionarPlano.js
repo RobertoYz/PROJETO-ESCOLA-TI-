@@ -79,6 +79,17 @@ function limparErro() {
     }
 }
 
+function formatarTextoMembros(limite) {
+    if (limite === null || limite === undefined) {
+        return 'Membros de equipe ilimitados';
+    }
+    const limiteNumerico = Number(limite);
+    if (limiteNumerico === 1) {
+        return '<strong>1</strong> membro (somente titular)';
+    }
+    return `Até <strong>${limiteNumerico}</strong> membros de equipe`;
+}
+
 function obterDescricaoPadrao(nomePlano) {
     const nome = (nomePlano || '').toLowerCase();
     if (nome.includes('enterprise')) {
@@ -182,7 +193,7 @@ async function carregarPlanosNaTela() {
             cabecalho.appendChild(elementoPreco);
 
             const limiteStartups = plano.limite_startups ?? 1;
-            const limiteMembros = plano.limite_membros_equipe ?? plano.limite_usuarios ?? 1;
+            const limiteMembros = plano.limite_membros_equipe !== undefined ? plano.limite_membros_equipe : (plano.limite_usuarios ?? 1);
             const limiteMinutas = plano.limite_minutas_ia ?? obterLimiteMinutasPadrao(plano.nome);
 
             const detalhes = document.createElement('ul');
@@ -194,7 +205,7 @@ async function carregarPlanosNaTela() {
                 </li>
                 <li class="plano-beneficio">
                     <span class="plano-beneficio-icone" aria-hidden="true">✔</span>
-                    <span>Até <strong>${limiteMembros}</strong> ${limiteMembros === 1 ? 'membro' : 'membros'} na equipe</span>
+                    <span>${formatarTextoMembros(limiteMembros)}</span>
                 </li>
                 <li class="plano-beneficio">
                     <span class="plano-beneficio-icone" aria-hidden="true">✔</span>

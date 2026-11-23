@@ -104,9 +104,15 @@ if (planoSelecionado) {
     }
     if (resumoPlanoCotas) {
         const startups = planoSelecionado.limite_startups ?? 1;
-        const membros = planoSelecionado.limite_membros_equipe ?? 1;
+        const membros = planoSelecionado.limite_membros_equipe;
         const minutas = planoSelecionado.limite_minutas_ia ?? 3;
-        resumoPlanoCotas.textContent = `Até ${startups} ${startups === 1 ? 'startup' : 'startups'} • Até ${membros} ${membros === 1 ? 'membro' : 'membros'} • ${minutas} minutas IA/mês`;
+        
+        let textoMembros = 'Membros ilimitados';
+        if (membros !== null && membros !== undefined) {
+            const numMembros = Number(membros);
+            textoMembros = numMembros === 1 ? '1 membro (somente titular)' : `Até ${numMembros} membros de equipe`;
+        }
+        resumoPlanoCotas.textContent = `Até ${startups} ${startups === 1 ? 'startup' : 'startups'} • ${textoMembros} • ${minutas} minutas IA/mês`;
     }
 }
 

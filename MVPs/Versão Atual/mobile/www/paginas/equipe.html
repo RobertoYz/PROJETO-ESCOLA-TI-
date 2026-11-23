@@ -61,6 +61,41 @@
                 </button>
             </div>
 
+            <div id="cardCotaEquipe" class="card-cota-equipe" style="display: none;">
+                <div class="cota-equipe-cabecalho">
+                    <div class="cota-equipe-info">
+                        <span class="cota-equipe-titulo">Capacidade de Equipe do Plano <strong id="cotaPlanoNome">Standard</strong></span>
+                        <span class="cota-equipe-subtexto" id="cotaSubtextoDetalhes">Inclui titular, consultores ativos e convites pendentes</span>
+                    </div>
+                    <div class="cota-equipe-contador" id="cotaEquipeContador">
+                        <span id="cotaNumeroUsados">0</span> / <span id="cotaNumeroLimite">0</span> membros utilizados
+                    </div>
+                </div>
+                <div class="cota-equipe-barra-trilho">
+                    <div class="cota-equipe-barra-progresso" id="cotaBarraProgresso" style="width: 0%;"></div>
+                </div>
+                <div class="cota-equipe-rodape" id="cotaRodapeMetricas">
+                    <span id="cotaMetricaAtivos">0 ativos</span>
+                    <span>•</span>
+                    <span id="cotaMetricaPendentes">0 pendentes</span>
+                    <span>•</span>
+                    <span id="cotaMetricaInativos">0 inativos</span>
+                </div>
+            </div>
+
+            <div id="bannerLimiteEquipe" class="banner-limite-equipe" style="display: none;" role="alert">
+                <div class="banner-limite-conteudo">
+                    <div class="banner-limite-icone">⚠️</div>
+                    <div class="banner-limite-texto">
+                        <strong id="bannerLimiteTitulo">Limite de consultores atingido</strong>
+                        <p id="bannerLimiteDescricao">Sua consultoria atingiu a cota máxima de membros contratada no plano.</p>
+                    </div>
+                </div>
+                <div id="bannerLimiteAcoes" class="banner-limite-acoes">
+                    <button type="button" class="btn-upgrade-cota" id="btnUpgradePlanoEquipe">Fazer Upgrade do Plano</button>
+                </div>
+            </div>
+
             <div id="alertaFeedbackEquipe" class="alerta-feedback" role="alert"></div>
 
             <section id="containerListaMembros" class="lista-membros-grid" aria-live="polite">

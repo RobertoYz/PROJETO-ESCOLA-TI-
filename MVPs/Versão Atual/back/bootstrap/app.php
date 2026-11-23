@@ -24,9 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => $e->getMessage(),
                 'code' => $e->getErrorCode(),
                 'codigo' => $e->getErrorCode(),
+                'codigo_erro' => $e->getErrorCode(),
                 'atual' => $e->getAtual(),
+                'usados' => $e->getAtual(),
                 'limite' => $e->getLimite(),
+                'restantes' => $e->getRestantes(),
                 'plano_atual' => $e->getPlanoAtual(),
+                'plano_nome' => $e->getPlanoAtual(),
             ], 403);
         });
     })->create();

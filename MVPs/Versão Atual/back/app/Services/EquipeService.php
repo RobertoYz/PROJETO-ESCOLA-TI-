@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\Permissao;
+use App\Models\Agencia;
 use App\Models\User;
 use App\Policies\EquipePolicy;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -20,10 +21,17 @@ class EquipeService
     public const HORAS_EXPIRACAO_CONVITE = 48;
 
     protected EquipePolicy $policy;
+    protected PlanoQuotaService $quotaService;
 
-    public function __construct(?EquipePolicy $policy = null)
+    public function __construct(?EquipePolicy $policy = null, ?PlanoQuotaService $quotaService = null)
     {
         $this->policy = $policy ?? new EquipePolicy();
+        $this->quotaService = $quotaService ?? new PlanoQuotaService();
+    }
+
+    public function obterResumoCotaEquipe(Agencia $agencia): array
+    {
+        return $this->quotaService->obterResumoCotaEquipe($agencia);
     }
 
     /**
@@ -35,7 +43,7 @@ class EquipeService
             throw new AuthorizationException('Você não possui permissão para visualizar ou gerenciar a equipe.');
         }
 
-        $agencia = $actor->agencia;
+        $agencia = $actor->agencia?->fresh();
         $membros = User::where('agencia_id', $actor->agencia_id)
             ->orderByRaw("CASE WHEN id = ? THEN 0 ELSE 1 END", [$agencia?->owner_id ?? 0])
             ->orderBy('name', 'asc')
@@ -53,6 +61,7 @@ class EquipeService
                 'nome' => $agencia->nome,
                 'owner_id' => $agencia->owner_id,
             ] : null,
+            'cota_equipe' => $agencia ? $this->quotaService->obterResumoCotaEquipe($agencia) : null,
             'membros' => $membrosFormatados,
             'catalogo_permissoes' => Permissao::catalogo($atorEhOwner),
             'presets' => array_values(Permissao::presets($atorEhOwner)),
@@ -87,7 +96,7 @@ class EquipeService
         $tokenConvite = $this->gerarTokenUnico();
         $pinAtivacao = (string) random_int(100000, 999999);
 
-        $membro = DB::transaction(function () use (
+        [$membro, $agencia] = DB::transaction(function () use (
             $actor,
             $nomeLimpo,
             $emailNormalizado,
@@ -95,7 +104,10 @@ class EquipeService
             $tokenConvite,
             $pinAtivacao
         ) {
-            return User::create([
+            $agencia = Agencia::where('id', $actor->agencia_id)->lockForUpdate()->firstOrFail();
+            $this->quotaService->validarLimiteEquipe($agencia, 'convidar');
+
+            $novoMembro = User::create([
                 'agencia_id' => $actor->agencia_id,
                 'perfil_acesso' => 'consultor_padrao',
                 'permissoes' => $permissoesSolicitadas,
@@ -110,6 +122,8 @@ class EquipeService
                 'convite_tentativas' => 0,
                 'convidado_por_id' => $actor->id,
             ]);
+
+            return [$novoMembro, $agencia];
         });
 
         $linkConvite = $this->construirLinkConvite($tokenConvite);
@@ -121,6 +135,7 @@ class EquipeService
             'codigo_ativacao' => $pinAtivacao,
             'expira_em' => $membro->convite_expira_em?->toIso8601String(),
             'email_enviado' => $emailEnviado,
+            'cota_equipe' => $this->quotaService->obterResumoCotaEquipe($agencia),
         ];
     }
 
@@ -311,11 +326,21 @@ class EquipeService
             ]);
         }
 
-        $target->status = $novoStatus;
-        $target->save();
+        if ($novoStatus === 'ativo' && $target->status === 'inativo') {
+            DB::transaction(function () use ($actor, $target) {
+                $agencia = Agencia::where('id', $actor->agencia_id)->lockForUpdate()->firstOrFail();
+                $this->quotaService->validarLimiteEquipe($agencia, 'reativar');
 
-        if ($novoStatus === 'inativo') {
-            $this->revogarSessoesETokens($target);
+                $target->status = 'ativo';
+                $target->save();
+            });
+        } else {
+            $target->status = $novoStatus;
+            $target->save();
+
+            if ($novoStatus === 'inativo') {
+                $this->revogarSessoesETokens($target);
+            }
         }
 
         return $this->formatarMembro($target->fresh(), $actor);
