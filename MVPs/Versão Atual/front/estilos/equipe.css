@@ -67,16 +67,69 @@ body {
 }
 
 .top-navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 2rem;
-    background-color: var(--navbar-bg);
-    border-bottom: 1px solid #222;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    min-height: 68px;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0.75rem 2rem !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+    min-height: 68px !important;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+body.dark-mode .top-navbar {
+    background-color: #0F1422 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #F8FAFC !important;
+}
+
+body:not(.dark-mode) .top-navbar {
+    background-color: #FFFFFF !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+    color: #0F172A !important;
+}
+
+body.dark-mode .page-brand-title {
+    color: #F8FAFC !important;
+}
+
+body:not(.dark-mode) .page-brand-title {
+    color: #0F172A !important;
+}
+
+body.dark-mode .page-brand-badge {
+    color: #A5B4FC !important;
+    background: rgba(99, 102, 241, 0.18) !important;
+}
+
+body:not(.dark-mode) .page-brand-badge {
+    color: #4F46E5 !important;
+    background: rgba(99, 102, 241, 0.10) !important;
+}
+
+body.dark-mode .theme-toggle-btn {
+    background-color: #161D31 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    color: #F8FAFC !important;
+}
+
+body:not(.dark-mode) .theme-toggle-btn {
+    background-color: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #0F172A !important;
+}
+
+body.dark-mode .mobile-menu-trigger {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #F8FAFC !important;
+}
+
+body:not(.dark-mode) .mobile-menu-trigger {
+    background: #F1F5F9 !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #0F172A !important;
 }
 
 .header-left-slot {

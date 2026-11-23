@@ -70,12 +70,26 @@ function injetarEstilosHeaderGlobal() {
             justify-content: space-between !important;
             align-items: center !important;
             padding: 0.85rem 2rem !important;
-            background-color: #0d0f12 !important;
-            border-bottom: 1px solid #222 !important;
+            background-color: var(--bg-surface, #0d0f12) !important;
+            border-bottom: 1px solid var(--border-subtle, #222) !important;
             min-height: 70px !important;
             width: 100% !important;
             box-sizing: border-box !important;
             z-index: 100 !important;
+            color: var(--text-main, #f8fafc) !important;
+            transition: background-color 0.25s ease, border-color 0.25s ease;
+        }
+
+        body.dark-mode .top-navbar {
+            background-color: #0F1422 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: #F8FAFC !important;
+        }
+
+        body:not(.dark-mode) .top-navbar {
+            background-color: #FFFFFF !important;
+            border-bottom: 1px solid #E2E8F0 !important;
+            color: #0F172A !important;
         }
 
         .header-left-slot {
@@ -414,6 +428,138 @@ function injetarEstilosHeaderGlobal() {
         .alertas-dropdown-menu.active {
             display: flex !important;
             flex-direction: column;
+        }
+
+        body:not(.dark-mode) .page-brand-title {
+            color: #0F172A !important;
+        }
+
+        body.dark-mode .page-brand-title {
+            color: #F8FAFC !important;
+        }
+
+        body:not(.dark-mode) .page-brand-badge {
+            color: #0369A1 !important;
+            background: rgba(3, 105, 161, 0.09) !important;
+        }
+
+        body.dark-mode .page-brand-badge {
+            color: #38BDF8 !important;
+            background: rgba(56, 189, 248, 0.15) !important;
+        }
+
+        body:not(.dark-mode) .mobile-menu-trigger {
+            background: #F1F5F9 !important;
+            border: 1px solid #CBD5E1 !important;
+            color: #0F172A !important;
+        }
+
+        body.dark-mode .mobile-menu-trigger {
+            background: rgba(255, 255, 255, 0.06) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            color: #F8FAFC !important;
+        }
+
+        body:not(.dark-mode) .theme-toggle-btn {
+            background-color: #FFFFFF !important;
+            border: 1px solid #CBD5E1 !important;
+            color: #0F172A !important;
+        }
+
+        body.dark-mode .theme-toggle-btn {
+            background-color: #161D31 !important;
+            border: 1px solid rgba(255, 255, 255, 0.14) !important;
+            color: #F8FAFC !important;
+        }
+
+        body:not(.dark-mode) .user-section-global .user-name {
+            color: #0F172A !important;
+        }
+
+        body.dark-mode .user-section-global .user-name {
+            color: #F8FAFC !important;
+        }
+
+        body:not(.dark-mode) .seletor-startup-wrapper {
+            background: #F8FAFC !important;
+            border-color: #CBD5E1 !important;
+        }
+
+        body:not(.dark-mode) .seletor-startup-wrapper:hover,
+        body:not(.dark-mode) .seletor-startup-wrapper.open {
+            border-color: #3B82F6 !important;
+            background: rgba(59, 130, 246, 0.06) !important;
+        }
+
+        body.dark-mode .seletor-startup-wrapper {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+
+        body.dark-mode .seletor-startup-wrapper:hover,
+        body.dark-mode .seletor-startup-wrapper.open {
+            border-color: #3B82F6 !important;
+            background: rgba(59, 130, 246, 0.10) !important;
+        }
+
+        body:not(.dark-mode) .label-startup-header {
+            color: #64748B !important;
+        }
+
+        body.dark-mode .label-startup-header {
+            color: #94A3B8 !important;
+        }
+
+        body:not(.dark-mode) .startup-trigger-box {
+            background: #FFFFFF !important;
+            border-color: #CBD5E1 !important;
+            color: #0F172A !important;
+        }
+
+        body.dark-mode .startup-trigger-box {
+            background: #181B20 !important;
+            border-color: #334155 !important;
+            color: #F8FAFC !important;
+        }
+
+        body:not(.dark-mode) .startup-trigger-nome {
+            color: #0F172A !important;
+        }
+
+        body.dark-mode .startup-trigger-nome {
+            color: #F8FAFC !important;
+        }
+
+        body:not(.dark-mode) .startup-trigger-seta {
+            color: #64748B !important;
+        }
+
+        body.dark-mode .startup-trigger-seta {
+            color: #94A3B8 !important;
+        }
+
+        body:not(.dark-mode) .btn-sino-alertas {
+            background: #F1F5F9 !important;
+            border-color: #CBD5E1 !important;
+            color: #475569 !important;
+        }
+
+        body.dark-mode .btn-sino-alertas {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+            color: #CBD5E1 !important;
+        }
+
+        body:not(.dark-mode) .user-section-global .avatar {
+            background-color: #E2E8F0 !important;
+            border: 1px solid #CBD5E1 !important;
+            color: #475569 !important;
+        }
+
+        body.dark-mode .user-section-global .avatar {
+            background-color: #1E293B !important;
+            border: 1px solid rgba(255, 255, 255, 0.14) !important;
+            color: #CBD5E1 !important;
         }
 
         body:not(.dark-mode) .alertas-dropdown-menu {
@@ -2161,7 +2307,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 ${siglaInicial}
             </div>
             <div class="startup-trigger-col" style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
-                <span class="label-startup-header" style="font-size: 9px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;">Startup Assessorada:</span>
+                <span class="label-startup-header" style="font-size: 9px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;">Startup Assessorada:</span>
                 <div class="startup-trigger-box" id="startupTriggerBox">
                     <span class="startup-trigger-nome" id="startupTriggerNome">${startupAtiva.nome}</span>
                     <span class="startup-trigger-seta">▼</span>

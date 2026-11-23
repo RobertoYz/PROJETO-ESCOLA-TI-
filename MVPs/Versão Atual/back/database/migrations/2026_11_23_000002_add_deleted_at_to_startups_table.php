@@ -16,7 +16,11 @@ return new class extends Migration
 
         if (Schema::hasTable('users') && !Schema::hasColumn('users', 'status')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->enum('status', ['pendente', 'ativo', 'inativo'])->default('ativo')->after('role');
+                $column = $table->enum('status', ['pendente', 'ativo', 'inativo'])->default('ativo');
+                
+                if (Schema::hasColumn('users', 'role')) {
+                    $column->after('role');
+                }
             });
         }
     }
