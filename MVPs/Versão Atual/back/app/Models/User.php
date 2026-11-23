@@ -25,7 +25,7 @@ class User extends Authenticatable
         'permissoes',
         'status',
         'convite_token',
-        'convite_codigo_hash',
+        'convite_codigo_criptografado',
         'convite_expira_em',
         'convite_tentativas',
         'convidado_por_id',
@@ -35,7 +35,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'convite_token',
-        'convite_codigo_hash',
+        'convite_codigo_criptografado',
     ];
 
     public function setRoleAttribute($value): void
@@ -54,6 +54,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'permissoes' => 'array',
+            'convite_codigo_criptografado' => 'encrypted',
             'convite_expira_em' => 'datetime',
             'convite_tentativas' => 'integer',
         ];

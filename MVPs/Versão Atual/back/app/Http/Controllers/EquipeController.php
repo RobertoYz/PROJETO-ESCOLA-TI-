@@ -18,7 +18,7 @@ class EquipeController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $dados = $this->equipeService->listarMembros($request->user());
+        $dados = $this->equipeService->listarMembros($request->user(), $request);
 
         return response()->json($dados, 200);
     }

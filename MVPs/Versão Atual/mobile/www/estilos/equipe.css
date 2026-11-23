@@ -350,6 +350,63 @@ body {
     border-style: dashed;
 }
 
+.membro-convite-inline-box {
+    margin-top: 8px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.membro-convite-inline-box.expirado {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fde68a;
+    font-size: 0.78rem;
+}
+
+.pin-inline-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #93c5fd;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.pin-inline-valor {
+    font-family: monospace;
+    font-size: 0.92rem;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: #34d399;
+    background: #090d14;
+    border: 1px solid #1e293b;
+    padding: 3px 10px;
+    border-radius: 6px;
+}
+
+.btn-inline-convite {
+    background: #172033;
+    border: 1px solid #334155;
+    color: #cbd5e1;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.16s;
+}
+
+.btn-inline-convite:hover {
+    background: #2563eb;
+    border-color: #3b82f6;
+    color: #ffffff;
+}
+
 .membro-acoes {
     display: flex;
     align-items: center;

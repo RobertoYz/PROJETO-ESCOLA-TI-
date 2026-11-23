@@ -11,6 +11,7 @@ use App\Models\Plano;
 use App\Models\Startup;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -56,7 +57,7 @@ class EquipeManagementAndInviteTest extends TestCase
         $this->agencia->save();
     }
 
-    public function test_1_titular_cria_convite_gerando_status_pendente_token_e_pin_6_digitos_com_hash_no_banco(): void
+    public function test_1_titular_cria_convite_gerando_status_pendente_token_e_pin_6_digitos_criptografado_no_banco(): void
     {
         Mail::fake();
 
@@ -73,28 +74,38 @@ class EquipeManagementAndInviteTest extends TestCase
         $res->assertStatus(201)
             ->assertJsonStructure([
                 'message',
-                'membro' => ['id', 'name', 'email', 'status', 'permissoes'],
+                'membro' => ['id', 'name', 'email', 'status', 'permissoes', 'codigo_ativacao', 'link_convite'],
                 'link_convite',
                 'codigo_ativacao',
             ])
             ->assertJsonPath('membro.status', 'pendente')
             ->assertJsonPath('membro.is_owner', false);
 
-        $pinRetornado = $res->json('codigo_ativacao');
-        $linkRetornado = $res->json('link_convite');
+        $pinRetornado = (string) $res->json('codigo_ativacao');
+        $linkRetornado = (string) $res->json('link_convite');
 
-        $this->assertMatchesRegularExpression('/^\d{6}$/', (string) $pinRetornado);
-        $this->assertStringContainsString('aceitar-convite.html?token=', (string) $linkRetornado);
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $pinRetornado);
+        $this->assertStringContainsString('aceitar-convite.html?token=', $linkRetornado);
 
         $convidado = User::where('email', 'juliana@anjonexus.com.br')->firstOrFail();
         $this->assertEquals('pendente', $convidado->status);
         $this->assertNull($convidado->email_verified_at);
         $this->assertNotNull($convidado->convite_token);
         $this->assertEquals(64, strlen($convidado->convite_token));
-        $this->assertNotNull($convidado->convite_codigo_hash);
-        $this->assertNotEquals($pinRetornado, $convidado->convite_codigo_hash);
-        $this->assertTrue(Hash::check($pinRetornado, $convidado->convite_codigo_hash));
+
+        $valorBrutoNoBanco = DB::table('users')
+            ->where('id', $convidado->id)
+            ->value('convite_codigo_criptografado');
+
+        $this->assertNotNull($valorBrutoNoBanco);
+        $this->assertNotEquals($pinRetornado, $valorBrutoNoBanco);
+        $this->assertEquals($pinRetornado, $convidado->convite_codigo_criptografado);
         $this->assertEquals($this->titular->id, $convidado->convidado_por_id);
+
+        // Serialização padrão do Model User oculta convite_token e convite_codigo_criptografado
+        $serializado = $convidado->toArray();
+        $this->assertArrayNotHasKey('convite_token', $serializado);
+        $this->assertArrayNotHasKey('convite_codigo_criptografado', $serializado);
     }
 
     public function test_2_bloqueia_login_com_403_para_usuario_pendente_e_inativo(): void
@@ -134,7 +145,7 @@ class EquipeManagementAndInviteTest extends TestCase
         $this->assertStringContainsString('Acesso desativado pela consultoria', $resInativo->json('message'));
     }
 
-    public function test_3_ativacao_convite_2_canais_erro_422_pin_incorreto_bloqueio_5_tentativas_e_sucesso_200(): void
+    public function test_3_exposicao_controlada_do_pin_no_get_equipe_e_limpeza_apos_ativacao_ou_5_tentativas_e_rota_publica_sem_pin(): void
     {
         Mail::fake();
 
@@ -145,20 +156,29 @@ class EquipeManagementAndInviteTest extends TestCase
         ]);
         $resConvite->assertStatus(201);
 
-        $pinCorreto = $resConvite->json('codigo_ativacao');
+        $pinCorreto = (string) $resConvite->json('codigo_ativacao');
         $convidado = User::where('email', 'carlos.convidado@anjonexus.com.br')->firstOrFail();
         $token = $convidado->convite_token;
 
-        // Consulta pública do convite (mascara o e-mail e não expõe dados sensíveis)
+        // 1. GET /api/equipe retorna codigo_ativacao e link_convite para o Titular enquanto pendente
+        $resListaPendente = $this->actingAs($this->titular, 'sanctum')->getJson('/api/equipe');
+        $resListaPendente->assertStatus(200);
+        $membroListado = collect($resListaPendente->json('membros'))->firstWhere('id', $convidado->id);
+        $this->assertNotNull($membroListado);
+        $this->assertEquals($pinCorreto, $membroListado['codigo_ativacao']);
+        $this->assertStringContainsString($token, (string) $membroListado['link_convite']);
+
+        // 2. Rota pública GET /api/convites/{token} valida o convite mas NUNCA expõe codigo_ativacao
         $resPublico = $this->getJson("/api/convites/{$token}");
         $resPublico->assertStatus(200)
             ->assertJsonPath('valido', true)
             ->assertJsonPath('agencia_nome', 'Consultoria Anjo Nexus B2B')
-            ->assertJsonPath('convidado_nome', 'Carlos Convidado');
+            ->assertJsonPath('convidado_nome', 'Carlos Convidado')
+            ->assertJsonMissing(['codigo_ativacao', 'convite_codigo_criptografado']);
 
         $pinErrado = $pinCorreto === '999999' ? '111111' : '999999';
 
-        // 1ª tentativa incorreta -> 422 e incrementa convite_tentativas = 1
+        // 3. 1ª tentativa incorreta -> 422 e incrementa convite_tentativas = 1
         $resErro1 = $this->postJson('/api/convites/aceitar', [
             'token' => $token,
             'codigo' => $pinErrado,
@@ -168,7 +188,7 @@ class EquipeManagementAndInviteTest extends TestCase
         $resErro1->assertStatus(422);
         $this->assertEquals(1, $convidado->fresh()->convite_tentativas);
 
-        // Ativação com PIN correto -> 200, status = ativo e email_verified_at preenchido
+        // 4. Ativação com PIN correto -> 200, status = ativo, email_verified_at preenchido e campos de convite limpos no banco
         $resSucesso = $this->postJson('/api/convites/aceitar', [
             'token' => $token,
             'codigo' => $pinCorreto,
@@ -182,16 +202,23 @@ class EquipeManagementAndInviteTest extends TestCase
         $this->assertEquals('ativo', $convidado->status);
         $this->assertNotNull($convidado->email_verified_at);
         $this->assertNull($convidado->convite_token);
-        $this->assertNull($convidado->convite_codigo_hash);
+        $this->assertNull($convidado->convite_codigo_criptografado);
+        $this->assertNull($convidado->convite_expira_em);
         $this->assertTrue(Hash::check('NovaSenha@2026', $convidado->password));
 
-        // Testa bloqueio após 5 falhas consecutivas em um segundo convite
+        // 5. Após ativado, GET /api/equipe retorna codigo_ativacao = null e link_convite = null
+        $resListaAtivo = $this->actingAs($this->titular, 'sanctum')->getJson('/api/equipe');
+        $membroAtivoListado = collect($resListaAtivo->json('membros'))->firstWhere('id', $convidado->id);
+        $this->assertNull($membroAtivoListado['codigo_ativacao']);
+        $this->assertNull($membroAtivoListado['link_convite']);
+
+        // 6. Testa bloqueio após 5 falhas consecutivas em um segundo convite: limpa banco e retorna null no GET /api/equipe
         $resConvite2 = $this->actingAs($this->titular, 'sanctum')->postJson('/api/equipe', [
             'name' => 'Tentativas BruteForce',
             'email' => 'bruteforce@anjonexus.com.br',
             'permissoes' => [],
         ]);
-        $pinCorreto2 = $resConvite2->json('codigo_ativacao');
+        $pinCorreto2 = (string) $resConvite2->json('codigo_ativacao');
         $convidado2 = User::where('email', 'bruteforce@anjonexus.com.br')->firstOrFail();
         $token2 = $convidado2->convite_token;
         $pinErrado2 = $pinCorreto2 === '888888' ? '123456' : '888888';
@@ -208,17 +235,18 @@ class EquipeManagementAndInviteTest extends TestCase
         $convidado2->refresh();
         $this->assertEquals(5, $convidado2->convite_tentativas);
         $this->assertNull($convidado2->convite_token);
+        $this->assertNull($convidado2->convite_codigo_criptografado);
+        $this->assertNull($convidado2->convite_expira_em);
 
-        // Mesmo enviando o PIN correto na 6ª tentativa, o convite já foi invalidado (422)
-        $this->postJson('/api/convites/aceitar', [
-            'token' => $token2,
-            'codigo' => $pinCorreto2,
-            'password' => 'SenhaTeste@2026',
-            'password_confirmation' => 'SenhaTeste@2026',
-        ])->assertStatus(422);
+        // GET /api/equipe após 5 tentativas retorna codigo_ativacao = null e convite_expirado = true
+        $resListaBloqueado = $this->actingAs($this->titular, 'sanctum')->getJson('/api/equipe');
+        $membroBloqueadoListado = collect($resListaBloqueado->json('membros'))->firstWhere('id', $convidado2->id);
+        $this->assertNull($membroBloqueadoListado['codigo_ativacao']);
+        $this->assertNull($membroBloqueadoListado['link_convite']);
+        $this->assertTrue($membroBloqueadoListado['convite_expirado']);
     }
 
-    public function test_4_proibicao_de_delegacao_transitiva_e_protecao_do_titular_e_outros_gerentes(): void
+    public function test_4_proibicao_de_delegacao_transitiva_e_visibilidade_restrita_de_pin_entre_gerentes(): void
     {
         Mail::fake();
 
@@ -238,18 +266,18 @@ class EquipeManagementAndInviteTest extends TestCase
             ],
         ]);
 
-        $gerenteB = User::create([
-            'name' => 'Gerente Operacional B',
+        // Titular convida um segundo Gerente B (pendente, com equipe.gerenciar)
+        $resConviteGerenteB = $this->actingAs($this->titular, 'sanctum')->postJson('/api/equipe', [
+            'name' => 'Gerente Operacional B Pendente',
             'email' => 'gerente.b@anjonexus.com.br',
-            'password' => Hash::make('SenhaGerente@123'),
-            'agencia_id' => $this->agencia->id,
-            'perfil_acesso' => 'consultor_padrao',
-            'status' => 'ativo',
             'permissoes' => [
                 Permissao::STARTUPS_CRIAR_EDITAR->value,
                 Permissao::EQUIPE_GERENCIAR->value,
             ],
         ]);
+        $resConviteGerenteB->assertStatus(201);
+        $idGerenteB = $resConviteGerenteB->json('membro.id');
+        $pinGerenteB = $resConviteGerenteB->json('codigo_ativacao');
 
         // 1. Gerente A consegue convidar um consultor comum (sem equipe.gerenciar) -> 201
         $resComum = $this->actingAs($gerenteA, 'sanctum')->postJson('/api/equipe', [
@@ -262,15 +290,37 @@ class EquipeManagementAndInviteTest extends TestCase
         ]);
         $resComum->assertStatus(201);
         $idConsultorComum = $resComum->json('membro.id');
+        $pinConsultorComum = $resComum->json('codigo_ativacao');
 
-        // 2. Gerente A tenta convidar alguém concedendo equipe.gerenciar -> 403
+        // 2. No GET /api/equipe autenticado como Gerente A:
+        //    - Vê codigo_ativacao do Consultor Comum pendente
+        //    - Recebe null para codigo_ativacao e link_convite do Gerente B pendente (criado pelo Titular)
+        $resListaGerenteA = $this->actingAs($gerenteA, 'sanctum')->getJson('/api/equipe');
+        $resListaGerenteA->assertStatus(200);
+        $membrosParaGerenteA = collect($resListaGerenteA->json('membros'));
+
+        $comumVistoPorGerenteA = $membrosParaGerenteA->firstWhere('id', $idConsultorComum);
+        $this->assertEquals($pinConsultorComum, $comumVistoPorGerenteA['codigo_ativacao']);
+        $this->assertNotNull($comumVistoPorGerenteA['link_convite']);
+
+        $gerenteBVistoPorGerenteA = $membrosParaGerenteA->firstWhere('id', $idGerenteB);
+        $this->assertNull($gerenteBVistoPorGerenteA['codigo_ativacao']);
+        $this->assertNull($gerenteBVistoPorGerenteA['link_convite']);
+        $this->assertFalse($gerenteBVistoPorGerenteA['pode_gerenciar']);
+
+        // Já o Titular vê o codigo_ativacao de ambos (Consultor Comum e Gerente B)
+        $resListaTitular = $this->actingAs($this->titular, 'sanctum')->getJson('/api/equipe');
+        $membrosParaTitular = collect($resListaTitular->json('membros'));
+        $this->assertEquals($pinGerenteB, $membrosParaTitular->firstWhere('id', $idGerenteB)['codigo_ativacao']);
+        $this->assertEquals($pinConsultorComum, $membrosParaTitular->firstWhere('id', $idConsultorComum)['codigo_ativacao']);
+
+        // 3. Gerente A tenta convidar alguém concedendo equipe.gerenciar ou assinatura.gerenciar -> 403
         $this->actingAs($gerenteA, 'sanctum')->postJson('/api/equipe', [
             'name' => 'Tentativa SubGerente',
             'email' => 'subgerente@anjonexus.com.br',
             'permissoes' => [Permissao::EQUIPE_GERENCIAR->value],
         ])->assertStatus(403);
 
-        // 3. Gerente A tenta conceder assinatura.gerenciar -> 403
         $this->actingAs($gerenteA, 'sanctum')->postJson('/api/equipe', [
             'name' => 'Tentativa Financeiro',
             'email' => 'financeiro@anjonexus.com.br',
@@ -282,21 +332,19 @@ class EquipeManagementAndInviteTest extends TestCase
             'permissoes' => [Permissao::EQUIPE_GERENCIAR->value],
         ])->assertStatus(403);
 
-        // 5. Gerente A tenta editar/remover o Titular (owner_id) -> 403
+        // 5. Gerente A tenta editar/remover o Titular (owner_id) ou o Gerente B -> 403
         $this->actingAs($gerenteA, 'sanctum')->putJson("/api/equipe/{$this->titular->id}/permissoes", [
             'permissoes' => [],
         ])->assertStatus(403);
         $this->actingAs($gerenteA, 'sanctum')->deleteJson("/api/equipe/{$this->titular->id}")
             ->assertStatus(403);
 
-        // 6. Gerente A tenta editar/desativar/remover o Gerente B (que possui equipe.gerenciar) -> 403
-        $this->actingAs($gerenteA, 'sanctum')->putJson("/api/equipe/{$gerenteB->id}/permissoes", [
+        $this->actingAs($gerenteA, 'sanctum')->putJson("/api/equipe/{$idGerenteB}/permissoes", [
             'permissoes' => [],
         ])->assertStatus(403);
-        $this->actingAs($gerenteA, 'sanctum')->patchJson("/api/equipe/{$gerenteB->id}/status", [
-            'status' => 'inativo',
-        ])->assertStatus(403);
-        $this->actingAs($gerenteA, 'sanctum')->deleteJson("/api/equipe/{$gerenteB->id}")
+        $this->actingAs($gerenteA, 'sanctum')->postJson("/api/equipe/{$idGerenteB}/reenviar-convite")
+            ->assertStatus(403);
+        $this->actingAs($gerenteA, 'sanctum')->deleteJson("/api/equipe/{$idGerenteB}")
             ->assertStatus(403);
     }
 
@@ -381,7 +429,6 @@ class EquipeManagementAndInviteTest extends TestCase
             'permissoes' => [Permissao::STARTUPS_EXCLUIR->value],
         ]);
 
-        // Visualizador bloqueado em escrita de Startups, Kanban, Minutas e Assinatura
         $this->actingAs($visualizador, 'sanctum')
             ->postJson('/api/startups', [
                 'cnpj' => '44.555.666/0001-77',
@@ -415,7 +462,6 @@ class EquipeManagementAndInviteTest extends TestCase
             ])
             ->assertStatus(403);
 
-        // Qualquer consultor secundário (mesmo com permissões operacionais) recebe 403 em Assinatura/Faturamento
         $this->actingAs($consultorComExcluir, 'sanctum')
             ->getJson('/api/assinatura/atual')
             ->assertStatus(403);
@@ -428,7 +474,6 @@ class EquipeManagementAndInviteTest extends TestCase
             ->postJson('/api/assinatura/atualizar-forma-pagamento', ['forma_pagamento' => 'CARD'])
             ->assertStatus(403);
 
-        // Consultor com startups.excluir consegue excluir a startup
         $this->actingAs($consultorComExcluir, 'sanctum')
             ->deleteJson("/api/startups/{$startup->id}")
             ->assertStatus(200);
@@ -458,27 +503,23 @@ class EquipeManagementAndInviteTest extends TestCase
         $plainToken = $consultor->createToken('auth_token')->plainTextToken;
         $this->assertEquals(1, PersonalAccessToken::where('tokenable_id', $consultor->id)->count());
 
-        // Titular inativa o consultor
         $this->actingAs($this->titular, 'sanctum')
             ->patchJson("/api/equipe/{$consultor->id}/status", ['status' => 'inativo'])
             ->assertStatus(200)
             ->assertJsonPath('membro.status', 'inativo');
 
-        // Tokens Sanctum foram apagados imediatamente do banco
         $this->assertEquals(0, PersonalAccessToken::where('tokenable_id', $consultor->id)->count());
 
-        // Requisição subsequente com o Bearer token antigo retorna 401 Unauthenticated
         $this->app['auth']->forgetGuards();
         $this->withHeader('Authorization', 'Bearer ' . $plainToken)
             ->getJson('/api/me')
             ->assertStatus(401);
 
-        // Reativa, emite novo token e remove definitivamente o consultor
         $this->actingAs($this->titular, 'sanctum')
             ->patchJson("/api/equipe/{$consultor->id}/status", ['status' => 'ativo'])
             ->assertStatus(200);
 
-        $novoToken = $consultor->fresh()->createToken('auth_token')->plainTextToken;
+        $consultor->fresh()->createToken('auth_token')->plainTextToken;
         $this->assertEquals(1, PersonalAccessToken::where('tokenable_id', $consultor->id)->count());
 
         $this->actingAs($this->titular, 'sanctum')
@@ -488,7 +529,6 @@ class EquipeManagementAndInviteTest extends TestCase
         $this->assertEquals(0, PersonalAccessToken::where('tokenable_id', $consultor->id)->count());
         $this->assertDatabaseMissing('users', ['id' => $consultor->id]);
 
-        // Dados operacionais da agência permanecem 100% intactos
         $this->assertDatabaseHas('startups', [
             'id' => $startupDaAgencia->id,
             'agencia_id' => $this->agencia->id,

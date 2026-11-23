@@ -141,10 +141,69 @@ function renderizarMembros() {
                     </div>
                     <span class="membro-email">${membro.email}</span>
                     <div class="membro-permissoes-lista">${chipsPermissoesHtml}</div>
+                    <div class="membro-convite-slot"></div>
                 </div>
             </div>
             <div class="membro-acoes"></div>
         `;
+
+        const slotConvite = card.querySelector('.membro-convite-slot');
+        if (membro.status === 'pendente' && slotConvite) {
+            if (membro.codigo_ativacao && membro.link_convite) {
+                const boxPin = document.createElement('div');
+                boxPin.className = 'membro-convite-inline-box';
+                boxPin.innerHTML = `
+                    <span class="pin-inline-label">🔑 PIN 6 Dígitos:</span>
+                    <span class="pin-inline-valor" data-visivel="0">••••••</span>
+                    <button type="button" class="btn-inline-convite btn-toggle-pin-inline">👁️ Ver</button>
+                    <button type="button" class="btn-inline-convite btn-copiar-pin-inline">📋 Copiar Código</button>
+                    <button type="button" class="btn-inline-convite btn-copiar-link-inline">🔗 Copiar Link</button>
+                `;
+
+                const spanValorPin = boxPin.querySelector('.pin-inline-valor');
+                const btnTogglePin = boxPin.querySelector('.btn-toggle-pin-inline');
+                const btnCopiarPin = boxPin.querySelector('.btn-copiar-pin-inline');
+                const btnCopiarLink = boxPin.querySelector('.btn-copiar-link-inline');
+
+                btnTogglePin?.addEventListener('click', () => {
+                    const estaVisivel = spanValorPin.getAttribute('data-visivel') === '1';
+                    if (estaVisivel) {
+                        spanValorPin.textContent = '••••••';
+                        spanValorPin.setAttribute('data-visivel', '0');
+                        btnTogglePin.textContent = '👁️ Ver';
+                    } else {
+                        spanValorPin.textContent = membro.codigo_ativacao;
+                        spanValorPin.setAttribute('data-visivel', '1');
+                        btnTogglePin.textContent = '🙈 Ocultar';
+                    }
+                });
+
+                btnCopiarPin?.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(String(membro.codigo_ativacao));
+                        btnCopiarPin.textContent = '✔ Código Copiado!';
+                        setTimeout(() => { btnCopiarPin.textContent = '📋 Copiar Código'; }, 1800);
+                    } catch (_) {}
+                });
+
+                btnCopiarLink?.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(String(membro.link_convite));
+                        btnCopiarLink.textContent = '✔ Link Copiado!';
+                        setTimeout(() => { btnCopiarLink.textContent = '🔗 Copiar Link'; }, 1800);
+                    } catch (_) {}
+                });
+
+                slotConvite.appendChild(boxPin);
+            } else if (membro.pode_gerenciar && membro.convite_expirado) {
+                const boxExpirado = document.createElement('div');
+                boxExpirado.className = 'membro-convite-inline-box expirado';
+                boxExpirado.innerHTML = `
+                    <span>⚠️ Convite expirado ou bloqueado por tentativas. Clique em <strong>"Reenviar Convite"</strong> para gerar um novo PIN.</span>
+                `;
+                slotConvite.appendChild(boxExpirado);
+            }
+        }
 
         const containerAcoes = card.querySelector('.membro-acoes');
         if (!membro.is_owner && membro.pode_gerenciar && containerAcoes) {

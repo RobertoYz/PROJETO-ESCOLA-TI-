@@ -30,7 +30,7 @@ class EquipeService
     /**
      * @return array<string, mixed>
      */
-    public function listarMembros(User $actor): array
+    public function listarMembros(User $actor, ?Request $request = null): array
     {
         if (!$this->policy->viewAny($actor)) {
             throw new AuthorizationException('Você não possui permissão para visualizar ou gerenciar a equipe.');
@@ -42,8 +42,8 @@ class EquipeService
             ->orderBy('name', 'asc')
             ->get();
 
-        $membrosFormatados = $membros->map(function (User $membro) use ($actor) {
-            return $this->formatarMembro($membro, $actor);
+        $membrosFormatados = $membros->map(function (User $membro) use ($actor, $request) {
+            return $this->formatarMembro($membro, $actor, $request);
         })->values()->all();
 
         $atorEhOwner = $actor->isOwner();
@@ -106,7 +106,7 @@ class EquipeService
                 'email_verified_at' => null,
                 'password' => Hash::make(Str::random(40)),
                 'convite_token' => $tokenConvite,
-                'convite_codigo_hash' => Hash::make($pinAtivacao),
+                'convite_codigo_criptografado' => $pinAtivacao,
                 'convite_expira_em' => now()->addHours(self::HORAS_EXPIRACAO_CONVITE),
                 'convite_tentativas' => 0,
                 'convidado_por_id' => $actor->id,
@@ -117,7 +117,7 @@ class EquipeService
         $emailEnviado = $this->dispararEmailConviteBestEffort($membro, $actor, $linkConvite);
 
         return [
-            'membro' => $this->formatarMembro($membro->fresh(), $actor),
+            'membro' => $this->formatarMembro($membro->fresh(), $actor, $request),
             'link_convite' => $linkConvite,
             'codigo_ativacao' => $pinAtivacao,
             'expira_em' => $membro->convite_expira_em?->toIso8601String(),
@@ -144,7 +144,7 @@ class EquipeService
         $novoPin = (string) random_int(100000, 999999);
 
         $target->convite_token = $novoToken;
-        $target->convite_codigo_hash = Hash::make($novoPin);
+        $target->convite_codigo_criptografado = $novoPin;
         $target->convite_expira_em = now()->addHours(self::HORAS_EXPIRACAO_CONVITE);
         $target->convite_tentativas = 0;
         $target->convidado_por_id = $actor->id;
@@ -154,7 +154,7 @@ class EquipeService
         $emailEnviado = $this->dispararEmailConviteBestEffort($target, $actor, $linkConvite);
 
         return [
-            'membro' => $this->formatarMembro($target->fresh(), $actor),
+            'membro' => $this->formatarMembro($target->fresh(), $actor, $request),
             'link_convite' => $linkConvite,
             'codigo_ativacao' => $novoPin,
             'expira_em' => $target->convite_expira_em?->toIso8601String(),
@@ -176,6 +176,11 @@ class EquipeService
         }
 
         if ($user->convite_expira_em && $user->convite_expira_em->isPast()) {
+            $user->convite_token = null;
+            $user->convite_codigo_criptografado = null;
+            $user->convite_expira_em = null;
+            $user->save();
+
             throw ValidationException::withMessages([
                 'token' => ['Este convite expirou. Solicite um novo convite ao titular da consultoria.'],
             ]);
@@ -215,6 +220,11 @@ class EquipeService
         }
 
         if ($user->convite_expira_em && $user->convite_expira_em->isPast()) {
+            $user->convite_token = null;
+            $user->convite_codigo_criptografado = null;
+            $user->convite_expira_em = null;
+            $user->save();
+
             throw ValidationException::withMessages([
                 'token' => ['Este convite expirou (validade de 48 horas). Solicite o reenvio do convite ao titular.'],
             ]);
@@ -226,14 +236,16 @@ class EquipeService
             ]);
         }
 
-        if (empty($user->convite_codigo_hash) || !Hash::check($codigo, $user->convite_codigo_hash)) {
+        $pinArmazenado = (string) ($user->convite_codigo_criptografado ?? '');
+
+        if ($pinArmazenado === '' || !hash_equals($pinArmazenado, (string) $codigo)) {
             $novasTentativas = ((int) $user->convite_tentativas) + 1;
             $user->convite_tentativas = $novasTentativas;
 
             if ($novasTentativas >= self::MAX_TENTATIVAS_PIN) {
                 $user->convite_token = null;
-                $user->convite_codigo_hash = null;
-                $user->convite_expira_em = now()->subSecond();
+                $user->convite_codigo_criptografado = null;
+                $user->convite_expira_em = null;
                 $user->save();
 
                 throw ValidationException::withMessages([
@@ -253,7 +265,7 @@ class EquipeService
         $user->status = 'ativo';
         $user->email_verified_at = now();
         $user->convite_token = null;
-        $user->convite_codigo_hash = null;
+        $user->convite_codigo_criptografado = null;
         $user->convite_expira_em = null;
         $user->convite_tentativas = 0;
         $user->save();
@@ -366,7 +378,7 @@ class EquipeService
     /**
      * @return array<string, mixed>
      */
-    public function formatarMembro(User $membro, ?User $actor = null): array
+    public function formatarMembro(User $membro, ?User $actor = null, ?Request $request = null): array
     {
         $ehOwner = $membro->isOwner();
         $agencia = $membro->agencia;
@@ -379,7 +391,26 @@ class EquipeService
             ? Permissao::valores()
             : (is_array($membro->permissoes) ? array_values($membro->permissoes) : $membro->permissoesEfetivas());
 
-        $podeGerenciar = $actor ? $this->policy->manageMember($actor, $membro) : false;
+        $podeGerenciar = $actor ? $actor->can('manageMember', $membro) : false;
+
+        $conviteValido = $status === 'pendente'
+            && !empty($membro->convite_token)
+            && !empty($membro->convite_codigo_criptografado)
+            && $membro->convite_expira_em !== null
+            && $membro->convite_expira_em->isFuture()
+            && (int) $membro->convite_tentativas < self::MAX_TENTATIVAS_PIN;
+
+        $exporCredenciaisConvite = $conviteValido && $podeGerenciar;
+
+        $codigoAtivacao = $exporCredenciaisConvite
+            ? (string) $membro->convite_codigo_criptografado
+            : null;
+
+        $linkConvite = $exporCredenciaisConvite
+            ? $this->construirLinkConvite((string) $membro->convite_token, $request)
+            : null;
+
+        $conviteExpiradoOuBloqueado = $status === 'pendente' && !$conviteValido;
 
         return [
             'id' => $membro->id,
@@ -392,7 +423,9 @@ class EquipeService
             'permissoes_efetivas' => $membro->permissoesEfetivas(),
             'email_verified_at' => $membro->email_verified_at?->toIso8601String(),
             'convite_expira_em' => $membro->convite_expira_em?->toIso8601String(),
-            'convite_expirado' => $status === 'pendente' && $membro->convite_expira_em !== null && $membro->convite_expira_em->isPast(),
+            'convite_expirado' => $conviteExpiradoOuBloqueado,
+            'codigo_ativacao' => $codigoAtivacao,
+            'link_convite' => $linkConvite,
             'pode_gerenciar' => $podeGerenciar,
             'created_at' => $membro->created_at?->toIso8601String(),
         ];

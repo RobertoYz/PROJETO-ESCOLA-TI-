@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
             $table->string('convite_token', 64)->nullable()->unique();
-            $table->string('convite_codigo_hash', 255)->nullable();
+            $table->text('convite_codigo_criptografado')->nullable();
             $table->timestamp('convite_expira_em')->nullable();
             $table->unsignedTinyInteger('convite_tentativas')->default(0);
             $table->unsignedBigInteger('convidado_por_id')->nullable()->index();
