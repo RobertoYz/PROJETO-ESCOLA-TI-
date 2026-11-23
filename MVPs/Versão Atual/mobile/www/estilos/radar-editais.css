@@ -462,6 +462,21 @@ body:not(.dark-mode) .user-section-global .avatar {
     background: var(--tag-fapemig-bg);
 }
 
+.agency-faperj {
+    color: #0284C7;
+    background: rgba(2, 132, 199, 0.12);
+}
+
+.agency-fapergs {
+    color: #10B981;
+    background: rgba(16, 185, 129, 0.12);
+}
+
+.agency-fapemat {
+    color: #0D9488;
+    background: rgba(13, 148, 136, 0.14);
+}
+
 .agency-default {
     color: var(--text-muted);
     background: var(--bg-surface-subtle);

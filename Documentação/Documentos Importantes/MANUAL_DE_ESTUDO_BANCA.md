@@ -23,7 +23,19 @@ A coleta automatizada de editais é executada pela camada de Spiders (baseada no
      - Utilizam o componente `Symfony\Component\DomCrawler\Crawler` navegando por XPath semântico (`filterXPath('//ul[contains(@class, "list")]/li')` e `filterXPath('//div[contains(@class, "upk-item")]')`).
      - Imunidade visual: O XPath mapeia a hierarquia lógica dos nós DOM independentemente de regras de layout ou classes cosméticas de CSS.
 
-4. Pipeline de Processamento e Idempotência (SalvarNoBancoProcessor.php):
+4. FAPERJ (FaperjSpider.php) e FAPERGS (FapergsSpider.php) — Deep Crawling e Heurística de Prazos:
+   - Desafio Técnico: Portais do Rio de Janeiro e Rio Grande do Sul com listas paginadas e múltiplos anexos PDF por edital.
+   - Solução em Código:
+     - Raspagem em profundidade disparando sub-requisições assíncronas para cada oportunidade listada.
+     - Detecção de PDFs (Edital Retificado, Anexos, Portarias) e normalização de orçamentos e prazos de encerramento em padrão ISO.
+
+5. FAPEMAT - Mato Grosso (FapematSpider.php) — CMS Liferay Estadual, Resiliência e Catálogo Estruturado:
+   - Desafio Técnico: Portal do Governo do Estado de Mato Grosso sobre Liferay CMS corporativo e ambiente SIGFAP com frequentes instabilidades de rede e redirecionamentos.
+   - Solução em Código:
+     - Arquitetura de contingência dupla: raspagem dinâmica nos endpoints oficiais da FAPEMAT aliada a um catálogo estruturado de editais estratégicos locais (PIETec MT, PROFIX-MT, Conecta Startup MT, TecNova III).
+     - Extração determinística com custo zero de tokens de IA para teto orçamentário, data de submissão e links diretos para os arquivos oficiais.
+
+6. Pipeline de Processamento e Idempotência (SalvarNoBancoProcessor.php):
    - Cada Spider emite dados via `yield $this->item([...])` (PHP Generator lazy, que consome memória próxima de zero).
    - O item passa pelo `SalvarNoBancoProcessor`, que executa:
      ```php

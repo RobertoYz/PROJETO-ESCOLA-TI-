@@ -24,6 +24,7 @@ Este catálogo reúne as 20 Decisões Arquiteturais que norteiam o desenvolvimen
 | **018** | Gestão Multi-tenant B2B e Seletor Global de Startups | Isolamento de carteira de clientes | Consultor gerencia N startups sem vazamento de dados, com eventos reativos na UI. |
 | **019** | Resiliência Touch e Ergonomia Mobile no Kanban e Radar | Incompatibilidade de drag-and-drop em telas touch | Botões direcionais touch, modais em viewport estrito e eliminação de saltos de scroll. |
 | **020** | Modelo de Custos, Precificação SaaS e Benchmark Competitivo | Risco de custos imprevisíveis com IA e falta de sustentabilidade de negócio | Garante viabilidade econômica com margem bruta >95%, cotas estritas de IA e vantagem contra consultorias tradicionais. |
+| **021** | Módulo Radar Mato Grosso (FAPEMAT) — Arquitetura de Raspagem e Ingestão Resiliente (EDTAN-364 / EDTAN-289) | Expansão de inteligência de fomento para a região Centro-Oeste e instabilidade de portais estaduais | Estratégia híbrida com spider ativo + catálogo estruturado de contingência local, idempotência e paridade web/mobile. |
 
 ---
 
