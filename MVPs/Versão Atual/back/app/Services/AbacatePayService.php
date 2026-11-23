@@ -29,24 +29,25 @@ class AbacatePayService
             throw new Exception('Chave ABACATEPAY_API_KEY não configurada no arquivo .env.');
         }
 
-        $urlBaseFront = env('FRONT_URL');
-        if (!$urlBaseFront) {
-            $origemRequisicao = request()->header('X-Frontend-Url')
-                ?? request()->header('X-Referer')
-                ?? request()->header('referer');
-            if ($origemRequisicao) {
-                $urlAnalisada = parse_url($origemRequisicao);
-                $host = ($urlAnalisada['scheme'] ?? 'http') . '://' . ($urlAnalisada['host'] ?? 'localhost') . (isset($urlAnalisada['port']) ? ':' . $urlAnalisada['port'] : '');
-                $caminho = $urlAnalisada['path'] ?? '';
-                if (str_contains($caminho, '/paginas/')) {
-                    $prefixo = substr($caminho, 0, strpos($caminho, '/paginas/'));
-                    $urlBaseFront = rtrim($host . $prefixo, '/');
-                } else {
-                    $urlBaseFront = $host;
-                }
+        $urlBaseFront = null;
+        $origemRequisicao = request()->header('X-Frontend-Url')
+            ?? request()->header('X-Referer')
+            ?? request()->header('referer');
+
+        if ($origemRequisicao) {
+            $urlAnalisada = parse_url($origemRequisicao);
+            $host = ($urlAnalisada['scheme'] ?? 'http') . '://' . ($urlAnalisada['host'] ?? 'localhost') . (isset($urlAnalisada['port']) ? ':' . $urlAnalisada['port'] : '');
+            $caminho = $urlAnalisada['path'] ?? '';
+            if (str_contains($caminho, '/paginas/')) {
+                $prefixo = substr($caminho, 0, strpos($caminho, '/paginas/'));
+                $urlBaseFront = rtrim($host . $prefixo, '/');
             } else {
-                $urlBaseFront = request()->getSchemeAndHttpHost();
+                $urlBaseFront = $host;
             }
+        }
+
+        if (!$urlBaseFront) {
+            $urlBaseFront = env('FRONT_URL') ?: request()->getSchemeAndHttpHost();
         }
 
         $urlLogin = rtrim($urlBaseFront, '/') . '/paginas/login.html';
