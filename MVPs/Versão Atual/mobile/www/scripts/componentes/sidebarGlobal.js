@@ -16,7 +16,10 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
             <button class="toggle-btn" id="toggleSidebar" title="Recolher / Expandir menu" style="background: none; border: none; color: #fff; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
             </button>
-            <div class="logo" style="font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: -0.5px;">Anjo<span style="font-weight: 400; color: #3b82f6;">Nexus</span></div>
+            <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+                <img src="../imagens/icone-192.png" alt="Logo AnjoNexus" style="height: 32px; width: 32px; border-radius: 8px; object-fit: contain;">
+                <span style="font-size: 1.35rem; font-weight: 700; color: #fff; letter-spacing: -0.5px;">Anjo<span style="font-weight: 400; color: #3b82f6;">Nexus</span></span>
+            </div>
         </div>
 
         <nav class="nav-menu" style="flex: 1; display: flex; flex-direction: column; padding: 1rem 0;">
