@@ -35,6 +35,12 @@ class AssinaturaController extends Controller
             ], 404);
         }
 
+        if (!$usuario->isOwner()) {
+            return response()->json([
+                'message' => 'Apenas o titular financeiro da consultoria possui acesso à gestão de assinatura e faturamento.',
+            ], 403);
+        }
+
         $plano = $agencia->plano ?? Plano::find($agencia->plano_id) ?? Plano::first();
 
         $resumoCotaStartups = $quotaService->getUsageSummary($agencia);
@@ -145,7 +151,7 @@ class AssinaturaController extends Controller
             ], 401);
         }
 
-        if ($usuario->perfil_acesso !== 'consultor_admin') {
+        if (!$usuario->isOwner()) {
             return response()->json([
                 'message' => 'Apenas o administrador da consultoria pode gerar uma cobrança de renovação da assinatura.',
             ], 403);
@@ -265,7 +271,7 @@ class AssinaturaController extends Controller
             ], 401);
         }
 
-        if ($usuario->perfil_acesso !== 'consultor_admin') {
+        if (!$usuario->isOwner()) {
             return response()->json([
                 'message' => 'Apenas o administrador da consultoria pode atualizar a forma de pagamento da assinatura.',
             ], 403);

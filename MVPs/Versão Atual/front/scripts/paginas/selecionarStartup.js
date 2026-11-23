@@ -2,7 +2,10 @@ import {
     usuarioEstaAutenticado,
     salvarStartupAtiva,
     obterUsuarioLogado,
-    removerToken
+    obterPerfilUsuario,
+    removerToken,
+    usuarioEhTitular,
+    usuarioTemPermissao
 } from '../servicos/servicoAutenticacao.js';
 import { listarStartupsComCota } from '../servicos/servicoStartups.js';
 import {
@@ -30,6 +33,30 @@ if (usuarioLogado && (usuarioLogado.name || usuarioLogado.email) && badgeConsult
     nomeConsultorTopbar.textContent = usuarioLogado.name || usuarioLogado.email;
     badgeConsultor.hidden = false;
 }
+
+function aplicarPermissoesSelecionarStartup(usuario) {
+    const ehOwner = usuarioEhTitular(usuario);
+    const podeCriarStartup = usuarioTemPermissao('startups.criar_editar', usuario);
+
+    if (botaoMinhaAssinatura) {
+        botaoMinhaAssinatura.style.display = ehOwner ? '' : 'none';
+    }
+    if (botaoNovaStartup) {
+        botaoNovaStartup.style.display = podeCriarStartup ? '' : 'none';
+    }
+}
+
+aplicarPermissoesSelecionarStartup(usuarioLogado);
+
+obterPerfilUsuario().then((usuarioAtualizado) => {
+    if (usuarioAtualizado) {
+        if (nomeConsultorTopbar && badgeConsultor) {
+            nomeConsultorTopbar.textContent = usuarioAtualizado.name || usuarioAtualizado.email;
+            badgeConsultor.hidden = false;
+        }
+        aplicarPermissoesSelecionarStartup(usuarioAtualizado);
+    }
+});
 
 if (botaoMinhaAssinatura) {
     botaoMinhaAssinatura.addEventListener('click', () => {

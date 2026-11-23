@@ -1,10 +1,15 @@
+import { obterUsuarioLogado, usuarioEhTitular, usuarioTemPermissao } from '../servicos/servicoAutenticacao.js';
+
 /**
  * Componente Sidebar Global
- * Mantém navegação padronizada e unificada entre Radar, Kanban e Minhas Startups
+ * Mantém navegação padronizada e unificada entre Radar, Kanban, Minhas Startups e Equipe
  */
 export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
     const sidebarEl = document.getElementById('sidebar');
     if (!sidebarEl) return;
+
+    const usuario = obterUsuarioLogado();
+    const podeGerenciarEquipe = usuarioEhTitular(usuario) || usuarioTemPermissao('equipe.gerenciar', usuario);
 
     sidebarEl.innerHTML = `
         <div class="sidebar-header" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
@@ -15,7 +20,7 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
         </div>
 
         <nav class="nav-menu" style="flex: 1; display: flex; flex-direction: column; padding: 1rem 0;">
-            <a href="busca-editais.html" class="nav-item ${paginaAtiva === 'busca' ? 'active' : ''}" style="padding: 0.9rem 1.5rem; color: #e2e8f0; text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; gap: 14px; transition: 0.2s;">
+            <a href="busca-editais.html" class="nav-item ${paginaAtiva === 'busca' || paginaAtiva === 'radar' ? 'active' : ''}" style="padding: 0.9rem 1.5rem; color: #e2e8f0; text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; gap: 14px; transition: 0.2s;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                 <span class="nav-text">Busca de Editais</span>
             </a>
@@ -28,6 +33,11 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
             <a href="minhas-startups.html" class="nav-item ${paginaAtiva === 'startups' ? 'active' : ''}" style="padding: 0.9rem 1.5rem; color: #e2e8f0; text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; gap: 14px; transition: 0.2s;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
                 <span class="nav-text">Minhas Startups</span>
+            </a>
+
+            <a href="equipe.html" id="navItemSidebarEquipe" class="nav-item ${paginaAtiva === 'equipe' ? 'active' : ''}" style="padding: 0.9rem 1.5rem; color: #e2e8f0; text-decoration: none; font-size: 0.95rem; display: ${podeGerenciarEquipe ? 'flex' : 'none'}; align-items: center; gap: 14px; transition: 0.2s;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                <span class="nav-text">Equipe</span>
             </a>
 
             <a href="baixar-app.html" class="nav-item ${paginaAtiva === 'mobile' ? 'active' : ''}" style="padding: 0.9rem 1.5rem; color: #a78bfa; text-decoration: none; font-size: 0.95rem; display: flex; align-items: center; justify-content: space-between; transition: 0.2s;">
@@ -47,7 +57,6 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
         </div>
     `;
 
-    // Criar backdrop para mobile se não existir
     let backdrop = document.getElementById('sidebarBackdrop');
     if (!backdrop) {
         backdrop = document.createElement('div');
@@ -70,10 +79,8 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
         }
     };
 
-    // Toggle expand/collapse e suporte a drawer no mobile
     const toggleBtn = document.getElementById('toggleSidebar');
     if (toggleBtn) {
-        // Remove listeners duplicados se houver
         const novoToggleBtn = toggleBtn.cloneNode(true);
         toggleBtn.parentNode.replaceChild(novoToggleBtn, toggleBtn);
 
@@ -88,7 +95,6 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
         });
     }
 
-    // Detecção de ambiente Capacitor nativo
     if (window.Capacitor || window.location.protocol === 'capacitor:' || (window.location.hostname === 'localhost' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent))) {
         document.body.classList.add('is-capacitor');
     }
@@ -105,10 +111,8 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
         });
     }
 
-    // Fechar ao tocar no backdrop
     backdrop.onclick = fecharMenuMobile;
 
-    // Fechar ao tocar fora no mobile
     document.addEventListener('click', (e) => {
         if (window.innerWidth <= 900 && sidebarEl.classList.contains('mobile-open')) {
             if (!sidebarEl.contains(e.target) && e.target !== toggleBtn && (!btnMobileMenu || !btnMobileMenu.contains(e.target))) {
@@ -116,4 +120,12 @@ export function inicializarSidebarGlobal(paginaAtiva = 'radar') {
             }
         }
     });
+}
+
+export function atualizarVisibilidadeSidebarEquipe(usuario = null) {
+    const itemEquipe = document.getElementById('navItemSidebarEquipe');
+    if (!itemEquipe) return;
+    const u = usuario || obterUsuarioLogado();
+    const visivel = usuarioEhTitular(u) || usuarioTemPermissao('equipe.gerenciar', u);
+    itemEquipe.style.display = visivel ? 'flex' : 'none';
 }

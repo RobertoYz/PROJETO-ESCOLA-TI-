@@ -124,12 +124,34 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
                     || caminho.includes('cadastro')
                     || caminho.includes('esqueci-senha')
                     || caminho.includes('redefinir-senha')
+                    || caminho.includes('aceitar-convite')
                     || caminho.includes('selecionar-plano')
                     || caminho.includes('pagamento-pendente');
 
                 if (!ehTelaPublicaOuPendencia) {
                     window.location.href = 'pagamento-pendente.html';
                 }
+            }
+        }
+
+        if (resposta.status === 401 && typeof window !== 'undefined' && window.location) {
+            const caminho = window.location.pathname.toLowerCase();
+            const ehTelaPublica = caminho.includes('login')
+                || caminho.includes('cadastro')
+                || caminho.includes('esqueci-senha')
+                || caminho.includes('redefinir-senha')
+                || caminho.includes('aceitar-convite')
+                || caminho.includes('selecionar-plano')
+                || caminho.includes('escolher-pagamento')
+                || caminho.includes('pagamento-pendente')
+                || caminho.includes('baixar-app')
+                || caminho.endsWith('/index.html')
+                || caminho.endsWith('/front/');
+
+            if (!ehTelaPublica && !endpoint.includes('/auth/login')) {
+                localStorage.removeItem('token_autenticacao');
+                localStorage.removeItem('usuario_logado');
+                window.location.href = 'login.html';
             }
         }
 

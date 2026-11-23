@@ -11,6 +11,12 @@ class PagamentoController extends Controller
     public function recuperarLinkPagamento(Request $requisicao, AbacatePayService $servicoAbacatePay, AbacatePayAdapter $adapter)
     {
         $usuario = $requisicao->user();
+        if ($usuario && !$usuario->isOwner()) {
+            return response()->json([
+                'message' => 'Apenas o titular financeiro da consultoria pode gerenciar pagamentos.',
+            ], 403);
+        }
+
         $agencia = $usuario ? $usuario->agencia : null;
 
         if (!$agencia) {

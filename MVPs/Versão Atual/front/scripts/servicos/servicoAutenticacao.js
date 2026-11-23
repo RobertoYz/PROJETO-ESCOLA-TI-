@@ -13,11 +13,22 @@ const CHAVE_USUARIO_EMAIL = 'usuario_email';
 export function salvarUsuarioLogado(usuario) {
     if (!usuario) return;
     const atual = obterUsuarioLogado() || {};
+    const perfilAcesso = usuario.perfil_acesso || atual.perfil_acesso || 'consultor_admin';
+    const isOwner = typeof usuario.is_owner === 'boolean'
+        ? usuario.is_owner
+        : (typeof atual.is_owner === 'boolean' ? atual.is_owner : perfilAcesso === 'consultor_admin');
+    const permissoes = Array.isArray(usuario.permissoes)
+        ? usuario.permissoes
+        : (Array.isArray(atual.permissoes) ? atual.permissoes : null);
+
     const dadosConsolidados = {
         id: usuario.id ?? atual.id ?? null,
         name: usuario.name || usuario.nome || atual.name || '',
         email: usuario.email || atual.email || '',
-        perfil_acesso: usuario.perfil_acesso || atual.perfil_acesso || 'consultor_admin'
+        perfil_acesso: perfilAcesso,
+        status: usuario.status || atual.status || 'ativo',
+        is_owner: isOwner,
+        permissoes: permissoes
     };
     localStorage.setItem(CHAVE_USUARIO, JSON.stringify(dadosConsolidados));
     if (dadosConsolidados.name) {
@@ -26,6 +37,31 @@ export function salvarUsuarioLogado(usuario) {
     if (dadosConsolidados.email) {
         localStorage.setItem(CHAVE_USUARIO_EMAIL, dadosConsolidados.email);
     }
+}
+
+export function usuarioEhTitular(usuario = null) {
+    const u = usuario || obterUsuarioLogado();
+    if (!u) return false;
+    if (typeof u.is_owner === 'boolean') return u.is_owner;
+    return u.perfil_acesso === 'consultor_admin' || u.perfil_acesso === 'admin_global';
+}
+
+export function usuarioTemPermissao(codigoPermissao, usuario = null) {
+    const u = usuario || obterUsuarioLogado();
+    if (!u) return false;
+    if (u.status && u.status !== 'ativo') return false;
+    if (usuarioEhTitular(u)) return true;
+    if (codigoPermissao === 'assinatura.gerenciar') return false;
+
+    if (Array.isArray(u.permissoes)) {
+        return u.permissoes.includes(codigoPermissao);
+    }
+
+    if (u.perfil_acesso === 'consultor_padrao') {
+        return ['startups.criar_editar', 'kanban.gerenciar', 'minutas.gerenciar'].includes(codigoPermissao);
+    }
+
+    return u.perfil_acesso === 'consultor_admin';
 }
 
 export function obterUsuarioLogado() {
