@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Plano extends Model
+{
+    protected $table = 'planos';
+
+    protected $fillable = [
+        'nome',
+        'preco',
+        'id_transacao',
+        'limite_startups',
+        'limite_membros_equipe',
+        'limite_minutas_ia',
+    ];
+
+    protected $casts = [
+        'preco' => 'decimal:2',
+        'limite_startups' => 'integer',
+        'limite_membros_equipe' => 'integer',
+        'limite_minutas_ia' => 'integer',
+    ];
+
+    public function agencias(): HasMany
+    {
+        return $this->hasMany(Agencia::class, 'plano_id');
+    }
+}

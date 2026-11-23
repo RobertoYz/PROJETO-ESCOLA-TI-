@@ -127,6 +127,7 @@ class AuthController extends Controller
                 if (!$agencia) {
                     $agencia = Agencia::create([
                         'nome' => $nomeAgencia,
+                        'owner_id' => $usuario->id,
                         'plano_id' => $plano->id,
                         'forma_pagamento' => $formaPagamento,
                         'status_pagamento' => 'pendente',
@@ -136,6 +137,9 @@ class AuthController extends Controller
                     $usuario->save();
                 } else {
                     $agencia->nome = $nomeAgencia;
+                    if (!$agencia->owner_id) {
+                        $agencia->owner_id = $usuario->id;
+                    }
                     $agencia->plano_id = $plano->id;
                     $agencia->forma_pagamento = $formaPagamento;
                     $agencia->status_pagamento = 'pendente';
@@ -158,6 +162,9 @@ class AuthController extends Controller
                     'agencia_id' => $agencia->id,
                     'perfil_acesso' => 'consultor_admin',
                 ]);
+
+                $agencia->owner_id = $usuario->id;
+                $agencia->save();
             }
 
             $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano, $formaPagamento);
@@ -503,7 +510,7 @@ class AuthController extends Controller
                 DB::table('sessions')->whereIn('user_id', $idsUsuarios)->delete();
 
                 if ($agencia) {
-                    $agencia->startups()->delete();
+                    $agencia->startups()->withTrashed()->forceDelete();
                     User::whereIn('id', $idsUsuarios)->forceDelete();
                     $agencia->forceDelete();
                 } else {
@@ -776,7 +783,7 @@ class AuthController extends Controller
                 }
 
                 $idsStartups = $agencia
-                    ? Startup::where('agencia_id', $agencia->id)->pluck('id')->toArray()
+                    ? Startup::withTrashed()->where('agencia_id', $agencia->id)->pluck('id')->toArray()
                     : [];
 
                 $idsBoards = $agencia
@@ -848,7 +855,7 @@ class AuthController extends Controller
 
                 // 5. Startups
                 if (!empty($idsStartups)) {
-                    Startup::whereIn('id', $idsStartups)->delete();
+                    Startup::withTrashed()->whereIn('id', $idsStartups)->forceDelete();
                 }
 
                 // 6. Tokens de recuperação de senha e sessões

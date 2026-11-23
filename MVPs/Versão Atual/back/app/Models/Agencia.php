@@ -12,6 +12,7 @@ class Agencia extends Model
 
     protected $fillable = [
         'nome',
+        'owner_id',
         'plano_id',
         'forma_pagamento',
         'id_transacao',
@@ -57,6 +58,11 @@ class Agencia extends Model
             && $this->assinatura_expira_em !== null
             && $this->assinatura_expira_em->isFuture()
             && $this->assinatura_expira_em->lte(now()->addDays(5));
+    }
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
     }
 
     public function plano(): BelongsTo

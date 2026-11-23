@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Anjo Nexus — Busca de Editais</title>
+    <script>
+        if (!localStorage.getItem('token_autenticacao')) {
+            window.location.replace('login.html');
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="../estilos/radar-editais.css">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
+</head>
+<body>
+    <svg style="display: none;">
+        <symbol id="icon-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+        <symbol id="icon-star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+        <symbol id="icon-star-filled" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="currentColor"/></symbol>
+    </svg>
+
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+        <header class="top-navbar">
+            <div class="header-left-slot">
+                <button id="btnMobileMenu" class="mobile-menu-trigger" aria-label="Abrir menu">☰</button>
+                <div class="page-brand-context">
+                    <div class="brand-symbol-mini" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="7"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
+                    <span class="page-brand-title">Busca de Editais</span>
+                    <span class="page-brand-badge">Catálogo</span>
+                </div>
+                <button id="btnAlternarTema" class="theme-toggle-btn" type="button" aria-label="Alternar tema claro e escuro" title="Alternar tema">
+                    <svg id="iconeSol" style="display: none;" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg id="iconeLua" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="container-seletor-global"></div>
+        </header>
+
+        <!-- Barra de Comando de Busca -->
+        <section class="search-command-section" aria-label="Pesquisa de editais">
+            <div class="search-command-row">
+                <div class="search-hero-input-wrap">
+                    <svg class="search-hero-icon" width="18" height="18"><use href="#icon-search"></use></svg>
+                    <input
+                        type="search"
+                        id="searchKeywordInput"
+                        class="search-hero-input"
+                        placeholder="Busque por tema, tecnologia, órgão, público-alvo, TRL ou palavra-chave..."
+                        aria-label="Buscar editais por palavra-chave"
+                    >
+                    <span class="search-kbd-hint" aria-hidden="true">/</span>
+                    <button type="button" id="btnLimparBusca" class="search-clear-btn" title="Limpar busca" aria-label="Limpar busca">&times;</button>
+                </div>
+
+                <button type="button" id="btnToggleFiltrosMobile" class="btn-toggle-filtros-mobile" aria-expanded="false" aria-controls="searchFilterRail">
+                    Filtros
+                </button>
+            </div>
+
+            <div class="search-meta-bar">
+                <div class="search-chips-wrap">
+                    <span class="search-counter-text" id="searchResultsCounter">Carregando catálogo...</span>
+                    <div id="activeFilterChips" style="display: inline-flex; gap: 6px; flex-wrap: wrap;"></div>
+                </div>
+
+                <div class="search-sort-group">
+                    <label for="searchSortSelect" style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Ordenar:</label>
+                    <select id="searchSortSelect" class="filter-select">
+                        <option value="match_desc">Relevância e match</option>
+                        <option value="prazo_asc">Prazo mais próximo</option>
+                        <option value="orcamento_desc">Maior orçamento</option>
+                        <option value="titulo_asc">Título (A–Z)</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trilho de Filtros + Lista Editorial de Resultados -->
+        <div class="search-layout">
+            <aside class="filter-rail" id="searchFilterRail" aria-label="Filtros avançados">
+                <div class="filter-rail-head">
+                    <h2 class="filter-rail-title">Refinar busca</h2>
+                    <button type="button" id="btnResetFilters" class="btn-reset-filters">Limpar tudo</button>
+                </div>
+
+                <div class="filter-group">
+                    <span class="filter-group-label">Agência fomentadora</span>
+                    <label class="filter-check-row">
+                        <span class="filter-check-left">
+                            <input type="checkbox" class="filter-fonte-check" value="FINEP">
+                            <span>FINEP</span>
+                        </span>
+                        <span class="filter-check-count" id="countFonteFINEP">0</span>
+                    </label>
+                    <label class="filter-check-row">
+                        <span class="filter-check-left">
+                            <input type="checkbox" class="filter-fonte-check" value="FAPESC">
+                            <span>FAPESC</span>
+                        </span>
+                        <span class="filter-check-count" id="countFonteFAPESC">0</span>
+                    </label>
+                    <label class="filter-check-row">
+                        <span class="filter-check-left">
+                            <input type="checkbox" class="filter-fonte-check" value="FAPESP">
+                            <span>FAPESP</span>
+                        </span>
+                        <span class="filter-check-count" id="countFonteFAPESP">0</span>
+                    </label>
+                    <label class="filter-check-row">
+                        <span class="filter-check-left">
+                            <input type="checkbox" class="filter-fonte-check" value="FAPEMIG">
+                            <span>FAPEMIG (MG)</span>
+                        </span>
+                        <span class="filter-check-count" id="countFonteFAPEMIG">0</span>
+                    </label>
+                    <label class="filter-check-row">
+                        <span class="filter-check-left">
+                            <input type="checkbox" class="filter-fonte-check" value="FAPERJ">
+                            <span>FAPERJ (RJ)</span>
+                        </span>
+                        <span class="filter-check-count" id="countFonteFAPERJ">0</span>
+                    </label>
+                    <label class="filter-check-row">
+                        <span class="filter-check-left">
+                            <input type="checkbox" class="filter-fonte-check" value="FAPERGS">
+                            <span>FAPERGS (RS)</span>
+                        </span>
+                        <span class="filter-check-count" id="countFonteFAPERGS">0</span>
+                    </label>
+                </div>
+
+                <div class="filter-group">
+                    <span class="filter-group-label">Preferências</span>
+                    <label class="filter-check-row">
+                        <span class="filter-check-left">
+                            <input type="checkbox" id="filterApenasFavoritos">
+                            <span>Somente favoritos</span>
+                        </span>
+                        <span class="filter-check-count" id="countFavoritosBusca">0</span>
+                    </label>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-group-label" for="filterMatchMinimo">Compatibilidade mínima</label>
+                    <select id="filterMatchMinimo" class="filter-rail-select">
+                        <option value="0">Qualquer percentual</option>
+                        <option value="50">50% ou mais</option>
+                        <option value="70">70% ou mais</option>
+                        <option value="85">85% ou mais</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-group-label" for="filterOrcamentoMinimo">Orçamento mínimo</label>
+                    <select id="filterOrcamentoMinimo" class="filter-rail-select">
+                        <option value="0">Qualquer valor</option>
+                        <option value="250000">A partir de R$ 250 mil</option>
+                        <option value="500000">A partir de R$ 500 mil</option>
+                        <option value="1000000">A partir de R$ 1 milhão</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-group-label" for="filterAbrangencia">Abrangência</label>
+                    <select id="filterAbrangencia" class="filter-rail-select">
+                        <option value="">Todas as regiões</option>
+                        <option value="nacional">Nacional</option>
+                        <option value="estadual">Estadual</option>
+                        <option value="mg">Minas Gerais (MG)</option>
+                        <option value="regional">Regional</option>
+                    </select>
+                </div>
+            </aside>
+
+            <section class="search-results-scroll" aria-label="Resultados da busca">
+                <div class="search-results-inner" id="searchResultsList"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Slide-over Drawer de Detalhes do Edital -->
+    <div class="search-drawer-backdrop" id="searchDrawerBackdrop" aria-hidden="true">
+        <aside class="search-drawer" id="searchDetailDrawer" role="dialog" aria-modal="true" aria-labelledby="drawerDetName">
+            <div class="detail-header">
+                <div>
+                    <div class="detail-org-badge" id="drawerDetOrg">Órgão emissor</div>
+                    <h2 class="detail-title" id="drawerDetName">Nome do edital</h2>
+                </div>
+                <div class="drawer-header-actions">
+                    <button id="drawerBtnFav" class="btn-icon" title="Favoritar edital" aria-label="Favoritar edital">
+                        <svg width="21" height="21"><use href="#icon-star"></use></svg>
+                    </button>
+                    <button type="button" id="btnCloseDrawer" class="btn-close-drawer" aria-label="Fechar detalhes">&times;</button>
+                </div>
+            </div>
+
+            <div class="drawer-body">
+                <div id="drawerDetObjetivo" class="detail-objetivo-box"></div>
+
+                <div>
+                    <h3 class="section-title">Parâmetros principais</h3>
+                    <div class="info-group">
+                        <div class="info-box"><div class="info-label">Público-alvo e porte</div><div class="info-value" id="drawerDetTarget">--</div></div>
+                        <div class="info-box"><div class="info-label">Abrangência</div><div class="info-value" id="drawerDetRegion">--</div></div>
+                        <div class="info-box"><div class="info-label">Nicho / tema</div><div class="info-value" id="drawerDetNicho">--</div></div>
+                        <div class="info-box"><div class="info-label">Faturamento exigido</div><div class="info-value" id="drawerDetFaturamento">--</div></div>
+                        <div class="info-box"><div class="info-label">TRL exigido</div><div class="info-value" id="drawerDetTrl">--</div></div>
+                        <div class="info-box">
+                            <div class="info-label">Compatibilidade estimada</div>
+                            <div class="info-value" id="drawerDetMatchVal">0%</div>
+                            <div class="match-bar-container"><div class="match-bar-fill" id="drawerDetMatchBar" style="width: 0%;"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="section-title">Elegibilidade & Parcerias</h3>
+                    <div class="info-group">
+                        <div class="info-box"><div class="info-label">Exigência de ICT</div><div class="info-value" id="drawerDetExigeIct">--</div></div>
+                        <div class="info-box"><div class="info-label">Empresa Concorre Sozinha</div><div class="info-value" id="drawerDetEmpresaSozinha">--</div></div>
+                        <div class="info-box"><div class="info-label">Parceria / Consórcio</div><div class="info-value" id="drawerDetParceria">--</div></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="section-title">Cronograma</h3>
+                    <div class="info-group">
+                        <div class="info-box"><div class="info-label">Data de abertura</div><div class="info-value" id="drawerDetOpen">--</div></div>
+                        <div class="info-box is-deadline-critical"><div class="info-label">Submissão final</div><div class="info-value" id="drawerDetClose">--</div></div>
+                        <div class="info-box"><div class="info-label">Previsão de resultado</div><div class="info-value" id="drawerDetResult">--</div></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="section-title">Documentos exigidos pelo edital</h3>
+                    <div id="drawerDetDocs" class="doc-list"></div>
+                </div>
+
+                <div>
+                    <h3 class="section-title">Análise de pré-requisitos</h3>
+                    <ul class="diag-list" id="drawerDetDiag"></ul>
+                </div>
+            </div>
+
+            <div class="detail-footer">
+                <button type="button" class="btn-primary" id="drawerBtnSendKanban">Enviar para o Kanban</button>
+                <a href="#" id="drawerDetUrl" target="_blank" rel="noopener noreferrer" class="btn-outline">Abrir página oficial do edital</a>
+            </div>
+        </aside>
+    </div>
+
+    <script type="module" src="../scripts/paginas/buscaEditais.js"></script>
+</body>
+</html>

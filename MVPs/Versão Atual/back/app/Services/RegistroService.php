@@ -29,6 +29,9 @@ class RegistroService
                 'perfil_acesso' => 'consultor_admin',
             ]);
 
+            $agencia->owner_id = $usuario->id;
+            $agencia->save();
+
             $token = $usuario->createToken('auth_token')->plainTextToken;
 
             return [

@@ -1,0 +1,14 @@
+vendor
+node_modules
+.git
+.gitignore
+public/storage
+public/hot
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+.env
+.phpunit.result.cache
+npm-debug.log
+yarn-error.log

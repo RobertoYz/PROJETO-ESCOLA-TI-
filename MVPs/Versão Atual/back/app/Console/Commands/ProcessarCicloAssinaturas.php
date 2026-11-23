@@ -118,12 +118,18 @@ class ProcessarCicloAssinaturas extends Command
                 }
             });
 
+        // C) Expurgo físico de startups excluídas via Soft Delete há mais de 30 dias (LGPD - EDTAN-249)
+        $startupsSoftDeletedExpurgadas = Startup::onlyTrashed()
+            ->where('deleted_at', '<=', now()->subDays(30))
+            ->forceDelete();
+
         $this->info(
             "Ciclo de assinaturas processado: {$alertasPreventivosEnviados} alertas preventivos (5 dias) enviados, "
             . "{$expurgadasNuncaPagas} nunca pagas expurgadas, "
             . "{$alertasCarenciaEnviados} alertas de carência enviados, "
             . "{$contasSuspensas} contas suspensas, "
-            . "{$expurgadasSuspensas} contas suspensas expurgadas."
+            . "{$expurgadasSuspensas} contas suspensas expurgadas, "
+            . "{$startupsSoftDeletedExpurgadas} startups em lixeira (>30d) expurgadas."
         );
 
         return self::SUCCESS;
@@ -252,7 +258,7 @@ class ProcessarCicloAssinaturas extends Command
                     ->delete();
             }
 
-            $idsStartups = Startup::where('agencia_id', $agencia->id)->pluck('id')->toArray();
+            $idsStartups = Startup::withTrashed()->where('agencia_id', $agencia->id)->pluck('id')->toArray();
             $idsBoards = KanbanBoard::where('agencia_id', $agencia->id)->pluck('id')->toArray();
 
             $idsColumns = !empty($idsBoards)
@@ -334,7 +340,7 @@ class ProcessarCicloAssinaturas extends Command
 
             // 5. Startups
             if (!empty($idsStartups)) {
-                Startup::whereIn('id', $idsStartups)->delete();
+                Startup::withTrashed()->whereIn('id', $idsStartups)->forceDelete();
             }
 
             // 6. Tokens de recuperação de senha e sessões

@@ -5,6 +5,92 @@
 Este guia rápido explica exatamente como ligar e rodar o projeto
 na sua máquina no dia a dia.
 
+⚠️ AVISO IMPORTANTE SOBRE OS ARQUIVOS .env E .env.docker:
+Por motivos estritos de segurança da informação, os arquivos ".env"
+(usado na execução manual em "back/.env") e ".env.docker" (usado na
+execução via Docker em "MVPs/Versão Atual/.env.docker") NÃO são
+enviados ao GitHub, pois contêm chaves reais de API (Inteligência
+Artificial, AbacatePay, Ngrok e SMTP Gmail).
+👉 PARA PROFESSORES, AVALIADORES E COLEGAS DE EQUIPE: Os arquivos
+".env" e ".env.docker" originais, completos e já configurados para
+rodar o sistema de imediato estão à disposição mediante solicitação
+direta aos membros do grupo (Ademar, Pedro ou Roberto).
+
+Você pode escolher entre DOIS MODOS para iniciar o sistema localmente:
+  - MODO A: Rodar tudo automaticamente com 1 comando via DOCKER (Novo)
+  - MODO B: Rodar manualmente pelo terminal com XAMPP (Método Clássico)
+
+
+======================================================================
+MODO A: COMO RODAR PELO DOCKER (AUTOMÁTICO COM 1 COMANDO)
+======================================================================
+
+----------------------------------------------------------------------
+PASSO 1 (DOCKER): ABRIR O APLICATIVO DO DOCKER NO COMPUTADOR
+----------------------------------------------------------------------
+1. Abra o aplicativo "Docker Desktop" no seu computador (Windows/Mac).
+2. Aguarde alguns segundos até o ícone da baleia ficar estável (verde
+   no canto inferior esquerdo do Docker Desktop, indicando "Engine running").
+   *Obs.: Sem o aplicativo do Docker Desktop aberto e iniciado, os
+   comandos abaixo não funcionarão.*
+
+----------------------------------------------------------------------
+PASSO 2 (DOCKER): CONFIGURAR O ARQUIVO .env.docker
+----------------------------------------------------------------------
+1. Abra um terminal (PowerShell ou CMD) e entre nesta pasta "Versão Atual":
+   cd "MVPs/Versão Atual"
+
+2. Configure o arquivo ".env.docker":
+   - Se você recebeu o ".env.docker" pronto da equipe (Ademar, Pedro ou
+     Roberto), basta colar o arquivo dentro da pasta "MVPs/Versão Atual/".
+   - OU, se quiser criar a partir do arquivo de exemplo, rode o comando:
+     copy .env.docker.example .env.docker
+     (No Linux/Mac ou Git Bash: cp .env.docker.example .env.docker)
+     Em seguida, abra o arquivo ".env.docker" criado e preencha as chaves
+     das IAs (GEMINI_API_KEY, GROQ_API_KEY, DEEPSEEK_API_KEY), AbacatePay
+     (ABACATEPAY_API_KEY, ABACATEPAY_WEBHOOK_SECRET) e MAIL_PASSWORD.
+
+----------------------------------------------------------------------
+PASSO 3 (DOCKER): SUBIR O SISTEMA COMPLETO COM 1 COMANDO
+----------------------------------------------------------------------
+Ainda dentro da pasta "MVPs/Versão Atual", execute:
+
+   docker compose --env-file .env.docker up --build
+
+O Docker irá subir sozinho:
+  - Banco de Dados MySQL 8.0 (na porta 3307 para não conflitar com o XAMPP)
+  - Criação automática das tabelas e planos (migrate:fresh --seed)
+  - Servidor da API Laravel (http://127.0.0.1:8000)
+  - Agendador de tarefas e assinaturas em segundo plano (scheduler)
+  - Robôs/Spiders de captura de editais (FINEP, FAPESC, FAPESP, etc.)
+  - Servidor Front-end Nginx pronto para usar!
+
+👉 Acesse o sistema no navegador em:
+   http://localhost:5500/paginas/login.html (ou http://localhost:5500)
+
+💡 PRECISO DO NGROK PARA TESTAR O PAGAMENTO ABACATEPAY?
+   NÃO! Com o comando padrão acima ("docker compose --env-file .env.docker up --build"),
+   o cadastro, a geração do checkout PIX/Cartão no AbacatePay e a ativação da
+   conta (ao clicar para verificar o pagamento no sistema) JÁ FUNCIONAM 100%
+   sem precisar do Ngrok, pois o próprio Back-end consulta a API do AbacatePay!
+   Você só precisa do "--profile ngrok" se quiser testar o túnel externo de
+   webhook no domínio estático NGROK_DOMAIN (esophagus-swifter-cultivate.ngrok-free.dev).
+   Nesse caso, mantenha o NGROK_AUTHTOKEN preenchido no .env.docker e lembre-se:
+   o plano gratuito do Ngrok permite apenas 1 túnel ativo por vez nesse domínio.
+
+Comandos extras do Docker (se precisar):
+- Para subir incluindo também o túnel do Ngrok (exige NGROK_AUTHTOKEN no .env.docker):
+  docker compose --env-file .env.docker --profile ngrok up --build
+- Para desligar os containers do Docker:
+  docker compose down
+- Para desligar e apagar/resetar o volume do banco de dados do Docker:
+  docker compose down -v
+
+
+======================================================================
+MODO B: COMO RODAR MANUALMENTE PELO TERMINAL (XAMPP + TERMINAIS)
+======================================================================
+
 ----------------------------------------------------------------------
 PASSO 1: LIGAR O BANCO DE DADOS (MySQL)
 ----------------------------------------------------------------------

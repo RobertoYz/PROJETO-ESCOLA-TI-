@@ -1,0 +1,85 @@
+======================================================================
+           PROJETO ANJO NEXUS - GUIA PASSO A PASSO SIMPLIFICADO
+======================================================================
+
+Este guia rápido explica exatamente como ligar e rodar o projeto
+na sua máquina no dia a dia.
+
+----------------------------------------------------------------------
+PASSO 1: LIGAR O BANCO DE DADOS (MySQL)
+----------------------------------------------------------------------
+1. Abra o programa "XAMPP Control Panel".
+2. Na linha do "MySQL", clique no botão "Start".
+3. Verifique se a palavra "MySQL" ficou com fundo verde e se a porta
+   3306 está ativa.
+
+(Dica: O banco já foi criado com o nome "anjo_nexus" e já está 
+com as tabelas e planos prontos).
+
+
+----------------------------------------------------------------------
+PASSO 2: ABRIR O SERVIDOR DA API (Terminal 1)
+----------------------------------------------------------------------
+1. Abra um terminal (PowerShell ou CMD).
+2. Entre na pasta do backend digitando:
+   cd "C:\Users\Pedro Emanuel\Downloads\PROJETO-ESCOLA-TI-\MVPs\Versão Atual\back"
+
+3. Inicie o servidor da API digitando:
+   php artisan serve
+
+4. Mantenha essa janela aberta! A API estará funcionando em:
+   http://127.0.0.1:8000
+
+
+----------------------------------------------------------------------
+PASSO 3: LIGAR A FILA DA INTELIGÊNCIA ARTIFICIAL (Terminal 2)
+----------------------------------------------------------------------
+1. Abra um SEGUNDO terminal (não feche o primeiro!).
+2. Entre na mesma pasta:
+   cd "C:\Users\Pedro Emanuel\Downloads\PROJETO-ESCOLA-TI-\MVPs\Versão Atual\back"
+
+3. Inicie o processador de filas digitando:
+   php artisan queue:work
+
+4. Mantenha essa janela aberta! Ela serve para processar os editais,
+   extrair dados dos PDFs e rodar a IA em segundo plano.
+
+
+----------------------------------------------------------------------
+PASSO 4: ABRIR O FRONTEND (Sua Tela Visual)
+----------------------------------------------------------------------
+1. Vá até a pasta:
+   C:\Users\Pedro Emanuel\Downloads\PROJETO-ESCOLA-TI-\MVPs\Versão Atual\front
+
+2. Dê dois cliques no arquivo "index.html" para abrir no seu navegador
+   (Google Chrome, Edge, etc.).
+
+Pronto! A tela vai carregar e se conectar à sua API automaticamente.
+
+
+----------------------------------------------------------------------
+PASSO 5 (OPCIONAL): CAPTURAR EDITAIS DA FAPESC OU FINEP
+----------------------------------------------------------------------
+Se quiser encher a sua tela com novos editais reais capturados da internet:
+
+1. Abra um TERCEIRO terminal.
+2. Entre na pasta do back:
+   cd "C:\Users\Pedro Emanuel\Downloads\PROJETO-ESCOLA-TI-\MVPs\Versão Atual\back"
+
+3. Para buscar editais da FAPESC, execute:
+   php artisan spider:fapesc
+
+4. Para buscar editais da FINEP, execute:
+   php artisan roach:run FinepSpider
+
+Assim que o robô terminar de capturar, o Terminal 2 (da fila) vai 
+analisar os editais com a IA. Depois, basta atualizar a página no seu 
+navegador (tecla F5) para ver os editais na tabela!
+
+
+----------------------------------------------------------------------
+O QUE FAZER SE PRECISAR RESETAR O BANCO?
+----------------------------------------------------------------------
+Caso queira apagar tudo e recriar o banco do zero:
+   php artisan migrate:fresh --seed
+======================================================================

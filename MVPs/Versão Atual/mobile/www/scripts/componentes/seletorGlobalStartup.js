@@ -1151,8 +1151,112 @@ function injetarEstilosHeaderGlobal() {
             cursor: not-allowed !important;
             box-shadow: none !important;
         }
+
+        /* Modal Limite de Startups Atingido (EDTAN-249) */
+        .modal-limite-startups-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 6, 12, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10040;
+            padding: 1rem;
+        }
+
+        .modal-limite-startups-overlay.active {
+            display: flex !important;
+        }
+
+        .modal-limite-startups-card {
+            background: #131722;
+            border: 1px solid rgba(245, 158, 11, 0.55);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.1rem;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 24px rgba(245, 158, 11, 0.14);
+            color: #f8fafc;
+        }
     `;
     document.head.appendChild(style);
+}
+
+export function exibirModalLimiteStartups(detalhes = {}) {
+    injetarEstilosHeaderGlobal();
+    garantirModalMinhaAssinatura();
+
+    let overlay = document.getElementById('modalLimiteStartupsOverlay');
+    if (!overlay) {
+        const html = `
+            <div class="modal-limite-startups-overlay" id="modalLimiteStartupsOverlay">
+                <div class="modal-limite-startups-card" role="dialog" aria-modal="true" aria-labelledby="tituloModalLimiteStartups">
+                    <div class="modal-perfil-consultor-header">
+                        <div>
+                            <div class="modal-perfil-consultor-title" id="tituloModalLimiteStartups" style="color: #fbbf24;">
+                                ⚠️ Limite de Empresas do Plano Atingido
+                            </div>
+                            <div class="modal-perfil-consultor-subtitle" id="subtituloModalLimiteStartups">
+                                Sua consultoria atingiu a capacidade máxima contratada
+                            </div>
+                        </div>
+                        <button type="button" class="modal-perfil-close" id="btnFecharModalLimiteStartups">&times;</button>
+                    </div>
+
+                    <div id="corpoMensagemLimiteStartups" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); border-left: 4px solid #f59e0b; border-radius: 10px; padding: 12px 14px; font-size: 0.88rem; line-height: 1.55; color: #fde68a;"></div>
+
+                    <div style="font-size: 0.84rem; color: #cbd5e1; line-height: 1.5;">
+                        Para cadastrar uma nova startup, escolha uma das opções abaixo:
+                        <ul style="margin-top: 8px; padding-left: 18px; display: flex; flex-direction: column; gap: 6px;">
+                            <li>Acesse <strong>Minha Assinatura</strong> para fazer upgrade do seu plano; ou</li>
+                            <li>Exclua uma startup existente em <strong>Configurações da Startup</strong> para liberar 1 vaga imediata.</li>
+                        </ul>
+                    </div>
+
+                    <div class="modal-perfil-actions" style="justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" class="btn-perfil-cancelar" id="btnFecharRodapeLimiteStartups">
+                            Entendi / Gerenciar Startups
+                        </button>
+                        <button type="button" class="btn-perfil-salvar" id="btnAbrirAssinaturaDeLimiteStartups">
+                            💳 Abrir Minha Assinatura
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', html);
+        overlay = document.getElementById('modalLimiteStartupsOverlay');
+
+        const fechar = () => overlay.classList.remove('active');
+        document.getElementById('btnFecharModalLimiteStartups')?.addEventListener('click', fechar);
+        document.getElementById('btnFecharRodapeLimiteStartups')?.addEventListener('click', fechar);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) fechar();
+        });
+        document.getElementById('btnAbrirAssinaturaDeLimiteStartups')?.addEventListener('click', () => {
+            fechar();
+            abrirModalMinhaAssinatura();
+        });
+    }
+
+    const atual = detalhes.atual ?? detalhes.startups_atual ?? 0;
+    const limite = detalhes.limite ?? detalhes.startups_limite ?? 0;
+    const plano = detalhes.plano_atual || detalhes.plano_nome || 'Atual';
+    const msgCustom = detalhes.message;
+
+    const corpo = document.getElementById('corpoMensagemLimiteStartups');
+    if (corpo) {
+        corpo.innerHTML = msgCustom
+            ? msgCustom
+            : `Você já possui <strong>${atual} de ${limite} empresas</strong> cadastradas no plano <strong>${plano}</strong>.`;
+    }
+
+    overlay.classList.add('active');
 }
 
 function atualizarVisibilidadeZonaPerigo(usuario) {
@@ -1608,9 +1712,12 @@ function garantirModalMinhaAssinatura() {
 
                 <div id="feedbackMinhaAssinatura" class="perfil-feedback"></div>
 
-                <!-- Ação de Renovação Mensal -->
-                <div class="modal-perfil-actions" style="justify-content: space-between; align-items: center; gap: 12px;">
+                <!-- Ação de Renovação Mensal / Upgrade de Plano -->
+                <div class="modal-perfil-actions" style="justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <button type="button" class="btn-perfil-cancelar" id="btnFecharRodapeAssinatura">Fechar</button>
+                    <button type="button" class="btn-perfil-salvar" id="btnAcaoEscolherOutroPlanoAssinatura" style="padding: 11px 16px;">
+                        🚀 Escolher Outro Plano
+                    </button>
                     <button type="button" class="btn-renovar-assinatura-pix" id="btnAcaoRenovarAssinaturaPix" disabled style="flex: 1;">
                         Renovar Assinatura
                     </button>
@@ -1624,8 +1731,18 @@ function garantirModalMinhaAssinatura() {
     const overlay = document.getElementById('modalMinhaAssinaturaOverlay');
     const btnFechar = document.getElementById('btnFecharModalMinhaAssinatura');
     const btnFecharRodape = document.getElementById('btnFecharRodapeAssinatura');
+    const btnEscolherOutroPlano = document.getElementById('btnAcaoEscolherOutroPlanoAssinatura');
     const btnRenovar = document.getElementById('btnAcaoRenovarAssinaturaPix');
     const feedback = document.getElementById('feedbackMinhaAssinatura');
+
+    btnEscolherOutroPlano?.addEventListener('click', () => {
+        const usuarioAtual = obterUsuarioLogado();
+        if (usuarioAtual?.email) {
+            sessionStorage.setItem('email_pendencia', usuarioAtual.email);
+            localStorage.setItem('email_pendencia', usuarioAtual.email);
+        }
+        window.location.href = 'selecionar-plano.html?modo=renovacao';
+    });
 
     const btnAbrirAtualizar = document.getElementById('btnAbrirAtualizarFormaPagamento');
     const painelAtualizar = document.getElementById('painelAtualizarFormaPagamento');
@@ -1789,6 +1906,11 @@ function preencherDadosModalAssinatura(dados) {
     const elAviso = document.getElementById('assinaturaAvisoRenovacao');
     const btnRenovar = document.getElementById('btnAcaoRenovarAssinaturaPix');
     const btnAbrirAtualizar = document.getElementById('btnAbrirAtualizarFormaPagamento');
+    const btnEscolherOutroPlano = document.getElementById('btnAcaoEscolherOutroPlanoAssinatura');
+
+    if (btnEscolherOutroPlano) {
+        btnEscolherOutroPlano.style.display = perfilAcesso === 'consultor_admin' ? 'inline-flex' : 'none';
+    }
 
     if (elNome) elNome.textContent = plano.nome || 'Plano Anjo Nexus';
     if (elPreco) {
@@ -1965,7 +2087,8 @@ function aplicarAlertaProativoAssinatura(dados) {
     });
 }
 
-async function abrirModalMinhaAssinatura() {
+export async function abrirModalMinhaAssinatura() {
+    injetarEstilosHeaderGlobal();
     garantirModalMinhaAssinatura();
     const overlay = document.getElementById('modalMinhaAssinaturaOverlay');
     const feedback = document.getElementById('feedbackMinhaAssinatura');
@@ -2224,11 +2347,12 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 </svg>
             `;
 
-            // Clicar na engrenagem vai para a página dedicada de configuração daquela startup
+            // Clicar na engrenagem vai para minhas-startups.html abrindo a startup correspondente
             btnGear.addEventListener('click', (e) => {
                 e.stopPropagation();
                 fecharDropdownStartups();
-                window.location.href = `perfil-startup.html?id=${encodeURIComponent(st.id)}`;
+                salvarStartupAtiva(st.id, nomeExibicao);
+                window.location.href = `minhas-startups.html?id=${encodeURIComponent(st.id)}`;
             });
 
             // Clicar no item seleciona a startup como ativa
@@ -2255,6 +2379,20 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         });
     }
 
+    let cotaHeaderStartups = null;
+
+    const btnHeaderCriarStartup = document.getElementById('btnHeaderCriarStartup');
+    if (btnHeaderCriarStartup) {
+        btnHeaderCriarStartup.addEventListener('click', (e) => {
+            if (cotaHeaderStartups && cotaHeaderStartups.pode_criar_startup === false) {
+                e.preventDefault();
+                e.stopPropagation();
+                fecharDropdownStartups();
+                exibirModalLimiteStartups(cotaHeaderStartups);
+            }
+        });
+    }
+
     // Renderiza inicialmente com a startup ativa em cache
     renderizarItensDropdown([{ id: startupAtiva.id, nome_fantasia: startupAtiva.nome }]);
 
@@ -2263,6 +2401,9 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         const startups = await listarStartupsDaConsultoria();
 
         if (Array.isArray(startups) && startups.length > 0) {
+            if (startups[0]?.cota) {
+                cotaHeaderStartups = startups[0].cota;
+            }
             const encontrada = startups.find(st => String(st.id) === String(startupAtiva.id)) || startups[0];
             if (encontrada) {
                 const nomeEncontrado = encontrada.nome_fantasia || encontrada.razao_social;

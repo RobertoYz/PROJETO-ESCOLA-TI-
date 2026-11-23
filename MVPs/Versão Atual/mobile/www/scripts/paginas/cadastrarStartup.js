@@ -4,6 +4,7 @@ import {
     removerToken
 } from '../servicos/servicoAutenticacao.js';
 import { criarNovaStartup, consultarDadosCnpj } from '../servicos/servicoStartups.js';
+import { exibirModalLimiteStartups } from '../componentes/seletorGlobalStartup.js';
 
 if (!usuarioEstaAutenticado()) {
     window.location.href = 'login.html';
@@ -179,6 +180,10 @@ formulario.addEventListener('submit', async (evento) => {
         await criarNovaStartup(dadosStartup);
         window.location.href = 'selecionar-startup.html';
     } catch (erro) {
+        const codigoErro = erro?.dados?.code || erro?.dados?.codigo;
+        if (erro?.status === 403 && codigoErro === 'LIMITE_STARTUPS_ATINGIDO') {
+            exibirModalLimiteStartups(erro.dados || { message: erro.message });
+        }
         exibirErro(erro.message || 'Erro ao cadastrar startup.');
         botaoConfirmar.disabled = false;
         botaoConfirmar.textContent = 'Concluir Cadastro da Startup';

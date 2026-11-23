@@ -1,7 +1,19 @@
 import { inicializarSidebarGlobal } from '../componentes/sidebarGlobal.js';
 import { inicializarSeletorGlobal } from '../componentes/seletorGlobalStartup.js';
-import { usuarioEstaAutenticado, obterStartupAtiva, salvarStartupAtiva } from '../servicos/servicoAutenticacao.js';
-import { listarStartupsDaConsultoria, obterStartupPorId, atualizarStartup, consultarDadosCnpj } from '../servicos/servicoStartups.js';
+import {
+    usuarioEstaAutenticado,
+    obterStartupAtiva,
+    salvarStartupAtiva,
+    limparStartupAtiva,
+    obterUsuarioLogado
+} from '../servicos/servicoAutenticacao.js';
+import {
+    listarStartupsDaConsultoria,
+    obterStartupPorId,
+    atualizarStartup,
+    excluirStartupPorId,
+    consultarDadosCnpj
+} from '../servicos/servicoStartups.js';
 
 if (!usuarioEstaAutenticado()) {
     window.location.href = 'login.html';
@@ -21,10 +33,28 @@ const btnCancelar = document.getElementById('btnCancelarEdicaoMesmaPagina');
 const btnSyncReceita = document.getElementById('btnSincronizarReceita');
 const tituloStartupSelecionada = document.getElementById('tituloStartupSelecionada');
 const badgeStatusStartupAberta = document.getElementById('badgeStatusStartupAberta');
+const secaoZonaPerigoStartup = document.getElementById('secaoZonaPerigoStartup');
+const btnAbrirModalExcluir = document.getElementById('btnAbrirModalExcluirStartup');
+const modalExcluirOverlay = document.getElementById('modalExcluirStartupOverlay');
+const btnFecharModalExcluir = document.getElementById('btnFecharModalExcluirStartup');
+const btnCancelarModalExcluir = document.getElementById('btnCancelarModalExcluirStartup');
+const btnConfirmarExclusao = document.getElementById('btnConfirmarExclusaoStartup');
+const nomeStartupModalExcluir = document.getElementById('nomeStartupModalExcluir');
+const feedbackModalExcluir = document.getElementById('feedbackModalExcluirStartup');
 
 let listaStartupsCache = [];
 let startupAbertaId = null;
 let dadosOriginaisStartupAberta = null;
+let podeExcluirPermissao = true;
+
+function usuarioPodeExcluirStartup(startup = null) {
+    if (startup && typeof startup.pode_excluir_startup === 'boolean') {
+        return startup.pode_excluir_startup;
+    }
+    const usuario = obterUsuarioLogado();
+    const perfil = usuario?.perfil_acesso || 'consultor_admin';
+    return perfil === 'consultor_admin' || perfil === 'admin_global';
+}
 
 function exibirAlertaEdicao(msg, tipo = 'sucesso') {
     if (!alertaEdicao) return;
@@ -72,6 +102,11 @@ function preencherFormularioStartup(startup) {
         badgeStatusStartupAberta.innerHTML = ehAtiva
             ? `<span style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #10b981; padding: 6px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 700;">● Esta startup está sendo utilizada no momento</span>`
             : '';
+    }
+
+    podeExcluirPermissao = usuarioPodeExcluirStartup(startup);
+    if (secaoZonaPerigoStartup) {
+        secaoZonaPerigoStartup.style.display = podeExcluirPermissao ? 'flex' : 'none';
     }
 }
 
@@ -297,7 +332,7 @@ formEdicao?.addEventListener('submit', async (e) => {
     }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     inicializarSidebarGlobal('startups');
 
     inicializarSeletorGlobal('container-seletor-global', {
@@ -310,6 +345,71 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    carregarListaStartups();
+    await carregarListaStartups();
+
+    const params = new URLSearchParams(window.location.search);
+    const idQuery = params.get('id');
+    if (idQuery) {
+        abrirDetalhesStartup(idQuery);
+    }
+});
+
+function fecharModalExcluirStartup() {
+    if (modalExcluirOverlay) {
+        modalExcluirOverlay.classList.remove('active');
+    }
+    if (feedbackModalExcluir) {
+        feedbackModalExcluir.style.display = 'none';
+        feedbackModalExcluir.textContent = '';
+    }
+}
+
+btnAbrirModalExcluir?.addEventListener('click', () => {
+    if (!startupAbertaId) return;
+    const nome = dadosOriginaisStartupAberta?.nome_fantasia
+        || dadosOriginaisStartupAberta?.razao_social
+        || 'esta startup';
+    if (nomeStartupModalExcluir) {
+        nomeStartupModalExcluir.textContent = nome;
+    }
+    if (feedbackModalExcluir) {
+        feedbackModalExcluir.style.display = 'none';
+        feedbackModalExcluir.textContent = '';
+    }
+    if (modalExcluirOverlay) {
+        modalExcluirOverlay.classList.add('active');
+    }
+});
+
+btnFecharModalExcluir?.addEventListener('click', fecharModalExcluirStartup);
+btnCancelarModalExcluir?.addEventListener('click', fecharModalExcluirStartup);
+modalExcluirOverlay?.addEventListener('click', (e) => {
+    if (e.target === modalExcluirOverlay) fecharModalExcluirStartup();
+});
+
+btnConfirmarExclusao?.addEventListener('click', async () => {
+    if (!startupAbertaId || btnConfirmarExclusao.disabled) return;
+
+    const textoOriginal = btnConfirmarExclusao.textContent;
+    btnConfirmarExclusao.disabled = true;
+    btnConfirmarExclusao.textContent = 'Excluindo...';
+
+    try {
+        const resposta = await excluirStartupPorId(startupAbertaId);
+        limparStartupAtiva();
+        sessionStorage.setItem(
+            'startup_excluida_feedback',
+            resposta?.message || 'Startup excluída com sucesso. Uma vaga foi liberada no seu plano.'
+        );
+        window.location.href = 'selecionar-startup.html?excluida=1';
+    } catch (erro) {
+        if (feedbackModalExcluir) {
+            feedbackModalExcluir.textContent = erro.message || 'Não foi possível excluir a startup.';
+            feedbackModalExcluir.className = 'alerta-feedback erro';
+            feedbackModalExcluir.style.display = 'block';
+        }
+        btnConfirmarExclusao.disabled = false;
+        btnConfirmarExclusao.textContent = textoOriginal;
+    }
 });
 

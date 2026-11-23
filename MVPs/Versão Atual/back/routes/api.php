@@ -82,6 +82,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/startups', [StartupController::class, 'store']);
         Route::get('/startups/{id}', [StartupController::class, 'show']);
         Route::put('/startups/{id}', [StartupController::class, 'update']);
+        Route::delete('/startups/{id}', [StartupController::class, 'destroy']);
     });
 });
 

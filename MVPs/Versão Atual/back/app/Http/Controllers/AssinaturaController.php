@@ -24,7 +24,7 @@ class AssinaturaController extends Controller
      * 1. Endpoint de Consulta da Assinatura Atual (EDTAN-160 / EDTAN-311)
      * GET /api/assinatura/atual
      */
-    public function atual(Request $requisicao, MinutaLimitService $limitService): JsonResponse
+    public function atual(Request $requisicao, MinutaLimitService $limitService, \App\Services\PlanoQuotaService $quotaService): JsonResponse
     {
         $usuario = $requisicao->user();
         $agencia = ($usuario && $usuario->agencia) ? $usuario->agencia->fresh() : null;
@@ -37,7 +37,8 @@ class AssinaturaController extends Controller
 
         $plano = $agencia->plano ?? Plano::find($agencia->plano_id) ?? Plano::first();
 
-        $startupsCadastradas = $agencia->startups()->count();
+        $resumoCotaStartups = $quotaService->getUsageSummary($agencia);
+        $startupsCadastradas = $resumoCotaStartups['startups_atual'];
         $membrosEquipe = $agencia->usuarios()->count();
         $consumoMinutas = $limitService->obterConsumoMinutas($usuario);
         $minutasUsadas = (int) ($consumoMinutas['usadas'] ?? 0);
@@ -104,6 +105,7 @@ class AssinaturaController extends Controller
                 'membros_equipe' => $membrosEquipe,
                 'minutas_ia' => $minutasUsadas,
             ],
+            'cota_startups' => $resumoCotaStartups,
             'forma_pagamento' => $formaPagamento,
             'forma_pagamento_label' => $formaPagamentoLabel,
             'em_carencia' => $emCarencia,

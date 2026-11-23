@@ -3,13 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Startup;
+use App\Services\PlanoQuotaService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class StartupController extends Controller
 {
+    protected PlanoQuotaService $quotaService;
+
+    public function __construct(PlanoQuotaService $quotaService)
+    {
+        $this->quotaService = $quotaService;
+    }
+
     public function index(Request $request)
     {
-        $agenciaId = $request->user()->agencia_id;
+        $user = $request->user();
+        $agencia = $user->agencia;
+        $agenciaId = $user->agencia_id;
         $termoBusca = $request->query('busca');
 
         $query = Startup::where('agencia_id', $agenciaId);
@@ -24,12 +35,46 @@ class StartupController extends Controller
 
         $startups = $query->orderBy('nome_fantasia', 'asc')->get();
 
-        return response()->json($startups, 200);
+        $cota = $agencia ? $this->quotaService->getUsageSummary($agencia) : [
+            'startups_atual' => $startups->count(),
+            'startups_limite' => null,
+            'pode_criar_startup' => true,
+            'plano_nome' => 'Standard',
+        ];
+
+        $ehTitular = $agencia && $agencia->owner_id !== null && (int) $agencia->owner_id === (int) $user->id;
+        $podeExcluirStartup = $ehTitular || in_array($user->perfil_acesso, ['consultor_admin', 'admin_global'], true);
+
+        $startupsTransformadas = $startups->map(function (Startup $startup) use ($cota, $podeExcluirStartup) {
+            $item = $startup->toArray();
+            $item['cota'] = $cota;
+            $item['pode_excluir_startup'] = $podeExcluirStartup;
+            return $item;
+        });
+
+        if ($request->boolean('incluir_cota') || $request->header('X-Include-Quota') === '1') {
+            return response()->json([
+                'data' => $startupsTransformadas,
+                'startups' => $startupsTransformadas,
+                'cota' => $cota,
+                'pode_excluir_startup' => $podeExcluirStartup,
+            ], 200);
+        }
+
+        return response()->json($startupsTransformadas, 200);
     }
 
     public function store(Request $request)
     {
-        $agenciaId = $request->user()->agencia_id;
+        Gate::authorize('create', Startup::class);
+
+        $user = $request->user();
+        $agencia = $user->agencia;
+        $agenciaId = $user->agencia_id;
+
+        if ($agencia) {
+            $this->quotaService->assertCanCreateStartup($agencia);
+        }
 
         $dadosValidados = $request->validate([
             'cnpj' => 'required|string|max:18',
@@ -48,42 +93,60 @@ class StartupController extends Controller
             'pitch' => 'nullable|string',
         ]);
 
-        $jaExiste = Startup::where('agencia_id', $agenciaId)
+        $existenteAtiva = Startup::where('agencia_id', $agenciaId)
             ->where('cnpj', $dadosValidados['cnpj'])
             ->exists();
 
-        if ($jaExiste) {
+        if ($existenteAtiva) {
             return response()->json([
                 'message' => 'Esta startup (CNPJ) já está cadastrada na sua consultoria.'
             ], 422);
         }
 
+        $startupExcluidaAnteriormente = Startup::onlyTrashed()
+            ->where('agencia_id', $agenciaId)
+            ->where('cnpj', $dadosValidados['cnpj'])
+            ->first();
+
         $dadosValidados['agencia_id'] = $agenciaId;
 
-        $startup = Startup::create($dadosValidados);
+        if ($startupExcluidaAnteriormente) {
+            $startupExcluidaAnteriormente->restore();
+            $startupExcluidaAnteriormente->update($dadosValidados);
+            $startup = $startupExcluidaAnteriormente->fresh();
+        } else {
+            $startup = Startup::create($dadosValidados);
+        }
+
+        $cota = $agencia ? $this->quotaService->getUsageSummary($agencia) : null;
 
         return response()->json([
             'message' => 'Startup cadastrada com sucesso.',
-            'startup' => $startup
+            'startup' => $startup,
+            'cota' => $cota,
         ], 201);
     }
 
     public function show(Request $request, $id)
     {
-        $startup = Startup::where('agencia_id', $request->user()->agencia_id)
-            ->where('id', $id)
-            ->firstOrFail();
+        $startup = Startup::findOrFail($id);
+        Gate::authorize('view', $startup);
 
-        return response()->json($startup, 200);
+        $user = $request->user();
+        $agencia = $user->agencia;
+        $ehTitular = $agencia && $agencia->owner_id !== null && (int) $agencia->owner_id === (int) $user->id;
+        $podeExcluirStartup = $ehTitular || in_array($user->perfil_acesso, ['consultor_admin', 'admin_global'], true);
+
+        $payload = $startup->toArray();
+        $payload['pode_excluir_startup'] = $podeExcluirStartup;
+
+        return response()->json($payload, 200);
     }
 
     public function update(Request $request, $id)
     {
-        $agenciaId = $request->user()->agencia_id;
-
-        $startup = Startup::where('agencia_id', $agenciaId)
-            ->where('id', $id)
-            ->firstOrFail();
+        $startup = Startup::findOrFail($id);
+        Gate::authorize('update', $startup);
 
         $dadosValidados = $request->validate([
             'cnpj' => 'nullable|string|max:18',
@@ -110,6 +173,23 @@ class StartupController extends Controller
             'sucesso' => true,
             'message' => 'Perfil da startup atualizado com sucesso.',
             'startup' => $startup
+        ], 200);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $startup = Startup::findOrFail($id);
+        Gate::authorize('delete', $startup);
+
+        $startup->delete();
+
+        $agencia = $request->user()->agencia;
+        $cota = $agencia ? $this->quotaService->getUsageSummary($agencia) : null;
+
+        return response()->json([
+            'sucesso' => true,
+            'message' => 'Startup excluída com sucesso. Uma vaga foi liberada no seu plano.',
+            'cota' => $cota,
         ], 200);
     }
 }

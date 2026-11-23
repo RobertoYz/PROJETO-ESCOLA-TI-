@@ -119,7 +119,7 @@ class FapergsSpider extends BaseSpider
         $publishedAt = $this->extrairPublishedAt($textoCompleto) ?? date('Y-m-d');
 
         // 4. Status
-        $status = 'open';
+        $status = 'active';
         if (stripos($html, 'ENCERRADO') !== false || ($deadline && Carbon::parse($deadline)->isPast())) {
             $status = 'closed';
         }

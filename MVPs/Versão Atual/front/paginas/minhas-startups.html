@@ -352,6 +352,93 @@
             justify-content: center;
             margin-right: 8px;
         }
+
+        /* Zona de Perigo — Exclusão de Startup (EDTAN-249) */
+        .card-zona-perigo-startup {
+            margin-top: 1.5rem;
+            background: rgba(239, 68, 68, 0.06);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .zona-perigo-startup-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-width: 640px;
+        }
+
+        .zona-perigo-startup-titulo {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #f87171;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .zona-perigo-startup-desc {
+            font-size: 0.86rem;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        .btn-excluir-startup-perigo {
+            background: rgba(239, 68, 68, 0.14);
+            border: 1px solid rgba(239, 68, 68, 0.55);
+            color: #fca5a5;
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-excluir-startup-perigo:hover {
+            background: #dc2626;
+            border-color: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+        }
+
+        .modal-excluir-startup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 6, 12, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10050;
+            padding: 1rem;
+        }
+
+        .modal-excluir-startup-overlay.active {
+            display: flex;
+        }
+
+        .modal-excluir-startup-card {
+            background: #12151e;
+            border: 1px solid rgba(239, 68, 68, 0.45);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.1rem;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9);
+            color: #f8fafc;
+        }
     </style>
 </head>
 <body>
@@ -531,9 +618,59 @@
                         </div>
                     </div>
                 </form>
+
+                <!-- ZONA DE PERIGO: EXCLUSÃO DE STARTUP (EDTAN-249) -->
+                <div class="card-zona-perigo-startup" id="secaoZonaPerigoStartup" style="display: none;">
+                    <div class="zona-perigo-startup-info">
+                        <div class="zona-perigo-startup-titulo">
+                            ⚠️ Zona de Perigo
+                        </div>
+                        <p class="zona-perigo-startup-desc">
+                            Remova esta empresa da carteira da consultoria para liberar imediatamente <strong>1 vaga</strong> no seu plano. O acesso ao quadro Kanban, documentos e minutas vinculados será desativado e os dados serão expurgados definitivamente após 30 dias (LGPD).
+                        </p>
+                    </div>
+                    <button type="button" class="btn-excluir-startup-perigo" id="btnAbrirModalExcluirStartup">
+                        🗑️ Excluir Startup
+                    </button>
+                </div>
             </section>
         </div>
     </main>
+
+    <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DA STARTUP -->
+    <div class="modal-excluir-startup-overlay" id="modalExcluirStartupOverlay">
+        <div class="modal-excluir-startup-card" role="dialog" aria-modal="true" aria-labelledby="tituloModalExcluirStartup">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #262930; padding-bottom: 0.9rem;">
+                <div>
+                    <div style="font-size: 1.18rem; font-weight: 700; color: #f87171;" id="tituloModalExcluirStartup">
+                        ⚠️ Excluir Startup da Carteira
+                    </div>
+                    <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 4px;">
+                        Confirmação de remoção e liberação de vaga no plano
+                    </div>
+                </div>
+                <button type="button" id="btnFecharModalExcluirStartup" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">&times;</button>
+            </div>
+
+            <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-left: 4px solid #ef4444; border-radius: 10px; padding: 12px 14px; font-size: 0.86rem; line-height: 1.55; color: #fecaca;">
+                Tem certeza que deseja excluir <strong id="nomeStartupModalExcluir" style="color: #fff;">esta startup</strong>?
+                <br><br>
+                • Ela será removida da carteira (junto ao acesso ao Kanban, documentos e minutas vinculadas, com expurgo definitivo após 30 dias conforme a LGPD).<br>
+                • <strong>1 vaga será liberada imediatamente</strong> na cota do seu plano atual.
+            </div>
+
+            <div id="feedbackModalExcluirStartup" class="alerta-feedback"></div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #262930; padding-top: 1rem;">
+                <button type="button" class="btn-cancelar-startup" id="btnCancelarModalExcluirStartup" style="padding: 10px 18px; font-size: 0.9rem;">
+                    Manter Startup
+                </button>
+                <button type="button" class="btn-excluir-startup-perigo" id="btnConfirmarExclusaoStartup" style="background: #dc2626; color: #fff; border-color: #ef4444;">
+                    Sim, Excluir Startup
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="../scripts/paginas/minhasStartups.js"></script>
 

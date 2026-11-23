@@ -1,6 +1,8 @@
 vendor/
 node_modules/
 .env
+.env.docker
+.env.docker/
 Mvp_anjo/
 Documentação/Projeto Anjo Nexus/back/vendor/
 regras-ia.md
