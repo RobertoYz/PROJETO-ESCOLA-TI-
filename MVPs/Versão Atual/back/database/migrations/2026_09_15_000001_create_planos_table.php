@@ -17,7 +17,7 @@ return new class extends Migration
             $table->decimal('preco', 8, 2);
             $table->string('id_transacao')->nullable();
             $table->integer('limite_startups')->default(1);
-            $table->integer('limite_membros_equipe')->default(1);
+            $table->integer('limite_membros_equipe')->nullable()->default(1);
             $table->integer('limite_minutas_ia')->default(5);
             $table->timestamps();
         });

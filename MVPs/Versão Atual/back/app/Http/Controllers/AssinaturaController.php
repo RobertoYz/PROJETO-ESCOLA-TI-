@@ -112,6 +112,7 @@ class AssinaturaController extends Controller
                 'minutas_ia' => $minutasUsadas,
             ],
             'cota_startups' => $resumoCotaStartups,
+            'cota_equipe' => $quotaService->obterResumoCotaEquipe($agencia),
             'forma_pagamento' => $formaPagamento,
             'forma_pagamento_label' => $formaPagamentoLabel,
             'em_carencia' => $emCarencia,

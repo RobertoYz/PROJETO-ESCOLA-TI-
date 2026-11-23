@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Agencia;
 use App\Models\User;
 use App\Services\EquipeService;
 use Illuminate\Http\JsonResponse;
@@ -45,6 +46,7 @@ class EquipeController extends Controller
             'codigo_ativacao' => $resultado['codigo_ativacao'],
             'expira_em' => $resultado['expira_em'],
             'email_enviado' => $resultado['email_enviado'],
+            'cota_equipe' => $resultado['cota_equipe'] ?? null,
         ], 201);
     }
 
@@ -90,9 +92,13 @@ class EquipeController extends Controller
             ? 'Acesso do consultor desativado e sessões encerradas imediatamente.'
             : 'Acesso do consultor reativado com sucesso.';
 
+        $agencia = $request->user()->agencia ?? Agencia::find($request->user()->agencia_id);
+        $cotaEquipe = $agencia ? $this->equipeService->obterResumoCotaEquipe($agencia) : null;
+
         return response()->json([
             'message' => $mensagem,
             'membro' => $membroAtualizado,
+            'cota_equipe' => $cotaEquipe,
         ], 200);
     }
 
@@ -118,10 +124,14 @@ class EquipeController extends Controller
 
         $this->equipeService->remover($request->user(), $alvo);
 
+        $agencia = $request->user()->agencia ?? Agencia::find($request->user()->agencia_id);
+        $cotaEquipe = $agencia ? $this->equipeService->obterResumoCotaEquipe($agencia) : null;
+
         return response()->json([
             'message' => $eraPendente
                 ? 'Convite pendente cancelado e removido com sucesso.'
                 : 'Consultor removido da equipe e sessões revogadas. Os dados da consultoria foram preservados.',
+            'cota_equipe' => $cotaEquipe,
         ], 200);
     }
 
