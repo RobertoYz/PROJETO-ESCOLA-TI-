@@ -101,6 +101,9 @@ export function obterClasseAgencia(org) {
     if (sigla.includes('FAPESP')) return 'agency-fapesp';
     if (sigla.includes('FAPESC')) return 'agency-fapesc';
     if (sigla.includes('FAPEMIG')) return 'agency-fapemig';
+    if (sigla.includes('FAPERJ')) return 'agency-faperj';
+    if (sigla.includes('FAPERGS')) return 'agency-fapergs';
+    if (sigla.includes('FAPEMAT')) return 'agency-fapemat';
     return 'agency-default';
 }
 
@@ -133,6 +136,15 @@ export function editalCorrespondeATermo(edital, termoNormalizado) {
     }
     if (orgUpper.includes('FAPESP') || String(edital.region || '').toUpperCase() === 'SP') {
         sinonimosRegionais.push('sao paulo sp estadual');
+    }
+    if (orgUpper.includes('FAPERJ') || String(edital.region || '').toUpperCase() === 'RJ') {
+        sinonimosRegionais.push('rio de janeiro rj estadual');
+    }
+    if (orgUpper.includes('FAPERGS') || String(edital.region || '').toUpperCase() === 'RS') {
+        sinonimosRegionais.push('rio grande do sul rs gaucho estadual');
+    }
+    if (orgUpper.includes('FAPEMAT') || String(edital.region || '').toUpperCase() === 'MT') {
+        sinonimosRegionais.push('mato grosso mt cuiaba centro oeste estadual');
     }
 
     const indice = normalizarTextoBusca([

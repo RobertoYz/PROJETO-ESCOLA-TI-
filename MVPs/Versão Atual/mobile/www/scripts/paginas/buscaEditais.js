@@ -213,7 +213,7 @@ async function carregarCatalogo() {
 }
 
 function atualizarContadoresLaterais() {
-    const porFonte = { FINEP: 0, FAPESC: 0, FAPESP: 0, FAPEMIG: 0, FAPERJ: 0, FAPERGS: 0 };
+    const porFonte = { FINEP: 0, FAPESC: 0, FAPESP: 0, FAPEMIG: 0, FAPERJ: 0, FAPERGS: 0, FAPEMAT: 0 };
     let totalFav = 0;
 
     catalogoEditais.forEach((ed) => {
@@ -224,6 +224,7 @@ function atualizarContadoresLaterais() {
         else if (org.includes('FAPEMIG')) porFonte.FAPEMIG += 1;
         else if (org.includes('FAPERJ')) porFonte.FAPERJ += 1;
         else if (org.includes('FAPERGS')) porFonte.FAPERGS += 1;
+        else if (org.includes('FAPEMAT')) porFonte.FAPEMAT += 1;
         if (ed.favorite) totalFav += 1;
     });
 
@@ -233,6 +234,7 @@ function atualizarContadoresLaterais() {
     const elFapemig = document.getElementById('countFonteFAPEMIG');
     const elFaperj = document.getElementById('countFonteFAPERJ');
     const elFapergs = document.getElementById('countFonteFAPERGS');
+    const elFapemat = document.getElementById('countFonteFAPEMAT');
     const elFav = document.getElementById('countFavoritosBusca');
 
     if (elFinep) elFinep.textContent = String(porFonte.FINEP);
@@ -241,6 +243,7 @@ function atualizarContadoresLaterais() {
     if (elFapemig) elFapemig.textContent = String(porFonte.FAPEMIG);
     if (elFaperj) elFaperj.textContent = String(porFonte.FAPERJ);
     if (elFapergs) elFapergs.textContent = String(porFonte.FAPERGS);
+    if (elFapemat) elFapemat.textContent = String(porFonte.FAPEMAT);
     if (elFav) elFav.textContent = String(totalFav);
 }
 
@@ -272,12 +275,18 @@ function aplicarFiltrosERenderizar() {
             if (estadoFiltros.abrangencia === 'mg') {
                 const ehMg = regiaoNorm === 'mg' || regiaoNorm.includes('minas gerais') || orgUpper.includes('FAPEMIG');
                 if (!ehMg) return false;
+            } else if (estadoFiltros.abrangencia === 'mt') {
+                const ehMt = regiaoNorm === 'mt' || regiaoNorm.includes('mato grosso') || orgUpper.includes('FAPEMAT');
+                if (!ehMt) return false;
             } else if (estadoFiltros.abrangencia === 'estadual') {
                 const ehEstadual = regiaoNorm.includes('estadual')
-                    || ['mg', 'sp', 'sc'].includes(regiaoNorm)
+                    || ['mg', 'sp', 'sc', 'rj', 'rs', 'mt'].includes(regiaoNorm)
                     || orgUpper.includes('FAPEMIG')
                     || orgUpper.includes('FAPESC')
-                    || orgUpper.includes('FAPESP');
+                    || orgUpper.includes('FAPESP')
+                    || orgUpper.includes('FAPERJ')
+                    || orgUpper.includes('FAPERGS')
+                    || orgUpper.includes('FAPEMAT');
                 if (!ehEstadual) return false;
             } else if (!regiaoNorm.includes(estadoFiltros.abrangencia)) {
                 return false;
