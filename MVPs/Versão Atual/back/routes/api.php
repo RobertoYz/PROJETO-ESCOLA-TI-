@@ -11,6 +11,7 @@ use App\Http\Controllers\CnpjController;
 use App\Http\Controllers\PlanoController;
 use App\Http\Controllers\AssinaturaController;
 use App\Http\Controllers\StartupController;
+use App\Http\Controllers\EquipeController;
 use App\Http\Controllers\AlertaMatchController;
 use App\Http\Controllers\AlertaPrazoController;
 
@@ -19,6 +20,10 @@ Route::get('/editais', [EditalController::class, 'index']);
 
 // Listagem pública dos planos disponíveis
 Route::get('/planos', [PlanoController::class, 'listarPlanos']);
+
+// Rotas públicas de Ativação de Convite de Equipe (2 Canais: Link + PIN de 6 dígitos - EDTAN-163)
+Route::get('/convites/{token}', [EquipeController::class, 'validarConvitePublico']);
+Route::post('/convites/aceitar', [EquipeController::class, 'aceitarConvitePublico']);
 
 // Rotas públicas de Autenticação / Registro SaaS
 Route::post('/auth/verificar-email', [AuthController::class, 'verificarEmail']);
@@ -61,8 +66,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/alertas/prazos-criticos/{id}/enviar-email', [AlertaPrazoController::class, 'enviarEmail']);
 
     // Perfil do Consultor (obter e atualizar dados de cadastro: nome, email, senha)
+    Route::get('/me', [AuthController::class, 'obterPerfil']);
     Route::get('/auth/perfil', [AuthController::class, 'obterPerfil']);
     Route::put('/auth/perfil', [AuthController::class, 'atualizarPerfil']);
+
+    // EDTAN-163: Gestão de Equipe (Consultores), RBAC Granular e Convites em 2 Canais
+    Route::get('/equipe', [EquipeController::class, 'index']);
+    Route::post('/equipe', [EquipeController::class, 'store']);
+    Route::put('/equipe/{id}/permissoes', [EquipeController::class, 'atualizarPermissoes']);
+    Route::patch('/equipe/{id}/status', [EquipeController::class, 'atualizarStatus']);
+    Route::post('/equipe/{id}/reenviar-convite', [EquipeController::class, 'reenviarConvite']);
+    Route::delete('/equipe/{id}', [EquipeController::class, 'destroy']);
 
     // EDTAN-158: Cancelamento de Conta com Reautenticação de Senha e Aceite LGPD
     Route::match(['delete', 'post'], '/conta/cancelar', [AuthController::class, 'cancelarConta']);

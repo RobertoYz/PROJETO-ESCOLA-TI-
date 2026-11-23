@@ -468,6 +468,7 @@
         import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
         import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
         import { exibirModalAlerta, exibirModalConfirmacao } from '../scripts/componentes/modalGlobal.js';
+        import { usuarioTemPermissao } from '../scripts/servicos/servicoAutenticacao.js';
 
         // Substitui os alert e confirm nativos pelo modal institucional
         window.alert = (msg) => exibirModalAlerta({ titulo: 'Aviso', mensagem: msg, tipo: 'info' });
@@ -488,6 +489,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             inicializarSidebarGlobal('kanban');
             initModal();
+            aplicarPermissoesKanbanMinutas();
             inicializarSeletorGlobal('container-seletor-global-kanban', {
                 onTrocarStartup: (id, nome) => {
                     fetchBoard();
@@ -495,6 +497,20 @@
             });
             fetchBoard();
         });
+
+        function aplicarPermissoesKanbanMinutas() {
+            const podeKanban = usuarioTemPermissao('kanban.gerenciar');
+            const podeMinutas = usuarioTemPermissao('minutas.gerenciar');
+
+            const btnNovoTicket = document.getElementById('btnOpenModal');
+            if (btnNovoTicket) {
+                btnNovoTicket.style.display = podeKanban ? '' : 'none';
+            }
+            const btnGerarMinuta = document.getElementById('btnGerarMinutaAction');
+            if (btnGerarMinuta) {
+                btnGerarMinuta.style.display = podeMinutas ? '' : 'none';
+            }
+        }
 
         function initSidebar() {
             const sidebar = document.getElementById('sidebar');

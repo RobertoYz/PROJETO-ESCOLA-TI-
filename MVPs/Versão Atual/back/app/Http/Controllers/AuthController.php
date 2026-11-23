@@ -256,7 +256,23 @@ class AuthController extends Controller
 
         $usuario = User::with('agencia.plano')->where('email', $validacao['email'])->first();
 
-        if (!$usuario || !Hash::check($validacao['password'], $usuario->password)) {
+        if ($usuario && ($usuario->status ?? 'ativo') === 'pendente') {
+            return response()->json([
+                'status' => 'erro',
+                'codigo' => 'CONVITE_PENDENTE',
+                'message' => 'Convite pendente de ativação. Acesse o link enviado ao seu e-mail e informe o código de 6 dígitos para ativar sua conta.',
+            ], 403);
+        }
+
+        if ($usuario && ($usuario->status ?? 'ativo') === 'inativo') {
+            return response()->json([
+                'status' => 'erro',
+                'codigo' => 'ACESSO_INATIVO',
+                'message' => 'Acesso desativado pela consultoria. Entre em contato com o titular da sua agência.',
+            ], 403);
+        }
+
+        if (!$usuario || !$usuario->password || !Hash::check($validacao['password'], $usuario->password)) {
             return response()->json([
                 'status' => 'erro',
                 'message' => 'Credenciais incorretas. Verifique seu e-mail e senha.',
@@ -303,6 +319,9 @@ class AuthController extends Controller
                     'name' => $usuario->name,
                     'email' => $usuario->email,
                     'perfil_acesso' => $usuario->perfil_acesso,
+                    'status' => $usuario->status ?? 'ativo',
+                    'is_owner' => $usuario->isOwner(),
+                    'permissoes' => $usuario->permissoesEfetivas(),
                 ],
                 'agencia' => $agencia ? [
                     'id' => $agencia->id,
@@ -669,11 +688,20 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => 'sucesso',
+            'id' => $usuario->id,
+            'name' => $usuario->name,
+            'email' => $usuario->email,
+            'perfil_acesso' => $usuario->perfil_acesso,
+            'is_owner' => $usuario->isOwner(),
+            'permissoes' => $usuario->permissoesEfetivas(),
             'usuario' => [
                 'id' => $usuario->id,
                 'name' => $usuario->name,
                 'email' => $usuario->email,
                 'perfil_acesso' => $usuario->perfil_acesso,
+                'status' => $usuario->status ?? 'ativo',
+                'is_owner' => $usuario->isOwner(),
+                'permissoes' => $usuario->permissoesEfetivas(),
             ],
         ], 200);
     }
@@ -719,6 +747,9 @@ class AuthController extends Controller
                 'name' => $usuario->name,
                 'email' => $usuario->email,
                 'perfil_acesso' => $usuario->perfil_acesso,
+                'status' => $usuario->status ?? 'ativo',
+                'is_owner' => $usuario->isOwner(),
+                'permissoes' => $usuario->permissoesEfetivas(),
             ],
         ], 200);
     }
@@ -735,7 +766,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Usuário não autenticado.'], 401);
         }
 
-        if ($usuario->perfil_acesso !== 'consultor_admin') {
+        if (!$usuario->isOwner()) {
             return response()->json([
                 'message' => 'Apenas o administrador da consultoria pode encerrar a conta.',
             ], 403);

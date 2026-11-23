@@ -9,8 +9,11 @@ import {
     obterPerfilUsuario,
     atualizarPerfilUsuario,
     cancelarContaDefinitivamente,
-    removerToken
+    removerToken,
+    usuarioEhTitular,
+    usuarioTemPermissao
 } from '../servicos/servicoAutenticacao.js';
+import { atualizarVisibilidadeSidebarEquipe } from './sidebarGlobal.js';
 import { requisicaoApi } from '../servicos/api.js';
 import { listarStartupsDaConsultoria } from '../servicos/servicoStartups.js';
 import {
@@ -1261,14 +1264,23 @@ export function exibirModalLimiteStartups(detalhes = {}) {
 
 function atualizarVisibilidadeZonaPerigo(usuario) {
     const secaoZonaPerigo = document.getElementById('secaoZonaPerigoConsultor');
-    if (!secaoZonaPerigo) return;
+    const ehOwner = usuarioEhTitular(usuario);
 
-    const perfil = usuario?.perfil_acesso;
-    if (perfil === 'consultor_admin') {
-        secaoZonaPerigo.style.display = 'flex';
-    } else {
-        secaoZonaPerigo.style.display = 'none';
+    if (secaoZonaPerigo) {
+        secaoZonaPerigo.style.display = ehOwner ? 'flex' : 'none';
     }
+
+    const btnVisualizarAssinatura = document.getElementById('btnMenuVisualizarAssinatura');
+    if (btnVisualizarAssinatura) {
+        btnVisualizarAssinatura.style.display = ehOwner ? 'flex' : 'none';
+    }
+
+    const btnHeaderCriarStartup = document.getElementById('btnHeaderCriarStartup');
+    if (btnHeaderCriarStartup) {
+        btnHeaderCriarStartup.style.display = usuarioTemPermissao('startups.criar_editar', usuario) ? 'flex' : 'none';
+    }
+
+    atualizarVisibilidadeSidebarEquipe(usuario);
 }
 
 function garantirModalCancelarConta() {
@@ -2303,8 +2315,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         }
         atualizarVisibilidadeZonaPerigo(usuarioApi);
 
-        const perfil = usuarioApi?.perfil_acesso || usuarioLocal?.perfil_acesso || 'consultor_admin';
-        if (perfil === 'consultor_admin') {
+        if (usuarioEhTitular(usuarioApi || usuarioLocal)) {
             try {
                 const dadosAssinatura = await requisicaoApi('/assinatura/atual', { method: 'GET' });
                 aplicarAlertaProativoAssinatura(dadosAssinatura);
@@ -2312,9 +2323,11 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 // Falha silenciosa caso offline
             }
         } else {
-            aplicarAlertaProativoAssinatura({ exibir_alerta_assinatura: false, perfil_acesso: perfil });
+            aplicarAlertaProativoAssinatura({ exibir_alerta_assinatura: false });
         }
     });
+
+    atualizarVisibilidadeZonaPerigo(usuarioLocal);
 
     function renderizarItensDropdown(listaStartups) {
         if (!startupDropdownLista) return;

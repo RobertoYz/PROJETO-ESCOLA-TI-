@@ -21,6 +21,19 @@ class KanbanController extends Controller
         $this->kanbanService = $kanbanService;
     }
 
+    protected function autorizarEscritaKanban(Request $request): ?JsonResponse
+    {
+        $usuario = $request->user('sanctum') ?? $request->user();
+        if ($usuario && !$usuario->temPermissao(\App\Enums\Permissao::KANBAN_GERENCIAR)) {
+            return response()->json([
+                'status' => 'erro',
+                'message' => 'Você não possui permissão para criar, editar ou excluir cards no Pipeline Kanban.',
+            ], 403);
+        }
+
+        return null;
+    }
+
     /**
      * Retorna o quadro Kanban completo com colunas e cards ordenados.
      */
@@ -52,6 +65,10 @@ class KanbanController extends Controller
      */
     public function storeCard(Request $request): JsonResponse
     {
+        if ($bloqueio = $this->autorizarEscritaKanban($request)) {
+            return $bloqueio;
+        }
+
         $dados = $request->validate([
             'board_id' => 'nullable|integer|exists:kanban_boards,id',
             'column_id' => 'nullable|integer|exists:kanban_columns,id',
@@ -92,6 +109,10 @@ class KanbanController extends Controller
      */
     public function moveCard(Request $request, int $id): JsonResponse
     {
+        if ($bloqueio = $this->autorizarEscritaKanban($request)) {
+            return $bloqueio;
+        }
+
         $dados = $request->validate([
             'target_column_id' => 'required|integer|exists:kanban_columns,id',
             'prev_position' => 'nullable|numeric',
@@ -123,8 +144,12 @@ class KanbanController extends Controller
     /**
      * Remove um card do Kanban.
      */
-    public function destroyCard(int $id): JsonResponse
+    public function destroyCard(Request $request, int $id): JsonResponse
     {
+        if ($bloqueio = $this->autorizarEscritaKanban($request)) {
+            return $bloqueio;
+        }
+
         try {
             $this->kanbanService->deleteCard($id);
 
@@ -146,6 +171,10 @@ class KanbanController extends Controller
      */
     public function updateCard(Request $request, int $id): JsonResponse
     {
+        if ($bloqueio = $this->autorizarEscritaKanban($request)) {
+            return $bloqueio;
+        }
+
         try {
             $card = \App\Models\KanbanCard::findOrFail($id);
 

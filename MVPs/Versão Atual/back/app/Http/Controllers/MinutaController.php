@@ -29,9 +29,16 @@ class MinutaController extends Controller
         $edital = Edital::findOrFail($request->edital_id);
         $usuario = $request->user('sanctum') ?? $request->user();
 
+        if ($usuario && !$usuario->temPermissao(\App\Enums\Permissao::MINUTAS_GERENCIAR)) {
+            return response()->json([
+                'sucesso' => false,
+                'message' => 'Você não possui permissão para gerar ou editar minutas técnicas.',
+            ], 403);
+        }
+
         // Se o usuário não estiver autenticado via Sanctum, tenta recuperar através da startup vinculada à agência
         if (!$usuario && $startup->agencia_id) {
-            $usuario = User::where('agencia_id', $startup->agencia_id)->first();
+            $usuario = \App\Models\User::where('agencia_id', $startup->agencia_id)->first();
         }
 
         // EDTAN-250: Controle de custos de IA - valida cota de minutas do plano antes de chamar o LLM
@@ -159,7 +166,14 @@ class MinutaController extends Controller
         ]);
 
         $minutaOriginal = Minuta::findOrFail($id);
-        $usuario = $request->user();
+        $usuario = $request->user('sanctum') ?? $request->user();
+
+        if ($usuario && !$usuario->temPermissao(\App\Enums\Permissao::MINUTAS_GERENCIAR)) {
+            return response()->json([
+                'sucesso' => false,
+                'message' => 'Você não possui permissão para editar minutas técnicas.',
+            ], 403);
+        }
 
         // Cria nova versão mantendo a auditoria do histórico (RF-33 & RF-34)
         $novaVersao = Minuta::create([

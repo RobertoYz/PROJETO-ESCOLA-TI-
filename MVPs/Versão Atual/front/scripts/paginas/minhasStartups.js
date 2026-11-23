@@ -5,7 +5,8 @@ import {
     obterStartupAtiva,
     salvarStartupAtiva,
     limparStartupAtiva,
-    obterUsuarioLogado
+    obterUsuarioLogado,
+    usuarioTemPermissao
 } from '../servicos/servicoAutenticacao.js';
 import {
     listarStartupsDaConsultoria,
@@ -51,9 +52,14 @@ function usuarioPodeExcluirStartup(startup = null) {
     if (startup && typeof startup.pode_excluir_startup === 'boolean') {
         return startup.pode_excluir_startup;
     }
-    const usuario = obterUsuarioLogado();
-    const perfil = usuario?.perfil_acesso || 'consultor_admin';
-    return perfil === 'consultor_admin' || perfil === 'admin_global';
+    return usuarioTemPermissao('startups.excluir');
+}
+
+function usuarioPodeEditarStartup(startup = null) {
+    if (startup && typeof startup.pode_editar_startup === 'boolean') {
+        return startup.pode_editar_startup;
+    }
+    return usuarioTemPermissao('startups.criar_editar');
 }
 
 function exibirAlertaEdicao(msg, tipo = 'sucesso') {
@@ -107,6 +113,19 @@ function preencherFormularioStartup(startup) {
     podeExcluirPermissao = usuarioPodeExcluirStartup(startup);
     if (secaoZonaPerigoStartup) {
         secaoZonaPerigoStartup.style.display = podeExcluirPermissao ? 'flex' : 'none';
+    }
+
+    const podeEditar = usuarioPodeEditarStartup(startup);
+    if (btnSalvar) {
+        btnSalvar.style.display = podeEditar ? 'inline-flex' : 'none';
+    }
+    if (btnSyncReceita) {
+        btnSyncReceita.style.display = podeEditar ? 'inline-flex' : 'none';
+    }
+    if (formEdicao) {
+        formEdicao.querySelectorAll('input:not(#campoCnpj), textarea').forEach((campo) => {
+            campo.disabled = !podeEditar;
+        });
     }
 }
 

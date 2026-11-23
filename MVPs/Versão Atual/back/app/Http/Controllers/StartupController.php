@@ -42,13 +42,14 @@ class StartupController extends Controller
             'plano_nome' => 'Standard',
         ];
 
-        $ehTitular = $agencia && $agencia->owner_id !== null && (int) $agencia->owner_id === (int) $user->id;
-        $podeExcluirStartup = $ehTitular || in_array($user->perfil_acesso, ['consultor_admin', 'admin_global'], true);
+        $podeCriarEditarStartup = $user->temPermissao(\App\Enums\Permissao::STARTUPS_CRIAR_EDITAR);
+        $podeExcluirStartup = $user->temPermissao(\App\Enums\Permissao::STARTUPS_EXCLUIR);
 
-        $startupsTransformadas = $startups->map(function (Startup $startup) use ($cota, $podeExcluirStartup) {
+        $startupsTransformadas = $startups->map(function (Startup $startup) use ($cota, $podeExcluirStartup, $podeCriarEditarStartup) {
             $item = $startup->toArray();
             $item['cota'] = $cota;
             $item['pode_excluir_startup'] = $podeExcluirStartup;
+            $item['pode_editar_startup'] = $podeCriarEditarStartup;
             return $item;
         });
 
@@ -58,6 +59,7 @@ class StartupController extends Controller
                 'startups' => $startupsTransformadas,
                 'cota' => $cota,
                 'pode_excluir_startup' => $podeExcluirStartup,
+                'pode_editar_startup' => $podeCriarEditarStartup,
             ], 200);
         }
 
@@ -133,12 +135,12 @@ class StartupController extends Controller
         Gate::authorize('view', $startup);
 
         $user = $request->user();
-        $agencia = $user->agencia;
-        $ehTitular = $agencia && $agencia->owner_id !== null && (int) $agencia->owner_id === (int) $user->id;
-        $podeExcluirStartup = $ehTitular || in_array($user->perfil_acesso, ['consultor_admin', 'admin_global'], true);
+        $podeExcluirStartup = $user->temPermissao(\App\Enums\Permissao::STARTUPS_EXCLUIR);
+        $podeCriarEditarStartup = $user->temPermissao(\App\Enums\Permissao::STARTUPS_CRIAR_EDITAR);
 
         $payload = $startup->toArray();
         $payload['pode_excluir_startup'] = $podeExcluirStartup;
+        $payload['pode_editar_startup'] = $podeCriarEditarStartup;
 
         return response()->json($payload, 200);
     }
