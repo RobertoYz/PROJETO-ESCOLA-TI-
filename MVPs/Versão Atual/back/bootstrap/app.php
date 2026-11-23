@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
         $middleware->alias([
             'check.pagamento' => \App\Http\Middleware\CheckPagamentoAtivo::class,
             'startup.ativa' => \App\Http\Middleware\VerificarStartupAtiva::class,

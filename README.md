@@ -64,6 +64,27 @@ cd PROJETO-ESCOLA-TI-
 ~~~
 
 ### ▶️ Como Iniciar o Sistema?
+
+#### 🐳 Opção 1: Execução Unificada com Docker Compose (Recomendado — 1 Comando)
+Com o **Docker Desktop** ativo, navegue até a pasta `MVPs/Versão Atual/`, crie seu `.env.docker` a partir do `.env.docker.example` e utilize os 3 comandos principais:
+
+```bash
+cd "MVPs/Versão Atual"
+cp .env.docker.example .env.docker
+
+# 1. COMANDO PADRÃO RECOMENDADO: Subida completa (MySQL 8.0 + Migrations/Seeders + API Laravel + Scheduler + Radares/Spiders + Front Nginx em http://localhost:5500)
+# Obs.: Já permite testar todo o fluxo do AbacatePay (criação de cobrança PIX/Cartão e conciliação de pagamento) sem precisar do Ngrok!
+docker compose --env-file .env.docker up --build
+
+# 2. OPCIONAL: Subida incluindo túnel Ngrok (apenas para testar Webhook automático de entrada; exige NGROK_AUTHTOKEN preenchido no .env.docker)
+docker compose --env-file .env.docker --profile ngrok up --build
+
+# 3. Encerrar os containers (ou resetar volumes do banco com -v)
+docker compose down
+docker compose down -v
+```
+
+#### 💻 Opção 2: Execução Manual Local (XAMPP + Live Server)
 Após clonar o repositório, navegue até a pasta **`MVPs/`**. 
 
 👉 **O arquivo `README.md` localizado dentro da pasta [`MVPs/`](./MVPs/README.md) contém o guia completo, passo a passo, com todos os comandos necessários para configurar o banco de dados, as chaves de ambiente e iniciar o servidor.**

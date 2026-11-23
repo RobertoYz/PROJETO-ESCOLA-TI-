@@ -1,0 +1,1999 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Anjo Nexus - Pipeline Kanban</title>
+    <script>
+        if (!localStorage.getItem('token_autenticacao')) {
+            window.location.replace('login.html');
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="../estilos/kanban.css">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
+</head>
+
+<body>
+    <svg style="display: none;">
+        <symbol id="icon-menu" viewBox="0 0 24 24">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+        </symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24">
+            <path
+                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+        </symbol>
+        <symbol id="icon-star" viewBox="0 0 24 24">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+        </symbol>
+        <symbol id="icon-history" viewBox="0 0 24 24">
+            <path
+                d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" />
+        </symbol>
+        <symbol id="icon-kanban" viewBox="0 0 24 24">
+            <path
+                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7V7h2v10zm4-5h-2V7h2v5zm4 3h-2V7h2v8z" />
+        </symbol>
+        <symbol id="icon-plus" viewBox="0 0 24 24">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+        </symbol>
+        <symbol id="icon-trash" viewBox="0 0 24 24">
+            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+        </symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24">
+            <path
+                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+        </symbol>
+        <symbol id="icon-back" viewBox="0 0 24 24">
+            <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" />
+        </symbol>
+    </svg>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-btn" id="toggleSidebar">
+                <svg viewBox="0 0 24 24">
+                    <use href="#icon-menu"></use>
+                </svg>
+            </button>
+            <div class="logo">Anjo<span>Nexus</span></div>
+        </div>
+        <nav class="nav-menu">
+            <a href="busca-editais.html" class="nav-item">
+                <svg class="nav-icon">
+                    <use href="#icon-search"></use>
+                </svg>
+                <span class="nav-text">Busca</span>
+            </a>
+            <a href="#" class="nav-item">
+                <svg class="nav-icon">
+                    <use href="#icon-star"></use>
+                </svg>
+                <span class="nav-text">Favoritos</span>
+            </a>
+            <a href="#" class="nav-item">
+                <svg class="nav-icon">
+                    <use href="#icon-history"></use>
+                </svg>
+                <span class="nav-text">Histórico</span>
+            </a>
+            <a href="kanban.html" class="nav-item active">
+                <svg class="nav-icon">
+                    <use href="#icon-kanban"></use>
+                </svg>
+                <span class="nav-text">Kanban</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="inicio.html" class="nav-item"><svg class="nav-icon">
+                    <use href="#icon-back"></use>
+                </svg><span class="nav-text">Menu Inicial</span></a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-navbar">
+            <div class="header-left-slot">
+                <button id="btnMobileMenu" class="mobile-menu-trigger" aria-label="Abrir Menu">☰</button>
+                <div class="page-brand-context">
+                    <div class="brand-symbol-mini" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                    </div>
+                    <span class="page-brand-title">Pipeline Kanban</span>
+                    <span class="page-brand-badge">Editais</span>
+                </div>
+                <button id="btnAlternarTema" class="theme-toggle-btn" type="button" aria-label="Alternar tema claro e escuro" title="Alternar tema">
+                    <svg id="iconeSol" style="display: none;" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg id="iconeLua" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="container-seletor-global-kanban"></div>
+        </header>
+
+        <!-- FUNÇÕES DO KANBAN NO TOPO DOS QUADROS (CAIXA SEPARADA À ESQUERDA) -->
+        <div class="kanban-top-bar">
+            <div class="kanban-actions-box">
+                <button class="btn-ai-sparkle" id="btnOpenAiModule">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                    </svg>
+                    Elaboração de Propostas & Fit
+                </button>
+                <button class="btn-add-card" id="btnOpenModal">
+                    <svg width="18" height="18">
+                        <use href="#icon-plus"></use>
+                    </svg>
+                    Novo Ticket
+                </button>
+            </div>
+        </div>
+
+        <!-- KANBAN BOARD CONTAINER -->
+        <div class="kanban-container" id="kanbanBoard">
+            <div style="color: #888; padding: 2rem;">Carregando quadro Kanban...</div>
+        </div>
+    </main>
+
+    <!-- MODAL DE NOVO CARD -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-card">
+            <h2 class="modal-title">Novo Ticket Kanban</h2>
+            <div class="form-group">
+                <label class="form-label">Título da Proposta / Edital</label>
+                <input type="text" id="inputCardTitle" class="form-input" placeholder="Ex: Proposta FINEP - Tecnova">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nome da Startup</label>
+                <input type="text" id="inputStartup" class="form-input" value="Startup X"
+                    placeholder="Nome da startup cliente">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Coluna Inicial</label>
+                <select id="selectColumn" class="form-select"></select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Descrição / Observações</label>
+                <textarea id="inputCardDesc" class="form-textarea" rows="3"
+                    placeholder="Anotações preliminares..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="btnCancelModal">Cancelar</button>
+                <button class="btn-save" id="btnSaveCard">Criar Card</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MÓDULO DE DOCUMENTOS E ENQUADRAMENTO -->
+    <div class="modal-overlay" id="modalMinutaOverlay">
+        <div class="modal-minuta-card">
+            <div class="modal-minuta-header">
+                <div>
+                    <h2 style="font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="#3b82f6"
+                                d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                        </svg>
+                        Elaboração de Propostas e Análise de Elegibilidade
+                    </h2>
+                    <span class="modal-minuta-subtitle">Geração estruturada de minutas técnicas, índice de
+                        aderência e exportação oficial</span>
+                </div>
+                <button class="btn-cancel" id="btnCloseMinutaModal" style="padding: 4px 10px;">&times;</button>
+            </div>
+
+            <!-- BARRA DE ABAS FIXA (SEM CORTE DE SCROLL) -->
+            <div class="minuta-tabs-container">
+                <div class="minuta-tabs">
+                    <button class="minuta-tab-btn active" id="tabMinutaBtn" onclick="switchMinutaTab('gerador')">Plano
+                        de Trabalho / Minuta</button>
+                    <button class="minuta-tab-btn" id="tabFitBtn" onclick="switchMinutaTab('fit')">Diagnóstico de
+                        Aderência</button>
+                    <button class="minuta-tab-btn" id="tabHistoricoBtn" onclick="switchMinutaTab('historico')">Histórico
+                        e Versões</button>
+                    <button class="minuta-tab-btn" id="tabAnexosBtn" onclick="switchMinutaTab('anexos')">📁 Arquivos & Dados do Card</button>
+                </div>
+            </div>
+
+            <div class="modal-minuta-body">
+                <!-- ABA 1: GERADOR E EDITOR DE MINUTA -->
+                <div id="tabContentGerador">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">1. Selecione a Startup Proponente:</label>
+                            <select id="selectMinutaStartup" class="form-select"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">2. Selecione o Edital Alvo:</label>
+                            <select id="selectMinutaEdital" class="form-select"
+                                onchange="handleTrocarEditalMinuta()"></select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label">3. Ideia / Escopo do Projeto da Empresa (O que será
+                            submetido):</label>
+                        <textarea id="inputMinutaIdeia" class="form-textarea" rows="3"
+                            placeholder="Descreva a solução tecnológica proposta, objetivos e diferencial que a empresa pretende implementar para resolver a dor do edital..."></textarea>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;">
+                        <button type="button" class="btn-ai-sparkle" id="btnGerarMinutaAction"
+                            onclick="handleGerarMinuta(event)">
+                            <svg width="16" height="16" viewBox="0 0 24 24">
+                                <path fill="currentColor"
+                                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2z" />
+                            </svg>
+                            Estruturar Minuta Técnica
+                        </button>
+                        <div id="cotaMinutasContainer" class="cota-minutas-pill">
+                            <span>Cota do Plano:</span>
+                            <strong id="badgeCotaMinutas">--/--</strong>
+                        </div>
+                        <span id="aiGenerationStatus" style="font-size: 0.85rem; color: var(--text-muted);"></span>
+                    </div>
+
+                    <!-- EDITOR DE MINUTA -->
+                    <div id="minutaEditorContainer" style="display: none; flex-direction: column; gap: 10px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 8px;">
+                            <div class="audit-info" id="minutaAuditHeader">
+                                <span>Versão: <strong id="lblMinutaVersao">v1</strong></span>
+                                <span>Responsável: <strong id="lblMinutaAutor">--</strong></span>
+                                <span>Motor de Análise: <strong id="lblMinutaModelo">--</strong></span>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn-ai-secondary" onclick="handleCopiarTextoMinuta()"
+                                    title="Copiar texto integral">
+                                    📋 Copiar Texto
+                                </button>
+                                <button class="btn-ai-secondary" onclick="handleExportarWord()"
+                                    title="Exportar no formato .docx">
+                                    📄 Word (.docx)
+                                </button>
+                                <button class="btn-ai-secondary" onclick="handleExportarPdf()"
+                                    title="Exportar no formato .pdf">
+                                    📑 Imprimir / PDF
+                                </button>
+                                <button class="btn-save" onclick="handleSalvarEdicaoMinuta()"
+                                    style="padding: 6px 14px; font-size: 0.85rem;">
+                                    💾 Salvar Versão
+                                </button>
+                            </div>
+                        </div>
+
+                        <textarea id="txtMinutaConteudo" class="minuta-editor-area" spellcheck="false"
+                            placeholder="Conteúdo da proposta técnica..."></textarea>
+                    </div>
+                </div>
+
+                <!-- ABA 2: DIAGNÓSTICO DE ADERÊNCIA / MATCH -->
+                <div id="tabContentFit" style="display: none;">
+                    <div class="fit-controls-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                            <label class="form-label" style="margin: 0; white-space: nowrap;">Empresa Proponente:</label>
+                            <select id="selectFitStartup" class="form-select" style="flex: 1; min-width: 0; width: 100%;" onchange="handleCarregarRankingFit()"></select>
+                        </div>
+                        <button class="btn-ai-secondary" onclick="handleCarregarRankingFit()" style="white-space: nowrap;">Atualizar Diagnóstico</button>
+                    </div>
+                    <div id="fitListContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="color: #888;">Selecione uma startup para calcular o ranking de compatibilidade com
+                            os editais ativos.</div>
+                    </div>
+                </div>
+
+                <!-- ABA 3: HISTÓRICO E VERSÕES VINCULADAS AO EDITAL -->
+                <div id="tabContentHistorico" style="display: none;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label class="form-label" style="margin: 0;">Filtrar por Edital:</label>
+                            <select id="selectHistoricoEdital" class="form-select" style="max-width: 420px;"
+                                onchange="fetchHistoricoMinutas()">
+                                <option value="atual">Edital Selecionado no Momento</option>
+                                <option value="todos">Todos os Editais</option>
+                            </select>
+                        </div>
+                        <button class="btn-ai-secondary" onclick="fetchHistoricoMinutas()">Atualizar Histórico</button>
+                    </div>
+                    <div id="historicoMinutasList" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="color: #888;">Carregando histórico...</div>
+                    </div>
+                </div>
+
+                <!-- ABA 4: ARQUIVOS, ANOTAÇÕES E DADOS DO CARD -->
+                <div id="tabContentAnexos" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                        <div>
+                            <h3 style="font-size: 1.05rem; font-weight: 600; color: var(--text-main); margin-bottom: 4px;">Documentação e Anotações da Proposta</h3>
+                            <span style="font-size: 0.82rem; color: var(--text-muted);">Anexe planilhas de custos, certidões negativas (CNDs), declarações e anotações internas da submissão.</span>
+                        </div>
+                    </div>
+
+                    <div class="anexos-grid">
+                        <!-- Anotações e Dados Customizados -->
+                        <div class="anexos-panel">
+                            <h4 class="anexos-panel-title" style="color: #60a5fa;">
+                                📝 Anotações Internas & Valores
+                            </h4>
+                            
+                            <div class="form-group" style="margin-bottom: 14px;">
+                                <label class="form-label">Card / Edital Selecionado:</label>
+                                <select id="selectCardAnexo" class="form-select" onchange="carregarDadosCardSelecionado()"></select>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 14px;">
+                                <label class="form-label">Valor Estimado do Projeto (R$):</label>
+                                <input type="text" id="inputValorProjetoCard" class="form-input" placeholder="Ex: R$ 350.000,00" style="width: 100%;">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 16px;">
+                                <label class="form-label">Status da Documentação & Pendências:</label>
+                                <textarea id="txtNotasInternasCard" class="form-textarea" placeholder="Ex: CND federal regularizada. Aguardando carta de anuência da ICT parceira e validação do orçamento com o proponente..." style="width: 100%; min-height: 120px; resize: vertical;"></textarea>
+                            </div>
+
+                            <button type="button" class="btn-save" id="btnSalvarDadosCard" onclick="handleSalvarDadosCard()" style="padding: 10px 16px; font-size: 0.9rem; width: 100%; justify-content: center; display: inline-flex; align-items: center; gap: 8px;">
+                                💾 Salvar Informações do Card
+                            </button>
+                        </div>
+
+                        <!-- Upload e Lista de Arquivos Anexos -->
+                        <div class="anexos-panel">
+                            <h4 class="anexos-panel-title" style="color: #c084fc;">
+                                📁 Anexos & Documentos do Projeto
+                            </h4>
+
+                            <div class="upload-limit-box" id="barraLimiteAnexosCard">
+                                <div class="upload-limit-meta">
+                                    <span>Armazenamento do card: <strong id="textoUsoAnexosCard">0,00 MB / 25 MB</strong></span>
+                                    <span>Máx. <strong>10 MB</strong> por arquivo</span>
+                                </div>
+                                <div class="upload-limit-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                    <div class="upload-limit-fill" id="progressoUsoAnexosCard"></div>
+                                </div>
+                            </div>
+
+                            <div id="alertaLimiteUploadCard" class="upload-limit-alert" role="alert" aria-live="polite"></div>
+
+                            <div class="upload-dropzone">
+                                <input type="file" id="inputUploadArquivoCard" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg" style="display: none;" onchange="handleUploadArquivoCard(event)">
+                                <label for="inputUploadArquivoCard" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="var(--accent-action)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                                    <span class="upload-dropzone-title">Clique para anexar arquivo</span>
+                                    <span class="upload-dropzone-hint">PDF, DOC/DOCX, XLS/XLSX, CSV, TXT, PNG/JPG (Até 10 MB/arquivo • 25 MB/card)</span>
+                                </label>
+                            </div>
+
+                            <div id="listaAnexosCard" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 240px; flex: 1; padding-right: 4px;">
+                                <div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 1.5rem;">Nenhum arquivo anexado a este card ainda.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALHES COMPLETOS DO EDITAL -->
+    <div class="modal-overlay" id="modalEditalDetalhesOverlay">
+        <div class="modal-detalhes-card">
+            <div class="modal-detalhes-header">
+                <div>
+                    <span id="detModalOrgTag" class="tag tag-finep" style="font-size: 0.8rem;">FINEP</span>
+                    <h2 id="detModalTitle"
+                        style="font-size: 1.15rem; font-weight: 600; margin-top: 6px; line-height: 1.3;">Nome do Edital
+                    </h2>
+                </div>
+                <button class="btn-cancel" id="btnCloseEditalDetalhesModal" style="padding: 4px 10px;">&times;</button>
+            </div>
+            <div class="modal-detalhes-body">
+                <!-- GRID DE DADOS CHAVE -->
+                <div class="detalhes-grid">
+                    <div class="detalhes-box">
+                        <div class="detalhes-box-label">Orçamento Máximo</div>
+                        <div class="detalhes-box-val" id="detModalBudget" style="color: #10b981;">--</div>
+                    </div>
+                    <div class="detalhes-box">
+                        <div class="detalhes-box-label">Prazo de Submissão</div>
+                        <div class="detalhes-box-val" id="detModalDeadline" style="color: #ef4444;">--</div>
+                    </div>
+                    <div class="detalhes-box">
+                        <div class="detalhes-box-label">Público-Alvo / Porte</div>
+                        <div class="detalhes-box-val" id="detModalTarget">--</div>
+                    </div>
+                    <div class="detalhes-box">
+                        <div class="detalhes-box-label">TRL / Nicho</div>
+                        <div class="detalhes-box-val" id="detModalNicho">--</div>
+                    </div>
+                </div>
+
+                <!-- OBJETIVO / CONTEÚDO EXTRAÍDO -->
+                <div>
+                    <label class="form-label" style="font-weight: 600; margin-bottom: 6px; display: block;">Objetivo e
+                        Diretrizes Oficiais do Edital:</label>
+                    <div class="detalhes-objetivo-box" id="detModalObjetivo">Carregando conteúdo...</div>
+                </div>
+
+                <!-- DOCUMENTOS EXIGIDOS -->
+                <div id="detModalDocsSection" style="display: none;">
+                    <label class="form-label" style="font-weight: 600; margin-bottom: 6px; display: block;">Documentos e
+                        Anexos Exigidos:</label>
+                    <div id="detModalDocsList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                </div>
+
+                <!-- BOTÕES DE AÇÃO -->
+                <div class="detalhes-footer-actions">
+                    <a href="#" id="detModalLinkOficial" target="_blank" class="btn-ai-secondary"
+                        style="text-decoration: none;">
+                        Abrir Edital Oficial ↗
+                    </a>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-ai-secondary" id="detModalBtnAnexos" style="display: inline-flex; align-items: center; gap: 6px;">
+                            📁 Anexos & Dados do Card
+                        </button>
+                        <button class="btn-ai-sparkle" id="detModalBtnGerarMinuta">
+                            <svg width="16" height="16" viewBox="0 0 24 24">
+                                <path fill="currentColor"
+                                    d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                            </svg>
+                            Elaborar Proposta para Este Edital
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
+        import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
+        import { exibirModalAlerta, exibirModalConfirmacao } from '../scripts/componentes/modalGlobal.js';
+
+        // Substitui os alert e confirm nativos pelo modal institucional
+        window.alert = (msg) => exibirModalAlerta({ titulo: 'Aviso', mensagem: msg, tipo: 'info' });
+
+        const ehDevNavegadorLocal = typeof window !== 'undefined' &&
+            window.location.protocol === 'http:' &&
+            (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') &&
+            (window.location.port !== '');
+
+        const URL_PADRAO = ehDevNavegadorLocal
+            ? 'http://127.0.0.1:8000/api'
+            : 'https://anjonexus.intalenti.com.br/api';
+
+        const API_BASE = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
+        let currentBoard = null;
+        let todosCardsKanban = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            inicializarSidebarGlobal('kanban');
+            initModal();
+            inicializarSeletorGlobal('container-seletor-global-kanban', {
+                onTrocarStartup: (id, nome) => {
+                    fetchBoard();
+                }
+            });
+            fetchBoard();
+        });
+
+        function initSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggleSidebar');
+            if (toggleBtn) toggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+        }
+
+        window.fetchBoard = fetchBoard;
+        window.handleDeleteCard = handleDeleteCard;
+        window.switchMinutaTab = switchMinutaTab;
+        window.handleGerarMinuta = handleGerarMinuta;
+        window.handleCopiarTextoMinuta = handleCopiarTextoMinuta;
+        window.handleExportarWord = handleExportarWord;
+        window.handleExportarPdf = handleExportarPdf;
+        window.handleSalvarEdicaoMinuta = handleSalvarEdicaoMinuta;
+        window.handleCarregarRankingFit = handleCarregarRankingFit;
+        window.fetchHistoricoMinutas = fetchHistoricoMinutas;
+        window.selecionarEditalParaMinuta = selecionarEditalParaMinuta;
+        window.abrirMinutaDoHistorico = abrirMinutaDoHistorico;
+        window.handleTrocarEditalMinuta = handleTrocarEditalMinuta;
+
+        async function fetchBoard() {
+            try {
+                const stAtiva = localStorage.getItem('startup_ativa_nome') || '';
+                const queryParam = stAtiva ? `?startup_name=${encodeURIComponent(stAtiva)}` : '';
+
+                const res = await fetch(`${API_BASE}/kanban${queryParam}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    }
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}: Erro ao carregar Kanban`);
+                const result = await res.json();
+                currentBoard = result.data;
+                renderBoard(currentBoard);
+                populateModalColumns(currentBoard.columns);
+            } catch (err) {
+                console.error('Erro detalhado Kanban:', err);
+                document.getElementById('kanbanBoard').innerHTML = `<div style="color: #ef4444; padding: 2rem;">Falha ao comunicar com a API do Kanban (${err.message}). Certifique-se de que o backend está ativo na porta 8000.</div>`;
+            }
+        }
+
+        function renderBoard(board) {
+            const container = document.getElementById('kanbanBoard');
+            container.innerHTML = '';
+            todosCardsKanban = [];
+
+            if (board.title) {
+                const boardTitleEl = document.getElementById('boardTitle');
+                if (boardTitleEl) {
+                    boardTitleEl.textContent = board.title;
+                }
+            }
+
+            board.columns.forEach(col => {
+                const colEl = document.createElement('div');
+                colEl.className = 'kanban-column';
+                colEl.dataset.colId = col.id;
+
+                const count = col.cards ? col.cards.length : 0;
+
+                colEl.innerHTML = `
+                    <div class="column-header">
+                        <h2 class="column-title">${col.title}</h2>
+                        <span class="column-count">${count}</span>
+                    </div>
+                    <div class="column-body" data-col-id="${col.id}"></div>
+                `;
+
+                const colBody = colEl.querySelector('.column-body');
+                if (col.cards && col.cards.length > 0) {
+                    col.cards.forEach(card => {
+                        todosCardsKanban.push(card);
+                        colBody.appendChild(createCardElement(card));
+                    });
+                }
+
+                initColumnDragEvents(colBody);
+                container.appendChild(colEl);
+            });
+        }
+
+        function createCardElement(card) {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'kanban-card';
+            cardEl.draggable = true;
+            cardEl.dataset.cardId = card.id;
+            cardEl.dataset.position = card.position;
+
+            const edital = card.edital || {};
+            const meta = card.metadata || {};
+            const org = edital.fonte || meta.fonte || 'PROPOSTA';
+            const tagClass = getTagClass(org);
+
+            const budgetVal = edital.max_budget || meta.max_budget;
+            const budgetFormatted = budgetVal ? 'R$ ' + Number(budgetVal).toLocaleString('pt-BR') : '--';
+            const matchVal = edital.ai_match || meta.ai_match || 0;
+            const matchColorClass = getMatchColorClass(matchVal);
+
+            let currentColumnIndex = -1;
+            if (currentBoard && Array.isArray(currentBoard.columns)) {
+                currentColumnIndex = currentBoard.columns.findIndex(col => String(col.id) === String(card.column_id));
+            }
+            const canMoveLeft = currentColumnIndex > 0;
+            const canMoveRight = currentBoard && Array.isArray(currentBoard.columns) && currentColumnIndex !== -1 && currentColumnIndex < currentBoard.columns.length - 1;
+
+            cardEl.innerHTML = `
+                <div class="card-top">
+                    <div class="card-tags">
+                        <span class="tag ${tagClass}">${org}</span>
+                    </div>
+                    <button class="btn-card-del" title="Excluir card" onclick="handleDeleteCard(event, ${card.id})">
+                        <svg width="15" height="15"><use href="#icon-trash"></use></svg>
+                    </button>
+                </div>
+                <h3 class="card-title">${card.title}</h3>
+                ${card.description ? `<p class="card-desc">${card.description}</p>` : ''}
+                <div class="card-footer">
+                    <span class="card-budget">${budgetFormatted}</span>
+                    ${matchVal ? `<span class="match-score ${matchColorClass}">${matchVal}% Match</span>` : ''}
+                </div>
+                <div class="card-mobile-actions">
+                    <button class="btn-card-move" ${canMoveLeft ? '' : 'disabled'} onclick="handleMoverCardMobile(event, ${card.id}, -1)">
+                        ◀ Anterior
+                    </button>
+                    <button class="btn-card-move" ${canMoveRight ? '' : 'disabled'} onclick="handleMoverCardMobile(event, ${card.id}, 1)">
+                        Avançar ▶
+                    </button>
+                </div>
+            `;
+
+            initCardDragEvents(cardEl, card);
+
+            return cardEl;
+        }
+
+        function getTagClass(fonte) {
+            const f = (fonte || '').toUpperCase();
+            if (f.includes('FINEP')) return 'tag-finep';
+            if (f.includes('FAPESP')) return 'tag-fapesp';
+            if (f.includes('FAPESC')) return 'tag-fapesc';
+            if (f.includes('FAPEMIG')) return 'tag-fapemig';
+            return 'tag-manual';
+        }
+
+        function getMatchColorClass(val) {
+            if (val >= 80) return 'match-high';
+            if (val >= 50) return 'match-medium';
+            return 'match-low';
+        }
+
+        function initCardDragEvents(cardEl, cardObj) {
+            let wasDragged = false;
+
+            cardEl.addEventListener('dragstart', () => {
+                wasDragged = true;
+                cardEl.classList.add('dragging');
+            });
+
+            cardEl.addEventListener('dragend', () => {
+                cardEl.classList.remove('dragging');
+                updateCounters();
+                setTimeout(() => { wasDragged = false; }, 100);
+            });
+
+            cardEl.addEventListener('click', (e) => {
+                if (wasDragged) return;
+                if (e.target.closest('.btn-card-del')) return;
+                const cardId = parseInt(cardEl.dataset.cardId);
+                const targetCard = cardObj || todosCardsKanban.find(c => c.id === cardId);
+                if (targetCard) {
+                    abrirModalDetalhesEdital(targetCard);
+                }
+            });
+        }
+
+        function initColumnDragEvents(colBody) {
+            colBody.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                colBody.parentElement.classList.add('drag-over');
+
+                const afterElement = getDragAfterElement(colBody, e.clientY);
+                const dragging = document.querySelector('.dragging');
+                if (!dragging) return;
+
+                if (afterElement == null) {
+                    colBody.appendChild(dragging);
+                } else {
+                    colBody.insertBefore(dragging, afterElement);
+                }
+            });
+
+            colBody.addEventListener('dragleave', () => {
+                colBody.parentElement.classList.remove('drag-over');
+            });
+
+            colBody.addEventListener('drop', async () => {
+                colBody.parentElement.classList.remove('drag-over');
+                const dragging = document.querySelector('.dragging');
+                if (!dragging) return;
+
+                const cardId = dragging.dataset.cardId;
+                const targetColId = colBody.dataset.colId;
+
+                // Calcula posições vizinhas para fractional indexing
+                const prevCard = dragging.previousElementSibling;
+                const nextCard = dragging.nextElementSibling;
+
+                const prevPos = prevCard ? parseFloat(prevCard.dataset.position) : null;
+                const nextPos = nextCard ? parseFloat(nextCard.dataset.position) : null;
+
+                try {
+                    const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/mover`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                            target_column_id: targetColId,
+                            prev_position: prevPos,
+                            next_position: nextPos
+                        })
+                    });
+
+                    if (res.ok) {
+                        const json = await res.json();
+                        dragging.dataset.position = json.data.position;
+                    } else {
+                        console.error('Falha ao mover card no backend');
+                        fetchBoard(); // Reverte
+                    }
+                } catch (e) {
+                    console.error(e);
+                    fetchBoard();
+                }
+
+                updateCounters();
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const elements = [...container.querySelectorAll('.kanban-card:not(.dragging)')];
+            return elements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function updateCounters() {
+            document.querySelectorAll('.kanban-column').forEach(col => {
+                const countBadge = col.querySelector('.column-count');
+                const num = col.querySelectorAll('.kanban-card').length;
+                if (countBadge) countBadge.textContent = num;
+            });
+        }
+
+
+        async function handleMoverCardMobile(event, cardId, direction) {
+            if (event) event.stopPropagation();
+
+            const card = todosCardsKanban.find(c => String(c.id) === String(cardId));
+            if (!card || !currentBoard || !Array.isArray(currentBoard.columns)) return;
+
+            const currentIndex = currentBoard.columns.findIndex(col => String(col.id) === String(card.column_id));
+            if (currentIndex === -1) return;
+
+            const targetIndex = currentIndex + direction;
+            if (targetIndex < 0 || targetIndex >= currentBoard.columns.length) return;
+
+            const targetCol = currentBoard.columns[targetIndex];
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/mover`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        target_column_id: targetCol.id,
+                        prev_position: null,
+                        next_position: null
+                    })
+                });
+
+                if (res.ok) {
+                    await fetchBoard();
+                } else {
+                    console.error('Falha ao mover card no backend');
+                }
+            } catch (err) {
+                console.error('Erro de rede ao mover card', err);
+            }
+        }
+        window.handleMoverCardMobile = handleMoverCardMobile;
+
+        async function handleDeleteCard(event, cardId) {
+            event.stopPropagation();
+            if (!confirm('Deseja realmente remover este card do Kanban?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}`, {
+                    method: 'DELETE',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (res.ok) {
+                    const cardEl = document.querySelector(`[data-card-id="${cardId}"]`);
+                    if (cardEl) cardEl.remove();
+                    updateCounters();
+                } else {
+                    alert('Erro ao excluir card.');
+                }
+            } catch (e) {
+                alert('Erro de comunicação.');
+            }
+        }
+
+        /* MODAL */
+        function initModal() {
+            const modal = document.getElementById('modalOverlay');
+            const openBtn = document.getElementById('btnOpenModal');
+            const cancelBtn = document.getElementById('btnCancelModal');
+            const saveBtn = document.getElementById('btnSaveCard');
+
+            openBtn.addEventListener('click', () => modal.classList.add('active'));
+            cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('active');
+            });
+
+            saveBtn.addEventListener('click', async () => {
+                const title = document.getElementById('inputCardTitle').value.trim();
+                const startup = document.getElementById('inputStartup').value.trim();
+                const colId = document.getElementById('selectColumn').value;
+                const desc = document.getElementById('inputCardDesc').value.trim();
+
+                if (!title) {
+                    alert('Por favor, informe o título do ticket.');
+                    return;
+                }
+
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Salvando...';
+
+                try {
+                    const res = await fetch(`${API_BASE}/kanban/cards`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                            title: title,
+                            startup_name: startup,
+                            column_id: colId,
+                            description: desc
+                        })
+                    });
+
+                    if (res.ok) {
+                        modal.classList.remove('active');
+                        document.getElementById('inputCardTitle').value = '';
+                        document.getElementById('inputCardDesc').value = '';
+                        fetchBoard();
+                    } else {
+                        alert('Falha ao criar card no servidor.');
+                    }
+                } catch (e) {
+                    alert('Erro de comunicação com a API.');
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Criar Card';
+                }
+            });
+        }
+
+        function populateModalColumns(columns) {
+            const select = document.getElementById('selectColumn');
+            select.innerHTML = '';
+            columns.forEach(col => {
+                const opt = document.createElement('option');
+                opt.value = col.id;
+                opt.textContent = col.title;
+                select.appendChild(opt);
+            });
+        }
+
+        // =========================================================================
+        // MÓDULO 9: INTELIGÊNCIA ARTIFICIAL E GERAÇÃO DE MINUTAS (RF-29 A RF-47)
+        // =========================================================================
+        let currentMinutaData = null;
+        let cachedStartups = [];
+        let cachedEditais = [];
+
+        // Inicializa listeners do Módulo de IA
+        const btnOpenAiModule = document.getElementById('btnOpenAiModule');
+        const modalMinutaOverlay = document.getElementById('modalMinutaOverlay');
+        const btnCloseMinutaModal = document.getElementById('btnCloseMinutaModal');
+
+        if (btnOpenAiModule) {
+            btnOpenAiModule.addEventListener('click', () => {
+                modalMinutaOverlay.classList.add('active');
+                carregarStartupsEEditaisMinuta();
+            });
+        }
+
+        if (btnCloseMinutaModal) {
+            btnCloseMinutaModal.addEventListener('click', () => {
+                modalMinutaOverlay.classList.remove('active');
+            });
+        }
+
+        if (modalMinutaOverlay) {
+            modalMinutaOverlay.addEventListener('click', (e) => {
+                if (e.target === modalMinutaOverlay) modalMinutaOverlay.classList.remove('active');
+            });
+        }
+
+        // Listeners e controle do Modal de Detalhes do Edital
+        const modalEditalDetalhesOverlay = document.getElementById('modalEditalDetalhesOverlay');
+        const btnCloseEditalDetalhesModal = document.getElementById('btnCloseEditalDetalhesModal');
+
+        if (btnCloseEditalDetalhesModal) {
+            btnCloseEditalDetalhesModal.addEventListener('click', () => {
+                modalEditalDetalhesOverlay.classList.remove('active');
+            });
+        }
+
+        if (modalEditalDetalhesOverlay) {
+            modalEditalDetalhesOverlay.addEventListener('click', (e) => {
+                if (e.target === modalEditalDetalhesOverlay) modalEditalDetalhesOverlay.classList.remove('active');
+            });
+        }
+
+        function abrirModalDetalhesEdital(card) {
+            try {
+                if (!card) return;
+                const meta = card.metadata || {};
+                const edital = card.edital || meta.edital || meta || {};
+                const org = edital.fonte || meta.fonte || edital.org || 'EDITAL';
+                const titulo = edital.title || meta.title || card.title || 'Edital de Inovação';
+                
+                let orcamento = 'Conforme Edital';
+                const budgetVal = edital.max_budget || meta.max_budget;
+                if (budgetVal && !isNaN(Number(budgetVal))) {
+                    orcamento = 'R$ ' + Number(budgetVal).toLocaleString('pt-BR');
+                } else if (budgetVal) {
+                    orcamento = String(budgetVal);
+                }
+
+                let prazo = 'Fluxo Contínuo / A Definir';
+                const deadlineVal = edital.deadline || meta.deadline;
+                if (deadlineVal) {
+                    try {
+                        const d = new Date(deadlineVal);
+                        if (!isNaN(d.getTime())) prazo = d.toLocaleDateString('pt-BR');
+                    } catch (_) {}
+                }
+
+                const publico = edital.publico || meta.publico || 'Startups, Micro e Pequenas Empresas';
+                const trlNicho = `${edital.ai_trl || meta.ai_trl || 'Geral'} | ${edital.ai_nicho || meta.ai_nicho || edital.nicho || 'Inovação'}`;
+                
+                // Prioriza o objetivo limpo e formatado da chamada pública em vez de despejo de HTML/CSS de página
+                let objetivo = edital.objetivo || meta.objetivo || card.description;
+                if (!objetivo || objetivo.trim().length === 0 || objetivo.includes('{"imports":') || objetivo.includes('--tw-')) {
+                    if (edital.conteudo_completo && !edital.conteudo_completo.includes('{"imports":')) {
+                        objetivo = edital.conteudo_completo;
+                    } else {
+                        objetivo = 'Diretrizes em conformidade com o regulamento oficial do edital.';
+                    }
+                }
+                const link = edital.source_url || meta.source_url || edital.url || meta.url || '#';
+
+                const elOrg = document.getElementById('detModalOrgTag');
+                if (elOrg) {
+                    elOrg.textContent = org;
+                    elOrg.className = `tag ${getTagClass(org)}`;
+                }
+                const elTitle = document.getElementById('detModalTitle');
+                if (elTitle) elTitle.textContent = titulo;
+                const elBudget = document.getElementById('detModalBudget');
+                if (elBudget) elBudget.textContent = orcamento;
+                const elDeadline = document.getElementById('detModalDeadline');
+                if (elDeadline) elDeadline.textContent = prazo;
+                const elTarget = document.getElementById('detModalTarget');
+                if (elTarget) elTarget.textContent = publico;
+                const elNicho = document.getElementById('detModalNicho');
+                if (elNicho) elNicho.textContent = trlNicho;
+                const elObj = document.getElementById('detModalObjetivo');
+                if (elObj) elObj.textContent = objetivo;
+
+                const linkEl = document.getElementById('detModalLinkOficial');
+                if (linkEl) {
+                    if (link && link !== '#') {
+                        linkEl.href = link;
+                        linkEl.style.display = 'inline-flex';
+                    } else {
+                        linkEl.style.display = 'none';
+                    }
+                }
+
+                // Documentos exigidos
+                const docsList = document.getElementById('detModalDocsList');
+                const docsSec = document.getElementById('detModalDocsSection');
+                const rawDocs = edital.documentos_exigidos || meta.documentos_exigidos || edital.documentos || meta.documentos || [];
+                const docs = Array.isArray(rawDocs) ? rawDocs : [];
+                
+                if (docsSec && docsList) {
+                    if (docs.length > 0) {
+                        docsSec.style.display = 'block';
+                        docsList.innerHTML = '';
+                        docs.forEach(d => {
+                            const docItem = document.createElement('div');
+                            docItem.className = 'modal-doc-item';
+                            docItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface-hover); border: 1px solid var(--border-subtle); padding: 9px 14px; border-radius: 8px; font-size: 0.88rem; color: var(--text-main); font-weight: 500;';
+
+                            const tituloDoc = typeof d === 'string' ? d : (d.titulo || d.nome || d.title || d.texto || 'Documento Exigido');
+                            const linkDoc = typeof d === 'object' && d.link && d.link !== '#' ? d.link : null;
+
+                            docItem.innerHTML = `
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="color: #10b981; font-weight: bold; font-size: 1rem;">✔</span>
+                                    <span style="color: var(--text-main);">${tituloDoc}</span>
+                                </div>
+                                ${linkDoc ? `<a href="${linkDoc}" target="_blank" style="color: var(--accent-action); font-weight: 600; text-decoration: none; font-size: 0.82rem;">Baixar / Ver ↗</a>` : ''}
+                            `;
+                            docsList.appendChild(docItem);
+                        });
+                    } else {
+                        docsSec.style.display = 'none';
+                    }
+                }
+
+                // Ação de Gerar Minuta direto deste edital
+                const btnGerar = document.getElementById('detModalBtnGerarMinuta');
+                if (btnGerar) {
+                    btnGerar.onclick = () => {
+                        const editalIdAlvo = edital.id || card.edital_id || meta.edital_id;
+                        modalEditalDetalhesOverlay.classList.remove('active');
+                        modalMinutaOverlay.classList.add('active');
+                        switchMinutaTab('gerador');
+                        carregarStartupsEEditaisMinuta().then(() => {
+                            if (editalIdAlvo) {
+                                const selE = document.getElementById('selectMinutaEdital');
+                                if (selE) {
+                                    // Se o edital não estiver na lista por qualquer motivo, cria a option dinamicamente
+                                    if (!Array.from(selE.options).some(o => String(o.value) === String(editalIdAlvo))) {
+                                        const optNovo = document.createElement('option');
+                                        optNovo.value = editalIdAlvo;
+                                        optNovo.textContent = `[${org}] ${titulo}`;
+                                        selE.appendChild(optNovo);
+                                    }
+                                    selE.value = editalIdAlvo;
+                                    handleTrocarEditalMinuta();
+                                }
+                            }
+                        });
+                    };
+                }
+
+                // Ação de Abrir Anexos direto deste edital/card
+                const btnAnexos = document.getElementById('detModalBtnAnexos');
+                if (btnAnexos) {
+                    btnAnexos.onclick = () => {
+                        modalEditalDetalhesOverlay.classList.remove('active');
+                        modalMinutaOverlay.classList.add('active');
+                        switchMinutaTab('anexos');
+                        carregarStartupsEEditaisMinuta();
+                        if (card && card.id) {
+                            selecionarCardParaAnexos(card.id);
+                        }
+                    };
+                }
+
+                const overlay = document.getElementById('modalEditalDetalhesOverlay');
+                if (overlay) overlay.classList.add('active');
+            } catch (err) {
+                console.error('Erro ao abrir detalhes do edital:', err);
+                // Fallback seguro: abre direto o modal de anexos/minuta
+                const overlayMinuta = document.getElementById('modalMinutaOverlay');
+                if (overlayMinuta) {
+                    overlayMinuta.classList.add('active');
+                    switchMinutaTab('anexos');
+                    carregarStartupsEEditaisMinuta();
+                    if (card && card.id) selecionarCardParaAnexos(card.id);
+                }
+            }
+        }
+
+        async function switchMinutaTab(tabName) {
+            document.querySelectorAll('.minuta-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tabContentGerador').style.display = 'none';
+            document.getElementById('tabContentFit').style.display = 'none';
+            document.getElementById('tabContentHistorico').style.display = 'none';
+            const tabAnexosContent = document.getElementById('tabContentAnexos');
+            if (tabAnexosContent) tabAnexosContent.style.display = 'none';
+
+            // Garante que a lista de startups e editais esteja carregada
+            if (!cachedStartups || cachedStartups.length === 0) {
+                await carregarStartupsEEditaisMinuta();
+            }
+
+            if (tabName === 'gerador') {
+                document.getElementById('tabMinutaBtn').classList.add('active');
+                document.getElementById('tabContentGerador').style.display = 'block';
+            } else if (tabName === 'fit') {
+                document.getElementById('tabFitBtn').classList.add('active');
+                document.getElementById('tabContentFit').style.display = 'block';
+                
+                // Pré-seleciona a startup ativa no select de Fit
+                const selectFit = document.getElementById('selectFitStartup');
+                if (selectFit) {
+                    const stAtivaId = localStorage.getItem('startup_ativa_id');
+                    if (stAtivaId && Array.from(selectFit.options).some(o => String(o.value) === String(stAtivaId))) {
+                        selectFit.value = stAtivaId;
+                    } else if (selectFit.options.length > 0 && !selectFit.value) {
+                        selectFit.selectedIndex = 0;
+                    }
+                }
+                handleCarregarRankingFit();
+            } else if (tabName === 'historico') {
+                document.getElementById('tabHistoricoBtn').classList.add('active');
+                document.getElementById('tabContentHistorico').style.display = 'block';
+                fetchHistoricoMinutas();
+            } else if (tabName === 'anexos') {
+                const tabAnexosBtn = document.getElementById('tabAnexosBtn');
+                if (tabAnexosBtn) tabAnexosBtn.classList.add('active');
+                if (tabAnexosContent) tabAnexosContent.style.display = 'block';
+                carregarOpcoesSelectCardsAnexo();
+            }
+        }
+
+        async function carregarStartupsEEditaisMinuta() {
+            carregarConsumoMinutasPlano();
+            const selectS = document.getElementById('selectMinutaStartup');
+            const selectFit = document.getElementById('selectFitStartup');
+            const selectE = document.getElementById('selectMinutaEdital');
+
+            // Feedback visual imediato enquanto os dados são carregados
+            if (selectS && selectS.options.length === 0) {
+                selectS.innerHTML = '<option value="">Carregando startups...</option>';
+            }
+            if (selectE && selectE.options.length === 0) {
+                selectE.innerHTML = '<option value="">Carregando editais disponíveis...</option>';
+            }
+
+            try {
+                // 1. Carrega Startups com autenticação e fallback robusto
+                let listS = [];
+                try {
+                    const resS = await fetch(`${API_BASE}/startups`, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                        }
+                    });
+                    if (resS.ok) {
+                        const jsonS = await resS.json();
+                        listS = Array.isArray(jsonS) ? jsonS : (jsonS.dados || jsonS.data || []);
+                    }
+                } catch (eS) {
+                    console.warn('API de startups indisponível ou sem sessão, usando fallback local.', eS);
+                }
+
+                // Fallback com a startup ativa em cache ou UNICESUMAR
+                if (!Array.isArray(listS) || listS.length === 0) {
+                    const stAtiva = localStorage.getItem('startup_ativa_nome') || 'UNICESUMAR';
+                    const stId = localStorage.getItem('startup_ativa_id') || '1';
+                    listS = [{ id: stId, nome_fantasia: stAtiva, razao_social: stAtiva, porte: 'ME/EPP' }];
+                }
+                cachedStartups = listS;
+
+                if (selectS) {
+                    selectS.innerHTML = '';
+                    cachedStartups.forEach(st => {
+                        const opt = document.createElement('option');
+                        opt.value = st.id;
+                        opt.textContent = `${st.nome_fantasia || st.razao_social || 'Startup'} (${st.porte || 'Ativa'})`;
+                        selectS.appendChild(opt);
+                    });
+                }
+
+                if (selectFit) {
+                    selectFit.innerHTML = '';
+                    cachedStartups.forEach(st => {
+                        const opt = document.createElement('option');
+                        opt.value = st.id;
+                        opt.textContent = `${st.nome_fantasia || st.razao_social || 'Startup'} (${st.porte || 'Ativa'})`;
+                        selectFit.appendChild(opt);
+                    });
+                }
+
+                // 2. Carrega Editais do banco
+                let listE = [];
+                try {
+                    const resE = await fetch(`${API_BASE}/editais`);
+                    if (resE.ok) {
+                        const jsonE = await resE.json();
+                        listE = Array.isArray(jsonE) ? jsonE : (jsonE.data || jsonE.dados || []);
+                    }
+                } catch (eE) {
+                    console.warn('API de editais demorou ou falhou, verificando cache:', eE);
+                }
+
+                if (Array.isArray(listE) && listE.length > 0) {
+                    cachedEditais = listE;
+                } else if (!cachedEditais || cachedEditais.length === 0) {
+                    cachedEditais = [{ id: 1, name: 'EDITAL DE CHAMADA PÚBLICA FAPESC/SED N.º 54/2026', org: 'FAPESC' }];
+                }
+
+                if (selectE) {
+                    selectE.innerHTML = '';
+                    cachedEditais.forEach(ed => {
+                        const opt = document.createElement('option');
+                        opt.value = ed.id;
+                        const titulo = ed.name || ed.title || 'Edital de Inovação';
+                        const fonte = ed.org || ed.fonte || 'EDITAL';
+                        opt.textContent = `[${fonte}] ${titulo.length > 80 ? titulo.substring(0, 80) + '...' : titulo}`;
+                        selectE.appendChild(opt);
+                    });
+                }
+
+                // Sincroniza minuta estritamente para o edital selecionado
+                await handleTrocarEditalMinuta();
+            } catch (e) {
+                console.error('Erro ao preencher seletores da IA:', e);
+            }
+        }
+
+        // Troca de edital no select: carrega a minuta específica daquele edital (se houver) ou limpa o editor
+        async function handleTrocarEditalMinuta() {
+            const editalId = document.getElementById('selectMinutaEdital').value;
+            const status = document.getElementById('aiGenerationStatus');
+            const editorContainer = document.getElementById('minutaEditorContainer');
+
+            if (!editalId) {
+                currentMinutaData = null;
+                editorContainer.style.display = 'none';
+                return;
+            }
+
+            status.textContent = 'Carregando proposta do edital...';
+
+            try {
+                const res = await fetch(`${API_BASE}/minutas?edital_id=${editalId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const lista = data.dados?.data || data.dados || [];
+                    if (lista.length > 0) {
+                        currentMinutaData = lista[0]; // Minuta mais recente deste edital
+                        renderizarEditorMinuta(currentMinutaData);
+                        status.textContent = `Proposta ativa vinculada a este edital (v${currentMinutaData.versao}).`;
+                    } else {
+                        // Não há minuta para este edital específico
+                        currentMinutaData = null;
+                        editorContainer.style.display = 'none';
+                        document.getElementById('txtMinutaConteudo').value = '';
+                        status.textContent = 'Nenhuma proposta elaborada para este edital. Clique em "Estruturar Minuta Técnica".';
+                    }
+                }
+            } catch (err) {
+                console.error('Erro ao buscar minuta do edital:', err);
+                status.textContent = '';
+            }
+        }
+
+        // RF-29 & EDTAN-250: Gerar Minuta de Proposta com IA respeitando limite do plano
+        async function handleGerarMinuta(evt) {
+            if (evt) evt.preventDefault();
+
+            const startupId = document.getElementById('selectMinutaStartup').value;
+            const editalId = document.getElementById('selectMinutaEdital').value;
+            const ideia = document.getElementById('inputMinutaIdeia').value.trim();
+
+            if (!startupId || !editalId) {
+                alert('Selecione uma startup e um edital.');
+                return;
+            }
+
+            if (!ideia || ideia.length < 15) {
+                alert('Por favor, informe a ideia ou escopo do projeto com pelo menos 15 caracteres.');
+                return;
+            }
+
+            const btn = document.getElementById('btnGerarMinutaAction');
+            const status = document.getElementById('aiGenerationStatus');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Elaborando Minuta Técnica...';
+            status.textContent = 'Processando diretrizes do edital e perfil da empresa...';
+
+            try {
+                const res = await fetch(`${API_BASE}/minutas/gerar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    },
+                    body: JSON.stringify({
+                        startup_id: startupId,
+                        edital_id: editalId,
+                        ideia_projeto: ideia
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.sucesso) {
+                    currentMinutaData = data.dados;
+                    renderizarEditorMinuta(currentMinutaData);
+                    status.textContent = `Proposta estruturada e salva com sucesso para este edital!`;
+                    if (data.consumo) {
+                        atualizarBadgeCotaMinutas(data.consumo);
+                    }
+                } else if (res.status === 403 && data.codigo === 'LIMITE_MINUTAS_ATINGIDO') {
+                    alert('⚠️ ' + data.message);
+                    status.innerHTML = `<span style="color: #ef4444; font-weight: 600;">Limite do plano atingido (${data.consumo?.usadas}/${data.consumo?.limite}). Faça upgrade para gerar mais.</span>`;
+                    if (data.consumo) {
+                        atualizarBadgeCotaMinutas(data.consumo);
+                    }
+                } else {
+                    alert('Falha ao elaborar minuta: ' + (data.message || 'Erro desconhecido.'));
+                    status.textContent = 'Erro na geração.';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de comunicação ao acionar o serviço de inteligência.');
+                status.textContent = 'Falha de comunicação.';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2z"/></svg> Estruturar Minuta Técnica`;
+            }
+        }
+
+        // EDTAN-250: Consulta e renderização da cota de minutas do plano
+        async function carregarConsumoMinutasPlano() {
+            const badge = document.getElementById('badgeCotaMinutas');
+            if (!badge) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/minutas/consumo`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    }
+                });
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.sucesso && json.dados) {
+                        atualizarBadgeCotaMinutas(json.dados);
+                    }
+                }
+            } catch (err) {
+                console.debug('Falha ao verificar consumo de minutas:', err);
+            }
+        }
+
+        function atualizarBadgeCotaMinutas(dados) {
+            const badge = document.getElementById('badgeCotaMinutas');
+            const btn = document.getElementById('btnGerarMinutaAction');
+            if (!badge) return;
+
+            badge.textContent = `${dados.usadas}/${dados.limite} minutas`;
+            if (dados.atingiu_limite) {
+                badge.style.color = '#ef4444';
+                badge.textContent += ' (Esgotada)';
+                if (btn) {
+                    btn.title = `Limite de minutas atingido para o plano ${dados.plano_nome}.`;
+                }
+            } else {
+                badge.style.color = '#10b981';
+            }
+        }
+
+        // RF-30: Renderiza no editor interativo
+        function renderizarEditorMinuta(minuta) {
+            const container = document.getElementById('minutaEditorContainer');
+            container.style.display = 'flex';
+
+            document.getElementById('lblMinutaVersao').textContent = `v${minuta.versao}`;
+            document.getElementById('lblMinutaAutor').textContent = minuta.autor_nome || 'Consultor';
+            document.getElementById('lblMinutaModelo').textContent = minuta.modelo_ia_usado || 'Sistema';
+
+            document.getElementById('txtMinutaConteudo').value = minuta.conteudo_gerado;
+
+            // Sincroniza o select do edital se a minuta tiver edital_id
+            if (minuta.edital_id) {
+                const selE = document.getElementById('selectMinutaEdital');
+                if (selE && selE.value != minuta.edital_id) {
+                    selE.value = minuta.edital_id;
+                }
+            }
+        }
+
+        // RF-30: Salvar alterações do editor gerando nova versão
+        async function handleSalvarEdicaoMinuta() {
+            if (!currentMinutaData) return;
+
+            const novoTexto = document.getElementById('txtMinutaConteudo').value;
+            if (!novoTexto.trim()) {
+                alert('O conteúdo da proposta não pode ficar vazio.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/minutas/${currentMinutaData.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        conteudo_gerado: novoTexto
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.sucesso) {
+                    currentMinutaData = data.dados;
+                    renderizarEditorMinuta(currentMinutaData);
+                    alert(data.message);
+                } else {
+                    alert('Erro ao salvar revisão.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de comunicação.');
+            }
+        }
+
+        // RF-31: Cópia Rápida em 1 Clique
+        async function handleCopiarTextoMinuta() {
+            const texto = document.getElementById('txtMinutaConteudo').value;
+            if (!texto) {
+                alert('Nenhum texto disponível para cópia.');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(texto);
+                alert('Texto da proposta técnica copiado com sucesso para a Área de Transferência! (RF-31)');
+            } catch (err) {
+                const txtArea = document.getElementById('txtMinutaConteudo');
+                txtArea.select();
+                document.execCommand('copy');
+                alert('Texto copiado com sucesso!');
+            }
+        }
+
+        // RF-32: Exportar Word (.docx)
+        function handleExportarWord() {
+            if (!currentMinutaData) {
+                alert('Gere ou selecione uma minuta antes de exportar.');
+                return;
+            }
+            window.open(`${API_BASE}/minutas/${currentMinutaData.id}/exportar-docx`, '_blank');
+        }
+
+        // RF-32.1: Exportar / Visualizar PDF
+        function handleExportarPdf() {
+            if (!currentMinutaData) {
+                alert('Gere ou selecione uma minuta antes de exportar.');
+                return;
+            }
+            window.open(`${API_BASE}/minutas/${currentMinutaData.id}/exportar-pdf`, '_blank');
+        }
+
+        // RF-47: Match Inteligente de Editais
+        async function handleCarregarRankingFit() {
+            let selectFit = document.getElementById('selectFitStartup');
+            let startupId = selectFit ? selectFit.value : null;
+
+            // Se o select estiver vazio, carrega startups automaticamente
+            if (!startupId && (!cachedStartups || cachedStartups.length === 0)) {
+                await carregarStartupsEEditaisMinuta();
+                selectFit = document.getElementById('selectFitStartup');
+                if (selectFit) {
+                    const stAtivaId = localStorage.getItem('startup_ativa_id');
+                    if (stAtivaId && Array.from(selectFit.options).some(o => String(o.value) === String(stAtivaId))) {
+                        selectFit.value = stAtivaId;
+                    } else if (selectFit.options.length > 0) {
+                        selectFit.selectedIndex = 0;
+                    }
+                    startupId = selectFit ? selectFit.value : null;
+                }
+            }
+
+            const container = document.getElementById('fitListContainer');
+            if (!container) return;
+
+            if (!startupId) {
+                container.innerHTML = '<div style="color: #888; padding: 1rem; text-align: center;">Selecione uma startup para calcular a aderência.</div>';
+                return;
+            }
+
+            container.innerHTML = '<div style="color: #888;">Calculando aderência e pontuação semântica de fit...</div>';
+
+            try {
+                const res = await fetch(`${API_BASE}/ia/match-editais`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ startup_id: startupId })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.sucesso) {
+                    renderizarRankingFit(data.ranking);
+                } else {
+                    container.innerHTML = '<div style="color: #ef4444;">Falha ao calcular fit.</div>';
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div style="color: #ef4444;">Erro de comunicação ao calcular fit.</div>';
+            }
+        }
+
+        function renderizarRankingFit(ranking) {
+            const container = document.getElementById('fitListContainer');
+            container.innerHTML = '';
+
+            if (!ranking || ranking.length === 0) {
+                container.innerHTML = '<div style="color: #888;">Nenhum edital encontrado para comparação.</div>';
+                return;
+            }
+
+            ranking.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'fit-card';
+
+                const scoreColor = item.match_percentual >= 80 ? '#10b981' : (item.match_percentual >= 60 ? '#8b5cf6' : '#f59e0b');
+
+                card.innerHTML = `
+                    <div class="fit-header">
+                        <div>
+                            <span class="tag ${getTagClass(item.fonte)}">${item.fonte}</span>
+                            <strong style="margin-left: 8px; font-size: 0.95rem;">${item.titulo}</strong>
+                        </div>
+                        <span class="fit-score" style="color: ${scoreColor};">${item.match_percentual}% Fit</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
+                        ${item.justificativa_fit}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 6px; font-size: 0.8rem; color: var(--text-subtle);">
+                        <span>Prazo: ${item.prazo} | Teto: R$ ${Number(item.orcamento_maximo || 0).toLocaleString('pt-BR')}</span>
+                        <button class="btn-ai-secondary" style="padding: 3px 8px; font-size: 0.75rem;" onclick="selecionarEditalParaMinuta(${item.edital_id})">
+                            Elaborar Proposta Deste Edital &rarr;
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function selecionarEditalParaMinuta(editalId) {
+            document.getElementById('selectMinutaEdital').value = editalId;
+            const startupId = document.getElementById('selectFitStartup').value;
+            if (startupId) document.getElementById('selectMinutaStartup').value = startupId;
+            switchMinutaTab('gerador');
+        }
+
+        // RF-33 & RF-34: Histórico e Auditoria Estritamente Vinculado ao Edital
+        async function fetchHistoricoMinutas() {
+            const container = document.getElementById('historicoMinutasList');
+            const selectFiltro = document.getElementById('selectHistoricoEdital');
+            const modoFiltro = selectFiltro ? selectFiltro.value : 'atual';
+            const editalAtualId = document.getElementById('selectMinutaEdital')?.value;
+
+            container.innerHTML = '<div style="color: #888;">Buscando histórico do edital...</div>';
+
+            try {
+                const stAtivaId = localStorage.getItem('startup_ativa_id');
+                const params = new URLSearchParams();
+
+                if (stAtivaId) {
+                    params.append('startup_id', stAtivaId);
+                }
+
+                if (modoFiltro === 'atual' && editalAtualId) {
+                    params.append('edital_id', editalAtualId);
+                }
+
+                const queryString = params.toString() ? `?${params.toString()}` : '';
+                const url = `${API_BASE}/minutas${queryString}`;
+
+                const res = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    }
+                });
+                const data = await res.json();
+
+                if (res.ok && data.sucesso) {
+                    renderizarHistoricoMinutas(data.dados.data || data.dados);
+                } else {
+                    container.innerHTML = '<div style="color: #ef4444;">Erro ao carregar histórico deste edital.</div>';
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div style="color: #ef4444;">Erro de conexão com o histórico.</div>';
+            }
+        }
+
+        function renderizarHistoricoMinutas(minutas) {
+            const container = document.getElementById('historicoMinutasList');
+            container.innerHTML = '';
+
+            if (!minutas || minutas.length === 0) {
+                container.innerHTML = '<div style="color: #888;">Nenhuma minuta gerada até o momento.</div>';
+                return;
+            }
+
+            minutas.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'fit-card';
+
+                const dataFmt = new Date(m.created_at).toLocaleString('pt-BR');
+
+                item.innerHTML = `
+                    <div class="fit-header">
+                        <div>
+                            <span class="tag tag-finep">v${m.versao}</span>
+                            <strong style="margin-left: 6px; font-size: 0.95rem;">${m.titulo_projeto || 'Minuta de Inovação'}</strong>
+                        </div>
+                        <span style="font-size: 0.8rem; color: #888;">Status: ${m.status.toUpperCase()}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        Startup: <strong>${m.startup?.nome_fantasia || m.startup?.razao_social || 'N/A'}</strong> | Edital: <strong>${m.edital?.title?.substring(0, 50) || 'N/A'}...</strong>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-subtle);">
+                        Auditado em <strong>${dataFmt}</strong> por <strong>${m.autor_nome || 'Consultor'}</strong> (${m.modelo_ia_usado || 'IA'})
+                    </div>
+                    <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px;">
+                        <button class="btn-ai-secondary" style="font-size: 0.8rem;" onclick="abrirMinutaDoHistorico(${m.id})">Visualizar &rarr;</button>
+                        <a href="${API_BASE}/minutas/${m.id}/exportar-docx" target="_blank" class="btn-ai-secondary" style="font-size: 0.8rem; text-decoration: none;">Word (.docx)</a>
+                        <a href="${API_BASE}/minutas/${m.id}/exportar-pdf" target="_blank" class="btn-ai-secondary" style="font-size: 0.8rem; text-decoration: none;">PDF</a>
+                    </div>
+                `;
+
+                container.appendChild(item);
+            });
+        }
+
+        async function abrirMinutaDoHistorico(id) {
+            try {
+                const res = await fetch(`${API_BASE}/minutas/${id}`);
+                const data = await res.json();
+                if (res.ok && data.sucesso) {
+                    currentMinutaData = data.dados;
+                    switchMinutaTab('gerador');
+                    renderizarEditorMinuta(currentMinutaData);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao carregar minuta do histórico.');
+            }
+        }
+
+        // =========================================================================
+        // MÓDULO DE ANEXOS E DADOS DO CARD KANBAN
+        // =========================================================================
+        // (todosCardsKanban declarado no escopo principal do script)
+
+        function carregarOpcoesSelectCardsAnexo() {
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (!selectCard) return;
+
+            // Extrai todos os cards do quadro atual
+            todosCardsKanban = [];
+            if (currentBoard && currentBoard.columns) {
+                currentBoard.columns.forEach(col => {
+                    if (col.cards && col.cards.length > 0) {
+                        col.cards.forEach(c => todosCardsKanban.push(c));
+                    }
+                });
+            }
+
+            selectCard.innerHTML = '';
+            if (todosCardsKanban.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'Nenhum card cadastrado no Kanban';
+                selectCard.appendChild(opt);
+                limparCamposAnexos();
+                return;
+            }
+
+            todosCardsKanban.forEach(card => {
+                const opt = document.createElement('option');
+                opt.value = card.id;
+                const fullTitle = card.title || 'Card sem título';
+                const shortTitle = fullTitle.length > 65 ? fullTitle.substring(0, 65) + '...' : fullTitle;
+                opt.textContent = `${shortTitle} (#${card.id})`;
+                opt.title = fullTitle;
+                selectCard.appendChild(opt);
+            });
+
+            // Se ainda não selecionou nenhum, seleciona o primeiro
+            carregarDadosCardSelecionado();
+        }
+
+        function selecionarCardParaAnexos(cardId) {
+            carregarOpcoesSelectCardsAnexo();
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (selectCard) {
+                selectCard.value = cardId;
+                carregarDadosCardSelecionado();
+            }
+        }
+
+        const LIMITE_ARQUIVO_BYTES = 10 * 1024 * 1024; // 10 MB por arquivo
+        const LIMITE_TOTAL_CARD_BYTES = 25 * 1024 * 1024; // 25 MB acumulados por card
+        const EXTENSOES_DOCUMENTACAO_PERMITIDAS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'png', 'jpg', 'jpeg'];
+
+        function exibirAlertaLimiteUpload(mensagem) {
+            const alerta = document.getElementById('alertaLimiteUploadCard');
+            if (!alerta) return;
+            if (!mensagem) {
+                alerta.textContent = '';
+                alerta.classList.remove('active');
+                return;
+            }
+            alerta.textContent = mensagem;
+            alerta.classList.add('active');
+        }
+
+        function atualizarBarraLimiteAnexos(anexos = []) {
+            const textoUso = document.getElementById('textoUsoAnexosCard');
+            const barraProgresso = document.getElementById('progressoUsoAnexosCard');
+            const totalBytes = (anexos || []).reduce((acc, arq) => acc + (Number(arq.tamanho) || 0), 0);
+            const totalMb = (totalBytes / (1024 * 1024)).toFixed(2).replace('.', ',');
+            const percentual = Math.min(100, Math.round((totalBytes / LIMITE_TOTAL_CARD_BYTES) * 100));
+
+            if (textoUso) {
+                textoUso.textContent = `${totalMb} MB / 25 MB`;
+            }
+            if (barraProgresso) {
+                barraProgresso.style.width = `${percentual}%`;
+                barraProgresso.classList.remove('is-warning', 'is-danger');
+                if (percentual >= 95) {
+                    barraProgresso.classList.add('is-danger');
+                } else if (percentual >= 75) {
+                    barraProgresso.classList.add('is-warning');
+                }
+                if (barraProgresso.parentElement) {
+                    barraProgresso.parentElement.setAttribute('aria-valuenow', String(percentual));
+                }
+            }
+        }
+
+        function limparCamposAnexos() {
+            const inputValor = document.getElementById('inputValorProjetoCard');
+            const txtNotas = document.getElementById('txtNotasInternasCard');
+            const listaAnexos = document.getElementById('listaAnexosCard');
+            if (inputValor) inputValor.value = '';
+            if (txtNotas) txtNotas.value = '';
+            if (listaAnexos) listaAnexos.innerHTML = '<div style="color: #666; font-size: 0.85rem; text-align: center; padding: 1rem;">Nenhum card selecionado.</div>';
+            exibirAlertaLimiteUpload('');
+            atualizarBarraLimiteAnexos([]);
+        }
+
+        function carregarDadosCardSelecionado() {
+            exibirAlertaLimiteUpload('');
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (!selectCard || !selectCard.value) {
+                limparCamposAnexos();
+                return;
+            }
+
+            const cardId = parseInt(selectCard.value);
+            const card = todosCardsKanban.find(c => c.id === cardId);
+            if (!card) return;
+
+            const meta = card.metadata || {};
+            const inputValor = document.getElementById('inputValorProjetoCard');
+            const txtNotas = document.getElementById('txtNotasInternasCard');
+
+            if (inputValor) inputValor.value = meta.valor_estimado || '';
+            if (txtNotas) txtNotas.value = meta.notas_internas || card.description || '';
+
+            renderizarListaAnexos(meta.anexos || []);
+        }
+
+        function renderizarListaAnexos(anexos) {
+            atualizarBarraLimiteAnexos(anexos || []);
+            const container = document.getElementById('listaAnexosCard');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!anexos || anexos.length === 0) {
+                container.innerHTML = '<div style="color: #666; font-size: 0.85rem; text-align: center; padding: 1rem;">Nenhum arquivo anexado a este card ainda.</div>';
+                return;
+            }
+
+            anexos.forEach(arq => {
+                const item = document.createElement('div');
+                item.className = 'anexo-item-card';
+
+                const tamanhoFmt = arq.tamanho ? `(${(arq.tamanho / 1024).toFixed(1)} KB)` : '';
+                const linkCompleto = arq.caminho.startsWith('http') ? arq.caminho : `${window.location.origin}${arq.caminho}`;
+
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+                        <span style="font-size: 1.25rem;">📄</span>
+                        <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <a href="${linkCompleto}" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 0.88rem; font-weight: 500;" title="${arq.nome}">
+                                ${arq.nome}
+                            </a>
+                            <span style="font-size: 0.75rem; color: #64748b; margin-left: 6px;">${tamanhoFmt}</span>
+                        </div>
+                    </div>
+                    <a href="${linkCompleto}" download target="_blank" style="color: var(--text-main); text-decoration: none; font-size: 0.8rem; padding: 4px 10px; border: 1px solid var(--border-field); border-radius: 6px; background: var(--bg-surface-hover); display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" title="Baixar">
+                        ⬇ Baixar
+                    </a>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        async function handleSalvarDadosCard() {
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (!selectCard || !selectCard.value) {
+                alert('Selecione um card para salvar os dados.');
+                return;
+            }
+
+            const cardId = selectCard.value;
+            const valor = document.getElementById('inputValorProjetoCard')?.value.trim();
+            const notas = document.getElementById('txtNotasInternasCard')?.value.trim();
+
+            const btn = document.getElementById('btnSalvarDadosCard');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Salvando...';
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/dados-anexos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    },
+                    body: JSON.stringify({
+                        metadata: {
+                            valor_estimado: valor,
+                            notas_internas: notas
+                        }
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.status === 'sucesso') {
+                    // Atualiza cache local
+                    const card = todosCardsKanban.find(c => c.id === parseInt(cardId));
+                    if (card) {
+                        card.metadata = card.metadata || {};
+                        card.metadata.valor_estimado = valor;
+                        card.metadata.notas_internas = notas;
+                    }
+                    alert('Dados do card salvos com sucesso!');
+                    fetchBoard();
+                } else {
+                    alert('Erro ao salvar informações do card: ' + (data.message || 'Falha na requisição.'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de comunicação ao salvar dados do card.');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '💾 Salvar Informações do Card';
+                }
+            }
+        }
+
+        async function handleUploadArquivoCard(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            exibirAlertaLimiteUpload('');
+
+            const selectCard = document.getElementById('selectCardAnexo');
+            if (!selectCard || !selectCard.value) {
+                exibirAlertaLimiteUpload('Selecione um card no seletor antes de anexar arquivos.');
+                event.target.value = '';
+                return;
+            }
+
+            const extensao = (file.name.split('.').pop() || '').toLowerCase();
+            if (!EXTENSOES_DOCUMENTACAO_PERMITIDAS.includes(extensao)) {
+                exibirAlertaLimiteUpload(`Formato ".${extensao}" não permitido. Envie PDF, DOC/DOCX, XLS/XLSX, CSV, TXT, PNG ou JPG.`);
+                event.target.value = '';
+                return;
+            }
+
+            if (file.size > LIMITE_ARQUIVO_BYTES) {
+                const tamanhoMb = (file.size / (1024 * 1024)).toFixed(2).replace('.', ',');
+                exibirAlertaLimiteUpload(`O arquivo "${file.name}" (${tamanhoMb} MB) excede o limite máximo de 10 MB por anexo.`);
+                event.target.value = '';
+                return;
+            }
+
+            const cardId = selectCard.value;
+            const cardSelecionado = todosCardsKanban.find(c => c.id === parseInt(cardId));
+            const anexosAtuais = cardSelecionado?.metadata?.anexos || [];
+            const usoAtualBytes = anexosAtuais.reduce((acc, arq) => acc + (Number(arq.tamanho) || 0), 0);
+            if ((usoAtualBytes + file.size) > LIMITE_TOTAL_CARD_BYTES) {
+                const disponivelMb = Math.max(0, (LIMITE_TOTAL_CARD_BYTES - usoAtualBytes) / (1024 * 1024)).toFixed(2).replace('.', ',');
+                exibirAlertaLimiteUpload(`Limite total do card (25 MB) excedido. Espaço disponível: ${disponivelMb} MB.`);
+                event.target.value = '';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('arquivo', file);
+
+            const container = document.getElementById('listaAnexosCard');
+            if (container) {
+                container.insertAdjacentHTML('afterbegin', `<div id="uploadingNotice" style="color: var(--accent-action); font-size: 0.85rem; padding: 6px;">Enviando ${file.name}...</div>`);
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/dados-anexos`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token_autenticacao') || ''}`
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (res.ok && data.status === 'sucesso') {
+                    // Atualiza cache local do card
+                    const card = todosCardsKanban.find(c => c.id === parseInt(cardId));
+                    const cardAtualizado = data.card || data.data;
+                    if (card && cardAtualizado) {
+                        card.metadata = cardAtualizado.metadata;
+                        renderizarListaAnexos(card.metadata?.anexos || []);
+                    }
+                    exibirAlertaLimiteUpload('');
+                    alert(`Arquivo "${file.name}" anexado com sucesso!`);
+                    fetchBoard();
+                } else {
+                    const msgErro = data.message || 'Erro desconhecido';
+                    exibirAlertaLimiteUpload('Falha no upload: ' + msgErro);
+                }
+            } catch (err) {
+                console.error(err);
+                exibirAlertaLimiteUpload('Erro de comunicação durante o upload do arquivo.');
+            } finally {
+                const notice = document.getElementById('uploadingNotice');
+                if (notice) notice.remove();
+                event.target.value = '';
+            }
+        }
+
+        // Exportação global para manipuladores inline
+        window.carregarDadosCardSelecionado = carregarDadosCardSelecionado;
+        window.handleSalvarDadosCard = handleSalvarDadosCard;
+        window.handleUploadArquivoCard = handleUploadArquivoCard;
+        window.selecionarCardParaAnexos = selecionarCardParaAnexos;
+    </script>
+
+    <!-- Script de Alternância de Tema (Claro / Escuro) -->
+    <script>
+        (function () {
+            const btnTema = document.getElementById('btnAlternarTema');
+            const iconeSol = document.getElementById('iconeSol');
+            const iconeLua = document.getElementById('iconeLua');
+
+            function aplicarTema(escuro) {
+                if (escuro) {
+                    document.body.classList.add('dark-mode');
+                    if (iconeSol) iconeSol.style.display = 'block';
+                    if (iconeLua) iconeLua.style.display = 'none';
+                    localStorage.setItem('tema_preferido', 'dark');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    if (iconeSol) iconeSol.style.display = 'none';
+                    if (iconeLua) iconeLua.style.display = 'block';
+                    localStorage.setItem('tema_preferido', 'light');
+                }
+            }
+
+            // Padrão escuro por padrão alinhado ao RadarEditais
+            const temaSalvo = localStorage.getItem('tema_preferido');
+            if (temaSalvo === 'light') {
+                aplicarTema(false);
+            } else {
+                aplicarTema(true);
+            }
+
+            if (btnTema) {
+                btnTema.addEventListener('click', () => {
+                    aplicarTema(!document.body.classList.contains('dark-mode'));
+                });
+            }
+        })();
+    </script>
+
+</body>
+
+</html>

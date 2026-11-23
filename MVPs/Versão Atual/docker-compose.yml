@@ -1,0 +1,218 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: anjonexus_db
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-anjonexus}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_USER: ${DB_USERNAME:-anjonexus}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-root}
+      TZ: America/Sao_Paulo
+    ports:
+      - "${DB_EXTERNAL_PORT:-3307}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "--password=${DB_ROOT_PASSWORD:-root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - anjonexus_net
+
+  back:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    image: anjonexus-back:latest
+    container_name: anjonexus_back
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${API_EXTERNAL_PORT:-8000}:8000"
+    environment:
+      APP_NAME: "${APP_NAME:-Anjo Nexus}"
+      APP_ENV: ${APP_ENV:-local}
+      APP_KEY: ${APP_KEY:-}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      FRONT_URL: ${FRONT_URL:-http://localhost:5500}
+      DOCKER_FRESH_DB: ${DOCKER_FRESH_DB:-true}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-anjonexus}
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      SESSION_DRIVER: ${SESSION_DRIVER:-database}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
+      CACHE_STORE: ${CACHE_STORE:-database}
+      MAIL_MAILER: ${MAIL_MAILER:-smtp}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-465}
+      MAIL_USERNAME: ${MAIL_USERNAME:-projetoanjonexus@gmail.com}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-ssl}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-projetoanjonexus@gmail.com}
+      MAIL_FROM_NAME: "${MAIL_FROM_NAME:-Anjo Nexus}"
+      ABACATEPAY_API_KEY: ${ABACATEPAY_API_KEY:-}
+      ABACATEPAY_WEBHOOK_SECRET: ${ABACATEPAY_WEBHOOK_SECRET:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      ASSINATURA_DIAS_EXPURGO_NUNCA_PAGO: ${ASSINATURA_DIAS_EXPURGO_NUNCA_PAGO:-3}
+      ASSINATURA_DIAS_EXPURGO_SUSPENSA: ${ASSINATURA_DIAS_EXPURGO_SUSPENSA:-30}
+    volumes:
+      - ./back:/var/www/html
+      - /var/www/html/vendor
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/api/planos >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    networks:
+      - anjonexus_net
+
+  scheduler:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    image: anjonexus-back:latest
+    container_name: anjonexus_scheduler
+    restart: unless-stopped
+    depends_on:
+      back:
+        condition: service_healthy
+    entrypoint: []
+    command: ["php", "artisan", "schedule:work"]
+    environment:
+      APP_NAME: "${APP_NAME:-Anjo Nexus}"
+      APP_ENV: ${APP_ENV:-local}
+      APP_KEY: ${APP_KEY:-}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      FRONT_URL: ${FRONT_URL:-http://localhost:5500}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-anjonexus}
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      SESSION_DRIVER: ${SESSION_DRIVER:-database}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
+      CACHE_STORE: ${CACHE_STORE:-database}
+      MAIL_MAILER: ${MAIL_MAILER:-smtp}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-465}
+      MAIL_USERNAME: ${MAIL_USERNAME:-projetoanjonexus@gmail.com}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-ssl}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-projetoanjonexus@gmail.com}
+      MAIL_FROM_NAME: "${MAIL_FROM_NAME:-Anjo Nexus}"
+      ABACATEPAY_API_KEY: ${ABACATEPAY_API_KEY:-}
+      ABACATEPAY_WEBHOOK_SECRET: ${ABACATEPAY_WEBHOOK_SECRET:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      ASSINATURA_DIAS_EXPURGO_NUNCA_PAGO: ${ASSINATURA_DIAS_EXPURGO_NUNCA_PAGO:-3}
+      ASSINATURA_DIAS_EXPURGO_SUSPENSA: ${ASSINATURA_DIAS_EXPURGO_SUSPENSA:-30}
+    volumes:
+      - ./back:/var/www/html
+      - /var/www/html/vendor
+    networks:
+      - anjonexus_net
+
+  spiders:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    image: anjonexus-back:latest
+    container_name: anjonexus_spiders
+    restart: "no"
+    depends_on:
+      back:
+        condition: service_healthy
+    entrypoint: []
+    command:
+      - bash
+      - -c
+      - |
+        echo "=================================================="
+        echo " 🕷️ [Anjo Nexus Spiders] Iniciando mineracao de editais..."
+        echo "=================================================="
+        php artisan editais:sync || true
+        php artisan finep:sync-detalhes --limit=40 || true
+        php artisan editais:processar-pdfs --limit=25 || true
+        echo "=================================================="
+        echo " ✔ [Anjo Nexus Spiders] Ciclo de mineracao finalizado!"
+        echo "=================================================="
+    environment:
+      APP_NAME: "${APP_NAME:-Anjo Nexus}"
+      APP_ENV: ${APP_ENV:-local}
+      APP_KEY: ${APP_KEY:-}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      FRONT_URL: ${FRONT_URL:-http://localhost:5500}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-anjonexus}
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      SESSION_DRIVER: ${SESSION_DRIVER:-database}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
+      CACHE_STORE: ${CACHE_STORE:-database}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+    volumes:
+      - ./back:/var/www/html
+      - /var/www/html/vendor
+    networks:
+      - anjonexus_net
+
+  front:
+    image: nginx:alpine
+    container_name: anjonexus_front
+    restart: unless-stopped
+    ports:
+      - "${FRONT_EXTERNAL_PORT:-5500}:80"
+    volumes:
+      - ./front:/usr/share/nginx/html:ro
+    networks:
+      - anjonexus_net
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: anjonexus_ngrok
+    restart: on-failure:2
+    profiles:
+      - ngrok
+    depends_on:
+      back:
+        condition: service_healthy
+    command:
+      - "http"
+      - "--domain=${NGROK_DOMAIN:-esophagus-swifter-cultivate.ngrok-free.dev}"
+      - "back:8000"
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:-}
+    ports:
+      - "4040:4040"
+    networks:
+      - anjonexus_net
+
+networks:
+  anjonexus_net:
+    name: anjonexus_net
+    driver: bridge
+
+volumes:
+  mysql_data:
+    name: anjonexus_mysql_data

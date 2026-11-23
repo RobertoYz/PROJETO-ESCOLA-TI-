@@ -1,0 +1,583 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+    --bg-page: #F8FAFC;
+    --bg-surface: #FFFFFF;
+    --bg-surface-subtle: #F1F5F9;
+    --bg-brand-panel: #0F172A;
+    --text-main: #0F172A;
+    --text-muted: #475569;
+    --text-subtle: #64748B;
+    --text-brand: #F8FAFC;
+    --text-brand-muted: #94A3B8;
+    --accent-action: #0369A1;
+    --accent-action-hover: #075985;
+    --accent-soft: rgba(3, 105, 161, 0.08);
+    --border-subtle: #E2E8F0;
+    --border-field: #CBD5E1;
+    --border-focus: #0284C7;
+    --color-error: #B91C1C;
+    --color-success: #047857;
+    --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+body.dark-mode {
+    --bg-page: #07090E;
+    --bg-surface: #0F1422;
+    --bg-surface-subtle: #131A2C;
+    --bg-brand-panel: #0A0F1D;
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+    --text-subtle: #64748B;
+    --accent-action: #0284C7;
+    --accent-action-hover: #0369A1;
+    --accent-soft: rgba(56, 189, 248, 0.12);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-field: rgba(255, 255, 255, 0.14);
+    --border-focus: #38BDF8;
+    --color-success: #34D399;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-page);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Cabeçalho Institucional Superior */
+.topbar-institucional {
+    background-color: var(--bg-brand-panel);
+    color: var(--text-brand);
+    border-bottom: 1px solid #1E293B;
+    padding: max(14px, env(safe-area-inset-top, 14px)) 32px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.brand-symbol {
+    width: 34px;
+    height: 34px;
+    background-color: var(--accent-action);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(3, 105, 161, 0.35);
+}
+
+.brand-title {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #FFFFFF;
+    white-space: nowrap;
+}
+
+.brand-divider {
+    width: 1px;
+    height: 18px;
+    background-color: #334155;
+    flex-shrink: 0;
+}
+
+.brand-context {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-brand-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.consultor-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #CBD5E1;
+    padding-right: 4px;
+}
+
+.consultor-badge strong {
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.btn-topbar-sair {
+    height: 36px;
+    padding: 0 12px;
+    background: transparent;
+    border: 1px solid #334155;
+    border-radius: 2px;
+    color: #E2E8F0;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-topbar-sair:hover {
+    background-color: rgba(239, 68, 68, 0.14);
+    border-color: rgba(239, 68, 68, 0.45);
+    color: #FCA5A5;
+}
+
+.theme-toggle-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid #334155;
+    border-radius: 4px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #F8FAFC;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+    border-color: var(--border-focus);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.theme-toggle-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+}
+
+/* Conteúdo Principal */
+.pagina-conteudo {
+    flex: 1;
+    width: 100%;
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 36px 24px max(48px, env(safe-area-inset-bottom, 32px));
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.link-voltar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-action);
+    text-decoration: none;
+    width: fit-content;
+    transition: color 0.15s ease;
+}
+
+body.dark-mode .link-voltar {
+    color: #38BDF8;
+}
+
+.link-voltar:hover {
+    text-decoration: underline;
+}
+
+.cabecalho-secao {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 20px;
+}
+
+.cabecalho-kicker {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-action);
+}
+
+body.dark-mode .cabecalho-kicker {
+    color: #38BDF8;
+}
+
+.cabecalho-secao h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+    line-height: 1.25;
+}
+
+.cabecalho-secao p {
+    font-size: 14px;
+    color: var(--text-muted);
+    max-width: 640px;
+}
+
+/* Superfície do Formulário */
+.form-surface {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 28px 32px;
+    transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+#formulario-cadastro-startup {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.section-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+    letter-spacing: -0.01em;
+}
+
+.section-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 16px;
+}
+
+.col-12 { grid-column: span 12; }
+.col-9 { grid-column: span 9; }
+.col-6 { grid-column: span 6; }
+.col-4 { grid-column: span 4; }
+.col-3 { grid-column: span 3; }
+.col-2 { grid-column: span 2; }
+.col-7 { grid-column: span 7; }
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.obrigatorio {
+    color: var(--color-error);
+    margin-left: 2px;
+}
+
+body.dark-mode .obrigatorio {
+    color: #F87171;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-main);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-field);
+    border-radius: 2px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.25s ease;
+}
+
+.form-group input {
+    height: 44px;
+    padding: 0 14px;
+}
+
+.form-group textarea {
+    min-height: 112px;
+    padding: 12px 14px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--text-subtle);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+}
+
+/* Grupo CNPJ + Botão Puxar Dados */
+.grupo-cnpj {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.grupo-cnpj input {
+    flex: 1;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.btn-buscar-cnpj {
+    height: 44px;
+    padding: 0 18px;
+    background-color: var(--bg-surface-subtle);
+    color: var(--text-main);
+    border: 1px solid var(--border-field);
+    border-radius: 2px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-buscar-cnpj:hover:not(:disabled) {
+    background-color: var(--accent-soft);
+    border-color: var(--accent-action);
+    color: var(--accent-action);
+}
+
+body.dark-mode .btn-buscar-cnpj:hover:not(:disabled) {
+    color: #38BDF8;
+    border-color: #38BDF8;
+}
+
+.btn-buscar-cnpj:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Aviso Status CNPJ */
+.aviso-status {
+    padding: 10px 14px;
+    border-radius: 2px;
+    font-size: 13px;
+    line-height: 1.4;
+    display: none;
+}
+
+.aviso-status.carregando {
+    display: block;
+    background-color: var(--accent-soft);
+    color: var(--accent-action);
+    border: 1px solid rgba(3, 105, 161, 0.25);
+}
+
+body.dark-mode .aviso-status.carregando {
+    color: #38BDF8;
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.aviso-status.sucesso {
+    display: block;
+    background-color: #ECFDF5;
+    color: var(--color-success);
+    border: 1px solid #A7F3D0;
+}
+
+body.dark-mode .aviso-status.sucesso {
+    background-color: rgba(16, 185, 129, 0.14);
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #6EE7B7;
+}
+
+/* Alerta de Erro */
+.alert-box {
+    padding: 12px 16px;
+    border-radius: 2px;
+    font-size: 13px;
+    line-height: 1.4;
+    background-color: #FEF2F2;
+    color: var(--color-error);
+    border: 1px solid #FCA5A5;
+}
+
+body.dark-mode .alert-box {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #FCA5A5;
+}
+
+.alert-box[hidden] {
+    display: none;
+}
+
+/* Barra de Ações do Formulário */
+.form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.btn-secundario {
+    height: 44px;
+    padding: 0 18px;
+    background: transparent;
+    border: 1px solid var(--border-field);
+    border-radius: 2px;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-secundario:hover {
+    background-color: var(--bg-surface-subtle);
+}
+
+.btn-submit {
+    height: 44px;
+    padding: 0 24px;
+    background-color: var(--accent-action);
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease;
+}
+
+.btn-submit:hover:not(:disabled) {
+    background-color: var(--accent-action-hover);
+}
+
+.btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Rodapé Discreto */
+.rodape-institucional {
+    margin-top: auto;
+    padding: 16px 32px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 12px;
+    color: var(--text-subtle);
+    text-align: center;
+}
+
+/* Responsividade Mobile e Tablet */
+@media (max-width: 680px) {
+    .topbar-institucional {
+        padding: max(12px, env(safe-area-inset-top, 12px)) 16px 12px;
+    }
+
+    .brand-divider,
+    .brand-context,
+    .consultor-badge {
+        display: none;
+    }
+
+    .pagina-conteudo {
+        padding: 24px 16px max(32px, env(safe-area-inset-bottom, 24px));
+        gap: 18px;
+    }
+
+    .cabecalho-secao h1 {
+        font-size: 22px;
+    }
+
+    .form-surface {
+        padding: 20px 16px;
+    }
+
+    .col-9,
+    .col-7,
+    .col-6,
+    .col-4,
+    .col-3,
+    .col-2 {
+        grid-column: span 12;
+    }
+
+    .grupo-cnpj {
+        flex-direction: column;
+    }
+
+    .btn-buscar-cnpj {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .btn-secundario,
+    .btn-submit {
+        width: 100%;
+    }
+}

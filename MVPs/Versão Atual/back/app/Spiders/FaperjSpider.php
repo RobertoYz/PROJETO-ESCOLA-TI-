@@ -63,8 +63,8 @@ class FaperjSpider extends BaseSpider
             // 2. Extrai data limite de submissão (removendo datas riscadas / prorrogadas)
             $deadline = $this->extrairDeadline($htmlParagrafo, $textoParagrafo);
 
-            // 3. Define status (open / closed)
-            $status = 'open';
+            // 3. Define status (active / closed)
+            $status = 'active';
             if ($deadline && Carbon::parse($deadline)->isPast()) {
                 $status = 'closed';
             }
