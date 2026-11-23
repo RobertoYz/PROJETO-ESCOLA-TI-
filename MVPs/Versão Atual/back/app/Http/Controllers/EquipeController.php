@@ -18,7 +18,7 @@ class EquipeController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $dados = $this->equipeService->listarMembros($request->user(), $request);
+        $dados = $this->equipeService->listarMembros($request->user());
 
         return response()->json($dados, 200);
     }
@@ -36,7 +36,7 @@ class EquipeController extends Controller
             'email.email' => 'Informe um endereço de e-mail válido.',
         ]);
 
-        $resultado = $this->equipeService->convidar($request->user(), $dadosValidados, $request);
+        $resultado = $this->equipeService->convidar($request->user(), $dadosValidados);
 
         return response()->json([
             'message' => 'Convite gerado com sucesso! Envie o código de ativação de 6 dígitos ao consultor.',
@@ -99,7 +99,7 @@ class EquipeController extends Controller
     public function reenviarConvite(Request $request, int $id): JsonResponse
     {
         $alvo = User::findOrFail($id);
-        $resultado = $this->equipeService->reenviarConvite($request->user(), $alvo, $request);
+        $resultado = $this->equipeService->reenviarConvite($request->user(), $alvo);
 
         return response()->json([
             'message' => 'Novo convite e código PIN de 6 dígitos gerados com sucesso.',

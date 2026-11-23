@@ -535,4 +535,40 @@ class EquipeManagementAndInviteTest extends TestCase
             'deleted_at' => null,
         ]);
     }
+
+    public function test_8_link_convite_utiliza_config_front_url_e_ignora_headers_de_origem_do_cliente(): void
+    {
+        Mail::fake();
+        config(['app.front_url' => 'https://app.anjonexus.com.br']);
+
+        $res = $this->actingAs($this->titular, 'sanctum')
+            ->withHeaders([
+                'Referer' => 'http://evil.test/paginas/equipe.html',
+                'X-Frontend-Url' => 'capacitor://localhost/paginas/equipe.html',
+            ])
+            ->postJson('/api/equipe', [
+                'name' => 'Consultor Blindado',
+                'email' => 'blindado@anjonexus.com.br',
+                'permissoes' => [Permissao::STARTUPS_CRIAR_EDITAR->value],
+            ]);
+
+        $res->assertStatus(201);
+
+        $linkRetornado = (string) $res->json('link_convite');
+        $this->assertStringStartsWith('https://app.anjonexus.com.br/paginas/aceitar-convite.html?token=', $linkRetornado);
+        $this->assertStringNotContainsString('evil.test', $linkRetornado);
+        $this->assertStringNotContainsString('capacitor://localhost', $linkRetornado);
+
+        $resListagem = $this->actingAs($this->titular, 'sanctum')
+            ->withHeaders([
+                'Referer' => 'http://evil.test/paginas/equipe.html',
+                'X-Frontend-Url' => 'capacitor://localhost/paginas/equipe.html',
+            ])
+            ->getJson('/api/equipe');
+
+        $resListagem->assertStatus(200);
+        $membroBlindado = collect($resListagem->json('membros'))->firstWhere('email', 'blindado@anjonexus.com.br');
+        $this->assertNotNull($membroBlindado);
+        $this->assertStringStartsWith('https://app.anjonexus.com.br/paginas/aceitar-convite.html?token=', (string) $membroBlindado['link_convite']);
+    }
 }

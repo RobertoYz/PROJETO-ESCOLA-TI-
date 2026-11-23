@@ -6,7 +6,6 @@ use App\Enums\Permissao;
 use App\Models\User;
 use App\Policies\EquipePolicy;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -30,7 +29,7 @@ class EquipeService
     /**
      * @return array<string, mixed>
      */
-    public function listarMembros(User $actor, ?Request $request = null): array
+    public function listarMembros(User $actor): array
     {
         if (!$this->policy->viewAny($actor)) {
             throw new AuthorizationException('Você não possui permissão para visualizar ou gerenciar a equipe.');
@@ -42,8 +41,8 @@ class EquipeService
             ->orderBy('name', 'asc')
             ->get();
 
-        $membrosFormatados = $membros->map(function (User $membro) use ($actor, $request) {
-            return $this->formatarMembro($membro, $actor, $request);
+        $membrosFormatados = $membros->map(function (User $membro) use ($actor) {
+            return $this->formatarMembro($membro, $actor);
         })->values()->all();
 
         $atorEhOwner = $actor->isOwner();
@@ -69,7 +68,7 @@ class EquipeService
      * @param array<string, mixed> $dados
      * @return array<string, mixed>
      */
-    public function convidar(User $actor, array $dados, ?Request $request = null): array
+    public function convidar(User $actor, array $dados): array
     {
         if (!$this->policy->create($actor)) {
             throw new AuthorizationException('Você não possui permissão para convidar novos consultores.');
@@ -113,11 +112,11 @@ class EquipeService
             ]);
         });
 
-        $linkConvite = $this->construirLinkConvite($tokenConvite, $request);
+        $linkConvite = $this->construirLinkConvite($tokenConvite);
         $emailEnviado = $this->dispararEmailConviteBestEffort($membro, $actor, $linkConvite);
 
         return [
-            'membro' => $this->formatarMembro($membro->fresh(), $actor, $request),
+            'membro' => $this->formatarMembro($membro->fresh(), $actor),
             'link_convite' => $linkConvite,
             'codigo_ativacao' => $pinAtivacao,
             'expira_em' => $membro->convite_expira_em?->toIso8601String(),
@@ -128,7 +127,7 @@ class EquipeService
     /**
      * @return array<string, mixed>
      */
-    public function reenviarConvite(User $actor, User $target, ?Request $request = null): array
+    public function reenviarConvite(User $actor, User $target): array
     {
         if (!$this->policy->manageMember($actor, $target)) {
             throw new AuthorizationException('Você não possui permissão para gerenciar este membro.');
@@ -150,11 +149,11 @@ class EquipeService
         $target->convidado_por_id = $actor->id;
         $target->save();
 
-        $linkConvite = $this->construirLinkConvite($novoToken, $request);
+        $linkConvite = $this->construirLinkConvite($novoToken);
         $emailEnviado = $this->dispararEmailConviteBestEffort($target, $actor, $linkConvite);
 
         return [
-            'membro' => $this->formatarMembro($target->fresh(), $actor, $request),
+            'membro' => $this->formatarMembro($target->fresh(), $actor),
             'link_convite' => $linkConvite,
             'codigo_ativacao' => $novoPin,
             'expira_em' => $target->convite_expira_em?->toIso8601String(),
@@ -378,7 +377,7 @@ class EquipeService
     /**
      * @return array<string, mixed>
      */
-    public function formatarMembro(User $membro, ?User $actor = null, ?Request $request = null): array
+    public function formatarMembro(User $membro, ?User $actor = null): array
     {
         $ehOwner = $membro->isOwner();
         $agencia = $membro->agencia;
@@ -407,7 +406,7 @@ class EquipeService
             : null;
 
         $linkConvite = $exporCredenciaisConvite
-            ? $this->construirLinkConvite((string) $membro->convite_token, $request)
+            ? $this->construirLinkConvite((string) $membro->convite_token)
             : null;
 
         $conviteExpiradoOuBloqueado = $status === 'pendente' && !$conviteValido;
@@ -440,16 +439,9 @@ class EquipeService
         return $token;
     }
 
-    protected function construirLinkConvite(string $token, ?Request $request = null): string
+    protected function construirLinkConvite(string $token): string
     {
-        $urlOrigemFront = $request?->header('X-Frontend-Url') ?: $request?->header('Referer');
-
-        if ($urlOrigemFront && str_contains($urlOrigemFront, '/paginas/')) {
-            $urlBasePaginas = substr($urlOrigemFront, 0, strpos($urlOrigemFront, '/paginas/') + 9);
-            return $urlBasePaginas . 'aceitar-convite.html?token=' . urlencode($token);
-        }
-
-        $frontUrl = rtrim((string) env('FRONT_URL', 'http://localhost:5500'), '/');
+        $frontUrl = rtrim((string) config('app.front_url', 'http://localhost:5500'), '/');
         if (str_ends_with($frontUrl, '/paginas')) {
             return $frontUrl . '/aceitar-convite.html?token=' . urlencode($token);
         }
