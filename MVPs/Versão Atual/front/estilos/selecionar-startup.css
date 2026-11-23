@@ -131,6 +131,29 @@ body {
     font-weight: 600;
 }
 
+.btn-topbar-assinatura {
+    height: 36px;
+    padding: 0 12px;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-radius: 2px;
+    color: #38BDF8;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-topbar-assinatura:hover {
+    background-color: #0284C7;
+    border-color: #38BDF8;
+    color: #FFFFFF;
+}
+
 .btn-topbar-sair {
     height: 36px;
     padding: 0 12px;
@@ -313,6 +336,95 @@ body.dark-mode .alert-box {
 
 .alert-box[hidden] {
     display: none;
+}
+
+.alert-box-success {
+    background-color: #ECFDF5;
+    color: #047857;
+    border-color: #6EE7B7;
+}
+
+body.dark-mode .alert-box-success {
+    background-color: rgba(16, 185, 129, 0.14);
+    border-color: rgba(16, 185, 129, 0.45);
+    color: #6EE7B7;
+}
+
+.contador-cota-badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-action);
+    border: 1px solid var(--border-subtle);
+    font-weight: 700;
+}
+
+body.dark-mode .contador-cota-badge {
+    color: #38BDF8;
+}
+
+.contador-cota-badge.limite-atingido {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.55);
+    color: #D97706;
+}
+
+body.dark-mode .contador-cota-badge.limite-atingido {
+    color: #FBBF24;
+}
+
+.btn-nova-startup.limite-atingido {
+    background-color: #475569;
+    opacity: 0.9;
+}
+
+.startup-item-direita {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.startup-hover-hint {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-action);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    white-space: nowrap;
+}
+
+body.dark-mode .startup-hover-hint {
+    color: #38BDF8;
+}
+
+.botao-item-startup:hover .startup-hover-hint,
+.botao-item-startup:focus-within .startup-hover-hint {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.btn-config-startup-card {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 6px;
+    border: 1px solid var(--border-field);
+    background-color: var(--bg-surface);
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.btn-config-startup-card:hover {
+    background-color: var(--accent-action);
+    border-color: var(--accent-action);
+    color: #FFFFFF;
+    transform: rotate(25deg);
 }
 
 /* Resumo da Lista */

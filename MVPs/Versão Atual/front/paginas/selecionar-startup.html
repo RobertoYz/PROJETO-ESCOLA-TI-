@@ -31,6 +31,14 @@
                 Consultor: <strong id="nome-consultor-topbar"></strong>
             </span>
 
+            <button type="button" id="botao-minha-assinatura" class="btn-topbar-assinatura" title="Consultar ou trocar plano da assinatura">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                    <line x1="2" y1="10" x2="22" y2="10"></line>
+                </svg>
+                Minha Assinatura
+            </button>
+
             <button type="button" id="botao-sair-sessao" class="btn-topbar-sair" title="Encerrar sessão">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -90,6 +98,7 @@
             </button>
         </section>
 
+        <div id="mensagem-sucesso" class="alert-box alert-box-success" role="status" aria-live="polite" hidden></div>
         <div id="mensagem-erro" class="alert-box" role="alert" aria-live="polite" hidden></div>
 
         <div class="carteira-meta">

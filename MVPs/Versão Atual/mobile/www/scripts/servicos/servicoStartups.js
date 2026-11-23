@@ -7,6 +7,17 @@ export async function listarStartupsDaConsultoria(termoBusca = '') {
     });
 }
 
+export async function listarStartupsComCota(termoBusca = '') {
+    const params = new URLSearchParams();
+    params.set('incluir_cota', '1');
+    if (termoBusca) {
+        params.set('busca', termoBusca);
+    }
+    return await requisicaoApi(`/startups?${params.toString()}`, {
+        method: 'GET'
+    });
+}
+
 export async function criarNovaStartup(dadosStartup) {
     return await requisicaoApi('/startups', {
         method: 'POST',
@@ -24,6 +35,12 @@ export async function atualizarStartup(id, dados) {
     return await requisicaoApi(`/startups/${id}`, {
         method: 'PUT',
         body: JSON.stringify(dados)
+    });
+}
+
+export async function excluirStartupPorId(id) {
+    return await requisicaoApi(`/startups/${id}`, {
+        method: 'DELETE'
     });
 }
 

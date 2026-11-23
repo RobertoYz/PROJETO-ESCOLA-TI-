@@ -4,12 +4,18 @@ import {
     obterUsuarioLogado,
     removerToken
 } from '../servicos/servicoAutenticacao.js';
-import { listarStartupsDaConsultoria } from '../servicos/servicoStartups.js';
+import { listarStartupsComCota } from '../servicos/servicoStartups.js';
+import {
+    abrirModalMinhaAssinatura,
+    exibirModalLimiteStartups
+} from '../componentes/seletorGlobalStartup.js';
 
 const campoBusca = document.getElementById('campo-busca-startup');
 const botaoNovaStartup = document.getElementById('botao-nova-startup');
+const botaoMinhaAssinatura = document.getElementById('botao-minha-assinatura');
 const containerLista = document.getElementById('lista-startups');
 const divMensagemErro = document.getElementById('mensagem-erro');
+const divMensagemSucesso = document.getElementById('mensagem-sucesso');
 const contadorStartups = document.getElementById('contador-startups');
 const badgeConsultor = document.getElementById('consultor-identificacao');
 const nomeConsultorTopbar = document.getElementById('nome-consultor-topbar');
@@ -25,6 +31,12 @@ if (usuarioLogado && (usuarioLogado.name || usuarioLogado.email) && badgeConsult
     badgeConsultor.hidden = false;
 }
 
+if (botaoMinhaAssinatura) {
+    botaoMinhaAssinatura.addEventListener('click', () => {
+        abrirModalMinhaAssinatura();
+    });
+}
+
 if (botaoSairSessao) {
     botaoSairSessao.addEventListener('click', () => {
         removerToken();
@@ -32,14 +44,64 @@ if (botaoSairSessao) {
     });
 }
 
-function atualizarContador(quantidade) {
-    if (!contadorStartups) return;
-    if (quantidade === 0) {
-        contadorStartups.textContent = '0 empresas';
-    } else if (quantidade === 1) {
-        contadorStartups.textContent = '1 empresa';
+let cotaAtual = {
+    startups_atual: 0,
+    startups_limite: null,
+    pode_criar_startup: true,
+    plano_nome: 'Standard'
+};
+
+function verificarFeedbackPosExclusao() {
+    const params = new URLSearchParams(window.location.search);
+    const msgFlash = sessionStorage.getItem('startup_excluida_feedback');
+    const veioDeExclusao = params.get('excluida') === '1' || Boolean(msgFlash);
+
+    if (veioDeExclusao && divMensagemSucesso) {
+        divMensagemSucesso.textContent = msgFlash || 'Startup excluída com sucesso. Uma vaga foi liberada no seu plano.';
+        divMensagemSucesso.hidden = false;
+        sessionStorage.removeItem('startup_excluida_feedback');
+
+        if (params.has('excluida')) {
+            params.delete('excluida');
+            const novaQuery = params.toString();
+            const novaUrl = `${window.location.pathname}${novaQuery ? '?' + novaQuery : ''}`;
+            window.history.replaceState({}, document.title, novaUrl);
+        }
+    }
+}
+
+function atualizarContadorECota(quantidadeLista, cota = null) {
+    if (cota && typeof cota === 'object') {
+        cotaAtual = {
+            startups_atual: Number(cota.startups_atual ?? quantidadeLista),
+            startups_limite: cota.startups_limite !== undefined && cota.startups_limite !== null
+                ? Number(cota.startups_limite)
+                : null,
+            pode_criar_startup: cota.pode_criar_startup !== undefined
+                ? Boolean(cota.pode_criar_startup)
+                : true,
+            plano_nome: cota.plano_nome || 'Standard'
+        };
     } else {
-        contadorStartups.textContent = `${quantidade} empresas`;
+        cotaAtual.startups_atual = quantidadeLista;
+    }
+
+    if (contadorStartups) {
+        const atual = cotaAtual.startups_atual;
+        const limite = cotaAtual.startups_limite;
+
+        if (limite !== null && limite > 0) {
+            contadorStartups.textContent = `${atual} / ${limite} EMPRESAS`;
+            const atingiu = atual >= limite;
+            contadorStartups.className = `contador-cota-badge ${atingiu ? 'limite-atingido' : ''}`;
+        } else {
+            contadorStartups.textContent = atual === 1 ? '1 EMPRESA' : `${atual} EMPRESAS`;
+            contadorStartups.className = 'contador-cota-badge';
+        }
+    }
+
+    if (botaoNovaStartup) {
+        botaoNovaStartup.classList.toggle('limite-atingido', cotaAtual.pode_criar_startup === false);
     }
 }
 
@@ -59,10 +121,11 @@ function renderizarCarregando() {
     containerLista.appendChild(loading);
 }
 
-function renderizarLista(startups, termo = '') {
+function renderizarLista(startups, termo = '', cota = null) {
     containerLista.innerHTML = '';
     const lista = Array.isArray(startups) ? startups : [];
-    atualizarContador(lista.length);
+    const cotaResolvida = cota || lista[0]?.cota || null;
+    atualizarContadorECota(lista.length, cotaResolvida);
 
     if (lista.length === 0) {
         const caixaVazia = document.createElement('div');
@@ -89,9 +152,10 @@ function renderizarLista(startups, termo = '') {
     lista.forEach((startup) => {
         const nomeExibicao = startup.nome_fantasia || startup.razao_social || 'Startup';
 
-        const botaoStartup = document.createElement('button');
-        botaoStartup.type = 'button';
-        botaoStartup.className = 'botao-item-startup';
+        const cardStartup = document.createElement('div');
+        cardStartup.className = 'botao-item-startup';
+        cardStartup.setAttribute('role', 'button');
+        cardStartup.setAttribute('tabindex', '0');
 
         const esquerda = document.createElement('div');
         esquerda.className = 'startup-item-esquerda';
@@ -150,25 +214,52 @@ function renderizarLista(startups, termo = '') {
         esquerda.appendChild(monograma);
         esquerda.appendChild(dados);
 
-        const acao = document.createElement('div');
-        acao.className = 'startup-item-acao';
-        acao.innerHTML = `
-            <span>Acessar painel</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
+        const direita = document.createElement('div');
+        direita.className = 'startup-item-direita';
+
+        const hoverHint = document.createElement('span');
+        hoverHint.className = 'startup-hover-hint';
+        hoverHint.textContent = 'Selecionar Empresa';
+
+        const btnConfig = document.createElement('button');
+        btnConfig.type = 'button';
+        btnConfig.className = 'btn-config-startup-card';
+        btnConfig.title = 'Configurações da Startup';
+        btnConfig.setAttribute('aria-label', `Configurações da Startup ${nomeExibicao}`);
+        btnConfig.innerHTML = `
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
         `;
 
-        botaoStartup.appendChild(esquerda);
-        botaoStartup.appendChild(acao);
-
-        botaoStartup.addEventListener('click', () => {
+        btnConfig.addEventListener('click', (evento) => {
+            evento.stopPropagation();
             salvarStartupAtiva(startup.id, nomeExibicao);
-            window.location.href = 'busca-editais.html';
+            window.location.href = `minhas-startups.html?id=${encodeURIComponent(startup.id)}`;
         });
 
-        containerLista.appendChild(botaoStartup);
+        direita.appendChild(hoverHint);
+        direita.appendChild(btnConfig);
+
+        cardStartup.appendChild(esquerda);
+        cardStartup.appendChild(direita);
+
+        const selecionarCard = () => {
+            salvarStartupAtiva(startup.id, nomeExibicao);
+            window.location.href = 'busca-editais.html';
+        };
+
+        cardStartup.addEventListener('click', selecionarCard);
+        cardStartup.addEventListener('keydown', (evento) => {
+            if (evento.key === 'Enter' || evento.key === ' ') {
+                if (document.activeElement === btnConfig) return;
+                evento.preventDefault();
+                selecionarCard();
+            }
+        });
+
+        containerLista.appendChild(cardStartup);
     });
 }
 
@@ -187,13 +278,19 @@ async function carregarStartups(termo = '') {
     if (divMensagemErro) divMensagemErro.hidden = true;
     renderizarCarregando();
     try {
-        const startups = await listarStartupsDaConsultoria(termo);
+        const resposta = await listarStartupsComCota(termo);
         if (idRequisicao !== requisicaoAtualId) return;
-        renderizarLista(startups, termo);
+
+        const startups = Array.isArray(resposta)
+            ? resposta
+            : (resposta?.data || resposta?.startups || []);
+        const cota = resposta?.cota || startups[0]?.cota || null;
+
+        renderizarLista(startups, termo, cota);
     } catch (erro) {
         if (idRequisicao !== requisicaoAtualId) return;
         if (containerLista) containerLista.innerHTML = '';
-        atualizarContador(0);
+        atualizarContadorECota(0);
         if (divMensagemErro) {
             divMensagemErro.textContent = erro.message || 'Não foi possível carregar as startups da consultoria.';
             divMensagemErro.hidden = false;
@@ -236,7 +333,12 @@ campoBusca?.addEventListener('keydown', (evento) => {
 });
 
 botaoNovaStartup?.addEventListener('click', () => {
+    if (cotaAtual && cotaAtual.pode_criar_startup === false) {
+        exibirModalLimiteStartups(cotaAtual);
+        return;
+    }
     window.location.href = 'cadastrar-startup.html';
 });
 
+verificarFeedbackPosExclusao();
 carregarStartups();

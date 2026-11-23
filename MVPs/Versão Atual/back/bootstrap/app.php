@@ -19,5 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\App\Exceptions\PlanLimitExceededException $e, \Illuminate\Http\Request $request) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'code' => $e->getErrorCode(),
+                'codigo' => $e->getErrorCode(),
+                'atual' => $e->getAtual(),
+                'limite' => $e->getLimite(),
+                'plano_atual' => $e->getPlanoAtual(),
+            ], 403);
+        });
     })->create();

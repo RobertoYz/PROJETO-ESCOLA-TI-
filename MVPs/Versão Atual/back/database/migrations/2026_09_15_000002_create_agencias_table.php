@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('agencias', function (Blueprint $table) {
             $table->id();
             $table->string('nome');
+            $table->unsignedBigInteger('owner_id')->nullable()->index();
             $table->foreignId('plano_id')->nullable()->constrained('planos')->nullOnDelete();
             $table->enum('forma_pagamento', ['PIX', 'CARD'])->default('PIX');
             $table->string('id_transacao')->nullable();

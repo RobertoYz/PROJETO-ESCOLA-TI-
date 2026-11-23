@@ -39,6 +39,7 @@ return new class extends Migration
             $table->text('pitch')->nullable(); 
 
             $table->timestamps();
+            $table->softDeletes();
 
             // Uma agencia não pode cadastrar 2 vezes a mesma startup
             $table->unique(['agencia_id', 'cnpj']);
