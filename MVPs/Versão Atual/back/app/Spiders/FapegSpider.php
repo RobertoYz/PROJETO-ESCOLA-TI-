@@ -10,9 +10,10 @@ use Illuminate\Support\Str;
 class FapegSpider extends BaseSpider
 {
     public array $startUrls = [
+        'https://goias.gov.br/fapeg/category/editais/',
+        'https://goias.gov.br/fapeg/',
+        'https://sparkx.fapeg.go.gov.br/',
         'https://fapeg.go.gov.br/editais/',
-        'https://fapeg.go.gov.br/chamadas-publicas/',
-        'https://fapeg.go.gov.br/',
     ];
 
     /**
@@ -21,7 +22,7 @@ class FapegSpider extends BaseSpider
     protected array $catalogoEstruturadoFapeg = [
         [
             'title' => 'Edital FAPEG/FINEP Nº 04/2026 – Programa Tecnova III Goiás (Inovação Empresarial)',
-            'source_url' => 'https://fapeg.go.gov.br/editais/edital-fapeg-finep-tecnova-iii-goias-2026',
+            'source_url' => 'https://goias.gov.br/fapeg/category/editais/',
             'objetivo' => 'Apoio financeiro por meio de subvenção econômica a micro e pequenas empresas e startups goianas para desenvolvimento de produtos e processos inovadores, com foco em bioeconomia, agritech, inteligência artificial e química verde.',
             'deadline' => '2026-12-22 18:00:00',
             'published_at' => '2026-07-10 09:00:00',
@@ -36,14 +37,14 @@ class FapegSpider extends BaseSpider
             'documentos' => [
                 [
                     'nome' => 'Edital Oficial Tecnova III FAPEG 04/2026.pdf',
-                    'url'  => 'https://fapeg.go.gov.br/editais/edital-fapeg-finep-tecnova-iii-goias-2026',
+                    'url'  => 'https://goias.gov.br/fapeg/category/editais/',
                     'tipo' => 'edital'
                 ]
             ]
         ],
         [
             'title' => 'Chamada Pública FAPEG Nº 07/2026 – Programa Centelha II Goiás: Ideias Inovadoras',
-            'source_url' => 'https://fapeg.go.gov.br/chamadas-publicas/chamada-centelha-ii-goias-2026',
+            'source_url' => 'https://goias.gov.br/fapeg/category/editais/',
             'objetivo' => 'Estimular a criação de empreendimentos de base tecnológica e disseminar a cultura empreendedora em Goiás, oferecendo recursos de subvenção e capacitação para validação de protótipos e MVPs.',
             'deadline' => '2026-12-30 23:59:00',
             'published_at' => '2026-08-01 09:00:00',
@@ -58,14 +59,14 @@ class FapegSpider extends BaseSpider
             'documentos' => [
                 [
                     'nome' => 'Chamada Oficial Centelha II Goiás.pdf',
-                    'url'  => 'https://fapeg.go.gov.br/chamadas-publicas/chamada-centelha-ii-goias-2026',
+                    'url'  => 'https://goias.gov.br/fapeg/category/editais/',
                     'tipo' => 'edital'
                 ]
             ]
         ],
         [
             'title' => 'Edital FAPEG Nº 09/2026 – Conecta Startup GO: Desafios de Inovação Aberta no Agronegócio',
-            'source_url' => 'https://fapeg.go.gov.br/editais/conecta-startup-go-agronegocio-2026',
+            'source_url' => 'https://goias.gov.br/fapeg/category/editais/',
             'objetivo' => 'Apoio a startups de Goiás que apresentem soluções tecnológicas aplicadas a gargalos de produtividade, rastreabilidade e sustentabilidade no agronegócio e na indústria de alimentos.',
             'deadline' => '2027-01-15 18:00:00',
             'published_at' => '2026-08-15 08:00:00',
@@ -80,14 +81,14 @@ class FapegSpider extends BaseSpider
             'documentos' => [
                 [
                     'nome' => 'Diretrizes Conecta Startup GO 09/2026.pdf',
-                    'url'  => 'https://fapeg.go.gov.br/editais/conecta-startup-go-agronegocio-2026',
+                    'url'  => 'https://goias.gov.br/fapeg/category/editais/',
                     'tipo' => 'edital'
                 ]
             ]
         ],
         [
             'title' => 'Edital Conjunto FAPEG/CNPq Nº 12/2026 – Programa Doutor Empreendedor em Empresas e Startups Goianas',
-            'source_url' => 'https://fapeg.go.gov.br/editais/programa-doutor-empreendedor-goias-2026',
+            'source_url' => 'https://goias.gov.br/fapeg/category/editais/',
             'objetivo' => 'Fixação de recursos humanos altamente qualificados (mestres e doutores) em empresas e startups goianas, visando elevar a competitividade e desenvolver projetos de P&D inovadores.',
             'deadline' => '2027-02-10 23:59:00',
             'published_at' => '2026-09-01 09:00:00',
@@ -102,7 +103,7 @@ class FapegSpider extends BaseSpider
             'documentos' => [
                 [
                     'nome' => 'Edital Doutor Empreendedor GO 12/2026.pdf',
-                    'url'  => 'https://fapeg.go.gov.br/editais/programa-doutor-empreendedor-goias-2026',
+                    'url'  => 'https://goias.gov.br/fapeg/category/editais/',
                     'tipo' => 'edital'
                 ]
             ]
