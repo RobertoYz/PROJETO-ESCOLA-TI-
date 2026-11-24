@@ -54,10 +54,10 @@ try {
 const tokenPendencia = obterTokenPendencia();
 const emailPendencia = obterEmailPendencia();
 
-if (!planoSelecionado || !planoSelecionado.id) {
-    window.location.replace(urlVoltarPlano);
-} else if (!modoTroca && !modoRenovacao && (!dadosPreCadastro || !dadosPreCadastro.nome_agencia)) {
+if (!modoTroca && !modoRenovacao && (!dadosPreCadastro?.nome_agencia || !dadosPreCadastro.verification_token || dadosPreCadastro.email !== dadosPreCadastro.email_verificado)) {
     window.location.replace('cadastro.html');
+} else if (!planoSelecionado || !planoSelecionado.id) {
+    window.location.replace(urlVoltarPlano);
 } else if (modoRenovacao && !tokenPendencia && !emailPendencia) {
     window.location.replace('login.html');
 }
@@ -252,6 +252,7 @@ btnFinalizar?.addEventListener('click', async () => {
                 name: dadosPreCadastro.name,
                 email: dadosPreCadastro.email,
                 password: dadosPreCadastro.password,
+                verification_token: dadosPreCadastro.verification_token,
                 plano_id: planoSelecionado.id,
                 forma_pagamento: formaPagamentoSelecionada
             });
@@ -280,6 +281,12 @@ btnFinalizar?.addEventListener('click', async () => {
             window.location.replace('cadastro.html');
         }
     } catch (erro) {
+        if (!modoRenovacao && !modoTroca && erro.dados?.codigo_erro === 'VERIFICACAO_EMAIL_INVALIDA') {
+            const { nome_agencia, name, email } = dadosPreCadastro;
+            sessionStorage.setItem('dados_pre_cadastro', JSON.stringify({ nome_agencia, name, email }));
+            window.location.replace('cadastro.html?revalidar=1');
+            return;
+        }
         exibirErro(descreverImpedimentos(erro.dados?.impedimentos) || erro.message || 'Erro ao finalizar escolha de pagamento. Tente novamente.');
         btnFinalizar.disabled = false;
         btnFinalizar.textContent = textoOriginal;

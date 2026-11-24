@@ -412,3 +412,25 @@ body.is-capacitor .banner-mobile-app {
         right: 16px;
     }
 }
+
+.acoes-verificacao {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.acoes-verificacao button {
+    color: inherit;
+    background: transparent;
+    border: 0;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 8px 0;
+}
+
+.acoes-verificacao button:disabled {
+    opacity: .6;
+    cursor: default;
+}

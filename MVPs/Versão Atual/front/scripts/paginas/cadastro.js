@@ -1,4 +1,5 @@
-import { verificarEmail, limparDadosPendencia, salvarUsuarioLogado, salvarEmailPendencia } from '../servicos/servicoAutenticacao.js';
+import { requisicaoApi } from '../servicos/api.js';
+import { limparDadosPendencia } from '../servicos/servicoAutenticacao.js';
 
 const formulario = document.getElementById('formulario-cadastro');
 const campoNomeAgencia = document.getElementById('campo-nome-agencia');
@@ -8,38 +9,20 @@ const campoSenha = document.getElementById('campo-senha');
 const divMensagemErro = document.getElementById('mensagem-erro');
 const botaoConfirmar = document.getElementById('botao-confirmar');
 
-function exibirErro(mensagem, opcoes = {}) {
-    const configuracao = typeof opcoes === 'object' && opcoes !== null
-        ? opcoes
-        : { exibirLinkLogin: Boolean(opcoes) };
+const verificacao = document.getElementById('formulario-verificacao');
+const campoCodigo = document.getElementById('codigo');
+const reenviar = document.getElementById('reenviar');
+const voltar = document.getElementById('alterar-email');
+const confirmar = verificacao.querySelector('[type="submit"]');
+const titulo = document.querySelector('.form-title');
+const subtitulo = document.querySelector('.form-subtitle');
+let cadastro;
+let intervalo;
+let disponivelEm = 0;
+let ocupado = false;
 
-    const { exibirLinkLogin = false, pagamentoPendente = false, email = '' } = configuracao;
-
-    if (pagamentoPendente) {
-        if (email) {
-            salvarEmailPendencia(email);
-        }
-        divMensagemErro.innerHTML = `
-            <div>${mensagem}</div>
-            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
-                <a href="pagamento-pendente.html" class="alert-link" style="font-weight: 700; color: #818cf8; text-decoration: underline;">
-                    Regularizar ou consultar pagamento pendente →
-                </a>
-                <a href="login.html" class="alert-link" style="font-size: 0.85rem; color: var(--text-muted);">
-                    Ou entrar com sua senha na tela de Login →
-                </a>
-            </div>
-        `;
-    } else if (exibirLinkLogin) {
-        divMensagemErro.innerHTML = `
-            <div>${mensagem}</div>
-            <div style="margin-top: 8px;">
-                <a href="login.html" class="alert-link">Ir para a tela de Login →</a>
-            </div>
-        `;
-    } else {
-        divMensagemErro.textContent = mensagem;
-    }
+function exibirErro(mensagem) {
+    divMensagemErro.textContent = mensagem;
     divMensagemErro.hidden = false;
 }
 
@@ -48,11 +31,11 @@ function limparErro() {
     divMensagemErro.hidden = true;
 }
 
-// Preenche automaticamente Consultoria, Nome e E-mail caso o usuário tenha retornado da seleção de plano
 try {
     const dadosSalvos = sessionStorage.getItem('dados_pre_cadastro');
     if (dadosSalvos) {
         const dados = JSON.parse(dadosSalvos);
+        sessionStorage.removeItem('dados_pre_cadastro');
         if (dados.nome_agencia && campoNomeAgencia) {
             campoNomeAgencia.value = dados.nome_agencia;
         }
@@ -63,11 +46,10 @@ try {
             campoEmail.value = dados.email;
         }
     }
-} catch (e) {
-    // Ignora falha ao restaurar pré-cadastro
+} catch {
+    sessionStorage.removeItem('dados_pre_cadastro');
 }
 
-// Limpa erro ao digitar novamente
 [campoNomeAgencia, campoNomeUsuario, campoEmail, campoSenha].forEach((campo) => {
     campo?.addEventListener('input', () => {
         if (!divMensagemErro.hidden) {
@@ -92,7 +74,7 @@ formulario.addEventListener('submit', async (evento) => {
 
     const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!regexEmail.test(email)) {
-        exibirErro('Informe um endereço de e-mail corporativo válido.');
+        exibirErro('Informe um endereço de e-mail válido.');
         return;
     }
 
@@ -101,42 +83,96 @@ formulario.addEventListener('submit', async (evento) => {
         return;
     }
 
-    botaoConfirmar.disabled = true;
-    botaoConfirmar.textContent = 'Verificando e-mail...';
+    if (ocupado) return;
+    cadastro = { nome_agencia: nomeAgencia, name: nomeUsuario, email, password: senha };
+    await enviarCodigo();
+});
 
+function atualizarBotoes() {
+    const segundos = Math.max(0, Math.ceil((disponivelEm - Date.now()) / 1000));
+    reenviar.textContent = segundos ? `Reenviar código em ${segundos}s` : 'Reenviar código';
+    reenviar.disabled = ocupado || segundos > 0;
+    confirmar.disabled = ocupado;
+    voltar.disabled = ocupado;
+    botaoConfirmar.disabled = ocupado;
+    if (!segundos) clearInterval(intervalo);
+}
+
+function mostrarVerificacao(segundos) {
+    clearInterval(intervalo);
+    disponivelEm = Date.now() + segundos * 1000;
+    formulario.hidden = true;
+    verificacao.hidden = false;
+    titulo.textContent = 'Confirme seu e-mail';
+    subtitulo.textContent = 'Informe o código para escolher seu plano.';
+    document.getElementById('destino-codigo').textContent = `Enviado para ${cadastro.email}. Válido por 15 minutos.`;
+    campoCodigo.value = '';
+    campoCodigo.focus();
+    intervalo = setInterval(atualizarBotoes, 250);
+}
+
+async function enviarCodigo() {
+    ocupado = true;
+    atualizarBotoes();
+    limparErro();
     try {
-        const resposta = await verificarEmail(email);
-
-        if (resposta && resposta.disponivel) {
-            limparDadosPendencia();
-
-            const dadosPreCadastro = {
-                nome_agencia: nomeAgencia,
-                name: nomeUsuario,
-                email: email,
-                password: senha
-            };
-            sessionStorage.setItem('dados_pre_cadastro', JSON.stringify(dadosPreCadastro));
-            salvarUsuarioLogado({ name: nomeUsuario, email: email });
-
-            window.location.href = 'selecionar-plano.html';
-        } else {
-            const mensagem = resposta.message || 'Este e-mail já está cadastrado.';
-            const pendente = Boolean(resposta.pagamento_pendente);
-            exibirErro(mensagem, { exibirLinkLogin: true, pagamentoPendente: pendente, email });
-        }
-    } catch (erro) {
-        const dadosErro = erro.dados || {};
-        const pendente = Boolean(dadosErro.pagamento_pendente) || (erro.message && erro.message.toLowerCase().includes('pagamento pendente'));
-        const jaCadastrado = erro.status === 422 || (erro.message && erro.message.toLowerCase().includes('cadastrado'));
-        
-        exibirErro(erro.message || 'Erro ao validar e-mail. Tente novamente.', {
-            exibirLinkLogin: jaCadastrado,
-            pagamentoPendente: pendente,
-            email
+        const resposta = await requisicaoApi('/auth/enviar-codigo-verificacao', {
+            method: 'POST', body: JSON.stringify({ email: cadastro.email, nome: cadastro.name })
         });
+        mostrarVerificacao(resposta.reenvio_em_segundos);
+    } catch (erro) {
+        if (erro.dados?.segundos_restantes) mostrarVerificacao(erro.dados.segundos_restantes);
+        exibirErro(erro.message || 'Não foi possível enviar o código.');
     } finally {
-        botaoConfirmar.disabled = false;
-        botaoConfirmar.textContent = 'Continuar para Escolha de Plano';
+        ocupado = false;
+        atualizarBotoes();
+    }
+}
+
+campoCodigo.addEventListener('input', () => {
+    campoCodigo.value = campoCodigo.value.replace(/\D/g, '').slice(0, 6);
+    limparErro();
+});
+
+reenviar.addEventListener('click', enviarCodigo);
+voltar.addEventListener('click', () => {
+    clearInterval(intervalo);
+    verificacao.hidden = true;
+    formulario.hidden = false;
+    titulo.textContent = 'Criar conta de consultoria';
+    subtitulo.textContent = 'Cadastre seus dados para acessar a inteligência de editais';
+    cadastro = null;
+    limparErro();
+    campoEmail.focus();
+});
+
+verificacao.addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    if (ocupado) return;
+    ocupado = true;
+    atualizarBotoes();
+    limparErro();
+    try {
+        const resposta = await requisicaoApi('/auth/verificar-codigo-email', {
+            method: 'POST', body: JSON.stringify({ email: cadastro.email, codigo: campoCodigo.value })
+        });
+        limparDadosPendencia();
+        sessionStorage.setItem('dados_pre_cadastro', JSON.stringify({
+            ...cadastro, email_verificado: cadastro.email, verification_token: resposta.verification_token
+        }));
+        window.location.replace('selecionar-plano.html');
+    } catch (erro) {
+        const restantes = erro.dados?.tentativas_restantes;
+        let mensagem = erro.message || 'Não foi possível confirmar o código.';
+        if (restantes === 0) mensagem += ' Solicite outro código.';
+        else if (restantes !== undefined) mensagem += ` Tentativas restantes: ${restantes}.`;
+        exibirErro(mensagem);
+    } finally {
+        ocupado = false;
+        atualizarBotoes();
     }
 });
+
+if (new URLSearchParams(location.search).has('revalidar')) {
+    exibirErro('Sua confirmação de e-mail perdeu a validade. Informe a senha e solicite um novo código.');
+}

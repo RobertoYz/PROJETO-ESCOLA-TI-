@@ -269,6 +269,7 @@ class CancelamentoContaApiTest extends TestCase
         });
 
         $resNovoRegistro = $this->postJson('/api/auth/registrar-com-plano', [
+            'verification_token' => $this->confirmarEmailCadastro('mariana@retorno.com.br'),
             'name' => 'Mariana Nova Consultoria',
             'email' => 'mariana@retorno.com.br',
             'password' => 'NovaSenhaForte@2026',
