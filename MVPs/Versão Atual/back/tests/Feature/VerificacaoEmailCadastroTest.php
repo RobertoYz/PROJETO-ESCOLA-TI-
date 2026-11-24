@@ -45,7 +45,7 @@ class VerificacaoEmailCadastroTest extends TestCase
     {
         $plano = Plano::create(['nome' => 'Individual', 'preco' => 99, 'limite_startups' => 2, 'limite_membros_equipe' => 1]);
 
-        return ['name' => 'Ana', 'email' => self::EMAIL, 'nome_agencia' => 'Consultoria',
+        return $this->aceiteCadastro() + ['name' => 'Ana', 'email' => self::EMAIL, 'nome_agencia' => 'Consultoria',
             'password' => 'senha-forte', 'plano_id' => $plano->id, 'forma_pagamento' => 'PIX'];
     }
 

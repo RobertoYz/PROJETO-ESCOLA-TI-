@@ -37,6 +37,9 @@ services:
       - "${API_EXTERNAL_PORT:-8000}:8000"
     environment:
       APP_NAME: "${APP_NAME:-Anjo Nexus}"
+      TERMOS_HMAC_KEY: ${TERMOS_HMAC_KEY:-desenvolvimento-exclusivo-termos-nao-usar-em-producao}
+      TERMOS_HMAC_KEY_ID: ${TERMOS_HMAC_KEY_ID:-v1}
+      TERMOS_RETENCAO_ANOS: ${TERMOS_RETENCAO_ANOS:-5}
       APP_ENV: ${APP_ENV:-local}
       APP_KEY: ${APP_KEY:-}
       APP_DEBUG: ${APP_DEBUG:-true}
@@ -93,6 +96,9 @@ services:
     command: ["php", "artisan", "schedule:work"]
     environment:
       APP_NAME: "${APP_NAME:-Anjo Nexus}"
+      TERMOS_HMAC_KEY: ${TERMOS_HMAC_KEY:-desenvolvimento-exclusivo-termos-nao-usar-em-producao}
+      TERMOS_HMAC_KEY_ID: ${TERMOS_HMAC_KEY_ID:-v1}
+      TERMOS_RETENCAO_ANOS: ${TERMOS_RETENCAO_ANOS:-5}
       APP_ENV: ${APP_ENV:-local}
       APP_KEY: ${APP_KEY:-}
       APP_DEBUG: ${APP_DEBUG:-true}
@@ -154,6 +160,9 @@ services:
         echo "=================================================="
     environment:
       APP_NAME: "${APP_NAME:-Anjo Nexus}"
+      TERMOS_HMAC_KEY: ${TERMOS_HMAC_KEY:-desenvolvimento-exclusivo-termos-nao-usar-em-producao}
+      TERMOS_HMAC_KEY_ID: ${TERMOS_HMAC_KEY_ID:-v1}
+      TERMOS_RETENCAO_ANOS: ${TERMOS_RETENCAO_ANOS:-5}
       APP_ENV: ${APP_ENV:-local}
       APP_KEY: ${APP_KEY:-}
       APP_DEBUG: ${APP_DEBUG:-true}

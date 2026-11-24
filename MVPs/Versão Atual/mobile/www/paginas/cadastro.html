@@ -105,6 +105,11 @@
                             placeholder="Crie sua senha segura" required>
                     </div>
 
+                    <div class="aceite-cadastro">
+                        <input id="aceite" type="checkbox" disabled aria-labelledby="texto-aceite">
+                        <span id="texto-aceite">Li e concordo com os <button type="button" data-documento="termos_uso">Termos de Uso</button> e declaro ciência da <button type="button" data-documento="politica_privacidade">Política de Privacidade</button>.</span>
+                    </div>
+
                     <button type="submit" class="btn-submit" id="botao-confirmar">
                         Enviar código de confirmação
                     </button>
@@ -181,6 +186,17 @@
     </script>
 
     <!-- Script modular oficial de cadastro -->
+    <dialog id="documentos-legais" role="dialog" aria-modal="true" aria-labelledby="titulo-documentos">
+        <header><h2 id="titulo-documentos">Documentos do cadastro</h2><button type="button" id="fechar-documentos" aria-label="Fechar">X</button></header>
+        <div role="tablist" aria-label="Documento">
+            <button role="tab" id="aba-termos_uso" aria-controls="painel-documento" aria-selected="true">Termos de Uso</button>
+            <button role="tab" id="aba-politica_privacidade" aria-controls="painel-documento" aria-selected="false" tabindex="-1">Política de Privacidade</button>
+        </div>
+        <p id="estado-documentos" role="status"></p>
+        <article id="painel-documento" role="tabpanel" aria-labelledby="aba-termos_uso" tabindex="0"></article>
+        <button type="button" id="confirmar-documentos" disabled>Concordar com os Termos e declarar ciência da Política</button>
+    </dialog>
+
     <script type="module" src="../scripts/paginas/cadastro.js"></script>
 </body>
 

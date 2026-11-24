@@ -19,6 +19,8 @@
     </source>
     <php>
         <env name="ABACATEPAY_WEBHOOK_SECRET" value="segredo-local-da-suite"/>
+        <env name="TERMOS_HMAC_KEY" value="desenvolvimento-exclusivo-termos-nao-usar-em-producao" force="true"/>
+        <env name="TERMOS_HMAC_KEY_ID" value="teste" force="true"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>

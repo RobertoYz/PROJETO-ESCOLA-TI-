@@ -434,3 +434,17 @@ body.is-capacitor .banner-mobile-app {
     opacity: .6;
     cursor: default;
 }
+
+.aceite-cadastro { display: flex; align-items: baseline; gap: .65rem; margin: 1rem 0; }
+.aceite-cadastro input { flex: none; width: 1.1rem; height: 1.1rem; }
+.aceite-cadastro button { background: transparent; border: 0; padding: 0; color: inherit; text-decoration: underline; font: inherit; cursor: pointer; }
+#documentos-legais { box-sizing: border-box; margin: auto; padding: 1.25rem; width: min(42rem, 94vw); max-height: 90dvh; color: #193755; background: #f4f9ff; border: 1px solid #90b1cf; border-radius: .8rem; }
+#documentos-legais[open] { display: flex; flex-direction: column; gap: .75rem; }
+#documentos-legais::backdrop { background: rgb(12 34 60 / 65%); }
+#documentos-legais header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+#documentos-legais button { padding: .6rem; color: inherit; background: white; border: 1px solid #7092b1; border-radius: .4rem; cursor: pointer; }
+#documentos-legais button:disabled { opacity: .55; }
+#documentos-legais [aria-selected="true"], #documentos-legais #confirmar-documentos { background: #25567d; color: white; }
+#painel-documento { overflow-y: auto; min-height: 2rem; line-height: 1.55; }
+#painel-documento h3 { margin: 1rem 0 .35rem; }
+#estado-documentos:empty { display: none; }

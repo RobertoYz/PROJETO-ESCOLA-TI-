@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\TermoAceiteService;
 use App\Models\Startup;
 use App\Models\User;
 use App\Policies\EquipePolicy;
@@ -18,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if ($this->app->isProduction()) {
+            $this->app->make(TermoAceiteService::class)->validarConfiguracao();
+        }
+
         Gate::policy(Startup::class, StartupPolicy::class);
         Gate::policy(User::class, EquipePolicy::class);
     }

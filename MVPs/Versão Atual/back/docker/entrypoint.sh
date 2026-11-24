@@ -83,9 +83,9 @@ if [ "${FRESH_DB}" = "true" ] || [ "${FRESH_DB}" = "1" ]; then
     echo "-> [Database] DOCKER_FRESH_DB=true: Executando migrate:fresh --seed --force..."
     php artisan migrate:fresh --seed --force --no-interaction
 else
-    echo "-> [Database] DOCKER_FRESH_DB=false: Executando migrate --force e PlanoSeeder..."
+    echo "-> [Database] DOCKER_FRESH_DB=false: Executando migrate --force e seeders..."
     php artisan migrate --force --no-interaction
-    php artisan db:seed --class=PlanoSeeder --force --no-interaction
+    php artisan db:seed --force --no-interaction
 fi
 
 # 8. Recria link simbolico public/storage com fallback seguro para volumes Windows e limpa caches
