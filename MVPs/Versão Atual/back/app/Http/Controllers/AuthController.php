@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\TermoAceiteService;
 use App\Adapters\AbacatePayAdapter;
 use App\Services\VerificacaoEmailCadastroService;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -83,8 +84,10 @@ class AuthController extends Controller
         return response()->json($servico->verificarCodigo($dados['email'], $dados['codigo']));
     }
 
-    public function registrarComPlano(Request $requisicao, AbacatePayService $servicoAbacatePay, VerificacaoEmailCadastroService $verificacao): JsonResponse
+    public function registrarComPlano(Request $requisicao, AbacatePayService $servicoAbacatePay, VerificacaoEmailCadastroService $verificacao, TermoAceiteService $termos): JsonResponse
     {
+        $documentos = $termos->validar($requisicao);
+        $termos->validarConfiguracao();
         if (!is_string($requisicao->input('verification_token')) || !$requisicao->filled('verification_token')) {
             return response()->json([
                 'codigo_erro' => 'VERIFICACAO_EMAIL_INVALIDA',
@@ -115,7 +118,7 @@ class AuthController extends Controller
         $formaPagamento = strtoupper($dadosValidados['forma_pagamento'] ?? 'PIX');
 
         try {
-            return DB::transaction(function () use ($requisicao, $dadosValidados, $formaPagamento, $verificacao, $servicoAbacatePay) {
+            return DB::transaction(function () use ($requisicao, $dadosValidados, $formaPagamento, $verificacao, $servicoAbacatePay, $termos, $documentos) {
                 $email = strtolower(trim($dadosValidados['email']));
                 $verificacao->validarEConsumirToken($email, $requisicao->input('verification_token'));
                 $plano = Plano::findOrFail($dadosValidados['plano_id']);
@@ -154,6 +157,7 @@ class AuthController extends Controller
                 $agencia->id_transacao = $idTransacao;
                 $agencia->save();
 
+                $termos->registrar($usuario, $documentos, $requisicao);
                 $tokenPendencia = $usuario->createToken('token_pendencia', ['pagamento:gerenciar'])->plainTextToken;
 
                 return response()->json([
@@ -490,6 +494,7 @@ class AuthController extends Controller
                     $usuario->tokens()->delete();
                 }
 
+                app(TermoAceiteService::class)->iniciarRetencao($idsUsuarios);
                 DB::table('password_reset_tokens')->where('email', $emailUsuario)->delete();
                 DB::table('sessions')->whereIn('user_id', $idsUsuarios)->delete();
 
@@ -859,6 +864,8 @@ class AuthController extends Controller
                     DB::table('password_reset_tokens')->whereIn('email', $emailsUsuarios)->delete();
                 }
                 DB::table('sessions')->whereIn('user_id', $idsUsuarios)->delete();
+
+                app(TermoAceiteService::class)->iniciarRetencao($idsUsuarios);
 
                 // 7. Usuários e Agência
                 User::whereIn('id', $idsUsuarios)->forceDelete();

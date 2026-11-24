@@ -23,3 +23,5 @@ Artisan::command('auth:limpar-verificacoes-email', function () {
 })->purpose('Remove verificações de cadastro vencidas ou consumidas há mais de 24 horas');
 
 Schedule::command('auth:limpar-verificacoes-email')->dailyAt('03:10');
+
+Schedule::command('termos:expurgar-aceites-vencidos')->dailyAt('03:25');

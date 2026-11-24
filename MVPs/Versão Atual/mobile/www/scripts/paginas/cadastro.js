@@ -21,13 +21,155 @@ let intervalo;
 let disponivelEm = 0;
 let ocupado = false;
 
+
+const aceite = document.getElementById('aceite');
+const dialogo = document.getElementById('documentos-legais');
+const painel = document.getElementById('painel-documento');
+const estado = document.getElementById('estado-documentos');
+const concordar = document.getElementById('confirmar-documentos');
+const abas = [...dialogo.querySelectorAll('[role="tab"]')];
+let documentos;
+let metadados;
+let abaAtual = 'termos_uso';
+let acionador;
+let pendente;
+
+function limparAceite() {
+    aceite.checked = false;
+    sessionStorage.removeItem('aceite_cadastro');
+}
+
+function registrarEscolha() {
+    if (!metadados || !aceite.checked) return limparAceite();
+    sessionStorage.setItem('aceite_cadastro', JSON.stringify(metadados));
+}
+
+function exibirDocumento(tipo) {
+    abaAtual = tipo;
+    for (const aba of abas) {
+        const selecionada = aba.id === 'aba-' + tipo;
+        aba.setAttribute('aria-selected', String(selecionada));
+        aba.tabIndex = selecionada ? 0 : -1;
+    }
+    painel.setAttribute('aria-labelledby', 'aba-' + tipo);
+    painel.replaceChildren();
+    if (!documentos) return;
+    const documento = documentos[tipo];
+    const versao = document.createElement('p');
+    versao.textContent = documento.titulo + ' · Versão ' + documento.versao;
+    painel.append(versao);
+    for (const secao of documento.conteudo_json) {
+        const titulo = document.createElement('h3');
+        const texto = document.createElement('p');
+        titulo.textContent = secao.titulo;
+        texto.textContent = secao.texto;
+        painel.append(titulo, texto);
+    }
+    painel.scrollTop = 0;
+}
+
+async function atualizarDocumentos() {
+    aceite.disabled = concordar.disabled = true;
+    estado.textContent = 'Carregando documentos…';
+    try {
+        const atuais = await requisicaoApi('/termos/vigentes');
+        for (const tipo of ['termos_uso', 'politica_privacidade']) {
+            const secoes = atuais[tipo]?.conteudo_json;
+            if (!Array.isArray(secoes) || !secoes.length ||
+                !secoes.every(secao => typeof secao?.titulo === 'string' && typeof secao.texto === 'string')) {
+                throw new Error('Documento indisponível.');
+            }
+        }
+        const novos = { termos_aceitos: true };
+        for (const campo of ['documento_termos_id', 'documento_privacidade_id', 'versao_termos', 'versao_privacidade', 'hash_termos', 'hash_privacidade']) {
+            if (!atuais[campo]) throw new Error('Publicação incompleta.');
+            novos[campo] = atuais[campo];
+        }
+        const mudaram = metadados && JSON.stringify(novos) !== JSON.stringify(metadados);
+        if (mudaram) {
+            limparAceite();
+            exibirErro('Os documentos mudaram. Confira as novas versões e confirme novamente.');
+        }
+        documentos = atuais;
+        metadados = novos;
+        aceite.disabled = concordar.disabled = false;
+        estado.textContent = mudaram ? 'Documentos atualizados. Confira as novas versões.' : '';
+    } catch {
+        documentos = metadados = null;
+        limparAceite();
+        estado.textContent = 'Não foi possível carregar os documentos. Feche e abra novamente para tentar.';
+        exibirErro(estado.textContent);
+    }
+    exibirDocumento(abaAtual);
+}
+
+function carregarDocumentos() {
+    pendente ??= atualizarDocumentos().finally(() => { pendente = null; });
+    return pendente;
+}
+
+limparAceite();
+carregarDocumentos();
+window.addEventListener('pageshow', evento => {
+    if (evento.persisted) {
+        limparAceite();
+        retornarAoFormulario();
+        carregarDocumentos();
+    }
+});
+aceite.addEventListener('change', registrarEscolha);
+for (const botao of formulario.querySelectorAll('[data-documento]')) {
+    botao.addEventListener('click', () => {
+        acionador = botao;
+        exibirDocumento(botao.dataset.documento);
+        dialogo.showModal();
+        document.getElementById('aba-' + abaAtual).focus();
+        carregarDocumentos();
+    });
+}
+for (const aba of abas) {
+    aba.addEventListener('click', () => exibirDocumento(aba.id.slice(4)));
+    aba.addEventListener('keydown', evento => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(evento.key)) return;
+        evento.preventDefault();
+        const proxima = evento.key === 'Home' ? abas[0] : evento.key === 'End' ? abas[1] : abas.find(item => item !== aba);
+        proxima.click();
+        proxima.focus();
+    });
+}
+document.getElementById('fechar-documentos').onclick = () => dialogo.close();
+dialogo.addEventListener('close', () => acionador?.focus());
+dialogo.addEventListener('click', evento => {
+    const limites = dialogo.getBoundingClientRect();
+    if (evento.target === dialogo && (evento.clientX < limites.left || evento.clientX > limites.right
+        || evento.clientY < limites.top || evento.clientY > limites.bottom)) dialogo.close();
+});
+dialogo.addEventListener('keydown', evento => {
+    if (evento.key !== 'Tab') return;
+    const focaveis = [...dialogo.querySelectorAll('button:not(:disabled), [tabindex="0"]')].filter(item => item.tabIndex >= 0);
+    const primeiro = focaveis[0];
+    const ultimo = focaveis.at(-1);
+    if (evento.shiftKey && document.activeElement === primeiro || !evento.shiftKey && document.activeElement === ultimo) {
+        evento.preventDefault();
+        (evento.shiftKey ? ultimo : primeiro).focus();
+    }
+});
+concordar.onclick = () => {
+    aceite.checked = true;
+    registrarEscolha();
+    dialogo.close();
+};
+if (new URLSearchParams(location.search).has('rever-termos')) {
+    exibirErro('Confira os documentos vigentes e confirme novamente para continuar.');
+}
+
 function exibirErro(mensagem) {
     divMensagemErro.textContent = mensagem;
     divMensagemErro.hidden = false;
 }
 
 function limparErro() {
-    divMensagemErro.innerHTML = '';
+    divMensagemErro.textContent = '';
     divMensagemErro.hidden = true;
 }
 
@@ -112,14 +254,24 @@ function mostrarVerificacao(segundos) {
 }
 
 async function enviarCodigo() {
+    if (!aceite.checked || !documentos) {
+        exibirErro('Carregue os documentos e confirme o aceite antes de solicitar o código.');
+        return;
+    }
     ocupado = true;
     atualizarBotoes();
     limparErro();
     try {
+        await carregarDocumentos();
+        if (!aceite.checked || !documentos) {
+            retornarAoFormulario();
+            exibirErro('Confira os documentos vigentes e confirme novamente.');
+            return;
+        }
         const resposta = await requisicaoApi('/auth/enviar-codigo-verificacao', {
             method: 'POST', body: JSON.stringify({ email: cadastro.email, nome: cadastro.name })
         });
-        mostrarVerificacao(resposta.reenvio_em_segundos);
+        if (aceite.checked && documentos) mostrarVerificacao(resposta.reenvio_em_segundos);
     } catch (erro) {
         if (erro.dados?.segundos_restantes) mostrarVerificacao(erro.dados.segundos_restantes);
         exibirErro(erro.message || 'Não foi possível enviar o código.');
@@ -135,7 +287,7 @@ campoCodigo.addEventListener('input', () => {
 });
 
 reenviar.addEventListener('click', enviarCodigo);
-voltar.addEventListener('click', () => {
+function retornarAoFormulario() {
     clearInterval(intervalo);
     verificacao.hidden = true;
     formulario.hidden = false;
@@ -144,7 +296,8 @@ voltar.addEventListener('click', () => {
     cadastro = null;
     limparErro();
     campoEmail.focus();
-});
+}
+voltar.addEventListener('click', retornarAoFormulario);
 
 verificacao.addEventListener('submit', async (evento) => {
     evento.preventDefault();
@@ -153,6 +306,12 @@ verificacao.addEventListener('submit', async (evento) => {
     atualizarBotoes();
     limparErro();
     try {
+        await carregarDocumentos();
+        if (!aceite.checked || !documentos) {
+            retornarAoFormulario();
+            exibirErro('Confira os documentos vigentes e confirme novamente.');
+            return;
+        }
         const resposta = await requisicaoApi('/auth/verificar-codigo-email', {
             method: 'POST', body: JSON.stringify({ email: cadastro.email, codigo: campoCodigo.value })
         });

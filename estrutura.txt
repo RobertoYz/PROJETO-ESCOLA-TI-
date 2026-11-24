@@ -1,5 +1,5 @@
 Listagem de caminhos de pasta
-O n£mero de s‚rie do volume ‚ 00000088 9C24:6ED5
+O nï¿½mero de sï¿½rie do volume ï¿½ 00000088 9C24:6ED5
 C:\USERS\PEDRO EMANUEL\DOWNLOADS\PROJETO-ESCOLA-TI-\MVPS\PROJETO ANJO NEXUS
 +---back
 |   |   .env

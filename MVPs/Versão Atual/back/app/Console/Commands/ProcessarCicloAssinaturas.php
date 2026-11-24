@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\TermoAceiteService;
 use App\Models\Agencia;
 use App\Models\AlertaMatch;
 use App\Models\AlertaPrazo;
@@ -349,6 +350,7 @@ class ProcessarCicloAssinaturas extends Command
             }
             if (!empty($idsUsuarios)) {
                 DB::table('sessions')->whereIn('user_id', $idsUsuarios)->delete();
+                app(TermoAceiteService::class)->iniciarRetencao($idsUsuarios);
                 User::whereIn('id', $idsUsuarios)->forceDelete();
             }
 

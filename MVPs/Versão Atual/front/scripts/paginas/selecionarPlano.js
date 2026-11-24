@@ -61,6 +61,8 @@ if (modoTroca) {
     preencherResumoContexto([
         { rotulo: 'Conta', valor: emailPendencia }
     ]);
+} else if (!sessionStorage.getItem('aceite_cadastro')) {
+    window.location.replace('cadastro.html?rever-termos=1');
 } else if (!dadosPreCadastro?.nome_agencia || !dadosPreCadastro.verification_token || dadosPreCadastro.email !== dadosPreCadastro.email_verificado) {
     window.location.replace('cadastro.html');
 } else {

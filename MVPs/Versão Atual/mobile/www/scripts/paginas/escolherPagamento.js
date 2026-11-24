@@ -54,7 +54,9 @@ try {
 const tokenPendencia = obterTokenPendencia();
 const emailPendencia = obterEmailPendencia();
 
-if (!modoTroca && !modoRenovacao && (!dadosPreCadastro?.nome_agencia || !dadosPreCadastro.verification_token || dadosPreCadastro.email !== dadosPreCadastro.email_verificado)) {
+if (!modoTroca && !modoRenovacao && !sessionStorage.getItem('aceite_cadastro')) {
+    window.location.replace('cadastro.html?rever-termos=1');
+} else if (!modoTroca && !modoRenovacao && (!dadosPreCadastro?.nome_agencia || !dadosPreCadastro.verification_token || dadosPreCadastro.email !== dadosPreCadastro.email_verificado)) {
     window.location.replace('cadastro.html');
 } else if (!planoSelecionado || !planoSelecionado.id) {
     window.location.replace(urlVoltarPlano);
@@ -248,6 +250,7 @@ btnFinalizar?.addEventListener('click', async () => {
             }
         } else if (dadosPreCadastro) {
             const resposta = await registrarComPlano({
+                ...JSON.parse(sessionStorage.getItem('aceite_cadastro')),
                 nome_agencia: dadosPreCadastro.nome_agencia,
                 name: dadosPreCadastro.name,
                 email: dadosPreCadastro.email,
@@ -271,6 +274,7 @@ btnFinalizar?.addEventListener('click', async () => {
                     url_checkout: urlCheckout,
                     forma_pagamento: formaPagamentoSelecionada
                 });
+                sessionStorage.removeItem('aceite_cadastro');
                 sessionStorage.removeItem('dados_pre_cadastro');
                 sessionStorage.removeItem('plano_selecionado');
                 window.location.replace(urlCheckout);
@@ -281,6 +285,13 @@ btnFinalizar?.addEventListener('click', async () => {
             window.location.replace('cadastro.html');
         }
     } catch (erro) {
+        if (!modoRenovacao && !modoTroca && ['TERMOS_NAO_ACEITOS', 'VERSAO_TERMOS_DESATUALIZADA'].includes(erro.dados?.codigo_erro)) {
+            sessionStorage.removeItem('aceite_cadastro');
+            const { nome_agencia, name, email } = dadosPreCadastro;
+            sessionStorage.setItem('dados_pre_cadastro', JSON.stringify({ nome_agencia, name, email }));
+            window.location.replace('cadastro.html?rever-termos=1');
+            return;
+        }
         if (!modoRenovacao && !modoTroca && erro.dados?.codigo_erro === 'VERIFICACAO_EMAIL_INVALIDA') {
             const { nome_agencia, name, email } = dadosPreCadastro;
             sessionStorage.setItem('dados_pre_cadastro', JSON.stringify({ nome_agencia, name, email }));

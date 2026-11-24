@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\TermoAceiteController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\WebhookController;
@@ -14,6 +15,9 @@ use App\Http\Controllers\StartupController;
 use App\Http\Controllers\EquipeController;
 use App\Http\Controllers\AlertaMatchController;
 use App\Http\Controllers\AlertaPrazoController;
+
+Route::get('/termos/vigentes', [TermoAceiteController::class, 'vigentes']);
+Route::get('/termos/meu-aceite', [TermoAceiteController::class, 'meuAceite'])->middleware('auth:sanctum');
 
 // Rotas de Editais
 Route::get('/editais', [EditalController::class, 'index']);

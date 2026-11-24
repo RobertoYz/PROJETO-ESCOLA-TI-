@@ -381,7 +381,7 @@ class AssinaturaAtualApiTest extends TestCase
             );
         });
 
-        $resRegistro = $this->postJson('/api/auth/registrar-com-plano', [
+        $resRegistro = $this->postJson('/api/auth/registrar-com-plano', $this->aceiteCadastro() + [
             'verification_token' => $this->confirmarEmailCadastro('cartao@consultoria.com.br'),
             'name' => 'Consultor Cartão',
             'email' => 'cartao@consultoria.com.br',
