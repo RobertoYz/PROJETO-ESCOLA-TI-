@@ -16,8 +16,8 @@ return new class extends Migration {
             $table->longText('conteudo_json');
             $table->string('hash_sha256', 64);
             $table->string('vigente_tipo', 40)->nullable()->unique();
-            $table->timestamp('publicado_em');
-            $table->timestamp('created_at');
+            $table->timestamp('publicado_em')->nullable();
+            $table->timestamp('created_at')->nullable();
         });
     }
 

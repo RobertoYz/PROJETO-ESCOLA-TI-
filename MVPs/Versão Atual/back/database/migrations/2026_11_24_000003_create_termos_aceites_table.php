@@ -19,12 +19,12 @@ return new class extends Migration {
             $table->string('versao_privacidade', 20);
             $table->string('hash_termos', 64);
             $table->string('hash_privacidade', 64);
-            $table->timestamp('aceito_em');
+            $table->timestamp('aceito_em')->nullable();
             $table->timestamp('retencao_ate')->nullable()->index();
             $table->boolean('preservacao_excepcional')->default(false);
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
-            $table->timestamp('created_at');
+            $table->timestamp('created_at')->nullable();
         });
     }
 
