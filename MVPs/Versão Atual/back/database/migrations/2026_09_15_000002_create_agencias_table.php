@@ -13,6 +13,11 @@ return new class extends Migration
             $table->string('nome');
             $table->unsignedBigInteger('owner_id')->nullable()->index();
             $table->foreignId('plano_id')->nullable()->constrained('planos')->nullOnDelete();
+            $table->foreignId('plano_upgrade_pendente_id')->nullable()->constrained('planos')->nullOnDelete();
+            $table->string('upgrade_transacao_id')->nullable();
+            $table->unsignedInteger('upgrade_dias_extras')->default(0);
+            $table->string('upgrade_forma_pagamento', 20)->nullable();
+            $table->foreignId('plano_agendado_id')->nullable()->constrained('planos')->nullOnDelete();
             $table->enum('forma_pagamento', ['PIX', 'CARD'])->default('PIX');
             $table->string('id_transacao')->nullable();
             $table->text('url_checkout')->nullable();

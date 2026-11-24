@@ -382,6 +382,17 @@ class AuthController extends Controller
             return response()->json(['message' => 'Agência não vinculada a este usuário.'], 404);
         }
 
+        if ($agencia->plano_upgrade_pendente_id) {
+            $aberta = $agencia->pagamento_expira_em?->isFuture() && $agencia->url_checkout;
+
+            return response()->json([
+                'pago' => false,
+                'expirado' => !$aberta,
+                'url_checkout' => $aberta ? $agencia->url_checkout : null,
+                'message' => 'Aguardando a confirmação do pagamento da troca de plano.',
+            ]);
+        }
+
         if ($agencia->isPagamentoAtivo()) {
             return response()->json([
                 'expirado' => false,
@@ -450,6 +461,13 @@ class AuthController extends Controller
 
         if (!$usuario || !$agencia) {
             return response()->json(['message' => 'Agência não encontrada para este usuário.'], 404);
+        }
+
+        if ($agencia->plano_id && (int) $agencia->plano_id !== (int) $dadosValidados['plano_id']) {
+            return response()->json(['message' => 'Entre na conta para simular e confirmar a troca de plano.'], 422);
+        }
+        if ($agencia->status_pagamento !== 'pendente' || $agencia->plano_upgrade_pendente_id) {
+            return response()->json(['message' => 'Use a renovação autenticada da assinatura.'], 422);
         }
 
         $plano = Plano::findOrFail($dadosValidados['plano_id']);

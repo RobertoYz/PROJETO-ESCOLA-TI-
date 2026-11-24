@@ -6,9 +6,11 @@ import {
     salvarEmailPendencia,
     salvarAgenciaPendencia
 } from '../servicos/servicoAutenticacao.js';
+import { requisicaoApi } from '../servicos/api.js';
 import { gerarNovaCobranca } from '../servicos/servicoPlanos.js';
 
 const parametrosUrl = new URLSearchParams(window.location.search);
+const modoTroca = parametrosUrl.get('modo') === 'troca';
 const modoRenovacao = parametrosUrl.get('modo') === 'renovacao';
 
 const linkAlterarPlano = document.getElementById('link-alterar-plano');
@@ -24,7 +26,7 @@ const btnFinalizar = document.getElementById('btn-finalizar-pagamento');
 
 const urlVoltarPlano = modoRenovacao
     ? 'selecionar-plano.html?modo=renovacao'
-    : 'selecionar-plano.html';
+    : (modoTroca ? 'selecionar-plano.html?modo=troca' : 'selecionar-plano.html');
 
 if (linkAlterarPlano) linkAlterarPlano.href = urlVoltarPlano;
 if (linkCardAlterarPlano) linkCardAlterarPlano.href = urlVoltarPlano;
@@ -54,7 +56,7 @@ const emailPendencia = obterEmailPendencia();
 
 if (!planoSelecionado || !planoSelecionado.id) {
     window.location.replace(urlVoltarPlano);
-} else if (!modoRenovacao && (!dadosPreCadastro || !dadosPreCadastro.nome_agencia)) {
+} else if (!modoTroca && !modoRenovacao && (!dadosPreCadastro || !dadosPreCadastro.nome_agencia)) {
     window.location.replace('cadastro.html');
 } else if (modoRenovacao && !tokenPendencia && !emailPendencia) {
     window.location.replace('login.html');
@@ -82,7 +84,7 @@ if (modoRenovacao && (tokenPendencia || emailPendencia)) {
     preencherResumoContexto([
         { rotulo: 'Conta', valor: emailPendencia }
     ]);
-} else if (dadosPreCadastro) {
+} else if (!modoTroca && dadosPreCadastro) {
     preencherResumoContexto([
         { rotulo: 'Consultoria', valor: dadosPreCadastro.nome_agencia },
         { rotulo: 'E-mail', valor: dadosPreCadastro.email }
@@ -158,6 +160,51 @@ function limparErro() {
     }
 }
 
+function descreverImpedimentos(impedimentos) {
+    const instrucoes = [];
+    if (impedimentos?.startups) instrucoes.push('Remova ' + impedimentos.startups.excedente + ' startup(s).');
+    if (impedimentos?.membros) instrucoes.push('Libere ' + impedimentos.membros.excedente + ' vaga(s) de equipe, incluindo convites pendentes.');
+    return instrucoes.join(' ');
+}
+
+let simulacao;
+async function carregarSimulacao() {
+    btnFinalizar.disabled = true;
+    const resumo = document.getElementById('simulacao-troca');
+    const metodos = document.querySelector('.metodos-pagamento-grid');
+    metodos.style.display = 'none';
+    document.querySelector('.planos-nota-rodape').hidden = true;
+    document.getElementById('titulo-pagina').textContent = 'Revise a troca de plano';
+    document.getElementById('subtitulo-pagina').textContent = 'Confira as condições antes de confirmar.';
+    try {
+        simulacao = await requisicaoApi('/assinatura/simular-troca?plano_id=' + encodeURIComponent(planoSelecionado.id));
+        resumo.hidden = false;
+        if (!simulacao.permitido) {
+            resumo.textContent = descreverImpedimentos(simulacao.impedimentos);
+            btnFinalizar.textContent = 'Troca bloqueada pelas cotas';
+            return;
+        }
+        if (simulacao.tipo === 'downgrade') {
+            const data = new Date(simulacao.data_vigencia).toLocaleDateString('pt-BR');
+            resumo.textContent = 'Seu plano atual permanece ativo até ' + data + ', quando entra em vigor o plano ' + simulacao.plano_destino.nome + '. Nenhuma cobrança hoje.';
+            btnFinalizar.textContent = 'Agendar downgrade';
+        } else {
+            metodos.style.display = '';
+            const bonus = simulacao.tipo === 'upgrade'
+                ? simulacao.dias_restantes + ' dia(s) restantes convertidos em +' + simulacao.dias_extras + ' dias bônus. '
+                : '';
+            resumo.textContent = 'Pagamento hoje de ' + formatarPreco(simulacao.valor_a_pagar) + '. ' + bonus
+                + 'O plano ' + simulacao.plano_destino.nome + ' ativa automaticamente após a confirmação do pagamento, por ' + simulacao.novo_ciclo_dias + ' dias.';
+            btnFinalizar.textContent = 'Confirmar troca e pagar';
+        }
+        btnFinalizar.disabled = false;
+    } catch (erro) {
+        exibirErro(erro.message);
+    }
+}
+
+if (modoTroca && planoSelecionado) carregarSimulacao();
+
 btnFinalizar?.addEventListener('click', async () => {
     if (!planoSelecionado) return;
     limparErro();
@@ -167,8 +214,25 @@ btnFinalizar?.addEventListener('click', async () => {
     btnFinalizar.textContent = 'Processando e gerando checkout...';
 
     try {
-        if (modoRenovacao && (tokenPendencia || emailPendencia)) {
-            const resposta = await gerarNovaCobranca(planoSelecionado.id, formaPagamentoSelecionada);
+        if (modoTroca) {
+            const resposta = await requisicaoApi('/assinatura/trocar-plano', {
+                method: 'POST',
+                body: JSON.stringify({ plano_id: planoSelecionado.id, forma_pagamento: formaPagamentoSelecionada, tipo_simulado: simulacao.tipo })
+            });
+            sessionStorage.removeItem('plano_selecionado');
+            if (resposta.url_checkout) {
+                window.location.assign(resposta.url_checkout);
+            } else {
+                btnFinalizar.textContent = 'Downgrade agendado';
+                linkAlterarPlano.href = 'selecionar-startup.html';
+                linkAlterarPlano.textContent = '← Voltar à consultoria';
+            }
+        } else if (modoRenovacao && (tokenPendencia || emailPendencia)) {
+            const resposta = sessionStorage.getItem('renovacao_autenticada') === '1'
+                ? await requisicaoApi('/assinatura/renovar', {
+                    method: 'POST', body: JSON.stringify({ forma_pagamento: formaPagamentoSelecionada })
+                })
+                : await gerarNovaCobranca(planoSelecionado.id, formaPagamentoSelecionada);
             const urlCheckout = resposta?.url_checkout;
 
             if (urlCheckout && urlCheckout.startsWith('http')) {
@@ -216,7 +280,7 @@ btnFinalizar?.addEventListener('click', async () => {
             window.location.replace('cadastro.html');
         }
     } catch (erro) {
-        exibirErro(erro.message || 'Erro ao finalizar escolha de pagamento. Tente novamente.');
+        exibirErro(descreverImpedimentos(erro.dados?.impedimentos) || erro.message || 'Erro ao finalizar escolha de pagamento. Tente novamente.');
         btnFinalizar.disabled = false;
         btnFinalizar.textContent = textoOriginal;
     }

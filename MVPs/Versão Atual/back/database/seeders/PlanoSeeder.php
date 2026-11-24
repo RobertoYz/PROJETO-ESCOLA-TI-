@@ -14,7 +14,7 @@ class PlanoSeeder extends Seeder
                 'id' => 1,
                 'nome' => 'Standard',
                 'preco' => 49.90,
-                'id_transacao' => 'prod_sWfDg0eZXTLbtZEHYpqnMLKP',
+                'id_transacao' => 'prod_NKNk5t4saLSRLGEEZ21qL0sG',
                 'limite_startups' => 2,
                 'limite_membros_equipe' => 1,
                 'limite_minutas_ia' => 3
@@ -23,7 +23,7 @@ class PlanoSeeder extends Seeder
                 'id' => 2,
                 'nome' => 'Pro',
                 'preco' => 99.90,
-                'id_transacao' => 'prod_sWfDg0eZXTLbtZEHYpqnMLKP',
+                'id_transacao' => 'prod_BrNPMy2ajTtF0MzhzWwdCkpp',
                 'limite_startups' => 10,
                 'limite_membros_equipe' => 5,
                 'limite_minutas_ia' => 15
@@ -32,7 +32,7 @@ class PlanoSeeder extends Seeder
                 'id' => 3,
                 'nome' => 'Enterprise',
                 'preco' => 299.90,
-                'id_transacao' => 'prod_sWfDg0eZXTLbtZEHYpqnMLKP',
+                'id_transacao' => 'prod_yjeeY2u5sXwGaZJZGGpEgW1g',
                 'limite_startups' => 50,
                 'limite_membros_equipe' => 15,
                 'limite_minutas_ia' => 50

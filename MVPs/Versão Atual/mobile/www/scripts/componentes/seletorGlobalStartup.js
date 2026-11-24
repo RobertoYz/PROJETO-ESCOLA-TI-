@@ -1868,6 +1868,10 @@ function garantirModalMinhaAssinatura() {
                 <!-- Aviso da Janela de Renovação -->
                 <div class="assinatura-aviso-renovacao" id="assinaturaAvisoRenovacao" style="display: none;"></div>
 
+                <div id="avisoDowngrade" hidden>
+                    <p id="resumoDowngrade"></p>
+                    <button type="button" class="btn-perfil-cancelar" id="cancelarDowngrade">Cancelar downgrade agendado</button>
+                </div>
                 <div id="feedbackMinhaAssinatura" class="perfil-feedback"></div>
 
                 <!-- Ação de Renovação Mensal / Upgrade de Plano -->
@@ -1894,12 +1898,21 @@ function garantirModalMinhaAssinatura() {
     const feedback = document.getElementById('feedbackMinhaAssinatura');
 
     btnEscolherOutroPlano?.addEventListener('click', () => {
-        const usuarioAtual = obterUsuarioLogado();
-        if (usuarioAtual?.email) {
-            sessionStorage.setItem('email_pendencia', usuarioAtual.email);
-            localStorage.setItem('email_pendencia', usuarioAtual.email);
+        window.location.href = 'selecionar-plano.html?modo=troca';
+    });
+
+    document.getElementById('cancelarDowngrade').addEventListener('click', async (evento) => {
+        const botao = evento.currentTarget;
+        botao.disabled = true;
+        try {
+            await requisicaoApi('/assinatura/downgrade-agendado', { method: 'DELETE' });
+            preencherDadosModalAssinatura(await requisicaoApi('/assinatura/atual'));
+        } catch (erro) {
+            feedback.textContent = erro.message;
+            feedback.className = 'perfil-feedback erro';
+        } finally {
+            botao.disabled = false;
         }
-        window.location.href = 'selecionar-plano.html?modo=renovacao';
     });
 
     const btnAbrirAtualizar = document.getElementById('btnAbrirAtualizarFormaPagamento');
@@ -2069,6 +2082,10 @@ function preencherDadosModalAssinatura(dados) {
     if (btnEscolherOutroPlano) {
         btnEscolherOutroPlano.style.display = perfilAcesso === 'consultor_admin' ? 'inline-flex' : 'none';
     }
+
+    document.getElementById('avisoDowngrade').hidden = !dados.plano_agendado;
+    document.getElementById('resumoDowngrade').textContent = dados.plano_agendado
+        ? `Plano ${dados.plano_agendado.nome} agendado para ${dataVencimentoFmt}.` : '';
 
     if (elNome) elNome.textContent = plano.nome || 'Plano Anjo Nexus';
     if (elPreco) {

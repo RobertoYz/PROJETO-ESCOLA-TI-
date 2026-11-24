@@ -9,7 +9,11 @@ class AbacatePayAdapter
      */
     public function paraPayloadCriacao($agencia, $usuario, $plano, string $urlRetorno, string $formaPagamento = 'PIX'): array
     {
-        $idProdutoAbacatePay = $plano->id_transacao ?? 'prod_sWfDg0eZXTLbtZEHYpqnMLKP';
+        $idProdutoAbacatePay = trim((string) $plano->id_transacao);
+        if ($idProdutoAbacatePay === '') {
+            throw new \DomainException('Produto AbacatePay não configurado para este plano.');
+        }
+
         $metodoNormalizado = strtoupper(trim($formaPagamento));
         if (!in_array($metodoNormalizado, ['PIX', 'CARD'], true)) {
             $metodoNormalizado = 'PIX';

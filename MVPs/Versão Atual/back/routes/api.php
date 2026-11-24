@@ -82,6 +82,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::match(['delete', 'post'], '/conta/cancelar', [AuthController::class, 'cancelarConta']);
 
     // EDTAN-160 / EDTAN-311: Visualização de Plano Atual, Renovação e Atualização de Forma de Pagamento (PIX / CARD)
+    Route::get('/assinatura/simular-troca', [AssinaturaController::class, 'simularTroca']);
+    Route::post('/assinatura/trocar-plano', [AssinaturaController::class, 'trocarPlano']);
+    Route::delete('/assinatura/downgrade-agendado', [AssinaturaController::class, 'cancelarDowngradeAgendado']);
     Route::get('/assinatura/atual', [AssinaturaController::class, 'atual']);
     Route::post('/assinatura/renovar', [AssinaturaController::class, 'renovar']);
     Route::post('/assinatura/atualizar-forma-pagamento', [AssinaturaController::class, 'atualizarFormaPagamento']);

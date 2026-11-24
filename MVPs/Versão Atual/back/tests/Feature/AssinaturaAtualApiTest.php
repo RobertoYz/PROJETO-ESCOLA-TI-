@@ -26,6 +26,7 @@ class AssinaturaAtualApiTest extends TestCase
         $this->plano = Plano::create([
             'nome' => 'Plano Corporativo Mensal',
             'preco' => 297.00,
+            'id_transacao' => 'prod_teste_corporativo',
             'limite_startups' => 25,
             'limite_membros_equipe' => 5,
             'limite_minutas_ia' => 50,

@@ -15,7 +15,7 @@ class AbacatePayService
 
     public function __construct(?AbacatePayAdapter $adapter = null)
     {
-        $this->chaveApi = env('ABACATEPAY_API_KEY');
+        $this->chaveApi = config('services.abacatepay.api_key');
         $this->urlBase = 'https://api.abacatepay.com/v2';
         $this->adapter = $adapter ?? new AbacatePayAdapter();
     }
@@ -23,7 +23,7 @@ class AbacatePayService
     /**
      * Gera cobrança real no AbacatePay e retorna os campos padronizados do domínio (`id_transacao`, `url_checkout`).
      */
-    public function gerarCobranca($agencia, $usuario, $plano, string $formaPagamento = 'PIX'): array
+    public function gerarCobranca($agencia, $usuario, $plano, string $formaPagamento = 'PIX', bool $trocaPlano = false): array
     {
         if (empty($this->chaveApi)) {
             throw new Exception('Chave ABACATEPAY_API_KEY não configurada no arquivo .env.');
@@ -47,7 +47,7 @@ class AbacatePayService
         }
 
         if (!$urlBaseFront) {
-            $urlBaseFront = env('FRONT_URL') ?: request()->getSchemeAndHttpHost();
+            $urlBaseFront = config('app.front_url') ?: request()->getSchemeAndHttpHost();
         }
 
         $urlLogin = rtrim($urlBaseFront, '/') . '/paginas/login.html';
@@ -58,6 +58,10 @@ class AbacatePayService
         }
 
         $dadosEnvio = $this->adapter->paraPayloadCriacao($agencia, $usuario, $plano, $urlLogin, $metodoPagamento);
+
+        if ($trocaPlano) {
+            $dadosEnvio['externalId'] .= '_troca';
+        }
 
         $resposta = Http::withToken($this->chaveApi)
             ->post("{$this->urlBase}/checkouts/create", $dadosEnvio);

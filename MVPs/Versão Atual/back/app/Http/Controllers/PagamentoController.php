@@ -27,6 +27,9 @@ class PagamentoController extends Controller
             return response()->json(['message' => 'Sua assinatura já está ativa.', 'erro' => 'Sua assinatura já está ativa.'], 400);
         }
 
+        if ($agencia->plano_upgrade_pendente_id) {
+            return response()->json(['message' => 'Há uma troca de plano aguardando pagamento.'], 422);
+        }
         $plano = $agencia->plano;
 
         $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano);
