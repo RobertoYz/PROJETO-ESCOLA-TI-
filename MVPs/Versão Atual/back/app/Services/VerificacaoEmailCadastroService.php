@@ -44,7 +44,17 @@ class VerificacaoEmailCadastroService
                 'verificado_em' => null,
                 'consumido_em' => null,
             ]);
-            Mail::to($email)->send(new CodigoVerificacaoCadastroMail($codigo, $nome));
+
+            try {
+                Mail::to($email)->send(new CodigoVerificacaoCadastroMail($codigo, $nome));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Erro ao despachar e-mail de verificação para {$email}: " . $e->getMessage());
+                if (!app()->environment('local') && !config('app.debug')) {
+                    throw $e;
+                }
+            }
+
+            \Illuminate\Support\Facades\Log::info("Código de verificação gerado para {$email}: {$codigo}");
 
             return ['expira_em_segundos' => 900, 'reenvio_em_segundos' => 60];
         });
