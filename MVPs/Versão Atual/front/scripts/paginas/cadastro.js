@@ -289,9 +289,32 @@ formulario.addEventListener('submit', async (evento) => {
         return;
     }
 
-    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
     if (!regexEmail.test(email)) {
-        exibirErro('Informe um endereço de e-mail válido.');
+        exibirErro('Informe um endereço de e-mail válido com domínio completo.');
+        return;
+    }
+
+    const dominiosProibidos = [
+        'teste.com', 'test.com', 'teste.com.br', 'test.com.br',
+        'exemplo.com', 'example.com', 'example.org', 'example.net',
+        'fake.com', 'fakedoamin.com', 'emailfake.com', 'naoexiste.com',
+        'mailinator.com', 'yopmail.com', '10minutemail.com', 'tempmail.com',
+        'temp-mail.org', 'guerrillamail.com', 'sharklasers.com', 'trashmail.com',
+        'throwawaymail.com', 'dispostable.com', 'fakeinbox.com', 'mohmal.com',
+        'crazymailing.com', 'getairmail.com', 'generator.email', 'nada.ltd'
+    ];
+    const partesEmail = email.split('@');
+    const usuarioEmail = partesEmail[0] || '';
+    const dominioEmail = partesEmail[1] || '';
+
+    if (dominiosProibidos.includes(dominioEmail)) {
+        exibirErro('E-mails temporários, fictícios ou de teste não são aceitos. Informe um e-mail válido.');
+        return;
+    }
+
+    if (['teste', 'test', 'fake', 'asdf'].includes(usuarioEmail) && ['email.com', 'gmail.com', 'hotmail.com'].includes(dominioEmail)) {
+        exibirErro('Informe um e-mail válido para receber o código.');
         return;
     }
 

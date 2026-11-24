@@ -12,9 +12,59 @@ use Illuminate\Support\Facades\Mail;
 
 class VerificacaoEmailCadastroService
 {
+    public function validarEmailFiltro(string $email): void
+    {
+        $email = strtolower(trim($email));
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw $this->erro('EMAIL_FORMATO_INVALIDO', 'Informe um endereço de e-mail válido.');
+        }
+
+        $partes = explode('@', $email);
+        if (count($partes) !== 2) {
+            throw $this->erro('EMAIL_FORMATO_INVALIDO', 'Informe um endereço de e-mail válido.');
+        }
+
+        [$usuario, $dominio] = $partes;
+        $usuario = trim($usuario);
+        $dominio = trim($dominio);
+
+        if (!preg_match('/^[a-z0-9.-]+\.[a-z]{2,}$/i', $dominio) || str_contains($dominio, '..')) {
+            throw $this->erro('DOMINIO_EMAIL_INVALIDO', 'O domínio do e-mail é inválido.');
+        }
+
+        $dominiosProibidos = [
+            'teste.com', 'test.com', 'teste.com.br', 'test.com.br',
+            'exemplo.com', 'example.com', 'example.org', 'example.net',
+            'fake.com', 'fakedoamin.com', 'emailfake.com', 'naoexiste.com',
+            'mailinator.com', 'yopmail.com', '10minutemail.com', 'tempmail.com',
+            'temp-mail.org', 'guerrillamail.com', 'sharklasers.com', 'trashmail.com',
+            'throwawaymail.com', 'dispostable.com', 'fakeinbox.com', 'mohmal.com',
+            'crazymailing.com', 'getairmail.com', 'generator.email', 'nada.ltd',
+            'burnermail.io', 'dropmail.me', 'fakemailgenerator.com'
+        ];
+
+        if (in_array($dominio, $dominiosProibidos, true)) {
+            throw $this->erro('EMAIL_TEMPORARIO_OU_INVALIDO', 'E-mails temporários, fictícios ou de teste não são permitidos.');
+        }
+
+        if (in_array($usuario, ['teste', 'test', 'fake', 'asdf', 'naoexiste'], true) && in_array($dominio, ['email.com', 'gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com'], true)) {
+            throw $this->erro('EMAIL_TEMPORARIO_OU_INVALIDO', 'Informe um e-mail válido para receber o código.');
+        }
+
+        if (!app()->runningUnitTests() && function_exists('checkdnsrr')) {
+            $temMx = @checkdnsrr($dominio, 'MX');
+            $temA = $temMx ? true : @checkdnsrr($dominio, 'A');
+            if (!$temMx && !$temA) {
+                throw $this->erro('DOMINIO_EMAIL_SEM_DNS', 'O domínio informado não possui servidores ativos para receber e-mails.');
+            }
+        }
+    }
+
     public function enviarCodigo(string $email, ?string $nome = null): array
     {
         $email = strtolower(trim($email));
+        $this->validarEmailFiltro($email);
 
         return DB::transaction(function () use ($email, $nome) {
             DB::table('email_verificacoes_cadastro')->upsert([
@@ -105,7 +155,9 @@ class VerificacaoEmailCadastroService
 
     public function validarEConsumirToken(string $email, string $verificationToken): void
     {
-        $registro = EmailVerificacaoCadastro::where('email', strtolower(trim($email)))->lockForUpdate()->first();
+        $email = strtolower(trim($email));
+        $this->validarEmailFiltro($email);
+        $registro = EmailVerificacaoCadastro::where('email', $email)->lockForUpdate()->first();
         if (!$registro?->verification_token_hash || $registro->consumido_em || !$registro->token_expira_em?->isFuture()
             || !hash_equals($registro->verification_token_hash, hash('sha256', $verificationToken))) {
             throw $this->erro('VERIFICACAO_EMAIL_INVALIDA', 'Confirme seu e-mail novamente para concluir o cadastro.');
