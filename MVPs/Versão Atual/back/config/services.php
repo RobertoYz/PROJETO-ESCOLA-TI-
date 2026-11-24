@@ -14,6 +14,11 @@ return [
     |
     */
 
+    'abacatepay' => [
+        'api_key' => env('ABACATEPAY_API_KEY'),
+        'webhook_secret' => env('ABACATEPAY_WEBHOOK_SECRET'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

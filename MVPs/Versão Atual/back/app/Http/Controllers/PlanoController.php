@@ -47,6 +47,12 @@ class PlanoController extends Controller
 
         $plano = Plano::findOrFail($requisicao->plano_id);
 
+        if ($agencia->plano_id && (int) $agencia->plano_id !== (int) $plano->id) {
+            return response()->json(['message' => 'Simule e confirme a troca na gestão da assinatura.'], 422);
+        }
+        if ($agencia->plano_upgrade_pendente_id) {
+            return response()->json(['message' => 'Há uma troca de plano aguardando pagamento.'], 422);
+        }
         $agencia->plano_id = $plano->id;
         $agencia->save();
 

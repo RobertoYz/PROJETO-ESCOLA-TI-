@@ -2,6 +2,7 @@ import {
     obterTokenPendencia,
     obterEmailPendencia
 } from '../servicos/servicoAutenticacao.js';
+import { requisicaoApi } from '../servicos/api.js';
 import { buscarPlanos } from '../servicos/servicoPlanos.js';
 
 const containerListaPlanos = document.getElementById('lista-planos');
@@ -11,6 +12,7 @@ const subtituloPagina = document.getElementById('subtitulo-pagina');
 const resumoPreCadastro = document.getElementById('resumo-pre-cadastro');
 
 const parametrosUrl = new URLSearchParams(window.location.search);
+const modoTroca = parametrosUrl.get('modo') === 'troca';
 const modoRenovacao = parametrosUrl.get('modo') === 'renovacao';
 
 const dadosPreCadastroBrutos = sessionStorage.getItem('dados_pre_cadastro');
@@ -44,7 +46,11 @@ function preencherResumoContexto(itens) {
     resumoPreCadastro.hidden = resumoPreCadastro.childElementCount === 0;
 }
 
-if (modoRenovacao && (tokenPendencia || emailPendencia)) {
+if (modoTroca) {
+    linkVoltar.href = 'selecionar-startup.html';
+    linkVoltar.textContent = '← Voltar';
+    subtituloPagina.textContent = 'Selecione o plano para consultar o valor, a vigência e as cotas antes de confirmar.';
+} else if (modoRenovacao && (tokenPendencia || emailPendencia)) {
     if (linkVoltar) {
         linkVoltar.href = 'pagamento-pendente.html';
         linkVoltar.textContent = '← Voltar para Pagamento Pendente';
@@ -226,7 +232,7 @@ async function carregarPlanosNaTela() {
             botao.className = 'btn-selecionar-plano';
             botao.textContent = 'Selecionar Plano';
 
-            botao.addEventListener('click', () => {
+            botao.addEventListener('click', async () => {
                 limparErro();
 
                 const planoParaSalvar = {
@@ -241,6 +247,24 @@ async function carregarPlanosNaTela() {
 
                 sessionStorage.setItem('plano_selecionado', JSON.stringify(planoParaSalvar));
 
+                sessionStorage.removeItem('renovacao_autenticada');
+                let usarTroca = modoTroca;
+                if (modoRenovacao && (tokenPendencia || localStorage.getItem('token_autenticacao'))) {
+                    try {
+                        const atual = await requisicaoApi('/assinatura/atual');
+                        if (atual.status_pagamento_real !== 'pendente' || atual.upgrade_pendente) {
+                            sessionStorage.setItem('renovacao_autenticada', '1');
+                        }
+                        usarTroca = Number(atual.plano.id) !== Number(plano.id);
+                    } catch (erro) {
+                        exibirErro(erro.message);
+                        return;
+                    }
+                }
+                if (usarTroca) {
+                    window.location.href = 'escolher-pagamento.html?modo=troca';
+                    return;
+                }
                 const destino = modoRenovacao
                     ? 'escolher-pagamento.html?modo=renovacao'
                     : 'escolher-pagamento.html';

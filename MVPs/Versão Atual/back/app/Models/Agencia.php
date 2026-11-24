@@ -14,6 +14,11 @@ class Agencia extends Model
         'nome',
         'owner_id',
         'plano_id',
+        'plano_upgrade_pendente_id',
+        'upgrade_transacao_id',
+        'upgrade_dias_extras',
+        'upgrade_forma_pagamento',
+        'plano_agendado_id',
         'forma_pagamento',
         'id_transacao',
         'url_checkout',
@@ -68,6 +73,26 @@ class Agencia extends Model
     public function plano(): BelongsTo
     {
         return $this->belongsTo(Plano::class, 'plano_id');
+    }
+
+    public function planoAgendado(): BelongsTo
+    {
+        return $this->belongsTo(Plano::class, 'plano_agendado_id');
+    }
+
+    public function upgradePendente(): BelongsTo
+    {
+        return $this->belongsTo(Plano::class, 'plano_upgrade_pendente_id');
+    }
+
+    public function limparUpgradePendente(): void
+    {
+        $this->plano_upgrade_pendente_id = null;
+        $this->upgrade_transacao_id = null;
+        $this->upgrade_dias_extras = 0;
+        $this->upgrade_forma_pagamento = null;
+        $this->url_checkout = null;
+        $this->pagamento_expira_em = null;
     }
 
     public function usuarios(): HasMany
