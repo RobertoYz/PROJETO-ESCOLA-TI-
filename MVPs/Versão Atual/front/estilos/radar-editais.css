@@ -529,6 +529,16 @@ body:not(.dark-mode) .user-section-global .avatar {
     background: rgba(13, 148, 136, 0.14);
 }
 
+.agency-fapeg {
+    color: #059669;
+    background: rgba(5, 150, 105, 0.15);
+}
+
+.agency-fapdf {
+    color: #0284C7;
+    background: rgba(2, 132, 199, 0.15);
+}
+
 .agency-default {
     color: var(--text-muted);
     background: var(--bg-surface-subtle);
