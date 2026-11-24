@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Adapters\AbacatePayAdapter;
-use App\Services\RegistroService;
+use App\Services\VerificacaoEmailCadastroService;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use App\Services\AbacatePayService;
 use App\Models\User;
 use App\Models\Agencia;
@@ -27,12 +28,10 @@ use Exception;
 
 class AuthController extends Controller
 {
-    protected RegistroService $registroService;
     protected AbacatePayAdapter $abacatePayAdapter;
 
-    public function __construct(RegistroService $registroService, ?AbacatePayAdapter $abacatePayAdapter = null)
+    public function __construct(?AbacatePayAdapter $abacatePayAdapter = null)
     {
-        $this->registroService = $registroService;
         $this->abacatePayAdapter = $abacatePayAdapter ?? new AbacatePayAdapter();
     }
 
@@ -70,28 +69,32 @@ class AuthController extends Controller
         ], 200);
     }
 
-    /**
-     * 2. Registra o Usuário e a Agência vinculados ao plano e gera cobrança no AbacatePay
-     * POST /api/auth/registrar-com-plano
-     */
-    public function registrarComPlano(Request $requisicao, AbacatePayService $servicoAbacatePay): JsonResponse
+    public function enviarCodigoVerificacao(Request $requisicao, VerificacaoEmailCadastroService $servico): JsonResponse
     {
-        $emailNormalizado = strtolower(trim((string) $requisicao->input('email')));
-        $usuarioExistente = $emailNormalizado ? User::with('agencia')->where('email', $emailNormalizado)->first() : null;
+        $dados = $requisicao->validate(['email' => 'required|string|email|max:255', 'nome' => 'nullable|string|max:255']);
 
-        if ($usuarioExistente && $usuarioExistente->agencia && $usuarioExistente->agencia->isPagamentoAtivo()) {
+        return response()->json($servico->enviarCodigo($dados['email'], $dados['nome'] ?? null));
+    }
+
+    public function verificarCodigoEmail(Request $requisicao, VerificacaoEmailCadastroService $servico): JsonResponse
+    {
+        $dados = $requisicao->validate(['email' => 'required|string|email|max:255', 'codigo' => ['required', 'string', 'regex:/^[0-9]{6}$/D']]);
+
+        return response()->json($servico->verificarCodigo($dados['email'], $dados['codigo']));
+    }
+
+    public function registrarComPlano(Request $requisicao, AbacatePayService $servicoAbacatePay, VerificacaoEmailCadastroService $verificacao): JsonResponse
+    {
+        if (!is_string($requisicao->input('verification_token')) || !$requisicao->filled('verification_token')) {
             return response()->json([
-                'message' => 'Este e-mail já está cadastrado e possui assinatura ativa. Faça login para acessar sua conta.',
+                'codigo_erro' => 'VERIFICACAO_EMAIL_INVALIDA',
+                'message' => 'Confirme seu e-mail para concluir o cadastro.',
             ], 422);
         }
 
-        $regraEmail = $usuarioExistente
-            ? 'required|string|email|max:255'
-            : 'required|string|email|max:255|unique:users,email';
-
         $dadosValidados = $requisicao->validate([
             'name' => 'required|string|max:255',
-            'email' => $regraEmail,
+            'email' => 'required|string|email|max:255',
             'password' => 'required|string|min:8',
             'plano_id' => 'required|exists:planos,id',
             'nome_agencia' => 'required|string|max:255',
@@ -111,42 +114,13 @@ class AuthController extends Controller
 
         $formaPagamento = strtoupper($dadosValidados['forma_pagamento'] ?? 'PIX');
 
-        DB::beginTransaction();
-
         try {
-            $plano = Plano::findOrFail($dadosValidados['plano_id']);
-            $nomeAgencia = trim($dadosValidados['nome_agencia']);
+            return DB::transaction(function () use ($requisicao, $dadosValidados, $formaPagamento, $verificacao, $servicoAbacatePay) {
+                $email = strtolower(trim($dadosValidados['email']));
+                $verificacao->validarEConsumirToken($email, $requisicao->input('verification_token'));
+                $plano = Plano::findOrFail($dadosValidados['plano_id']);
+                $nomeAgencia = trim($dadosValidados['nome_agencia']);
 
-            if ($usuarioExistente) {
-                $usuario = $usuarioExistente;
-                $usuario->name = $dadosValidados['name'];
-                $usuario->password = Hash::make($dadosValidados['password']);
-                $usuario->save();
-
-                $agencia = $usuario->agencia;
-                if (!$agencia) {
-                    $agencia = Agencia::create([
-                        'nome' => $nomeAgencia,
-                        'owner_id' => $usuario->id,
-                        'plano_id' => $plano->id,
-                        'forma_pagamento' => $formaPagamento,
-                        'status_pagamento' => 'pendente',
-                        'pagamento_expira_em' => Carbon::now()->addMinutes(60),
-                    ]);
-                    $usuario->agencia_id = $agencia->id;
-                    $usuario->save();
-                } else {
-                    $agencia->nome = $nomeAgencia;
-                    if (!$agencia->owner_id) {
-                        $agencia->owner_id = $usuario->id;
-                    }
-                    $agencia->plano_id = $plano->id;
-                    $agencia->forma_pagamento = $formaPagamento;
-                    $agencia->status_pagamento = 'pendente';
-                    $agencia->pagamento_expira_em = Carbon::now()->addMinutes(60);
-                    $agencia->save();
-                }
-            } else {
                 $agencia = Agencia::create([
                     'nome' => $nomeAgencia,
                     'plano_id' => $plano->id,
@@ -157,7 +131,8 @@ class AuthController extends Controller
 
                 $usuario = User::create([
                     'name' => $dadosValidados['name'],
-                    'email' => strtolower(trim($dadosValidados['email'])),
+                    'email' => $email,
+                    'email_verified_at' => now(),
                     'password' => Hash::make($dadosValidados['password']),
                     'agencia_id' => $agencia->id,
                     'perfil_acesso' => 'consultor_admin',
@@ -165,78 +140,50 @@ class AuthController extends Controller
 
                 $agencia->owner_id = $usuario->id;
                 $agencia->save();
-            }
 
-            $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano, $formaPagamento);
-            $dadosCobranca = $this->abacatePayAdapter->normalizarRetornoCobranca($cobranca);
-            $urlCheckout = $dadosCobranca['url_checkout'];
-            $idTransacao = $dadosCobranca['id_transacao'];
+                $cobranca = $servicoAbacatePay->gerarCobranca($agencia, $usuario, $plano, $formaPagamento);
+                $dadosCobranca = $this->abacatePayAdapter->normalizarRetornoCobranca($cobranca);
+                $urlCheckout = $dadosCobranca['url_checkout'];
+                $idTransacao = $dadosCobranca['id_transacao'];
 
-            if (empty($urlCheckout) || !str_starts_with($urlCheckout, 'http') || !str_contains($urlCheckout, 'abacatepay.com')) {
-                throw new Exception('O gateway de pagamento AbacatePay não retornou uma URL de checkout válida.');
-            }
+                if (empty($urlCheckout) || !str_starts_with($urlCheckout, 'http') || !str_contains($urlCheckout, 'abacatepay.com')) {
+                    throw new Exception('O gateway de pagamento AbacatePay não retornou uma URL de checkout válida.');
+                }
 
-            $agencia->url_checkout = $urlCheckout;
-            $agencia->id_transacao = $idTransacao;
-            $agencia->save();
+                $agencia->url_checkout = $urlCheckout;
+                $agencia->id_transacao = $idTransacao;
+                $agencia->save();
 
-            $tokenPendencia = $usuario->createToken('token_pendencia', ['pagamento:gerenciar'])->plainTextToken;
+                $tokenPendencia = $usuario->createToken('token_pendencia', ['pagamento:gerenciar'])->plainTextToken;
 
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Conta criada com pagamento pendente. Redirecionando para o pagamento...',
-                'url_checkout' => $urlCheckout,
-                'token_pendencia' => $tokenPendencia,
-                'access_token' => $tokenPendencia,
-                'token' => $tokenPendencia,
-                'usuario' => [
-                    'id' => $usuario->id,
-                    'name' => $usuario->name,
-                    'email' => $usuario->email,
-                ],
-                'agencia' => [
-                    'id' => $agencia->id,
-                    'nome' => $agencia->nome,
-                    'forma_pagamento' => $agencia->forma_pagamento,
-                    'status_pagamento' => $agencia->status_pagamento,
-                    'url_checkout' => $agencia->url_checkout,
-                    'pagamento_expira_em' => $agencia->pagamento_expira_em,
-                ],
-            ], 201);
-
+                return response()->json([
+                    'message' => 'Conta criada com pagamento pendente. Redirecionando para o pagamento...',
+                    'url_checkout' => $urlCheckout,
+                    'token_pendencia' => $tokenPendencia,
+                    'access_token' => $tokenPendencia,
+                    'token' => $tokenPendencia,
+                    'usuario' => [
+                        'id' => $usuario->id,
+                        'name' => $usuario->name,
+                        'email' => $usuario->email,
+                    ],
+                    'agencia' => [
+                        'id' => $agencia->id,
+                        'nome' => $agencia->nome,
+                        'forma_pagamento' => $agencia->forma_pagamento,
+                        'status_pagamento' => $agencia->status_pagamento,
+                        'url_checkout' => $agencia->url_checkout,
+                        'pagamento_expira_em' => $agencia->pagamento_expira_em,
+                    ],
+                ], 201);
+            });
+        } catch (HttpResponseException $excecao) {
+            throw $excecao;
         } catch (Exception $excecao) {
-            DB::rollBack();
-
             return response()->json([
                 'message' => 'Erro ao processar cadastro e geração de cobrança: ' . $excecao->getMessage(),
             ], 500);
         }
-    }
-
-    /**
-     * Cadastro inicial de agência e usuário
-     * POST /api/auth/registro
-     */
-    public function registrar(Request $requisicao): JsonResponse
-    {
-        $dadosValidados = $requisicao->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'nome_agencia' => 'required|string|max:255',
-        ], [
-            'nome_agencia.required' => 'O nome da agência/consultoria é obrigatório.',
-        ]);
-
-        $resultado = $this->registroService->registrarNovaAgenciaEUsuario($dadosValidados);
-
-        return response()->json([
-            'message' => 'Cadastro inicial realizado. Selecione o seu plano.',
-            'token' => $resultado['token'],
-            'usuario' => $resultado['usuario'],
-            'agencia' => $resultado['agencia'],
-        ], 201);
     }
 
     /**

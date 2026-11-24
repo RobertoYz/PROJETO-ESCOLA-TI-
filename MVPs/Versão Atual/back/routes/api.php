@@ -26,9 +26,11 @@ Route::get('/convites/{token}', [EquipeController::class, 'validarConvitePublico
 Route::post('/convites/aceitar', [EquipeController::class, 'aceitarConvitePublico']);
 
 // Rotas públicas de Autenticação / Registro SaaS
+Route::post('/auth/enviar-codigo-verificacao', [AuthController::class, 'enviarCodigoVerificacao'])->middleware('throttle:10,1,envio-cadastro');
+Route::post('/auth/verificar-codigo-email', [AuthController::class, 'verificarCodigoEmail'])->middleware('throttle:15,1,confirmacao-cadastro');
 Route::post('/auth/verificar-email', [AuthController::class, 'verificarEmail']);
 Route::post('/auth/registrar-com-plano', [AuthController::class, 'registrarComPlano']);
-Route::post('/auth/registro', [AuthController::class, 'registrar']);
+Route::post('/auth/registro', [AuthController::class, 'registrarComPlano']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/esqueci-senha', [AuthController::class, 'solicitarRecuperacaoSenha']);
 Route::post('/auth/redefinir-senha', [AuthController::class, 'redefinirSenha']);

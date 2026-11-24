@@ -83,6 +83,7 @@ class AuthApiTest extends TestCase
             'nome_agencia' => 'Nexus Consultoria de Inovação'
         ];
 
+        $payload['verification_token'] = $this->confirmarEmailCadastro($payload['email']);
         $response = $this->postJson('/api/auth/registrar-com-plano', $payload);
 
         $response->assertStatus(201)
