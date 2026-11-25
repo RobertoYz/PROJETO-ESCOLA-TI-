@@ -213,7 +213,7 @@ async function carregarCatalogo() {
 }
 
 function atualizarContadoresLaterais() {
-    const porFonte = { FINEP: 0, FAPESC: 0, FAPESP: 0, FAPEMIG: 0, FAPERJ: 0, FAPERGS: 0, FAPEMAT: 0 };
+    const porFonte = { FINEP: 0, FAPESC: 0, FAPESP: 0, FAPEMIG: 0, FAPERJ: 0, FAPERGS: 0, FAPEMAT: 0, FAPEG: 0, FAPDF: 0 };
     let totalFav = 0;
 
     catalogoEditais.forEach((ed) => {
@@ -225,6 +225,8 @@ function atualizarContadoresLaterais() {
         else if (org.includes('FAPERJ')) porFonte.FAPERJ += 1;
         else if (org.includes('FAPERGS')) porFonte.FAPERGS += 1;
         else if (org.includes('FAPEMAT')) porFonte.FAPEMAT += 1;
+        else if (org.includes('FAPEG')) porFonte.FAPEG += 1;
+        else if (org.includes('FAPDF')) porFonte.FAPDF += 1;
         if (ed.favorite) totalFav += 1;
     });
 
@@ -235,6 +237,8 @@ function atualizarContadoresLaterais() {
     const elFaperj = document.getElementById('countFonteFAPERJ');
     const elFapergs = document.getElementById('countFonteFAPERGS');
     const elFapemat = document.getElementById('countFonteFAPEMAT');
+    const elFapeg = document.getElementById('countFonteFAPEG');
+    const elFapdf = document.getElementById('countFonteFAPDF');
     const elFav = document.getElementById('countFavoritosBusca');
 
     if (elFinep) elFinep.textContent = String(porFonte.FINEP);
@@ -244,6 +248,8 @@ function atualizarContadoresLaterais() {
     if (elFaperj) elFaperj.textContent = String(porFonte.FAPERJ);
     if (elFapergs) elFapergs.textContent = String(porFonte.FAPERGS);
     if (elFapemat) elFapemat.textContent = String(porFonte.FAPEMAT);
+    if (elFapeg) elFapeg.textContent = String(porFonte.FAPEG);
+    if (elFapdf) elFapdf.textContent = String(porFonte.FAPDF);
     if (elFav) elFav.textContent = String(totalFav);
 }
 
@@ -278,15 +284,30 @@ function aplicarFiltrosERenderizar() {
             } else if (estadoFiltros.abrangencia === 'mt') {
                 const ehMt = regiaoNorm === 'mt' || regiaoNorm.includes('mato grosso') || orgUpper.includes('FAPEMAT');
                 if (!ehMt) return false;
+            } else if (estadoFiltros.abrangencia === 'go') {
+                const ehGo = regiaoNorm === 'go' || regiaoNorm.includes('goias') || regiaoNorm.includes('goiás') || orgUpper.includes('FAPEG');
+                if (!ehGo) return false;
+            } else if (estadoFiltros.abrangencia === 'df') {
+                const ehDf = regiaoNorm === 'df' || regiaoNorm.includes('distrito federal') || regiaoNorm.includes('brasilia') || regiaoNorm.includes('brasília') || orgUpper.includes('FAPDF');
+                if (!ehDf) return false;
+            } else if (estadoFiltros.abrangencia === 'centro-oeste') {
+                const ehCentroOeste = ['go', 'df', 'mt', 'ms'].includes(regiaoNorm)
+                    || regiaoNorm.includes('goias') || regiaoNorm.includes('goiás')
+                    || regiaoNorm.includes('distrito federal') || regiaoNorm.includes('brasilia') || regiaoNorm.includes('brasília')
+                    || regiaoNorm.includes('mato grosso') || regiaoNorm.includes('centro-oeste')
+                    || orgUpper.includes('FAPEG') || orgUpper.includes('FAPDF') || orgUpper.includes('FAPEMAT');
+                if (!ehCentroOeste) return false;
             } else if (estadoFiltros.abrangencia === 'estadual') {
                 const ehEstadual = regiaoNorm.includes('estadual')
-                    || ['mg', 'sp', 'sc', 'rj', 'rs', 'mt'].includes(regiaoNorm)
+                    || ['mg', 'sp', 'sc', 'rj', 'rs', 'mt', 'go', 'df'].includes(regiaoNorm)
                     || orgUpper.includes('FAPEMIG')
                     || orgUpper.includes('FAPESC')
                     || orgUpper.includes('FAPESP')
                     || orgUpper.includes('FAPERJ')
                     || orgUpper.includes('FAPERGS')
-                    || orgUpper.includes('FAPEMAT');
+                    || orgUpper.includes('FAPEMAT')
+                    || orgUpper.includes('FAPEG')
+                    || orgUpper.includes('FAPDF');
                 if (!ehEstadual) return false;
             } else if (!regiaoNorm.includes(estadoFiltros.abrangencia)) {
                 return false;

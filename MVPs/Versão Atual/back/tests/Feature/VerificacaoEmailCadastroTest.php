@@ -161,4 +161,23 @@ class VerificacaoEmailCadastroTest extends TestCase
         $this->assertDatabaseHas('email_verificacoes_cadastro', ['email' => self::EMAIL]);
         $this->assertDatabaseHas('email_verificacoes_cadastro', ['email' => 'recente@empresa.com']);
     }
+
+    public function test_rejeita_email_temporario_ou_ficticio(): void
+    {
+        $this->postJson(self::ENVIO, ['email' => 'teste@teste.com', 'nome' => 'Teste'])
+            ->assertUnprocessable()
+            ->assertJsonPath('codigo_erro', 'EMAIL_TEMPORARIO_OU_INVALIDO');
+
+        $this->postJson(self::ENVIO, ['email' => 'usuario@mailinator.com', 'nome' => 'Teste'])
+            ->assertUnprocessable()
+            ->assertJsonPath('codigo_erro', 'EMAIL_TEMPORARIO_OU_INVALIDO');
+
+        $this->postJson(self::ENVIO, ['email' => 'usuario@tempmail.com', 'nome' => 'Teste'])
+            ->assertUnprocessable()
+            ->assertJsonPath('codigo_erro', 'EMAIL_TEMPORARIO_OU_INVALIDO');
+
+        $this->postJson(self::ENVIO, ['email' => 'email-sem-tld@invalido', 'nome' => 'Teste'])
+            ->assertUnprocessable()
+            ->assertJsonPath('codigo_erro', 'EMAIL_FORMATO_INVALIDO');
+    }
 }

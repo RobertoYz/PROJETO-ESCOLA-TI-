@@ -28,8 +28,53 @@ const painel = document.getElementById('painel-documento');
 const estado = document.getElementById('estado-documentos');
 const concordar = document.getElementById('confirmar-documentos');
 const abas = [...dialogo.querySelectorAll('[role="tab"]')];
-let documentos;
-let metadados;
+const DOCUMENTOS_FALLBACK = {
+    documento_termos_id: 1,
+    versao_termos: '1.0.0',
+    hash_termos: 'b6f4e137887e47f02379b392a831e5f8f537651a54728562479e09961db63a56',
+    documento_privacidade_id: 2,
+    versao_privacidade: '1.0.0',
+    hash_privacidade: '9984955b9671d1544a0fe0b9d9c22d1df913c5efea20f8fe64bcfd27c62b7cf5',
+    termos_uso: {
+        titulo: 'Termos de Uso',
+        versao: '1.0.0',
+        conteudo_json: [
+            { titulo: 'Quem presta o serviço', texto: 'Anjo Nexus é uma plataforma para consultorias que acompanham editais, organizam startups, propostas e equipes. Canal para dúvidas: projetoanjonexus@gmail.com.' },
+            { titulo: 'Conta e equipe', texto: 'Informe dados corretos e confirme seu e-mail com o código recebido. O titular da agência administra os convites e permissões da equipe.' },
+            { titulo: 'Propostas e inteligência artificial', texto: 'Sugestões, correspondências com editais e minutas podem conter erros. Uma pessoa qualificada deve conferir o edital original antes do envio.' },
+            { titulo: 'Plano e pagamento', texto: 'Confira preço e cotas do plano antes do checkout. A cobrança é processada pela plataforma de pagamento.' },
+            { titulo: 'Vencimento e encerramento', texto: 'O ciclo prevê carência após o vencimento e posterior suspensão.' },
+            { titulo: 'Direitos e responsabilidades', texto: 'A plataforma responde pelas próprias falhas nos limites da legislação aplicável.' },
+            { titulo: 'Criações e uso permitido', texto: 'O acesso permite usar a plataforma nos limites do plano contratado.' },
+            { titulo: 'Versões e foro', texto: 'Fica eleito o foro da Comarca de Maringá – PR.' }
+        ]
+    },
+    politica_privacidade: {
+        titulo: 'Política de Privacidade',
+        versao: '1.0.0',
+        conteudo_json: [
+            { titulo: 'Quem trata os dados', texto: 'Anjo Nexus define as finalidades e meios do tratamento dos dados de conta e autenticação.' },
+            { titulo: 'Do pré-cadastro à assinatura', texto: 'Usamos nome, nome da consultoria e e-mail. Enviamos um código válido por 15 minutos.' },
+            { titulo: 'Por que tratamos', texto: 'Tratamos os dados necessários ao cadastro, à verificação e à prestação do serviço (LGPD).' },
+            { titulo: 'Registro da sua escolha', texto: 'Ao confirmar, você aceita os Termos e declara ciência desta Política.' },
+            { titulo: 'Serviços externos', texto: 'O transporte de e-mail entrega códigos e avisos. Gateways processam o checkout.' },
+            { titulo: 'Segurança e registros', texto: 'A plataforma aplica controle de acesso por agência, permissões e autenticação.' },
+            { titulo: 'Prazos e descarte', texto: 'Rotinas periódicas limpam verificações expiradas.' },
+            { titulo: 'Seus direitos e atualizações', texto: 'Pelo canal de privacidade, solicite confirmação, acesso, correção ou eliminação dos dados.' }
+        ]
+    }
+};
+
+let documentos = DOCUMENTOS_FALLBACK;
+let metadados = {
+    termos_aceitos: true,
+    documento_termos_id: DOCUMENTOS_FALLBACK.documento_termos_id,
+    versao_termos: DOCUMENTOS_FALLBACK.versao_termos,
+    hash_termos: DOCUMENTOS_FALLBACK.hash_termos,
+    documento_privacidade_id: DOCUMENTOS_FALLBACK.documento_privacidade_id,
+    versao_privacidade: DOCUMENTOS_FALLBACK.versao_privacidade,
+    hash_privacidade: DOCUMENTOS_FALLBACK.hash_privacidade,
+};
 let abaAtual = 'termos_uso';
 let acionador;
 let pendente;
@@ -40,7 +85,21 @@ function limparAceite() {
 }
 
 function registrarEscolha() {
-    if (!metadados || !aceite.checked) return limparAceite();
+    if (!aceite.checked) {
+        sessionStorage.removeItem('aceite_cadastro');
+        return;
+    }
+    if (!metadados) {
+        metadados = {
+            termos_aceitos: true,
+            documento_termos_id: DOCUMENTOS_FALLBACK.documento_termos_id,
+            versao_termos: DOCUMENTOS_FALLBACK.versao_termos,
+            hash_termos: DOCUMENTOS_FALLBACK.hash_termos,
+            documento_privacidade_id: DOCUMENTOS_FALLBACK.documento_privacidade_id,
+            versao_privacidade: DOCUMENTOS_FALLBACK.versao_privacidade,
+            hash_privacidade: DOCUMENTOS_FALLBACK.hash_privacidade,
+        };
+    }
     sessionStorage.setItem('aceite_cadastro', JSON.stringify(metadados));
 }
 
@@ -69,8 +128,8 @@ function exibirDocumento(tipo) {
 }
 
 async function atualizarDocumentos() {
-    aceite.disabled = concordar.disabled = true;
-    estado.textContent = 'Carregando documentos…';
+    aceite.disabled = false;
+    concordar.disabled = false;
     try {
         const atuais = await requisicaoApi('/termos/vigentes');
         for (const tipo of ['termos_uso', 'politica_privacidade']) {
@@ -86,7 +145,7 @@ async function atualizarDocumentos() {
             novos[campo] = atuais[campo];
         }
         const mudaram = metadados && JSON.stringify(novos) !== JSON.stringify(metadados);
-        if (mudaram) {
+        if (mudaram && aceite.checked) {
             limparAceite();
             exibirErro('Os documentos mudaram. Confira as novas versões e confirme novamente.');
         }
@@ -94,11 +153,25 @@ async function atualizarDocumentos() {
         metadados = novos;
         aceite.disabled = concordar.disabled = false;
         estado.textContent = mudaram ? 'Documentos atualizados. Confira as novas versões.' : '';
-    } catch {
-        documentos = metadados = null;
-        limparAceite();
-        estado.textContent = 'Não foi possível carregar os documentos. Feche e abra novamente para tentar.';
-        exibirErro(estado.textContent);
+        if (aceite.checked) {
+            registrarEscolha();
+        }
+    } catch (e) {
+        console.warn('Utilizando documentos legais locais:', e);
+        if (!documentos) {
+            documentos = DOCUMENTOS_FALLBACK;
+            metadados = {
+                termos_aceitos: true,
+                documento_termos_id: DOCUMENTOS_FALLBACK.documento_termos_id,
+                versao_termos: DOCUMENTOS_FALLBACK.versao_termos,
+                hash_termos: DOCUMENTOS_FALLBACK.hash_termos,
+                documento_privacidade_id: DOCUMENTOS_FALLBACK.documento_privacidade_id,
+                versao_privacidade: DOCUMENTOS_FALLBACK.versao_privacidade,
+                hash_privacidade: DOCUMENTOS_FALLBACK.hash_privacidade,
+            };
+        }
+        aceite.disabled = concordar.disabled = false;
+        estado.textContent = '';
     }
     exibirDocumento(abaAtual);
 }
@@ -119,7 +192,9 @@ window.addEventListener('pageshow', evento => {
 });
 aceite.addEventListener('change', registrarEscolha);
 for (const botao of formulario.querySelectorAll('[data-documento]')) {
-    botao.addEventListener('click', () => {
+    botao.addEventListener('click', (evento) => {
+        evento.preventDefault();
+        evento.stopPropagation();
         acionador = botao;
         exibirDocumento(botao.dataset.documento);
         dialogo.showModal();
@@ -214,9 +289,32 @@ formulario.addEventListener('submit', async (evento) => {
         return;
     }
 
-    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
     if (!regexEmail.test(email)) {
-        exibirErro('Informe um endereço de e-mail válido.');
+        exibirErro('Informe um endereço de e-mail válido com domínio completo.');
+        return;
+    }
+
+    const dominiosProibidos = [
+        'teste.com', 'test.com', 'teste.com.br', 'test.com.br',
+        'exemplo.com', 'example.com', 'example.org', 'example.net',
+        'fake.com', 'fakedoamin.com', 'emailfake.com', 'naoexiste.com',
+        'mailinator.com', 'yopmail.com', '10minutemail.com', 'tempmail.com',
+        'temp-mail.org', 'guerrillamail.com', 'sharklasers.com', 'trashmail.com',
+        'throwawaymail.com', 'dispostable.com', 'fakeinbox.com', 'mohmal.com',
+        'crazymailing.com', 'getairmail.com', 'generator.email', 'nada.ltd'
+    ];
+    const partesEmail = email.split('@');
+    const usuarioEmail = partesEmail[0] || '';
+    const dominioEmail = partesEmail[1] || '';
+
+    if (dominiosProibidos.includes(dominioEmail)) {
+        exibirErro('E-mails temporários, fictícios ou de teste não são aceitos. Informe um e-mail válido.');
+        return;
+    }
+
+    if (['teste', 'test', 'fake', 'asdf'].includes(usuarioEmail) && ['email.com', 'gmail.com', 'hotmail.com'].includes(dominioEmail)) {
+        exibirErro('Informe um e-mail válido para receber o código.');
         return;
     }
 

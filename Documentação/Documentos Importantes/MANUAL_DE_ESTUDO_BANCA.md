@@ -35,7 +35,13 @@ A coleta automatizada de editais é executada pela camada de Spiders (baseada no
      - Arquitetura de contingência dupla: raspagem dinâmica nos endpoints oficiais da FAPEMAT aliada a um catálogo estruturado de editais estratégicos locais (PIETec MT, PROFIX-MT, Conecta Startup MT, TecNova III).
      - Extração determinística com custo zero de tokens de IA para teto orçamentário, data de submissão e links diretos para os arquivos oficiais.
 
-6. Pipeline de Processamento e Idempotência (SalvarNoBancoProcessor.php):
+6. FAPEG - Goiás (FapegSpider.php) e FAPDF - Distrito Federal (FapdfSpider.php) — Expansão Centro-Oeste e Resiliência Híbrida (ADR 022 / EDTAN-295):
+   - Desafio Técnico: Portais governamentais de Goiás e Distrito Federal com estruturas dinâmicas e oportunidades de inovação prioritárias (Tecnova III GO/DF, Centelha Goiás/Brasília, Conecta Startup GO, Startups Brasília Hub Capital e Redes Integradas).
+   - Solução em Código:
+     - Spiders especializados com raspagem ativa no portal institucional e ingestão de catálogo estruturado oficial de contingência (`syncCatalogoEstruturado`).
+     - Integração completa no frontend Web e Mobile (Capacitor) com filtros reativos por fonte, abrangência regional e badges visuais dedicadas (`.agency-fapeg` e `.agency-fapdf`).
+
+7. Pipeline de Processamento e Idempotência (SalvarNoBancoProcessor.php):
    - Cada Spider emite dados via `yield $this->item([...])` (PHP Generator lazy, que consome memória próxima de zero).
    - O item passa pelo `SalvarNoBancoProcessor`, que executa:
      ```php

@@ -11,6 +11,8 @@ use App\Spiders\FapemigSpider;
 use App\Spiders\FaperjSpider;
 use App\Spiders\FapergsSpider;
 use App\Spiders\FapematSpider;
+use App\Spiders\FapegSpider;
+use App\Spiders\FapdfSpider;
 use App\Models\Edital;
 
 class SyncAllEditais extends Command
@@ -20,14 +22,14 @@ class SyncAllEditais extends Command
      *
      * @var string
      */
-    protected $signature = 'editais:sync {--fonte= : Especifica a fonte para sincronizar (FINEP, FAPESP, FAPESC, FAPEMIG, FAPERJ, FAPERGS, FAPEMAT)}';
+    protected $signature = 'editais:sync {--fonte= : Especifica a fonte para sincronizar (FINEP, FAPESP, FAPESC, FAPEMIG, FAPERJ, FAPERGS, FAPEMAT, FAPEG, FAPDF)}';
 
     /**
      * A descrição do comando de console.
      *
      * @var string
      */
-    protected $description = 'Sincroniza os editais dos portais FINEP, FAPESP, FAPESC, FAPEMIG, FAPERJ, FAPERGS e FAPEMAT no banco de dados';
+    protected $description = 'Sincroniza os editais dos portais FINEP, FAPESP, FAPESC, FAPEMIG, FAPERJ, FAPERGS, FAPEMAT, FAPEG e FAPDF no banco de dados';
 
     /**
      * Executa o comando de console.
@@ -110,12 +112,34 @@ class SyncAllEditais extends Command
 
         // 7. FAPEMAT
         if (empty($fonte) || $fonte === 'FAPEMAT') {
-            $this->warn("\n[7/7] Rodando Spider FAPEMAT...");
+            $this->warn("\n[7/9] Rodando Spider FAPEMAT...");
             try {
                 Roach::startSpider(FapematSpider::class);
                 $this->info("✔ FAPEMAT sincronizado com sucesso!");
             } catch (\Throwable $e) {
                 $this->error("✖ Erro ao sincronizar FAPEMAT: " . $e->getMessage());
+            }
+        }
+
+        // 8. FAPEG (Goiás)
+        if (empty($fonte) || $fonte === 'FAPEG') {
+            $this->warn("\n[8/9] Rodando Spider FAPEG (Goiás)...");
+            try {
+                Roach::startSpider(FapegSpider::class);
+                $this->info("✔ FAPEG sincronizado com sucesso!");
+            } catch (\Throwable $e) {
+                $this->error("✖ Erro ao sincronizar FAPEG: " . $e->getMessage());
+            }
+        }
+
+        // 9. FAPDF (Distrito Federal)
+        if (empty($fonte) || $fonte === 'FAPDF') {
+            $this->warn("\n[9/9] Rodando Spider FAPDF (Distrito Federal)...");
+            try {
+                Roach::startSpider(FapdfSpider::class);
+                $this->info("✔ FAPDF sincronizado com sucesso!");
+            } catch (\Throwable $e) {
+                $this->error("✖ Erro ao sincronizar FAPDF: " . $e->getMessage());
             }
         }
 

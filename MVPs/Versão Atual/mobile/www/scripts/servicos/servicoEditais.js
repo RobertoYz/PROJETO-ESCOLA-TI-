@@ -104,6 +104,8 @@ export function obterClasseAgencia(org) {
     if (sigla.includes('FAPERJ')) return 'agency-faperj';
     if (sigla.includes('FAPERGS')) return 'agency-fapergs';
     if (sigla.includes('FAPEMAT')) return 'agency-fapemat';
+    if (sigla.includes('FAPEG')) return 'agency-fapeg';
+    if (sigla.includes('FAPDF')) return 'agency-fapdf';
     return 'agency-default';
 }
 
@@ -145,6 +147,12 @@ export function editalCorrespondeATermo(edital, termoNormalizado) {
     }
     if (orgUpper.includes('FAPEMAT') || String(edital.region || '').toUpperCase() === 'MT') {
         sinonimosRegionais.push('mato grosso mt cuiaba centro oeste estadual');
+    }
+    if (orgUpper.includes('FAPEG') || String(edital.region || '').toUpperCase() === 'GO') {
+        sinonimosRegionais.push('goias goiás go goiania goiânia centro oeste fapeg estadual');
+    }
+    if (orgUpper.includes('FAPDF') || String(edital.region || '').toUpperCase() === 'DF') {
+        sinonimosRegionais.push('distrito federal df brasilia brasília centro oeste fapdf capital federal estadual');
     }
 
     const indice = normalizarTextoBusca([

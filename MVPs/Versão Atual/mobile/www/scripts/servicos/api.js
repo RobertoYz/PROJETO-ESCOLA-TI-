@@ -7,12 +7,15 @@ const ehCapacitorApp = typeof window !== 'undefined' && (
 );
 
 // Se for Capacitor (APK no celular) ou domínio de produção, SEMPRE consome o servidor oficial na nuvem!
-// Só usa localhost se for explicitamente navegador desktop de desenvolvimento (ex: porta 3000 ou 5500 via http)
+// Só usa localhost se for explicitamente navegador desktop de desenvolvimento
 const ehDevNavegadorLocal = typeof window !== 'undefined' &&
     !ehCapacitorApp &&
-    window.location.protocol === 'http:' &&
-    (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') &&
-    (window.location.port !== '');
+    (
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === 'localhost' ||
+        window.location.protocol === 'file:' ||
+        window.location.hostname === ''
+    );
 
 const URL_PADRAO = ehDevNavegadorLocal
     ? 'http://127.0.0.1:8000/api'
