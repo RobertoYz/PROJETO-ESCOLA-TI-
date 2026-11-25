@@ -4,7 +4,7 @@
   "webDir": "www",
   "bundledWebRuntime": false,
   "server": {
-    "url": "http://anjonexus.intalenti.com.br/",
+    "url": "https://anjonexus.com.br/",
     "cleartext": true
   },
   "plugins": {
