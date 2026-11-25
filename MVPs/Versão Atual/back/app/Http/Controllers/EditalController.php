@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\Edital;
 use App\Models\EditalFavorito;
+use App\Models\Startup;
 
 class EditalController extends Controller
 {
@@ -44,12 +45,26 @@ class EditalController extends Controller
         }
 
         $editais = $query->get();
+
+        $startup = null;
+        if ($usuario) {
+            if ($request->filled('startup_id')) {
+                $startup = Startup::where('id', (int)$request->startup_id)
+                    ->where('agencia_id', $usuario->agencia_id)
+                    ->first();
+            }
+            if (!$startup && $usuario->agencia_id) {
+                $startup = Startup::where('agencia_id', $usuario->agencia_id)->first();
+            }
+        }
         
         // Formata os dados para a interface Front-end (Custo Zero de IA)
-        $formattedEditais = $editais->map(function($edital) use ($favoritosIds) {
+        $formattedEditais = $editais->map(function($edital) use ($favoritosIds, $startup) {
             $diagnostico = !empty($edital->ai_diagnosis) 
                 ? $edital->ai_diagnosis 
                 : [[ 'type' => 'info', 'text' => 'Edital Cadastrado - Dados Pré-Formatados' ]];
+
+            $matchScore = $this->calcularScoreMatch($edital, $startup);
 
             $formatarData = function($dataRaw) {
                 if (empty($dataRaw)) return '--';
@@ -78,7 +93,7 @@ class EditalController extends Controller
                 'deadline' => $deadlineFormatada,
                 'status' => 'Aberto',
                 'statusClass' => 'badge-aberto',
-                'match' => $edital->ai_match ?? 0,
+                'match' => $matchScore,
                 'target' => $edital->publico ?? 'Startup / Empresa / Pesquisador',
                 'region' => $edital->regiao ?? 'Nacional', 
                 'objetivo' => !empty($edital->objetivo) ? $edital->objetivo : (!empty($edital->conteudo_completo) ? mb_substr(strip_tags($edital->conteudo_completo), 0, 1500) . '...' : 'Sem descrição para exibir no resumo.'),
@@ -149,5 +164,77 @@ class EditalController extends Controller
     {
         $request->merge(['apenas_favoritos' => 1]);
         return $this->index($request);
+    }
+
+    /**
+     * Calcula o percentual de compatibilidade (Match) em PHP com custo zero de IA.
+     */
+    private function calcularScoreMatch(Edital $edital, ?Startup $startup): int
+    {
+        if (!empty($edital->ai_match) && (int) $edital->ai_match > 0) {
+            return min(99, max(1, (int) $edital->ai_match));
+        }
+
+        if (!$startup) {
+            return 0;
+        }
+
+        $score = 42;
+
+        // 1. Aderência por palavras-chave de nicho e pitch da startup vs título/objetivo do edital
+        $textoEdital = mb_strtolower(trim(
+            ($edital->title ?? '') . ' ' .
+            ($edital->objetivo ?? '') . ' ' .
+            ($edital->ai_nicho ?? '') . ' ' .
+            ($edital->nicho ?? '') . ' ' .
+            ($edital->conteudo_completo ?? '')
+        ));
+
+        $textoStartup = mb_strtolower(trim(($startup->nicho_atuacao ?? '') . ' ' . ($startup->pitch ?? '')));
+        $palavras = preg_split('/[\s,;.\-\/()]+/u', $textoStartup, -1, PREG_SPLIT_NO_EMPTY);
+        $stopWords = ['para', 'com', 'como', 'uma', 'uns', 'das', 'dos', 'nos', 'nas', 'por', 'que', 'mais', 'sobre', 'entre', 'empresa', 'startup'];
+
+        $acertos = 0;
+        $verificadas = [];
+        foreach ($palavras as $palavra) {
+            if (mb_strlen($palavra) < 4 || in_array($palavra, $stopWords, true) || isset($verificadas[$palavra])) {
+                continue;
+            }
+            $verificadas[$palavra] = true;
+            if (str_contains($textoEdital, $palavra)) {
+                $acertos++;
+                if ($acertos >= 6) {
+                    break;
+                }
+            }
+        }
+        $score += min(32, $acertos * 6);
+
+        // 2. Porte empresarial vs público-alvo do edital
+        $publico = mb_strtolower($edital->publico ?? '');
+        $porte = mb_strtolower($startup->porte ?? '');
+        if (
+            str_contains($publico, 'startup') ||
+            str_contains($publico, 'empresa') ||
+            (!empty($porte) && str_contains($publico, $porte))
+        ) {
+            $score += 12;
+        } elseif (str_contains($publico, 'micro') || str_contains($publico, 'pequena') || str_contains($publico, 'mei')) {
+            $score += 10;
+        }
+
+        // 3. Região / Estado
+        $regiao = mb_strtolower($edital->regiao ?? '');
+        $estado = mb_strtolower($startup->estado ?? '');
+        if (str_contains($regiao, 'nacional') || (!empty($estado) && str_contains($regiao, $estado))) {
+            $score += 8;
+        }
+
+        // 4. Teto orçamentário definido
+        if (!empty($edital->max_budget) && $edital->max_budget > 0) {
+            $score += 6;
+        }
+
+        return min(96, max(35, $score));
     }
 }

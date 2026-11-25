@@ -2650,7 +2650,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         toast.className = 'anjo-toast-notificacao';
         toast.style.cssText = `
             position: fixed;
-            top: 24px;
+            top: 82px;
             right: 24px;
             max-width: 410px;
             width: calc(100% - 32px);
@@ -2698,6 +2698,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         document.body.appendChild(toast);
 
         const fechar = () => {
+            sessionStorage.setItem('anjo_popup_silenciado_sessao', '1');
             if (alerta.id) {
                 // Grava permanentemente que o usuário já fechou/dispensou este alerta
                 localStorage.setItem(`anjo_notif_dispensada_${alerta._tipo}_${alerta.id}`, '1');
@@ -2706,15 +2707,16 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             setTimeout(() => toast.remove(), 260);
         };
 
-        toast.querySelector('#btnFecharToast')?.addEventListener('click', fechar);
-        toast.querySelector('#btnDispensarToast')?.addEventListener('click', () => {
-            if (alerta.id) {
-                localStorage.setItem(`anjo_notif_dispensada_${alerta._tipo}_${alerta.id}`, '1');
+        const dispensarEFechar = () => {
+            if (alerta.id && !String(alerta.id).startsWith('fallback_')) {
                 if (ehPrazo) marcarAlertaPrazoComoLido(alerta.id);
                 else marcarAlertaComoLido(alerta.id);
             }
             fechar();
-        });
+        };
+
+        toast.querySelector('#btnFecharToast')?.addEventListener('click', dispensarEFechar);
+        toast.querySelector('#btnDispensarToast')?.addEventListener('click', dispensarEFechar);
 
         toast.querySelector('#btnVerEditalToast')?.addEventListener('click', () => {
             fechar();
@@ -2795,7 +2797,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 || alertasPrazos.find(a => !a.lido && a.nivel_urgencia === 'urgente')
                 || alertasMatch.find(a => !a.lido && (a.score_match || 0) >= 85);
 
-            if (alertaMaisCritico) {
+            if (alertaMaisCritico && !sessionStorage.getItem('anjo_popup_silenciado_sessao')) {
                 // Guarda no localStorage permanente para nunca reaparecer após dispensado/fechado
                 const chaveDispensado = `anjo_notif_dispensada_${alertaMaisCritico._tipo}_${alertaMaisCritico.id}`;
                 if (!localStorage.getItem(chaveDispensado)) {
