@@ -33,7 +33,15 @@ test.describe('Painel do Administrador Global & Inteligência de Radares (E2E)',
 
     // 5. Valida identificação do Super Admin no cabeçalho
     await expect(page.locator('#admin-user-info')).toContainText('admin@anjonexus.com.br');
-    await expect(page.locator('.badge-super-admin')).toContainText(/Super Admin Global/i);
+    await expect(page.locator('.badge-super-admin').first()).toContainText(/Super Admin Global/i);
+
+    // 6. Valida presença da Sidebar Soberana na tela de Governança
+    const sidebar = page.locator('#sidebar');
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar).toContainText(/Painel de Governança/i);
+    await expect(sidebar.locator('a.nav-item.active')).toContainText(/Painel de Governança/i);
+    await expect(sidebar).toContainText(/Catálogo de Editais/i);
+    await expect(sidebar.locator('a[href*="minhas-startups"]')).toHaveCount(0);
   });
 
   test('Cenário 2: KPIs de Governança e Métricas SaaS em Tempo Real', async ({ page }) => {

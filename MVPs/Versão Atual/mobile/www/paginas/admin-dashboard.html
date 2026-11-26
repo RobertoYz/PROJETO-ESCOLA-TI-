@@ -8,31 +8,36 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../estilos/admin-dashboard.css">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
 </head>
 <body class="admin-body">
-    <!-- Header Admin (Top Navbar Alinhado ao Design System) -->
-    <header class="admin-header">
-        <div class="admin-header-left">
-            <a href="admin-dashboard.html" class="admin-logo" title="Anjo Nexus - Painel de Governança">
-                <span>⚡ Anjo Nexus</span>
-            </a>
-            <span class="badge-super-admin">Super Admin Global</span>
-        </div>
-        <div class="admin-header-right">
-            <div class="admin-user-pill">
-                <span>👤</span>
-                <span id="admin-user-info" class="admin-user-info">Carregando...</span>
-            </div>
-            <a href="busca-editais.html" id="btn-ver-radar" class="btn-header-action" title="Abrir Radar de Editais">
-                🔍 Ver Radar
-            </a>
-            <button id="btn-logout-admin" class="btn-header-action btn-header-logout" type="button" title="Encerrar sessão de Super Admin">
-                Sair
-            </button>
-        </div>
-    </header>
+    <aside class="sidebar" id="sidebar"></aside>
 
-    <main class="admin-container">
+    <div class="admin-main-wrapper">
+        <!-- Header Admin (Top Navbar Alinhado ao Design System) -->
+        <header class="admin-header">
+            <div class="admin-header-left">
+                <button id="btnMobileMenu" class="mobile-menu-trigger" aria-label="Abrir Menu">☰</button>
+                <div class="admin-logo" style="display: flex; align-items: center; gap: 8px;">
+                    <span>⚡ Anjo Nexus</span>
+                </div>
+                <span class="badge-super-admin">Super Admin Global</span>
+            </div>
+            <div class="admin-header-right">
+                <div class="admin-user-pill">
+                    <span>👤</span>
+                    <span id="admin-user-info" class="admin-user-info">Carregando...</span>
+                </div>
+                <a href="busca-editais.html" id="btn-ver-radar" class="btn-header-action" title="Abrir Radar de Editais">
+                    🔍 Ver Radar
+                </a>
+                <button id="btn-logout-admin" class="btn-header-action btn-header-logout" type="button" title="Encerrar sessão de Super Admin">
+                    Sair
+                </button>
+            </div>
+        </header>
+
+        <main class="admin-container">
         <!-- Título da Página -->
         <div class="admin-title-row">
             <h1>Painel de Governança e Inteligência</h1>
@@ -296,6 +301,8 @@
                 </button>
             </div>
         </div>
+    </div>
+        </main>
     </div>
 
     <script type="module" src="../scripts/paginas/adminDashboard.js"></script>

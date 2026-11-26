@@ -1,11 +1,25 @@
 import { requisicaoApi } from '../servicos/api.js';
 import { obterUsuarioLogado, removerToken, limparDadosPendencia } from '../servicos/servicoAutenticacao.js';
+import { inicializarSidebarGlobal } from '../componentes/sidebarGlobal.js';
 
 // Verificação de Autorização Global
 const usuarioLogado = obterUsuarioLogado();
 if (!usuarioLogado || usuarioLogado.perfil_acesso !== 'admin_global') {
     alert('Acesso restrito ao Administrador Global.');
     window.location.replace('login.html');
+}
+
+// Inicializa Sidebar Global com aba de Governança ativa ('admin')
+inicializarSidebarGlobal('admin');
+
+const btnMobileMenu = document.getElementById('btnMobileMenu');
+if (btnMobileMenu) {
+    btnMobileMenu.addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebarBackdrop');
+        const isOpen = sidebar?.classList.toggle('mobile-open');
+        backdrop?.classList.toggle('active', Boolean(isOpen));
+    });
 }
 
 // Elementos da UI
