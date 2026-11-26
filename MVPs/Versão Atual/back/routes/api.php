@@ -16,6 +16,7 @@ use App\Http\Controllers\StartupController;
 use App\Http\Controllers\EquipeController;
 use App\Http\Controllers\AlertaMatchController;
 use App\Http\Controllers\AlertaPrazoController;
+use App\Http\Controllers\AdminController;
 
 Route::get('/termos/vigentes', [TermoAceiteController::class, 'vigentes']);
 Route::get('/termos/meu-aceite', [TermoAceiteController::class, 'meuAceite'])->middleware('auth:sanctum');
@@ -145,4 +146,21 @@ Route::post('/ia/match-editais', [MinutaController::class, 'matchEditais']);
 Route::prefix('cnpj')->group(function () {
     Route::get('/{cnpj}', [CnpjController::class, 'consultar']);
     Route::post('/consultar', [CnpjController::class, 'consultarPost']);
+});
+
+// Módulo Back-end do Painel do Administrador Global (ADM) - EDTAN-302
+Route::middleware(['auth:sanctum', 'admin.global'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard']);
+
+    // Gestão de Consultorias/Empresas (Ligar, Desligar, Ajustar Plano e Excluir)
+    Route::get('/agencias', [AdminController::class, 'listarAgencias']);
+    Route::get('/agencias/{id}', [AdminController::class, 'obterAgencia']);
+    Route::patch('/agencias/{id}/status', [AdminController::class, 'alterarStatusAgencia']);
+    Route::post('/agencias/{id}/ajustar-plano', [AdminController::class, 'ajustarPlano']);
+    Route::delete('/agencias/{id}', [AdminController::class, 'excluirAgencia']);
+
+    // Monitoramento e Saúde dos Radares de Editais
+    Route::get('/radares/status', [AdminController::class, 'statusRadares']);
+    Route::get('/radares/{fonte}/detalhes', [AdminController::class, 'obterDetalhesRadar']);
+    Route::post('/radares/{fonte}/sincronizar', [AdminController::class, 'sincronizarRadar']);
 });

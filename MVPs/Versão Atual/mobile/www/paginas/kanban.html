@@ -9,6 +9,12 @@
         if (!localStorage.getItem('token_autenticacao')) {
             window.location.replace('login.html');
         }
+        try {
+            const user = JSON.parse(localStorage.getItem('usuario_logado') || '{}');
+            if (user?.perfil_acesso === 'admin_global') {
+                window.location.replace('admin-dashboard.html');
+            }
+        } catch (e) {}
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

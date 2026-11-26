@@ -19,6 +19,11 @@ if (!usuarioEstaAutenticado()) {
     window.location.href = 'login.html';
 }
 
+const usuarioLogado = obterUsuarioLogado();
+if (usuarioLogado?.perfil_acesso === 'admin_global') {
+    window.location.replace('admin-dashboard.html');
+}
+
 const containerListaMembros = document.getElementById('containerListaMembros');
 const alertaFeedbackEquipe = document.getElementById('alertaFeedbackEquipe');
 const btnAbrirModalConvidar = document.getElementById('btnAbrirModalConvidar');

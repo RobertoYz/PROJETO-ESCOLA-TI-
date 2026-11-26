@@ -14,6 +14,11 @@ let tokenPendencia = obterTokenPendencia();
 let emailPendencia = obterEmailPendencia();
 const agenciaPendencia = obterAgenciaPendencia();
 
+const usuarioVerificacao = obterUsuarioLogado();
+if (usuarioVerificacao?.perfil_acesso === 'admin_global') {
+    window.location.replace('admin-dashboard.html');
+}
+
 // Fallback de resiliência: resgata e-mail do cache do usuário caso não esteja explícito no storage de pendência
 if (!emailPendencia) {
     const usuarioLogado = obterUsuarioLogado();
@@ -131,6 +136,13 @@ botaoConsultarAnterior?.addEventListener('click', async () => {
 
     } catch (erro) {
         const mensagemErro = erro.message || '';
+
+        // Bloqueio administrativo soberano
+        if (erro.status === 403 && (erro.dados?.codigo === 'CONSULTORIA_SUSPENSA' || erro.dados?.codigo_erro === 'CONSULTORIA_SUSPENSA' || mensagemErro.toLowerCase().includes('bloqueio administrativo') || mensagemErro.toLowerCase().includes('suspenso'))) {
+            exibirFeedback(mensagemErro || 'Acesso Suspenso: Esta consultoria foi suspensa pela administração global. Entre em contato com o suporte.');
+            if (botaoGerarNova) botaoGerarNova.disabled = true;
+            return;
+        }
 
         // Fallback: caso a url esteja gravada em cache e o pagamento ainda esteja dentro do prazo
         if ((erro.status === 401 || mensagemErro.toLowerCase().includes('unauthenticated')) && agenciaPendencia) {

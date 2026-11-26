@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Painel do Administrador Global — Anjo Nexus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../estilos/admin-dashboard.css">
+    <link rel="stylesheet" href="../estilos/mobile-adaptive.css">
+</head>
+<body class="admin-body">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <div class="admin-main-wrapper">
+        <!-- Header Admin (Top Navbar Alinhado ao Design System) -->
+        <header class="admin-header">
+            <div class="admin-header-left">
+                <button id="btnMobileMenu" class="mobile-menu-trigger" aria-label="Abrir Menu">☰</button>
+                <div class="admin-logo" style="display: flex; align-items: center; gap: 8px;">
+                    <span>⚡ Anjo Nexus</span>
+                </div>
+                <span class="badge-super-admin">Super Admin Global</span>
+            </div>
+            <div class="admin-header-right">
+                <div class="admin-user-pill">
+                    <span>👤</span>
+                    <span id="admin-user-info" class="admin-user-info">Carregando...</span>
+                </div>
+                <a href="busca-editais.html" id="btn-ver-radar" class="btn-header-action" title="Abrir Radar de Editais">
+                    🔍 Ver Radar
+                </a>
+                <button id="btn-logout-admin" class="btn-header-action btn-header-logout" type="button" title="Encerrar sessão de Super Admin">
+                    Sair
+                </button>
+            </div>
+        </header>
+
+        <main class="admin-container">
+        <!-- Título da Página -->
+        <div class="admin-title-row">
+            <h1>Painel de Governança e Inteligência</h1>
+            <p>Supervisão operacional do ecossistema, métricas SaaS e monitoramento dos radares governamentais.</p>
+        </div>
+
+        <!-- KPIs Principais em Grid Responsivo -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Consultorias Cadastradas</div>
+                <div id="kpi-total-agencias" class="kpi-value">--</div>
+                <div id="kpi-agencias-status" class="kpi-subtext">Carregando...</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Usuários Totais</div>
+                <div id="kpi-total-usuarios" class="kpi-value">--</div>
+                <div id="kpi-usuarios-status" class="kpi-subtext">Carregando...</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">MRR Estimado (Recorrência)</div>
+                <div id="kpi-mrr" class="kpi-value">--</div>
+                <div id="kpi-pagamentos" class="kpi-subtext">Carregando...</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Editais Rastreados</div>
+                <div id="kpi-total-editais" class="kpi-value">--</div>
+                <div id="kpi-editais-abertos" class="kpi-subtext">Carregando...</div>
+            </div>
+        </div>
+
+        <!-- Seção 1: Saúde dos Radares de Editais (Healthcheck & Extração) -->
+        <section class="admin-section">
+            <div class="admin-section-header">
+                <div>
+                    <h2>
+                        <span>📡</span> Saúde dos Radares & Métodos de Extração (Healthcheck)
+                    </h2>
+                    <p class="section-subtitle">
+                        Clique em qualquer radar para abrir a inspeção técnica profunda e ver os últimos editais ingeridos.
+                    </p>
+                </div>
+                <div class="radares-sync-controls">
+                    <select id="select-sync-alvo" class="select-sync-regiao" aria-label="Alvo de Sincronização">
+                        <option value="TODOS">🌐 Sincronizar: Todos os Radares</option>
+                        <option value="CENTRO-OESTE">🏛️ Região: Centro-Oeste (DF + GO)</option>
+                        <option value="SUDESTE">🏙️ Região: Sudeste (SP, RJ, MG)</option>
+                        <option value="NACIONAL">🇧🇷 Região: Nacional (FINEP)</option>
+                        <optgroup label="Sincronizar por Órgão Específico">
+                            <option value="FAPDF">FAPDF (Distrito Federal)</option>
+                            <option value="FAPEG">FAPEG (Goiás)</option>
+                            <option value="FINEP">FINEP (Nacional)</option>
+                            <option value="FAPESP">FAPESP (São Paulo)</option>
+                            <option value="FAPERJ">FAPERJ (Rio de Janeiro)</option>
+                            <option value="FAPEMIG">FAPEMIG (Minas Gerais)</option>
+                        </optgroup>
+                    </select>
+                    <button id="btn-executar-sync-alvo" class="btn-sync-action" type="button">
+                        ⚡ Sincronizar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtros de Visualização por Região (Chips Horizontais Flexíveis) -->
+            <div class="radares-filtro-chips">
+                <span class="filtro-chip-label">Visualizar por Região:</span>
+                <button type="button" class="chip-filtro-radar active" data-regiao="TODAS">Todas as Regiões</button>
+                <button type="button" class="chip-filtro-radar" data-regiao="Centro-Oeste">Centro-Oeste (DF, GO)</button>
+                <button type="button" class="chip-filtro-radar" data-regiao="Sudeste">Sudeste (SP, RJ, MG)</button>
+                <button type="button" class="chip-filtro-radar" data-regiao="Nacional">Nacional (FINEP)</button>
+            </div>
+
+            <div id="container-radares" class="radares-grid">
+                <p style="color: var(--text-muted); font-size: 0.9rem; padding: 12px 0;">Verificando conexão com os portais governamentais...</p>
+            </div>
+        </section>
+
+        <!-- Seção 2: Gestão de Empresas / Consultorias (Ativar, Suspender, Excluir) -->
+        <section class="admin-section">
+            <div class="admin-section-header">
+                <div>
+                    <h2>
+                        <span>🏢</span> Gestão de Consultorias & Assinaturas
+                    </h2>
+                    <p class="section-subtitle">
+                        Supervisão das contas empresariais, concessão de dias de cortesia, planos e controle soberano de status.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Filtros de Empresas -->
+            <div class="filtros-agencias">
+                <input type="text" id="input-busca-agencia" class="input-busca-admin" placeholder="Buscar por consultoria, titular ou e-mail...">
+                <select id="select-status-agencia" class="select-filtro-admin">
+                    <option value="">Todos os Status</option>
+                    <option value="ativo">Ativo</option>
+                    <option value="suspenso">Suspenso</option>
+                    <option value="pendente">Pendente</option>
+                    <option value="cancelado">Cancelado</option>
+                </select>
+                <button id="btn-filtrar-agencias" class="btn-filtrar-admin" type="button">Filtrar</button>
+            </div>
+
+            <!-- Tabela de Empresas -->
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Consultoria / Agência</th>
+                            <th>Titular / Contato</th>
+                            <th>Plano</th>
+                            <th>Status Acesso</th>
+                            <th>Startups</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-agencias-corpo">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                                Carregando empresas cadastradas...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de Ajuste Manual de Plano -->
+    <div id="modal-ajuste-plano" class="modal-admin-backdrop" hidden>
+        <div class="modal-admin-card">
+            <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 8px; color: #fff;">Ajustar Plano / Conceder Dias</h3>
+            <p id="modal-agencia-nome" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;"></p>
+            
+            <form id="form-ajuste-plano">
+                <input type="hidden" id="modal-agencia-id">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 6px; color: var(--text-subtle); text-transform: uppercase; letter-spacing: 0.05em;">Novo Plano:</label>
+                    <select id="modal-select-plano" class="select-filtro-admin" style="width: 100%;">
+                        <option value="1">Standard (R$ 49,90)</option>
+                        <option value="2">Pro (R$ 99,90)</option>
+                        <option value="3">Enterprise (R$ 299,90)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 6px; color: var(--text-subtle); text-transform: uppercase; letter-spacing: 0.05em;">Dias Extras de Cortesia (Opcional):</label>
+                    <input type="number" id="modal-dias-extras" class="input-busca-admin" style="width: 100%;" min="0" max="365" placeholder="Ex: 30">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" id="btn-cancelar-modal" class="btn-header-action">Cancelar</button>
+                    <button type="submit" id="btn-confirmar-modal" class="btn-sync-action">Salvar Ajuste</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes e Inspeção do Radar -->
+    <div id="modal-detalhes-radar" class="modal-admin-backdrop" hidden>
+        <div class="modal-admin-card modal-radar-detalhes">
+            <div class="modal-header-radar">
+                <div class="modal-radar-title-group">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <h3 id="modal-radar-sigla" style="font-size: 1.35rem; font-weight: 800; color: #fff;">--</h3>
+                        <span id="modal-radar-status-badge" class="status-badge online">● Online</span>
+                    </div>
+                    <p id="modal-radar-orgao" style="color: var(--text-muted); font-size: 0.88rem; margin-top: 4px;"></p>
+                    <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <span id="modal-radar-regiao-badge" class="badge-macro-regiao">--</span>
+                        <span id="modal-radar-uf-badge" style="font-size: 0.78rem; color: var(--text-subtle);"></span>
+                    </div>
+                </div>
+                <button type="button" id="btn-fechar-modal-radar" class="btn-modal-close" aria-label="Fechar modal">✕</button>
+            </div>
+
+            <div class="modal-body-radar">
+                <!-- Grid de Métricas Rápidas -->
+                <div class="radar-modal-kpis">
+                    <div class="modal-kpi">
+                        <span class="modal-kpi-num" id="modal-radar-total-editais">0</span>
+                        <span class="modal-kpi-desc">Total Ingeridos</span>
+                    </div>
+                    <div class="modal-kpi">
+                        <span class="modal-kpi-num" id="modal-radar-abertos" style="color: #34d399;">0</span>
+                        <span class="modal-kpi-desc">Inscrições Abertas</span>
+                    </div>
+                    <div class="modal-kpi">
+                        <span class="modal-kpi-num" id="modal-radar-fechados" style="color: #94a3b8;">0</span>
+                        <span class="modal-kpi-desc">Encerrados</span>
+                    </div>
+                    <div class="modal-kpi">
+                        <span class="modal-kpi-num" id="modal-radar-latencia" style="color: #38bdf8; font-size: 1.15rem;">--</span>
+                        <span class="modal-kpi-desc">Latência HTTP</span>
+                    </div>
+                </div>
+
+                <!-- Painel Técnico da Arquitetura -->
+                <div class="radar-tech-grid">
+                    <div class="radar-tech-item">
+                        <span class="tech-label">Portal Governamental</span>
+                        <a id="modal-radar-url" href="#" target="_blank" rel="noopener noreferrer" class="tech-link">
+                            Acessar Portal Oficial ↗
+                        </a>
+                    </div>
+                    <div class="radar-tech-item">
+                        <span class="tech-label">Método de Ingestão</span>
+                        <span id="modal-radar-metodo" class="tech-value"></span>
+                    </div>
+                    <div class="radar-tech-item">
+                        <span class="tech-label">Arquitetura de Resiliência</span>
+                        <span id="modal-radar-resiliencia" class="tech-value"></span>
+                    </div>
+                    <div class="radar-tech-item">
+                        <span class="tech-label">Última Sincronização</span>
+                        <span id="modal-radar-ultima-sync" class="tech-value"></span>
+                    </div>
+                </div>
+
+                <!-- Tabela de Últimos Editais Capturados -->
+                <div class="radar-editais-section">
+                    <div class="radar-editais-header">
+                        <h4>📋 Últimos Editais Capturados por este Radar</h4>
+                        <span id="modal-radar-contagem-editais" style="font-size: 0.78rem; color: var(--text-subtle);"></span>
+                    </div>
+                    <div class="table-responsive radar-editais-table-wrap">
+                        <table class="admin-table radar-mini-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Título / Chamada</th>
+                                    <th>Status</th>
+                                    <th>Prazo</th>
+                                    <th>Link</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal-radar-editais-lista">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">
+                                        Carregando editais do radar...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Terminal / Log Output de Execução -->
+                <div id="modal-radar-log-wrap" class="radar-log-box" hidden>
+                    <h5>Terminal Log da Última Extração:</h5>
+                    <pre id="modal-radar-log-content"></pre>
+                </div>
+            </div>
+
+            <div class="modal-footer-radar">
+                <button type="button" id="btn-sync-modal-radar" class="btn-sync-action">
+                    ⚡ Sincronizar Este Radar Agora
+                </button>
+                <button type="button" id="btn-fechar-modal-radar-2" class="btn-header-action">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+        </main>
+    </div>
+
+    <script type="module" src="../scripts/paginas/adminDashboard.js"></script>
+</body>
+</html>

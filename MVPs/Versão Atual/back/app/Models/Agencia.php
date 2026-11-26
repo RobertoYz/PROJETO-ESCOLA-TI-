@@ -23,6 +23,10 @@ class Agencia extends Model
         'id_transacao',
         'url_checkout',
         'status_pagamento',
+        'bloqueio_administrativo',
+        'motivo_bloqueio',
+        'bloqueado_em',
+        'bloqueado_por_id',
         'pagamento_expira_em',
         'assinatura_expira_em',
         'alerta_vencimento_proximo_enviado_em',
@@ -30,15 +34,22 @@ class Agencia extends Model
     ];
 
     protected $casts = [
+        'bloqueio_administrativo' => 'boolean',
+        'bloqueado_em' => 'datetime',
         'pagamento_expira_em' => 'datetime',
         'assinatura_expira_em' => 'datetime',
         'alerta_vencimento_proximo_enviado_em' => 'datetime',
         'alerta_falha_pagamento_enviado_em' => 'datetime',
     ];
 
+    public function isSuspensaAdministrativamente(): bool
+    {
+        return (bool) $this->bloqueio_administrativo || $this->status_pagamento === 'suspenso';
+    }
+
     public function isPagamentoAtivo(): bool
     {
-        if ($this->status_pagamento !== 'ativo') {
+        if ($this->bloqueio_administrativo || $this->status_pagamento !== 'ativo') {
             return false;
         }
 
@@ -113,5 +124,10 @@ class Agencia extends Model
     public function kanbanBoards(): HasMany
     {
         return $this->hasMany(KanbanBoard::class, 'agencia_id');
+    }
+
+    public function termosAceites(): HasMany
+    {
+        return $this->hasMany(TermoAceite::class, 'agencia_id');
     }
 }

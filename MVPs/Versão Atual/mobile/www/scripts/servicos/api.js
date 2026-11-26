@@ -126,6 +126,13 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
 
             // Se o usuário estiver navegando em páginas internas protegidas, redireciona para a tela de pendência
             if (typeof window !== 'undefined' && window.location) {
+                try {
+                    const usuarioSalvo = JSON.parse(sessionStorage.getItem('usuario_logado') || localStorage.getItem('usuario_logado') || '{}');
+                    if (usuarioSalvo?.perfil_acesso === 'admin_global') {
+                        return dados;
+                    }
+                } catch (_) {}
+
                 const caminho = window.location.pathname.toLowerCase();
                 const ehTelaPublicaOuPendencia = caminho.includes('login')
                     || caminho.includes('cadastro')
@@ -133,6 +140,7 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
                     || caminho.includes('redefinir-senha')
                     || caminho.includes('aceitar-convite')
                     || caminho.includes('selecionar-plano')
+                    || caminho.includes('admin-dashboard')
                     || caminho.includes('pagamento-pendente');
 
                 if (!ehTelaPublicaOuPendencia) {

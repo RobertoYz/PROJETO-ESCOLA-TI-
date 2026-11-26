@@ -29,6 +29,11 @@ if (!usuarioEstaAutenticado()) {
 }
 
 const usuarioLogado = obterUsuarioLogado();
+if (usuarioLogado?.perfil_acesso === 'admin_global') {
+    window.location.replace('admin-dashboard.html');
+}
+
+const usuarioLogado = obterUsuarioLogado();
 if (usuarioLogado && (usuarioLogado.name || usuarioLogado.email) && badgeConsultor && nomeConsultorTopbar) {
     nomeConsultorTopbar.textContent = usuarioLogado.name || usuarioLogado.email;
     badgeConsultor.hidden = false;

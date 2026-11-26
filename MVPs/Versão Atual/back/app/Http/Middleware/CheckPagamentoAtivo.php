@@ -11,8 +11,23 @@ class CheckPagamentoAtivo
     {
         $usuario = $requisicao->user();
 
-        if ($usuario && $usuario->agencia && $usuario->agencia->isPagamentoAtivo()) {
+        // Administrador Global tem acesso irrestrito e não possui validação de pagamento
+        if ($usuario && $usuario->perfil_acesso === 'admin_global') {
             return $proximo($requisicao);
+        }
+
+        if ($usuario && $usuario->agencia) {
+            if ($usuario->agencia->isSuspensaAdministrativamente()) {
+                return response()->json([
+                    'message' => 'O acesso desta consultoria foi suspenso pela administração global da plataforma. Entre em contato com o suporte.',
+                    'codigo_erro' => 'CONSULTORIA_SUSPENSA',
+                    'codigo' => 'CONSULTORIA_SUSPENSA',
+                ], 403);
+            }
+
+            if ($usuario->agencia->isPagamentoAtivo()) {
+                return $proximo($requisicao);
+            }
         }
 
         return response()->json([

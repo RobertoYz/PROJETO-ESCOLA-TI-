@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PlanoSeeder::class,
             DocumentoLegalSeeder::class,
+            AdminGlobalSeeder::class,
         ]);
     }
 }

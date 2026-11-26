@@ -63,9 +63,21 @@ formulario.addEventListener('submit', async (evento) => {
         limparStartupAtiva();
         sessionStorage.removeItem('dados_pre_cadastro');
         limparDadosPendencia();
+
+        if (usuario?.perfil_acesso === 'admin_global') {
+            window.location.href = 'admin-dashboard.html';
+            return;
+        }
+
         window.location.href = 'selecionar-startup.html';
 
     } catch (erro) {
+        // Trata suspensão administrativa soberana
+        if (erro.status === 403 && (erro.dados?.codigo === 'CONSULTORIA_SUSPENSA' || erro.dados?.codigo_erro === 'CONSULTORIA_SUSPENSA')) {
+            exibirErro('Acesso Suspenso: Esta consultoria foi suspensa pela administração global da plataforma. Entre em contato com o suporte para mais informações.');
+            return;
+        }
+
         // Trata retorno HTTP 403 de Pagamento Pendente
         if (erro.status === 403 && (erro.dados?.codigo === 'PAGAMENTO_PENDENTE' || erro.dados?.codigo_erro === 'PAGAMENTO_PENDENTE')) {
             const tokenPendencia = erro.dados.token_pendencia || erro.dados.access_token || erro.dados.token;

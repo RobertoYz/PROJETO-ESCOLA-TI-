@@ -1,6 +1,6 @@
 import { inicializarSeletorGlobal } from '../componentes/seletorGlobalStartup.js';
 import { inicializarSidebarGlobal } from '../componentes/sidebarGlobal.js';
-import { obterStartupAtiva, usuarioEstaAutenticado } from '../servicos/servicoAutenticacao.js';
+import { obterStartupAtiva, usuarioEstaAutenticado, obterUsuarioLogado } from '../servicos/servicoAutenticacao.js';
 import { exibirModalAlerta, exibirModalConfirmacao } from '../componentes/modalGlobal.js';
 import {
     listarEditais,
@@ -748,6 +748,16 @@ async function alternarFavoritoNaBusca(id) {
 }
 
 async function enviarParaKanbanComFeedback(editalId, botao) {
+    const usuarioLogado = obterUsuarioLogado();
+    if (usuarioLogado?.perfil_acesso === 'admin_global') {
+        await exibirModalAlerta({
+            titulo: 'Acesso Exclusivo de Governança',
+            mensagem: 'Como Administrador Global, você possui visualização total do catálogo para auditoria e governança. O envio para o Pipeline Kanban é exclusivo para contas de consultoria e suas respectivas startups.',
+            icone: '🛡️'
+        });
+        return;
+    }
+
     const textoOriginal = botao ? botao.textContent : '';
     if (botao) {
         botao.disabled = true;

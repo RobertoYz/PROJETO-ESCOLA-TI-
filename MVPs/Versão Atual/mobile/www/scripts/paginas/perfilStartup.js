@@ -1,10 +1,15 @@
 import { inicializarSidebarGlobal } from '../componentes/sidebarGlobal.js';
 import { inicializarSeletorGlobal } from '../componentes/seletorGlobalStartup.js';
-import { obterStartupAtiva, salvarStartupAtiva, usuarioEstaAutenticado } from '../servicos/servicoAutenticacao.js';
+import { obterStartupAtiva, salvarStartupAtiva, usuarioEstaAutenticado, obterUsuarioLogado } from '../servicos/servicoAutenticacao.js';
 import { obterStartupPorId, atualizarStartup, consultarDadosCnpj } from '../servicos/servicoStartups.js';
 
 if (!usuarioEstaAutenticado()) {
     window.location.replace('login.html');
+}
+
+const usuarioLogado = obterUsuarioLogado();
+if (usuarioLogado?.perfil_acesso === 'admin_global') {
+    window.location.replace('admin-dashboard.html');
 }
 
 let startupIdAtual = null;
