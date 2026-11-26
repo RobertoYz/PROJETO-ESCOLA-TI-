@@ -20,6 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (\Illuminate\Http\Exceptions\PostTooLargeException $erro, \Illuminate\Http\Request $request) {
+            if ($request->is('api/kanban/cards/*/dados-anexos')) {
+                return response()->json(['status' => 'erro', 'codigo_erro' => 'LIMITE_TAMANHO_ARQUIVO_EXCEDIDO',
+                    'message' => 'O envio excedeu o tamanho máximo permitido.'], 422);
+            }
+        });
         $exceptions->render(function (\App\Exceptions\PlanLimitExceededException $e, \Illuminate\Http\Request $request) {
             return response()->json([
                 'message' => $e->getMessage(),

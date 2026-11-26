@@ -10,10 +10,6 @@ use Exception;
 
 class KanbanController extends Controller
 {
-    public const MAX_ANEXO_KB = 10240; // 10 MB por arquivo
-    public const MAX_ANEXO_BYTES = 10 * 1024 * 1024;
-    public const MAX_ANEXOS_CARD_BYTES = 25 * 1024 * 1024; // 25 MB acumulados por card
-
     protected KanbanService $kanbanService;
 
     public function __construct(KanbanService $kanbanService)
@@ -32,6 +28,7 @@ class KanbanController extends Controller
         }
 
         $agenciaId = $usuario?->agencia_id;
+        abort_unless($agenciaId, 403);
         $quadros = \App\Models\KanbanBoard::where('agencia_id', $agenciaId)->select('id');
         $quadroId = $request->integer('board_id') ?: null;
         if ($request->route('id')) {
@@ -56,8 +53,9 @@ class KanbanController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $agenciaId = $request->user('sanctum')?->agencia_id;
+        abort_unless($agenciaId, 403);
         try {
-            $agenciaId = $request->user('sanctum')?->agencia_id;
             $startupName = $request->query('startup_name');
             $board = $this->kanbanService->getOrCreateBoard(
                 $agenciaId ? (int)$agenciaId : null,
@@ -87,6 +85,7 @@ class KanbanController extends Controller
             return $bloqueio;
         }
 
+        $request->validate(['metadata.anexos' => 'missing']);
         $dados = $request->validate([
             'board_id' => 'nullable|integer|exists:kanban_boards,id',
             'column_id' => 'nullable|integer|exists:kanban_columns,id',
@@ -194,95 +193,30 @@ class KanbanController extends Controller
     /**
      * Atualiza dados de texto, anotações e anexos do Card.
      */
-    public function updateCard(Request $request, int $id): JsonResponse
+    public function updateCard(Request $request, int $id, \App\Services\ArmazenamentoKanbanService $armazenamento): JsonResponse
     {
         if ($bloqueio = $this->autorizarEscritaKanban($request)) {
             return $bloqueio;
         }
 
         try {
-            $card = \App\Models\KanbanCard::findOrFail($id);
-
+            $request->validate(['metadata.anexos' => 'missing']);
+            $arquivo = $request->file('arquivo');
+            if ($arquivo && in_array($arquivo->getError(), [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+                return response()->json(['status' => 'erro', 'codigo_erro' => 'LIMITE_TAMANHO_ARQUIVO_EXCEDIDO',
+                    'message' => 'O arquivo excede o limite individual permitido.'], 422);
+            }
             $dados = $request->validate([
                 'title' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
                 'metadata' => 'nullable|array',
-                'arquivo' => 'nullable|file|max:' . self::MAX_ANEXO_KB . '|mimes:pdf,doc,docx,xls,xlsx,csv,txt,png,jpg,jpeg'
-            ], [
-                'arquivo.file' => 'O anexo enviado não é um arquivo válido.',
-                'arquivo.max' => 'O arquivo excede o limite máximo permitido de 10 MB por anexo.',
-                'arquivo.mimes' => 'Formato de arquivo não permitido. Envie PDF, DOC, DOCX, XLS, XLSX, CSV, TXT, PNG ou JPG.'
+                'arquivo' => 'nullable|file',
             ]);
-
-            if (isset($dados['title'])) $card->title = $dados['title'];
-            if (isset($dados['description'])) $card->description = $dados['description'];
-
-            $metaAtual = $card->metadata ?? [];
-
-            // Se enviou metadados de texto (anotações, valores, etc)
-            if (isset($dados['metadata'])) {
-                $metaAtual = array_merge($metaAtual, $dados['metadata']);
-            }
-
-            // Se fez upload de arquivo
-            if ($request->hasFile('arquivo')) {
-                $file = $request->file('arquivo');
-                $anexosAtuais = $metaAtual['anexos'] ?? [];
-                $tamanhoAtualBytes = array_reduce($anexosAtuais, function ($carry, $item) {
-                    return $carry + (int) ($item['tamanho'] ?? 0);
-                }, 0);
-
-                $tamanhoNovo = (int) $file->getSize();
-                if (($tamanhoAtualBytes + $tamanhoNovo) > self::MAX_ANEXOS_CARD_BYTES) {
-                    $disponivelMb = max(0, (self::MAX_ANEXOS_CARD_BYTES - $tamanhoAtualBytes) / (1024 * 1024));
-                    return response()->json([
-                        'status' => 'erro',
-                        'message' => sprintf(
-                            'Limite total de documentação do card (25 MB) excedido. Espaço disponível: %.2f MB.',
-                            $disponivelMb
-                        )
-                    ], 422);
-                }
-
-                $nomeOriginal = $file->getClientOriginalName();
-                $caminho = $file->store('kanban_anexos', 'public');
-
-                $anexosAtuais[] = [
-                    'id' => uniqid(),
-                    'nome' => $nomeOriginal,
-                    'caminho' => '/storage/' . $caminho,
-                    'tamanho' => $tamanhoNovo,
-                    'enviado_em' => now()->toIso8601String()
-                ];
-                $metaAtual['anexos'] = $anexosAtuais;
-            }
-
-            $card->metadata = $metaAtual;
-            $card->save();
-
-            $cardAtualizado = $card->load('edital');
-
-            return response()->json([
-                'status' => 'sucesso',
-                'message' => 'Card atualizado com sucesso!',
-                'data' => $cardAtualizado,
-                'card' => $cardAtualizado
-            ]);
-        } catch (ValidationException $e) {
-            $errors = $e->errors();
-            $firstMessage = collect($errors)->flatten()->first() ?? 'Dados inválidos para atualização do card.';
-
-            return response()->json([
-                'status' => 'erro',
-                'message' => $firstMessage,
-                'errors' => $errors
-            ], 422);
-        } catch (Exception $e) {
-            return response()->json([
-                'status' => 'erro',
-                'message' => 'Falha ao atualizar card.',
-                'detalhe' => $e->getMessage()
-            ], 500);
+            $card = $armazenamento->atualizarCard($request->user()->agencia_id, $id, $dados, $arquivo);
+        } catch (ValidationException $erro) {
+            return response()->json(['status' => 'erro', 'message' => collect($erro->errors())->flatten()->first(),
+                'errors' => $erro->errors()], 422);
         }
+        return response()->json(['status' => 'sucesso', 'message' => 'Card atualizado com sucesso!', 'data' => $card, 'card' => $card]);
     }
 }

@@ -360,12 +360,10 @@
 
                             <div class="upload-limit-box" id="barraLimiteAnexosCard">
                                 <div class="upload-limit-meta">
-                                    <span>Armazenamento do card: <strong id="textoUsoAnexosCard">0,00 MB / 25 MB</strong></span>
-                                    <span>Máx. <strong>10 MB</strong> por arquivo</span>
+                                    <span>Armazenamento do card: <strong id="textoUsoAnexosCard">0,00 MB</strong></span>
+                                    <span>Máx. <strong>50 MB</strong> por arquivo</span>
                                 </div>
-                                <div class="upload-limit-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                                    <div class="upload-limit-fill" id="progressoUsoAnexosCard"></div>
-                                </div>
+
                             </div>
 
                             <div id="alertaLimiteUploadCard" class="upload-limit-alert" role="alert" aria-live="polite"></div>
@@ -375,7 +373,7 @@
                                 <label for="inputUploadArquivoCard" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;">
                                     <svg width="32" height="32" viewBox="0 0 24 24" fill="var(--accent-action)"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
                                     <span class="upload-dropzone-title">Clique para anexar arquivo</span>
-                                    <span class="upload-dropzone-hint">PDF, DOC/DOCX, XLS/XLSX, CSV, TXT, PNG/JPG (Até 10 MB/arquivo • 25 MB/card)</span>
+                                    <span class="upload-dropzone-hint">PDF, DOC/DOCX, XLS/XLSX, CSV, TXT, PNG/JPG (Até 50 MB/arquivo)</span>
                                 </label>
                             </div>
 
@@ -464,6 +462,7 @@
         import { inicializarSeletorGlobal } from '../scripts/componentes/seletorGlobalStartup.js';
         import { inicializarSidebarGlobal } from '../scripts/componentes/sidebarGlobal.js';
         import { exibirModalAlerta, exibirModalConfirmacao } from '../scripts/componentes/modalGlobal.js';
+        import { baixarAnexo, excluirAnexo } from '../scripts/servicos/arquivosKanban.js';
         import { usuarioTemPermissao } from '../scripts/servicos/servicoAutenticacao.js';
 
         // Substitui os alert e confirm nativos pelo modal institucional
@@ -1720,8 +1719,7 @@
             }
         }
 
-        const LIMITE_ARQUIVO_BYTES = 10 * 1024 * 1024; // 10 MB por arquivo
-        const LIMITE_TOTAL_CARD_BYTES = 25 * 1024 * 1024; // 25 MB acumulados por card
+        const LIMITE_ARQUIVO_BYTES = 50 * 1024 * 1024;
         const EXTENSOES_DOCUMENTACAO_PERMITIDAS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'png', 'jpg', 'jpeg'];
 
         function exibirAlertaLimiteUpload(mensagem) {
@@ -1738,26 +1736,8 @@
 
         function atualizarBarraLimiteAnexos(anexos = []) {
             const textoUso = document.getElementById('textoUsoAnexosCard');
-            const barraProgresso = document.getElementById('progressoUsoAnexosCard');
-            const totalBytes = (anexos || []).reduce((acc, arq) => acc + (Number(arq.tamanho) || 0), 0);
-            const totalMb = (totalBytes / (1024 * 1024)).toFixed(2).replace('.', ',');
-            const percentual = Math.min(100, Math.round((totalBytes / LIMITE_TOTAL_CARD_BYTES) * 100));
-
-            if (textoUso) {
-                textoUso.textContent = `${totalMb} MB / 25 MB`;
-            }
-            if (barraProgresso) {
-                barraProgresso.style.width = `${percentual}%`;
-                barraProgresso.classList.remove('is-warning', 'is-danger');
-                if (percentual >= 95) {
-                    barraProgresso.classList.add('is-danger');
-                } else if (percentual >= 75) {
-                    barraProgresso.classList.add('is-warning');
-                }
-                if (barraProgresso.parentElement) {
-                    barraProgresso.parentElement.setAttribute('aria-valuenow', String(percentual));
-                }
-            }
+            const bytes = anexos.reduce((soma, anexo) => soma + anexo.tamanho_bytes, 0);
+            textoUso.textContent = (bytes / 1048576).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' MB';
         }
 
         function limparCamposAnexos() {
@@ -1790,7 +1770,7 @@
             if (inputValor) inputValor.value = meta.valor_estimado || '';
             if (txtNotas) txtNotas.value = meta.notas_internas || card.description || '';
 
-            renderizarListaAnexos(meta.anexos || []);
+            renderizarListaAnexos(card.anexos || []);
         }
 
         function renderizarListaAnexos(anexos) {
@@ -1808,23 +1788,27 @@
                 const item = document.createElement('div');
                 item.className = 'anexo-item-card';
 
-                const tamanhoFmt = arq.tamanho ? `(${(arq.tamanho / 1024).toFixed(1)} KB)` : '';
-                const linkCompleto = arq.caminho.startsWith('http') ? arq.caminho : `${window.location.origin}${arq.caminho}`;
-
-                item.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
-                        <span style="font-size: 1.25rem;">📄</span>
-                        <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            <a href="${linkCompleto}" target="_blank" style="color: #60a5fa; text-decoration: none; font-size: 0.88rem; font-weight: 500;" title="${arq.nome}">
-                                ${arq.nome}
-                            </a>
-                            <span style="font-size: 0.75rem; color: #64748b; margin-left: 6px;">${tamanhoFmt}</span>
-                        </div>
-                    </div>
-                    <a href="${linkCompleto}" download target="_blank" style="color: var(--text-main); text-decoration: none; font-size: 0.8rem; padding: 4px 10px; border: 1px solid var(--border-field); border-radius: 6px; background: var(--bg-surface-hover); display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" title="Baixar">
-                        ⬇ Baixar
-                    </a>
-                `;
+                const nome = document.createElement('span');
+                nome.textContent = arq.nome_arquivo + ' · ' + (arq.tamanho_bytes / 1048576).toLocaleString('pt-BR', {maximumFractionDigits: 2}) + ' MB';
+                const baixar = document.createElement('button');
+                baixar.textContent = 'Baixar';
+                baixar.onclick = () => baixarAnexo(arq.id, arq.nome_arquivo).catch(erro => exibirAlertaLimiteUpload(erro.message));
+                item.append(nome, baixar);
+                if (usuarioTemPermissao('kanban.gerenciar')) {
+                    const excluir = document.createElement('button');
+                    excluir.textContent = 'Excluir';
+                    excluir.onclick = async () => {
+                        if (!window.confirm('Excluir permanentemente ' + arq.nome_arquivo + '?')) return;
+                        try {
+                            await excluirAnexo(arq.id);
+                            await fetchBoard();
+                            carregarDadosCardSelecionado();
+                        } catch (erro) {
+                            exibirAlertaLimiteUpload(erro.message);
+                        }
+                    };
+                    item.append(excluir);
+                }
                 container.appendChild(item);
             });
         }
@@ -1909,28 +1893,18 @@
 
             if (file.size > LIMITE_ARQUIVO_BYTES) {
                 const tamanhoMb = (file.size / (1024 * 1024)).toFixed(2).replace('.', ',');
-                exibirAlertaLimiteUpload(`O arquivo "${file.name}" (${tamanhoMb} MB) excede o limite máximo de 10 MB por anexo.`);
+                exibirAlertaLimiteUpload(`O arquivo "${file.name}" (${tamanhoMb} MB) excede o limite máximo de 50 MB por anexo. Consulte Minha Assinatura para acompanhar o consumo.`);
                 event.target.value = '';
                 return;
             }
 
             const cardId = selectCard.value;
-            const cardSelecionado = todosCardsKanban.find(c => c.id === parseInt(cardId));
-            const anexosAtuais = cardSelecionado?.metadata?.anexos || [];
-            const usoAtualBytes = anexosAtuais.reduce((acc, arq) => acc + (Number(arq.tamanho) || 0), 0);
-            if ((usoAtualBytes + file.size) > LIMITE_TOTAL_CARD_BYTES) {
-                const disponivelMb = Math.max(0, (LIMITE_TOTAL_CARD_BYTES - usoAtualBytes) / (1024 * 1024)).toFixed(2).replace('.', ',');
-                exibirAlertaLimiteUpload(`Limite total do card (25 MB) excedido. Espaço disponível: ${disponivelMb} MB.`);
-                event.target.value = '';
-                return;
-            }
-
             const formData = new FormData();
             formData.append('arquivo', file);
 
             const container = document.getElementById('listaAnexosCard');
             if (container) {
-                container.insertAdjacentHTML('afterbegin', `<div id="uploadingNotice" style="color: var(--accent-action); font-size: 0.85rem; padding: 6px;">Enviando ${file.name}...</div>`);
+                container.insertAdjacentHTML('afterbegin', `<div id="uploadingNotice" style="color: var(--accent-action); font-size: 0.85rem; padding: 6px;">Enviando arquivo…</div>`);
             }
 
             try {
@@ -1950,14 +1924,17 @@
                     const cardAtualizado = data.card || data.data;
                     if (card && cardAtualizado) {
                         card.metadata = cardAtualizado.metadata;
-                        renderizarListaAnexos(card.metadata?.anexos || []);
+                        card.anexos = cardAtualizado.anexos;
+                        renderizarListaAnexos(card.anexos);
                     }
                     exibirAlertaLimiteUpload('');
                     alert(`Arquivo "${file.name}" anexado com sucesso!`);
                     fetchBoard();
                 } else {
                     const msgErro = data.message || 'Erro desconhecido';
-                    exibirAlertaLimiteUpload('Falha no upload: ' + msgErro);
+                    const orientacao = ['LIMITE_ARMAZENAMENTO_ATINGIDO', 'LIMITE_TAMANHO_ARQUIVO_EXCEDIDO'].includes(data.codigo_erro)
+                        ? ' Consulte Minha Assinatura ou libere espaço em Minhas Startups → Arquivos anexados.' : '';
+                    exibirAlertaLimiteUpload(msgErro + orientacao);
                 }
             } catch (err) {
                 console.error(err);

@@ -1,5 +1,4 @@
 import { rodapePortal } from '../componentes/acessoPortal.js';
-import { escapeHtml } from '../servicos/servicoEditais.js';
 import { inicializarSidebarGlobal } from '../componentes/sidebarGlobal.js';
 import { inicializarSeletorGlobal } from '../componentes/seletorGlobalStartup.js';
 import {
@@ -197,27 +196,30 @@ function renderizarListaStartups(startups) {
 
         card.innerHTML = `
             <div class="card-startup-esquerda">
-                <div class="card-startup-sigla">${escapeHtml(sigla)}</div>
+                <div class="card-startup-sigla"></div>
                 <div class="card-startup-dados">
-                    <div class="card-startup-nome">${escapeHtml(nomeExibicao)}</div>
+                    <div class="card-startup-nome"></div>
                     <div class="card-startup-subinfo">
-                        <span>${escapeHtml(cnpjTexto)}</span>
-                        <span>${escapeHtml(nichoTexto)}</span>
-                        <span>${escapeHtml(localTexto)}</span>
                     </div>
                     ${ehEmUso ? `<div class="texto-startup-em-uso">● Sendo utilizada no momento</div>` : ''}
                 </div>
             </div>
-            <div class="card-startup-direita">
-                <span class="badge-ver-informacoes">Ver e Alterar Informações →</span>
-            </div>
         `;
+
+        card.querySelector('.card-startup-sigla').textContent = sigla;
+        card.querySelector('.card-startup-nome').textContent = nomeExibicao;
+        const subinfo = card.querySelector('.card-startup-subinfo');
+        subinfo.replaceChildren(...[cnpjTexto, nichoTexto, localTexto].map(texto => {
+            const campo = document.createElement('span');
+            campo.textContent = texto;
+            return campo;
+        }));
 
         card.addEventListener('click', () => {
             abrirDetalhesStartup(st.id);
         });
 
-        card.append(rodapePortal(st, usuarioPodeEditarStartup(st)));
+        card.append(rodapePortal(st, usuarioPodeEditarStartup(st), () => abrirDetalhesStartup(st.id)));
         containerLista.appendChild(card);
     });
 }

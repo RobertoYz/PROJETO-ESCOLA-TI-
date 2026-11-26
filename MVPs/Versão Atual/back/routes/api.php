@@ -95,6 +95,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/assinatura/simular-troca', [AssinaturaController::class, 'simularTroca']);
     Route::post('/assinatura/trocar-plano', [AssinaturaController::class, 'trocarPlano']);
     Route::delete('/assinatura/downgrade-agendado', [AssinaturaController::class, 'cancelarDowngradeAgendado']);
+    Route::get('/assinatura/consumo', [\App\Http\Controllers\ArquivoKanbanController::class, 'consumo']);
+    Route::get('/startups/{startup}/arquivos', [\App\Http\Controllers\ArquivoKanbanController::class, 'arquivos']);
+    Route::get('/kanban/anexos/{id}', [\App\Http\Controllers\ArquivoKanbanController::class, 'baixar']);
+    Route::delete('/kanban/anexos/{id}', [\App\Http\Controllers\ArquivoKanbanController::class, 'excluir']);
     Route::get('/assinatura/atual', [AssinaturaController::class, 'atual']);
     Route::post('/assinatura/renovar', [AssinaturaController::class, 'renovar']);
     Route::post('/assinatura/atualizar-forma-pagamento', [AssinaturaController::class, 'atualizarFormaPagamento']);
@@ -115,7 +119,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Rotas do Pipeline Kanban
-Route::prefix('kanban')->group(function () {
+Route::middleware('auth:sanctum')->prefix('kanban')->group(function () {
     Route::get('/', [KanbanController::class, 'index']);
     Route::post('/cards', [KanbanController::class, 'storeCard']);
     Route::patch('/cards/{id}/mover', [KanbanController::class, 'moveCard']);

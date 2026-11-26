@@ -13,12 +13,16 @@ class Plano extends Model
         'nome',
         'preco',
         'id_transacao',
+        'limite_armazenamento_mb',
+        'limite_arquivo_mb',
         'limite_startups',
         'limite_membros_equipe',
         'limite_minutas_ia',
     ];
 
     protected $casts = [
+        'limite_armazenamento_mb' => 'integer',
+        'limite_arquivo_mb' => 'integer',
         'preco' => 'decimal:2',
         'limite_startups' => 'integer',
         'limite_membros_equipe' => 'integer',

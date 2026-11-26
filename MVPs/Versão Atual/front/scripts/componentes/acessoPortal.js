@@ -1,3 +1,4 @@
+import { abrirArquivos } from './arquivosStartup.js';
 import { requisicaoApi } from '../servicos/api.js';
 
 const dialogo = document.getElementById('dialogoPortal');
@@ -69,29 +70,74 @@ form.onsubmit = async evento => {
     }
 };
 
-export function rodapePortal(startup, podeEditar) {
+export function rodapePortal(startup, podeEditar, editarDados) {
     const rodape = document.createElement('div');
     rodape.className = 'rodape-portal';
-    rodape.addEventListener('click', evento => evento.stopPropagation());
+    rodape.onclick = evento => evento.stopPropagation();
     const perfil = startup.portal_acesso;
-    function botao(texto, rotulo, acao) {
-        const el = document.createElement('button');
-        el.type = 'button';
-        el.textContent = texto;
-        el.setAttribute('aria-label', rotulo);
-        el.onclick = acao;
-        rodape.append(el);
+    const estado = document.createElement('span');
+    estado.className = perfil?.ativo ? 'estado ativo' : 'estado';
+    estado.textContent = perfil?.existe ? (perfil.ativo ? '● Portal ativo' : '○ Portal pausado') : '○ Sem portal';
+
+    const engrenagem = document.createElement('button');
+    engrenagem.type = 'button';
+    engrenagem.textContent = '⚙';
+    engrenagem.setAttribute('aria-label', 'Opções de ' + (startup.nome_fantasia || startup.razao_social));
+    const menu = document.createElement('div');
+    menu.className = 'menu-startup';
+    menu.id = 'menu-startup-' + startup.id;
+    menu.popover = 'auto';
+    const nativo = typeof menu.showPopover === 'function';
+    engrenagem.setAttribute('aria-controls', menu.id);
+    engrenagem.setAttribute('aria-expanded', 'false');
+    function posicionar() {
+        const caixa = engrenagem.getBoundingClientRect();
+        menu.style.right = Math.max(8, document.documentElement.clientWidth - caixa.right) + 'px';
+        const abaixo = innerHeight - caixa.bottom >= 150;
+        menu.style.top = abaixo ? caixa.bottom + 'px' : 'auto';
+        menu.style.bottom = abaixo ? 'auto' : innerHeight - caixa.top + 'px';
     }
-    if (perfil.existe) {
-        const estado = document.createElement('span');
-        estado.className = perfil.ativo ? 'estado ativo' : 'estado';
-        estado.textContent = perfil.ativo ? '● Portal ativo' : '○ Portal pausado';
-        rodape.append(estado);
-        if (podeEditar) {
-            botao('⚙', 'Configurar acesso ao portal', () => abrir(startup));
-        }
-    } else if (podeEditar) {
-        botao('+ Acesso ao portal', 'Criar acesso ao portal', () => abrir(startup));
+    function fechar() {
+        if (nativo) menu.hidePopover();
+        else menu.hidden = true;
+        engrenagem.setAttribute('aria-expanded', 'false');
     }
+    if (nativo) {
+        engrenagem.popoverTargetElement = menu;
+        menu.addEventListener('beforetoggle', evento => {
+            const aberto = evento.newState === 'open';
+            engrenagem.setAttribute('aria-expanded', String(aberto));
+            if (aberto) posicionar();
+        });
+    } else {
+        menu.hidden = true;
+        engrenagem.onclick = () => {
+            if (!menu.hidden) return fechar();
+            posicionar();
+            menu.hidden = false;
+            engrenagem.setAttribute('aria-expanded', 'true');
+            menu.querySelector('button').focus();
+        };
+        menu.onfocusout = evento => {
+            if (!rodape.contains(evento.relatedTarget)) fechar();
+        };
+        menu.onkeydown = evento => {
+            if (evento.key === 'Escape') { fechar(); engrenagem.focus(); }
+        };
+    }
+
+    for (const [texto, acao, permitido] of [
+        ['Editar dados e exclusão', editarDados, true],
+        ['Perfil de visualização', () => abrir(startup), podeEditar],
+        ['Arquivos anexados', () => abrirArquivos(startup), true]
+    ]) {
+        const botao = document.createElement('button');
+        botao.type = 'button';
+        botao.textContent = texto;
+        botao.disabled = !permitido;
+        botao.onclick = () => { fechar(); engrenagem.focus(); acao(); };
+        menu.append(botao);
+    }
+    rodape.append(estado, engrenagem, menu);
     return rodape;
 }

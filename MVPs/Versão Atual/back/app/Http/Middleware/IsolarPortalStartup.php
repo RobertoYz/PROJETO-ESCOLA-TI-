@@ -21,6 +21,8 @@ class IsolarPortalStartup
             if (!$perfil->disponivel()) {
                 return response()->json(['codigo_erro' => 'PORTAL_DESATIVADO', 'message' => 'Acesso ao portal desativado.'], 403);
             }
+        } elseif ($perfil && in_array('portal-startup', $perfil->currentAccessToken()?->abilities ?? [], true)) {
+            abort(403);
         } elseif ($portal && $perfil) {
             abort(403);
         }
