@@ -405,6 +405,10 @@ class AdminService
      */
     public function sincronizarRadar(string $alvo): array
     {
+        // Garante tempo de execução e memória adequados em hospedagens compartilhadas (ex: cPanel / HostGator)
+        @set_time_limit(300);
+        @ini_set('memory_limit', '512M');
+
         $alvoNormalizado = strtoupper(trim($alvo));
         $inicio = microtime(true);
         $comandosExecutados = [];
