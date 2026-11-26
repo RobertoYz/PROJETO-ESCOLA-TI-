@@ -54,6 +54,12 @@ formulario.addEventListener('submit', async (evento) => {
         limparStartupAtiva();
         sessionStorage.removeItem('dados_pre_cadastro');
         limparDadosPendencia();
+
+        if (usuario?.perfil_acesso === 'admin_global') {
+            window.location.href = 'admin-dashboard.html';
+            return;
+        }
+
         window.location.href = 'selecionar-startup.html';
 
     } catch (erro) {

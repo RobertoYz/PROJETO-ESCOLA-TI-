@@ -11,6 +11,11 @@ class CheckPagamentoAtivo
     {
         $usuario = $requisicao->user();
 
+        // Administrador Global tem acesso irrestrito e não possui validação de pagamento
+        if ($usuario && $usuario->perfil_acesso === 'admin_global') {
+            return $proximo($requisicao);
+        }
+
         if ($usuario && $usuario->agencia && $usuario->agencia->isPagamentoAtivo()) {
             return $proximo($requisicao);
         }

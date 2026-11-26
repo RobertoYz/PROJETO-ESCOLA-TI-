@@ -14,6 +14,11 @@ let tokenPendencia = obterTokenPendencia();
 let emailPendencia = obterEmailPendencia();
 const agenciaPendencia = obterAgenciaPendencia();
 
+const usuarioVerificacao = obterUsuarioLogado();
+if (usuarioVerificacao?.perfil_acesso === 'admin_global') {
+    window.location.replace('admin-dashboard.html');
+}
+
 // Fallback de resiliência: resgata e-mail do cache do usuário caso não esteja explícito no storage de pendência
 if (!emailPendencia) {
     const usuarioLogado = obterUsuarioLogado();

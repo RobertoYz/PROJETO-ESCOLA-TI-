@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Painel do Administrador Global - Anjo Nexus</title>
+    <link rel="stylesheet" href="../estilos/layout.css">
+    <link rel="stylesheet" href="../estilos/admin-dashboard.css">
+</head>
+<body class="admin-body">
+    <!-- Header Admin -->
+    <header class="admin-header">
+        <div class="admin-header-left">
+            <div class="admin-logo">
+                <span>⚡ Anjo Nexus</span>
+            </div>
+            <span class="badge-super-admin">Super Admin Global</span>
+        </div>
+        <div class="admin-header-right">
+            <span id="admin-user-info" style="font-size: 0.85rem; color: var(--text-muted); margin-right: 8px;"></span>
+            <a href="busca-editais.html" class="btn-header-action" title="Abrir Radar de Editais">
+                🔍 Ver Radar
+            </a>
+            <button id="btn-logout-admin" class="btn-header-action btn-header-logout" type="button">
+                Sair
+            </button>
+        </div>
+    </header>
+
+    <main class="admin-container">
+        <!-- Título -->
+        <div class="admin-title-row">
+            <h1>Painel de Governança e Inteligência</h1>
+            <p>Supervisão operacional do ecossistema, métricas SaaS e monitoramento dos radares.</p>
+        </div>
+
+        <!-- KPIs Principais -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Consultorias Cadastradas</div>
+                <div id="kpi-total-agencias" class="kpi-value">--</div>
+                <div id="kpi-agencias-status" class="kpi-subtext">Carregando...</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Usuários Totais</div>
+                <div id="kpi-total-usuarios" class="kpi-value">--</div>
+                <div id="kpi-usuarios-status" class="kpi-subtext">Carregando...</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">MRR Estimado (Recorrência)</div>
+                <div id="kpi-mrr" class="kpi-value">--</div>
+                <div id="kpi-pagamentos" class="kpi-subtext">Carregando...</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Editais Rastreados</div>
+                <div id="kpi-total-editais" class="kpi-value">--</div>
+                <div id="kpi-editais-abertos" class="kpi-subtext">Carregando...</div>
+            </div>
+        </div>
+
+        <!-- Seção 1: Saúde dos Radares de Editais (O que o Roberto pediu) -->
+        <section class="admin-section">
+            <div class="admin-section-header">
+                <h2>
+                    <span>📡</span> Saúde dos Radares & Métodos de Extração (Healthcheck)
+                </h2>
+                <button id="btn-sync-todos-radares" class="btn-sync-radar" type="button">
+                    ⚡ Sincronizar Todos os Radares
+                </button>
+            </div>
+            <div id="container-radares" class="radares-grid">
+                <!-- Inserido dinamicamente via JS -->
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Verificando conexão com os portais governamentais...</p>
+            </div>
+        </section>
+
+        <!-- Seção 2: Gestão de Empresas / Consultorias (Ativar, Suspender, Excluir) -->
+        <section class="admin-section">
+            <div class="admin-section-header">
+                <h2>
+                    <span>🏢</span> Gestão de Consultorias & Assinaturas
+                </h2>
+            </div>
+
+            <!-- Filtros de Empresas -->
+            <div class="filtros-agencias">
+                <input type="text" id="input-busca-agencia" class="input-busca-admin" placeholder="Buscar por consultoria, titular ou e-mail...">
+                <select id="select-status-agencia" class="select-filtro-admin">
+                    <option value="">Todos os Status</option>
+                    <option value="ativo">Ativo</option>
+                    <option value="suspenso">Suspenso</option>
+                    <option value="pendente">Pendente</option>
+                    <option value="cancelado">Cancelado</option>
+                </select>
+                <button id="btn-filtrar-agencias" class="btn-header-action" type="button">Filtrar</button>
+            </div>
+
+            <!-- Tabela de Empresas -->
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Consultoria / Agência</th>
+                            <th>Titular / Contato</th>
+                            <th>Plano</th>
+                            <th>Status Acesso</th>
+                            <th>Startups</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-agencias-corpo">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                                Carregando empresas cadastradas...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de Ajuste Manual de Plano -->
+    <div id="modal-ajuste-plano" class="modal-admin-backdrop" hidden>
+        <div class="modal-admin-card">
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 12px;">Ajustar Plano / Conceder Dias</h3>
+            <p id="modal-agencia-nome" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 18px;"></p>
+            
+            <form id="form-ajuste-plano">
+                <input type="hidden" id="modal-agencia-id">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);">Novo Plano:</label>
+                    <select id="modal-select-plano" class="select-filtro-admin" style="width: 100%;">
+                        <option value="1">Standard (R$ 49,90)</option>
+                        <option value="2">Pro (R$ 99,90)</option>
+                        <option value="3">Enterprise (R$ 299,90)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);">Dias Extras de Cortesia (Opcional):</label>
+                    <input type="number" id="modal-dias-extras" class="input-busca-admin" style="width: 100%;" min="0" max="365" placeholder="Ex: 30">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" id="btn-cancelar-modal" class="btn-header-action">Cancelar</button>
+                    <button type="submit" id="btn-confirmar-modal" class="btn-sync-radar">Salvar Ajuste</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="../scripts/paginas/adminDashboard.js"></script>
+</body>
+</html>
