@@ -3,38 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Painel do Administrador Global - Anjo Nexus</title>
-    <link rel="stylesheet" href="../estilos/layout.css">
+    <title>Painel do Administrador Global — Anjo Nexus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../estilos/admin-dashboard.css">
 </head>
 <body class="admin-body">
-    <!-- Header Admin -->
+    <!-- Header Admin (Top Navbar Alinhado ao Design System) -->
     <header class="admin-header">
         <div class="admin-header-left">
-            <div class="admin-logo">
+            <a href="admin-dashboard.html" class="admin-logo" title="Anjo Nexus - Painel de Governança">
                 <span>⚡ Anjo Nexus</span>
-            </div>
+            </a>
             <span class="badge-super-admin">Super Admin Global</span>
         </div>
         <div class="admin-header-right">
-            <span id="admin-user-info" class="admin-user-info"></span>
+            <div class="admin-user-pill">
+                <span>👤</span>
+                <span id="admin-user-info" class="admin-user-info">Carregando...</span>
+            </div>
             <a href="busca-editais.html" class="btn-header-action" title="Abrir Radar de Editais">
                 🔍 Ver Radar
             </a>
-            <button id="btn-logout-admin" class="btn-header-action btn-header-logout" type="button">
+            <button id="btn-logout-admin" class="btn-header-action btn-header-logout" type="button" title="Encerrar sessão de Super Admin">
                 Sair
             </button>
         </div>
     </header>
 
     <main class="admin-container">
-        <!-- Título -->
+        <!-- Título da Página -->
         <div class="admin-title-row">
             <h1>Painel de Governança e Inteligência</h1>
-            <p>Supervisão operacional do ecossistema, métricas SaaS e monitoramento dos radares.</p>
+            <p>Supervisão operacional do ecossistema, métricas SaaS e monitoramento dos radares governamentais.</p>
         </div>
 
-        <!-- KPIs Principais -->
+        <!-- KPIs Principais em Grid Responsivo -->
         <div class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-label">Consultorias Cadastradas</div>
@@ -58,23 +63,23 @@
             </div>
         </div>
 
-        <!-- Seção 1: Saúde dos Radares de Editais (O que o Roberto pediu) -->
+        <!-- Seção 1: Saúde dos Radares de Editais (Healthcheck & Extração) -->
         <section class="admin-section">
             <div class="admin-section-header">
                 <div>
                     <h2>
                         <span>📡</span> Saúde dos Radares & Métodos de Extração (Healthcheck)
                     </h2>
-                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
-                        Clique em qualquer radar para abrir a inspeção técnica e ver os últimos editais ingeridos.
+                    <p class="section-subtitle">
+                        Clique em qualquer radar para abrir a inspeção técnica profunda e ver os últimos editais ingeridos.
                     </p>
                 </div>
                 <div class="radares-sync-controls">
-                    <select id="select-sync-alvo" class="select-filtro-admin select-sync-regiao">
+                    <select id="select-sync-alvo" class="select-sync-regiao" aria-label="Alvo de Sincronização">
                         <option value="TODOS">🌐 Sincronizar: Todos os Radares</option>
-                        <option value="CENTRO-OESTE">🏛️ Sincronizar Região: Centro-Oeste (DF + GO)</option>
-                        <option value="SUDESTE">🏙️ Sincronizar Região: Sudeste (SP, RJ, MG)</option>
-                        <option value="NACIONAL">🇧🇷 Sincronizar Região: Nacional (FINEP)</option>
+                        <option value="CENTRO-OESTE">🏛️ Região: Centro-Oeste (DF + GO)</option>
+                        <option value="SUDESTE">🏙️ Região: Sudeste (SP, RJ, MG)</option>
+                        <option value="NACIONAL">🇧🇷 Região: Nacional (FINEP)</option>
                         <optgroup label="Sincronizar por Órgão Específico">
                             <option value="FAPDF">FAPDF (Distrito Federal)</option>
                             <option value="FAPEG">FAPEG (Goiás)</option>
@@ -84,13 +89,13 @@
                             <option value="FAPEMIG">FAPEMIG (Minas Gerais)</option>
                         </optgroup>
                     </select>
-                    <button id="btn-executar-sync-alvo" class="btn-sync-radar" type="button">
+                    <button id="btn-executar-sync-alvo" class="btn-sync-action" type="button">
                         ⚡ Sincronizar
                     </button>
                 </div>
             </div>
 
-            <!-- Filtros de Visualização por Região -->
+            <!-- Filtros de Visualização por Região (Chips Horizontais Flexíveis) -->
             <div class="radares-filtro-chips">
                 <span class="filtro-chip-label">Visualizar por Região:</span>
                 <button type="button" class="chip-filtro-radar active" data-regiao="TODAS">Todas as Regiões</button>
@@ -100,17 +105,21 @@
             </div>
 
             <div id="container-radares" class="radares-grid">
-                <!-- Inserido dinamicamente via JS -->
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Verificando conexão com os portais governamentais...</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; padding: 12px 0;">Verificando conexão com os portais governamentais...</p>
             </div>
         </section>
 
         <!-- Seção 2: Gestão de Empresas / Consultorias (Ativar, Suspender, Excluir) -->
         <section class="admin-section">
             <div class="admin-section-header">
-                <h2>
-                    <span>🏢</span> Gestão de Consultorias & Assinaturas
-                </h2>
+                <div>
+                    <h2>
+                        <span>🏢</span> Gestão de Consultorias & Assinaturas
+                    </h2>
+                    <p class="section-subtitle">
+                        Supervisão das contas empresariais, concessão de dias de cortesia, planos e controle soberano de status.
+                    </p>
+                </div>
             </div>
 
             <!-- Filtros de Empresas -->
@@ -123,13 +132,10 @@
                     <option value="pendente">Pendente</option>
                     <option value="cancelado">Cancelado</option>
                 </select>
-                <button id="btn-filtrar-agencias" class="btn-header-action" type="button">Filtrar</button>
+                <button id="btn-filtrar-agencias" class="btn-filtrar-admin" type="button">Filtrar</button>
             </div>
 
             <!-- Tabela de Empresas -->
-            <div class="mobile-scroll-hint">
-                <span>👉 Deslize horizontalmente para ver todas as colunas</span>
-            </div>
             <div class="table-responsive">
                 <table class="admin-table">
                     <thead>
@@ -158,13 +164,13 @@
     <!-- Modal de Ajuste Manual de Plano -->
     <div id="modal-ajuste-plano" class="modal-admin-backdrop" hidden>
         <div class="modal-admin-card">
-            <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 12px;">Ajustar Plano / Conceder Dias</h3>
-            <p id="modal-agencia-nome" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 18px;"></p>
+            <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 8px; color: #fff;">Ajustar Plano / Conceder Dias</h3>
+            <p id="modal-agencia-nome" style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;"></p>
             
             <form id="form-ajuste-plano">
                 <input type="hidden" id="modal-agencia-id">
                 <div style="margin-bottom: 16px;">
-                    <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);">Novo Plano:</label>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 6px; color: var(--text-subtle); text-transform: uppercase; letter-spacing: 0.05em;">Novo Plano:</label>
                     <select id="modal-select-plano" class="select-filtro-admin" style="width: 100%;">
                         <option value="1">Standard (R$ 49,90)</option>
                         <option value="2">Pro (R$ 99,90)</option>
@@ -172,14 +178,14 @@
                     </select>
                 </div>
 
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);">Dias Extras de Cortesia (Opcional):</label>
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 6px; color: var(--text-subtle); text-transform: uppercase; letter-spacing: 0.05em;">Dias Extras de Cortesia (Opcional):</label>
                     <input type="number" id="modal-dias-extras" class="input-busca-admin" style="width: 100%;" min="0" max="365" placeholder="Ex: 30">
                 </div>
 
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" id="btn-cancelar-modal" class="btn-header-action">Cancelar</button>
-                    <button type="submit" id="btn-confirmar-modal" class="btn-sync-radar">Salvar Ajuste</button>
+                    <button type="submit" id="btn-confirmar-modal" class="btn-sync-action">Salvar Ajuste</button>
                 </div>
             </form>
         </div>
@@ -191,7 +197,7 @@
             <div class="modal-header-radar">
                 <div class="modal-radar-title-group">
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <h3 id="modal-radar-sigla" style="font-size: 1.4rem; font-weight: 800; color: #fff;">--</h3>
+                        <h3 id="modal-radar-sigla" style="font-size: 1.35rem; font-weight: 800; color: #fff;">--</h3>
                         <span id="modal-radar-status-badge" class="status-badge online">● Online</span>
                     </div>
                     <p id="modal-radar-orgao" style="color: var(--text-muted); font-size: 0.88rem; margin-top: 4px;"></p>
@@ -219,7 +225,7 @@
                         <span class="modal-kpi-desc">Encerrados</span>
                     </div>
                     <div class="modal-kpi">
-                        <span class="modal-kpi-num" id="modal-radar-latencia" style="color: #a5b4fc; font-size: 1.15rem;">--</span>
+                        <span class="modal-kpi-num" id="modal-radar-latencia" style="color: #38bdf8; font-size: 1.15rem;">--</span>
                         <span class="modal-kpi-desc">Latência HTTP</span>
                     </div>
                 </div>
@@ -282,7 +288,7 @@
             </div>
 
             <div class="modal-footer-radar">
-                <button type="button" id="btn-sync-modal-radar" class="btn-sync-radar">
+                <button type="button" id="btn-sync-modal-radar" class="btn-sync-action">
                     ⚡ Sincronizar Este Radar Agora
                 </button>
                 <button type="button" id="btn-fechar-modal-radar-2" class="btn-header-action">
