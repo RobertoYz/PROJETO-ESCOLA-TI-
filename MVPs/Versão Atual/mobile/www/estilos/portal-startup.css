@@ -1,0 +1,26 @@
+.pagina-portal { margin: 0; background: #f2f6fc; color: #193352; font: 1rem/1.5 Inter, system-ui, sans-serif; }
+.pagina-portal main { max-width: 960px; margin: auto; padding: clamp(1rem, 4vw, 3rem); }
+.pagina-portal header, .pagina-portal article, .pagina-portal #resumo { background: white; border: 1px solid #d3e0ee; border-radius: 1rem; padding: 1.4rem; }
+.pagina-portal header, .pagina-portal #resumo, .pagina-portal .acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.pagina-portal header { justify-content: space-between; }
+.pagina-portal .marca { color: #265a92; font-weight: 700; }
+.pagina-portal h1, .pagina-portal h3 { margin: .3rem 0; overflow-wrap: anywhere; }
+.pagina-portal p { margin: .5rem 0; }
+.pagina-portal .etapa { display: inline-block; background: #e5f0ff; color: #214d7e; border-radius: 1rem; padding: .25rem .75rem; }
+.pagina-portal #resumo { background: #e8f1fc; margin: 1rem 0 2rem; }
+.pagina-portal #processos { display: grid; gap: .8rem; }
+.pagina-portal .urgente { color: #92410c; font-weight: 700; }
+.pagina-portal button, .dialogo-portal button { padding: .55rem .9rem; border-radius: .55rem; cursor: pointer; }
+.card-item-startup { flex-wrap: wrap; }
+.rodape-portal { flex: 1 0 100%; display: flex; gap: .6rem; align-items: center; border-top: 1px solid #64748b55; padding-top: .7rem; }
+.rodape-portal button { color: inherit; background: transparent; border: 0; cursor: pointer; padding: .4rem; }
+.rodape-portal .estado { margin-right: auto; background: #e4e8ee; color: #475569; padding: .2rem .65rem; border-radius: 1rem; }
+.rodape-portal .ativo { background: #d6f5e8; color: #145941; }
+.dialogo-portal { box-sizing: border-box; width: min(92vw, 28rem); border: 1px solid #bdcfe3; border-radius: 1rem; color: #193352; padding: 1.5rem; }
+.dialogo-portal::backdrop { background: #132239aa; }
+.dialogo-portal h2 { margin: 0; }
+.dialogo-portal form { display: grid; gap: .85rem; }
+.dialogo-portal input:not([type=checkbox]) { width: 100%; box-sizing: border-box; padding: .65rem; }
+.dialogo-portal button { background: #edf4fe; color: #214d7e; border: 1px solid #b9cde4; }
+.dialogo-portal button[type=submit] { background: #245993; color: white; }
+.dialogo-portal .fechar { float: right; }

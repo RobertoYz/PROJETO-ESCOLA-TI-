@@ -1,4 +1,4 @@
-import { realizarLogin, salvarToken, limparStartupAtiva, salvarTokenPendencia, salvarEmailPendencia, salvarAgenciaPendencia, limparDadosPendencia, salvarUsuarioLogado } from '../servicos/servicoAutenticacao.js';
+import { limparUsuarioLogado, realizarLogin, salvarToken, limparStartupAtiva, salvarTokenPendencia, salvarEmailPendencia, salvarAgenciaPendencia, limparDadosPendencia, salvarUsuarioLogado } from '../servicos/servicoAutenticacao.js';
 
 const formulario = document.getElementById('formulario-login');
 const campoEmail = document.getElementById('campo-email');
@@ -19,7 +19,7 @@ formulario.addEventListener('submit', async (evento) => {
     const senha = campoSenha.value;
 
     if (!email || !senha) {
-        exibirErro('Informe seu e-mail e sua senha.');
+        exibirErro('Informe seu e-mail ou usuário e sua senha.');
         return;
     }
 
@@ -45,6 +45,15 @@ formulario.addEventListener('submit', async (evento) => {
 
         // Login aprovado com assinatura ativa
         salvarToken(resposta.token || resposta.access_token);
+        localStorage.setItem('tipo_acesso', resposta.tipo_acesso || 'agencia');
+        if (resposta.tipo_acesso === 'portal_startup') {
+            limparUsuarioLogado();
+            limparStartupAtiva();
+            limparDadosPendencia();
+            sessionStorage.removeItem('dados_pre_cadastro');
+            window.location.replace('portal-startup.html');
+            return;
+        }
         const usuario = resposta.dados?.usuario || resposta.usuario;
         if (usuario) {
             salvarUsuarioLogado(usuario);

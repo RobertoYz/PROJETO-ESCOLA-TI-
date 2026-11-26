@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\StartupPortalController;
 use App\Http\Controllers\TermoAceiteController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -35,7 +36,7 @@ Route::post('/auth/verificar-codigo-email', [AuthController::class, 'verificarCo
 Route::post('/auth/verificar-email', [AuthController::class, 'verificarEmail']);
 Route::post('/auth/registrar-com-plano', [AuthController::class, 'registrarComPlano']);
 Route::post('/auth/registro', [AuthController::class, 'registrarComPlano']);
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:15,1,login');
 Route::post('/auth/esqueci-senha', [AuthController::class, 'solicitarRecuperacaoSenha']);
 Route::post('/auth/redefinir-senha', [AuthController::class, 'redefinirSenha']);
 Route::get('/auth/login', function () {
@@ -52,6 +53,9 @@ Route::delete('/auth/cancelar-cadastro-pendente', [AuthController::class, 'cance
 
 // Rotas protegidas (Sanctum) - sem o middleware que bloqueia pagamento pendente
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/portal/acompanhamento', [StartupPortalController::class, 'acompanhamento']);
+    Route::post('/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+
     // RF-11: Favoritar e listar editais favoritos
     Route::post('/editais/{id}/favoritar', [EditalController::class, 'toggleFavorito']);
     Route::get('/editais/favoritos', [EditalController::class, 'listarFavoritos']);
@@ -101,6 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Rotas do painel que exigem pagamento ativo
     Route::middleware('check.pagamento')->group(function () {
+        Route::match(['post', 'put', 'patch'], '/startups/{startup}/portal-acesso', [StartupPortalController::class, 'salvar']);
         Route::get('/startups', [StartupController::class, 'index']);
         Route::post('/startups', [StartupController::class, 'store']);
         Route::get('/startups/{id}', [StartupController::class, 'show']);

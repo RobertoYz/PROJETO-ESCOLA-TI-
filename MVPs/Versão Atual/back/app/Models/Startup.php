@@ -10,6 +10,11 @@ class Startup extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public function portalAcesso()
+    {
+        return $this->hasOne(StartupPortalAcesso::class);
+    }
+
     protected $fillable = [
         'agencia_id',
         'cnpj',

@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
+        $middleware->api(prepend: [\App\Http\Middleware\IsolarPortalStartup::class]);
         $middleware->alias([
             'check.pagamento' => \App\Http\Middleware\CheckPagamentoAtivo::class,
             'startup.ativa' => \App\Http\Middleware\VerificarStartupAtiva::class,

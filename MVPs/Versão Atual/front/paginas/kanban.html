@@ -531,7 +531,8 @@
         async function fetchBoard() {
             try {
                 const stAtiva = localStorage.getItem('startup_ativa_nome') || '';
-                const queryParam = stAtiva ? `?startup_name=${encodeURIComponent(stAtiva)}` : '';
+                const idAtivo = localStorage.getItem('startup_ativa_id');
+                const queryParam = idAtivo ? '?startup_id=' + encodeURIComponent(idAtivo) : stAtiva ? `?startup_name=${encodeURIComponent(stAtiva)}` : '';
 
                 const res = await fetch(`${API_BASE}/kanban${queryParam}`, {
                     headers: {
@@ -722,7 +723,7 @@
                 try {
                     const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/mover`, {
                         method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token_autenticacao') || ''), 'Content-Type': 'application/json', 'Accept': 'application/json' },
                         body: JSON.stringify({
                             target_column_id: targetColId,
                             prev_position: prevPos,
@@ -785,7 +786,7 @@
             try {
                 const res = await fetch(`${API_BASE}/kanban/cards/${cardId}/mover`, {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token_autenticacao') || ''), 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify({
                         target_column_id: targetCol.id,
                         prev_position: null,
@@ -811,7 +812,7 @@
             try {
                 const res = await fetch(`${API_BASE}/kanban/cards/${cardId}`, {
                     method: 'DELETE',
-                    headers: { 'Accept': 'application/json' }
+                    headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token_autenticacao') || ''), 'Accept': 'application/json' }
                 });
 
                 if (res.ok) {
@@ -833,7 +834,12 @@
             const cancelBtn = document.getElementById('btnCancelModal');
             const saveBtn = document.getElementById('btnSaveCard');
 
-            openBtn.addEventListener('click', () => modal.classList.add('active'));
+            openBtn.addEventListener('click', () => {
+                const campo = document.getElementById('inputStartup');
+                campo.value = localStorage.getItem('startup_ativa_nome') || '';
+                campo.readOnly = Boolean(localStorage.getItem('startup_ativa_id'));
+                modal.classList.add('active');
+            });
             cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) modal.classList.remove('active');
@@ -856,9 +862,10 @@
                 try {
                     const res = await fetch(`${API_BASE}/kanban/cards`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('token_autenticacao') || ''), 'Content-Type': 'application/json', 'Accept': 'application/json' },
                         body: JSON.stringify({
                             title: title,
+                            startup_id: localStorage.getItem('startup_ativa_id') || null,
                             startup_name: startup,
                             column_id: colId,
                             description: desc
