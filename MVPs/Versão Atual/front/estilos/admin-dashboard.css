@@ -1,38 +1,51 @@
 /* ==========================================================================
    ANJO NEXUS — PAINEL DO ADMINISTRADOR GLOBAL (ADM)
+   Design System Responsivo (Dark Mode Premium)
+   Compatível com Desktop 4K/FullHD, Notebooks, Tablets e Mobile
    ========================================================================== */
 
 .admin-body {
     background-color: var(--bg-dark);
     color: var(--text-main);
     min-height: 100vh;
-    padding-bottom: 60px;
+    width: 100%;
+    margin: 0;
+    padding: 0 0 60px 0;
+    display: block;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
+/* Header Admin Fixo */
 .admin-header {
-    background: rgba(15, 20, 34, 0.9);
+    background: rgba(15, 20, 34, 0.95);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
-    padding: 16px 24px;
+    padding: 14px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: sticky;
     top: 0;
     z-index: 100;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
 }
 
 .admin-header-left {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+    flex-shrink: 0;
 }
 
 .admin-logo {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 1.25rem;
+    gap: 8px;
+    font-size: 1.2rem;
     font-weight: 800;
     letter-spacing: -0.5px;
     background: var(--color-gradient);
@@ -43,18 +56,31 @@
 .badge-super-admin {
     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     color: #000;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 800;
-    padding: 4px 10px;
+    padding: 3px 9px;
     border-radius: var(--radius-full);
     text-transform: uppercase;
     letter-spacing: 0.8px;
+    white-space: nowrap;
 }
 
 .admin-header-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.admin-user-info {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 340px;
+    margin-right: 4px;
 }
 
 .btn-header-action {
@@ -63,14 +89,17 @@
     border: 1px solid var(--border-color);
     padding: 8px 14px;
     border-radius: var(--radius-sm);
-    font-size: 0.85rem;
+    font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
     text-decoration: none;
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
+    min-height: 38px;
+    box-sizing: border-box;
 }
 
 .btn-header-action:hover {
@@ -87,12 +116,16 @@
 .btn-header-logout:hover {
     background: #ef4444;
     color: #fff;
+    border-color: #ef4444;
 }
 
+/* Container Principal */
 .admin-container {
     max-width: 1280px;
-    margin: 28px auto 0;
+    margin: 24px auto 0;
     padding: 0 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .admin-title-row {
@@ -103,18 +136,20 @@
     font-size: 1.75rem;
     font-weight: 800;
     letter-spacing: -0.5px;
+    line-height: 1.2;
 }
 
 .admin-title-row p {
     color: var(--text-muted);
     font-size: 0.95rem;
-    margin-top: 4px;
+    margin-top: 6px;
+    line-height: 1.5;
 }
 
 /* KPI Cards Grid */
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
     margin-bottom: 32px;
 }
@@ -127,6 +162,7 @@
     position: relative;
     overflow: hidden;
     transition: transform 0.2s, border-color 0.2s;
+    box-sizing: border-box;
 }
 
 .kpi-card:hover {
@@ -135,7 +171,7 @@
 }
 
 .kpi-label {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -147,20 +183,23 @@
     font-weight: 800;
     color: #fff;
     margin: 8px 0 4px;
+    letter-spacing: -0.5px;
 }
 
 .kpi-subtext {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     color: var(--text-subtle);
+    line-height: 1.4;
 }
 
-/* Section Cards */
+/* Seções Administrativas */
 .admin-section {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: 24px;
     margin-bottom: 32px;
+    box-sizing: border-box;
 }
 
 .admin-section-header {
@@ -178,12 +217,23 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    line-height: 1.3;
 }
 
-/* Radares Grid */
+/* Botão Sincronizar Todos */
+#btn-sync-todos-radares {
+    padding: 9px 18px;
+    font-size: 0.86rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Grid de Radares (Healthcheck) */
 .radares-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
     gap: 16px;
 }
 
@@ -197,6 +247,7 @@
     justify-content: space-between;
     gap: 14px;
     transition: all 0.2s ease;
+    box-sizing: border-box;
 }
 
 .radar-card:hover {
@@ -209,27 +260,33 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .radar-card-title h3 {
     font-size: 1.05rem;
     font-weight: 700;
     color: #fff;
+    line-height: 1.3;
 }
 
 .radar-card-title span {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: var(--text-muted);
+    display: block;
+    margin-top: 2px;
+    line-height: 1.4;
 }
 
 .status-badge {
     padding: 4px 10px;
     border-radius: var(--radius-full);
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    white-space: nowrap;
 }
 
 .status-badge.online {
@@ -255,53 +312,73 @@
     grid-template-columns: 1fr 1fr;
     gap: 10px;
     padding: 10px 12px;
-    background: rgba(0, 0, 0, 0.25);
+    background: rgba(0, 0, 0, 0.3);
     border-radius: var(--radius-sm);
-    font-size: 0.82rem;
+    font-size: 0.8rem;
+}
+
+.radar-metrics div span {
+    color: var(--text-muted);
+    display: block;
+    font-size: 0.74rem;
+    margin-bottom: 2px;
 }
 
 .radar-metrics div strong {
     color: #fff;
     display: block;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
+    font-weight: 700;
 }
 
 .radar-card-bottom {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     padding-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
+    flex-wrap: wrap;
 }
 
 .radar-last-sync {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     color: var(--text-subtle);
+    line-height: 1.4;
 }
 
 .btn-sync-radar {
     background: var(--color-primary);
     color: #fff;
     border: none;
-    padding: 6px 14px;
+    padding: 8px 16px;
     border-radius: var(--radius-sm);
     font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+    min-height: 36px;
 }
 
 .btn-sync-radar:hover {
     background: var(--color-primary-hover);
 }
 
+.btn-sync-radar:active {
+    transform: scale(0.98);
+}
+
 .btn-sync-radar:disabled {
-    opacity: 0.5;
+    opacity: 0.55;
     cursor: not-allowed;
 }
 
-/* Agências / Empresas Table */
+/* Agências / Consultorias Filtros */
 .filtros-agencias {
     display: flex;
     gap: 12px;
@@ -318,6 +395,13 @@
     border-radius: var(--radius-sm);
     color: #fff;
     font-size: 0.9rem;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.input-busca-admin:focus {
+    border-color: var(--border-focus);
 }
 
 .select-filtro-admin {
@@ -328,26 +412,51 @@
     color: #fff;
     font-size: 0.9rem;
     cursor: pointer;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.select-filtro-admin:focus {
+    border-color: var(--border-focus);
+}
+
+/* Tabela Responsiva de Empresas */
+.mobile-scroll-hint {
+    display: none;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    align-items: center;
+    gap: 6px;
 }
 
 .table-responsive {
     width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
 }
 
 .admin-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.88rem;
+    min-width: 680px;
 }
 
 .admin-table th {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.04);
     color: var(--text-muted);
     font-weight: 600;
     text-align: left;
     padding: 12px 16px;
     border-bottom: 1px solid var(--border-color);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .admin-table td {
@@ -365,9 +474,10 @@
     display: inline-block;
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     font-weight: 700;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .badge-status-agencia.ativo {
@@ -389,6 +499,8 @@
     display: flex;
     gap: 8px;
     align-items: center;
+    flex-wrap: wrap;
+    min-width: 200px;
 }
 
 .btn-acao {
@@ -399,6 +511,11 @@
     border: none;
     cursor: pointer;
     transition: all 0.2s;
+    white-space: nowrap;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-acao-suspender {
@@ -443,27 +560,204 @@
     border-color: #ef4444;
 }
 
-/* Modal */
+/* Modal Responsivo */
 .modal-admin-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    padding: 16px;
+    box-sizing: border-box;
 }
 
 .modal-admin-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    width: 90%;
+    width: 100%;
     max-width: 480px;
     padding: 24px;
     box-shadow: var(--shadow-card);
+    box-sizing: border-box;
+}
+
+/* ==========================================================================
+   MEDIA QUERIES — ADAPTABILIDADE RESPONSIVA
+   ========================================================================== */
+
+/* Tablets e Telas Médias (<= 1024px) */
+@media (max-width: 1024px) {
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    .admin-user-info {
+        max-width: 220px;
+    }
+
+    .radares-grid {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    }
+}
+
+/* Tablets em Retrato e Smartphones Grandes (<= 768px) */
+@media (max-width: 768px) {
+    .admin-header {
+        padding: 12px 16px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .admin-header-left {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .admin-header-right {
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .admin-user-info {
+        width: 100%;
+        order: -1;
+        margin-bottom: 2px;
+        max-width: 100%;
+        font-size: 0.78rem;
+        text-align: left;
+    }
+
+    .btn-header-action {
+        flex: 1;
+        min-height: 40px;
+    }
+
+    .admin-container {
+        padding: 0 14px;
+        margin-top: 16px;
+    }
+
+    .admin-title-row {
+        margin-bottom: 18px;
+    }
+
+    .admin-title-row h1 {
+        font-size: 1.45rem;
+    }
+
+    .admin-title-row p {
+        font-size: 0.88rem;
+    }
+
+    .admin-section {
+        padding: 18px 16px;
+        margin-bottom: 24px;
+        border-radius: var(--radius-md);
+    }
+
+    .admin-section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    #btn-sync-todos-radares {
+        width: 100%;
+        padding: 11px 16px;
+        min-height: 42px;
+    }
+
+    .filtros-agencias {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .input-busca-admin,
+    .select-filtro-admin,
+    #btn-filtrar-agencias {
+        width: 100%;
+        min-width: 0;
+        min-height: 42px;
+    }
+
+    .mobile-scroll-hint {
+        display: flex;
+    }
+}
+
+/* Smartphones (<= 520px) */
+@media (max-width: 520px) {
+    .kpi-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .kpi-card {
+        padding: 16px;
+    }
+
+    .kpi-value {
+        font-size: 1.7rem;
+    }
+
+    .radares-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .radar-card {
+        padding: 16px;
+    }
+
+    .radar-card-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .status-badge {
+        align-self: flex-start;
+    }
+
+    .radar-card-bottom {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .radar-last-sync {
+        text-align: left;
+    }
+
+    .btn-sync-radar {
+        width: 100%;
+        padding: 11px;
+        min-height: 42px;
+    }
+
+    .modal-admin-card {
+        padding: 20px 16px;
+    }
+
+    #form-ajuste-plano div:last-child {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    #form-ajuste-plano button {
+        width: 100%;
+        min-height: 42px;
+    }
 }
