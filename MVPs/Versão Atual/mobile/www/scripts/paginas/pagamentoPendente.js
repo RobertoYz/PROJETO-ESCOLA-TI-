@@ -137,6 +137,13 @@ botaoConsultarAnterior?.addEventListener('click', async () => {
     } catch (erro) {
         const mensagemErro = erro.message || '';
 
+        // Bloqueio administrativo soberano
+        if (erro.status === 403 && (erro.dados?.codigo === 'CONSULTORIA_SUSPENSA' || erro.dados?.codigo_erro === 'CONSULTORIA_SUSPENSA' || mensagemErro.toLowerCase().includes('bloqueio administrativo') || mensagemErro.toLowerCase().includes('suspenso'))) {
+            exibirFeedback(mensagemErro || 'Acesso Suspenso: Esta consultoria foi suspensa pela administração global. Entre em contato com o suporte.');
+            if (botaoGerarNova) botaoGerarNova.disabled = true;
+            return;
+        }
+
         // Fallback: caso a url esteja gravada em cache e o pagamento ainda esteja dentro do prazo
         if ((erro.status === 401 || mensagemErro.toLowerCase().includes('unauthenticated')) && agenciaPendencia) {
             const urlSalva = agenciaPendencia.url_checkout;

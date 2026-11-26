@@ -45,12 +45,14 @@ class AdminController extends Controller
     {
         $dados = $request->validate([
             'status' => 'required|string|in:ativo,suspenso,cancelado,pendente',
+            'motivo' => 'nullable|string|max:255',
         ], [
             'status.required' => 'O novo status é obrigatório.',
             'status.in' => 'O status informado deve ser: ativo, suspenso, cancelado ou pendente.',
         ]);
 
-        $agencia = $service->alterarStatusAgencia($id, $dados['status']);
+        $adminId = $request->user()?->id;
+        $agencia = $service->alterarStatusAgencia($id, $dados['status'], $dados['motivo'] ?? null, $adminId);
 
         return response()->json([
             'status' => 'sucesso',

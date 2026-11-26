@@ -149,26 +149,49 @@ class AdminService
 
     /**
      * Altera o status da consultoria (ativo, suspenso, cancelado, pendente).
+     * Quando suspensa, ativa o bloqueio administrativo e revoga instantaneamente todos os tokens de sessão dos usuários.
      */
-    public function alterarStatusAgencia(int $agenciaId, string $novoStatus): Agencia
+    public function alterarStatusAgencia(int $agenciaId, string $novoStatus, ?string $motivo = null, ?int $adminId = null): Agencia
     {
         $statusValidos = ['ativo', 'suspenso', 'cancelado', 'pendente'];
         if (!in_array($novoStatus, $statusValidos, true)) {
             throw new \InvalidArgumentException('Status de agência inválido.');
         }
 
-        $agencia = Agencia::findOrFail($agenciaId);
-        $agencia->status_pagamento = $novoStatus;
+        $agencia = Agencia::with('usuarios')->findOrFail($agenciaId);
 
-        if ($novoStatus === 'ativo') {
-            if (!$agencia->assinatura_expira_em || $agencia->assinatura_expira_em->isPast()) {
-                $agencia->assinatura_expira_em = now()->addDays(30);
+        DB::transaction(function () use ($agencia, $novoStatus, $motivo, $adminId) {
+            $agencia->status_pagamento = $novoStatus;
+
+            if ($novoStatus === 'suspenso') {
+                $agencia->bloqueio_administrativo = true;
+                $agencia->motivo_bloqueio = $motivo ?? 'Suspenso pela administração global';
+                $agencia->bloqueado_em = now();
+                $agencia->bloqueado_por_id = $adminId;
+
+                // Revoga imediatamente todos os tokens Sanctum de todos os usuários da agência
+                $usuarioIds = $agencia->usuarios->pluck('id')->toArray();
+                if (!empty($usuarioIds)) {
+                    DB::table('personal_access_tokens')
+                        ->where('tokenable_type', User::class)
+                        ->whereIn('tokenable_id', $usuarioIds)
+                        ->delete();
+                }
+            } elseif ($novoStatus === 'ativo') {
+                $agencia->bloqueio_administrativo = false;
+                $agencia->motivo_bloqueio = null;
+                $agencia->bloqueado_em = null;
+                $agencia->bloqueado_por_id = null;
+
+                if (!$agencia->assinatura_expira_em || $agencia->assinatura_expira_em->isPast()) {
+                    $agencia->assinatura_expira_em = now()->addDays(30);
+                }
             }
-        }
 
-        $agencia->save();
+            $agencia->save();
+        });
 
-        return $agencia;
+        return $agencia->fresh(['plano', 'owner']);
     }
 
     /**

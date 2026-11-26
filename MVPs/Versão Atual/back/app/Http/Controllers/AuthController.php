@@ -232,29 +232,40 @@ class AuthController extends Controller
 
         $agencia = $usuario->agencia;
 
-        if ($usuario->perfil_acesso !== 'admin_global' && $agencia && !$agencia->isPagamentoAtivo()) {
-            $tokenPendencia = $usuario->createToken('token_pendencia', ['pagamento:gerenciar'])->plainTextToken;
+        if ($usuario->perfil_acesso !== 'admin_global' && $agencia) {
+            if ($agencia->isSuspensaAdministrativamente()) {
+                return response()->json([
+                    'status' => 'erro',
+                    'codigo' => 'CONSULTORIA_SUSPENSA',
+                    'codigo_erro' => 'CONSULTORIA_SUSPENSA',
+                    'message' => 'O acesso desta consultoria foi suspenso pela administração global da plataforma. Entre em contato com o suporte.',
+                ], 403);
+            }
 
-            return response()->json([
-                'codigo' => 'PAGAMENTO_PENDENTE',
-                'codigo_erro' => 'PAGAMENTO_PENDENTE',
-                'message' => 'Seu cadastro possui um pagamento pendente.',
-                'access_token' => $tokenPendencia,
-                'token' => $tokenPendencia,
-                'token_pendencia' => $tokenPendencia,
-                'usuario' => [
-                    'id' => $usuario->id,
-                    'name' => $usuario->name,
-                    'email' => $usuario->email,
-                ],
-                'agencia' => [
-                    'id' => $agencia->id,
-                    'nome' => $agencia->nome,
-                    'status_pagamento' => $agencia->status_pagamento,
-                    'url_checkout' => $agencia->url_checkout,
-                    'pagamento_expira_em' => $agencia->pagamento_expira_em,
-                ],
-            ], 403);
+            if (!$agencia->isPagamentoAtivo()) {
+                $tokenPendencia = $usuario->createToken('token_pendencia', ['pagamento:gerenciar'])->plainTextToken;
+
+                return response()->json([
+                    'codigo' => 'PAGAMENTO_PENDENTE',
+                    'codigo_erro' => 'PAGAMENTO_PENDENTE',
+                    'message' => 'Seu cadastro possui um pagamento pendente.',
+                    'access_token' => $tokenPendencia,
+                    'token' => $tokenPendencia,
+                    'token_pendencia' => $tokenPendencia,
+                    'usuario' => [
+                        'id' => $usuario->id,
+                        'name' => $usuario->name,
+                        'email' => $usuario->email,
+                    ],
+                    'agencia' => [
+                        'id' => $agencia->id,
+                        'nome' => $agencia->nome,
+                        'status_pagamento' => $agencia->status_pagamento,
+                        'url_checkout' => $agencia->url_checkout,
+                        'pagamento_expira_em' => $agencia->pagamento_expira_em,
+                    ],
+                ], 403);
+            }
         }
 
         $token = $usuario->createToken('auth_token')->plainTextToken;
@@ -331,6 +342,17 @@ class AuthController extends Controller
 
         if (!$usuario || !$agencia) {
             return response()->json(['message' => 'Agência não vinculada a este usuário.'], 404);
+        }
+
+        if ($agencia->isSuspensaAdministrativamente()) {
+            return response()->json([
+                'status' => 'erro',
+                'codigo' => 'CONSULTORIA_SUSPENSA',
+                'codigo_erro' => 'CONSULTORIA_SUSPENSA',
+                'pago' => false,
+                'expirado' => true,
+                'message' => 'Esta consultoria possui um bloqueio administrativo ativo. A auto-reativação não é permitida. Entre em contato com o suporte.',
+            ], 403);
         }
 
         if ($agencia->plano_upgrade_pendente_id) {
@@ -412,6 +434,14 @@ class AuthController extends Controller
 
         if (!$usuario || !$agencia) {
             return response()->json(['message' => 'Agência não encontrada para este usuário.'], 404);
+        }
+
+        if ($agencia->isSuspensaAdministrativamente()) {
+            return response()->json([
+                'status' => 'erro',
+                'codigo' => 'CONSULTORIA_SUSPENSA',
+                'message' => 'Esta consultoria possui um bloqueio administrativo ativo. Entre em contato com o suporte.',
+            ], 403);
         }
 
         if ($agencia->plano_id && (int) $agencia->plano_id !== (int) $dadosValidados['plano_id']) {

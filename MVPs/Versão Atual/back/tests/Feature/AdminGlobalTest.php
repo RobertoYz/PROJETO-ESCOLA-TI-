@@ -317,4 +317,72 @@ class AdminGlobalTest extends TestCase
             ->postJson('/api/admin/radares/FONTE_INEXISTENTE/sincronizar')
             ->assertUnprocessable();
     }
+
+    public function test_desativacao_inteligente_revoga_tokens_e_impede_auto_reativacao_e_login(): void
+    {
+        // 1. Criar token ativo para o usuário da consultoria
+        $tokenUsuario = $this->usuarioComum->createToken('auth_token')->plainTextToken;
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'tokenable_id' => $this->usuarioComum->id,
+        ]);
+
+        // 2. Admin Global suspende a agência
+        $this->actingAs($this->adminGlobal)
+            ->patchJson("/api/admin/agencias/{$this->agencia->id}/status", [
+                'status' => 'suspenso',
+                'motivo' => 'Inadimplência ou Bloqueio Administrativo',
+            ])
+            ->assertOk()
+            ->assertJsonPath('dados.status_pagamento', 'suspenso');
+
+        $agenciaAtualizada = $this->agencia->fresh();
+        $this->assertTrue($agenciaAtualizada->bloqueio_administrativo);
+        $this->assertTrue($agenciaAtualizada->isSuspensaAdministrativamente());
+        $this->assertFalse($agenciaAtualizada->isPagamentoAtivo());
+
+        // 3. Os tokens de sessão de todos os usuários da consultoria foram revogados imediatamente
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'tokenable_id' => $this->usuarioComum->id,
+        ]);
+
+        // 4. Usuário tenta logar e é barrado com 403 CONSULTORIA_SUSPENSA
+        $this->postJson('/api/auth/login', [
+            'email' => $this->usuarioComum->email,
+            'password' => 'Senha@123',
+        ])
+            ->assertForbidden()
+            ->assertJsonPath('codigo_erro', 'CONSULTORIA_SUSPENSA');
+
+        // 5. Empresa tenta burlar o bloqueio chamando 'consultarPagamentoAnterior'
+        $this->getJson("/api/pagamentos/consultar-anterior?email={$this->usuarioComum->email}")
+            ->assertForbidden()
+            ->assertJsonPath('codigo_erro', 'CONSULTORIA_SUSPENSA');
+
+        // 6. Middleware CheckPagamentoAtivo bloqueia o acesso mesmo se autenticado
+        $this->actingAs($this->usuarioComum)
+            ->getJson('/api/startups')
+            ->assertForbidden()
+            ->assertJsonPath('codigo_erro', 'CONSULTORIA_SUSPENSA');
+
+        // 7. Admin Global reativa o acesso da consultoria
+        $this->actingAs($this->adminGlobal)
+            ->patchJson("/api/admin/agencias/{$this->agencia->id}/status", [
+                'status' => 'ativo',
+            ])
+            ->assertOk()
+            ->assertJsonPath('dados.status_pagamento', 'ativo');
+
+        $agenciaReativada = $this->agencia->fresh();
+        $this->assertFalse($agenciaReativada->bloqueio_administrativo);
+        $this->assertFalse($agenciaReativada->isSuspensaAdministrativamente());
+        $this->assertTrue($agenciaReativada->isPagamentoAtivo());
+
+        // 8. Agora o login volta a funcionar normalmente
+        $this->postJson('/api/auth/login', [
+            'email' => $this->usuarioComum->email,
+            'password' => 'Senha@123',
+        ])
+            ->assertOk()
+            ->assertJsonPath('status', 'sucesso');
+    }
 }
