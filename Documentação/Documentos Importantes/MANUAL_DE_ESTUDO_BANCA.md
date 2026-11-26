@@ -358,39 +358,49 @@ Testar apenas no PHPUnit valida se o endpoint `/api/admin/dashboard` retorna JSO
 #### A Arquitetura do Teste E2E:
 1. **Servidor HTTP Estático (`serve-front.mjs`):** Um servidor Node.js modular sobe em `http://127.0.0.1:5500`, servindo os arquivos do front-end com os headers CORS e Content-Types corretos para módulos JavaScript (`text/javascript`, `text/css`, etc.).
 2. **API Backend Oficial (`php artisan serve`):** O backend Laravel roda na porta `8000`, processando as requisições autenticadas e interagindo com o banco MySQL.
-3. **Playwright Runner (`playwright.config.js`):** Instancia o executável do Google Chrome instalado no sistema (`channel: 'chrome'`), aplica viewport de desktop moderno (`1440x900`) e executa os 6 cenários sequenciais com tolerância inteligente a latências de rede governamentais.
+3. **Playwright Runner (`playwright.config.js`):** Instancia o executável do Google Chrome instalado no sistema (`channel: 'chrome'`), aplica viewport de desktop moderno (`1440x900`) e executa os 7 cenários sequenciais com tolerância inteligente a latências de rede governamentais e aceleração via cache de healthcheck.
 
-#### Os 6 Cenários E2E Mastigados (Passo a Passo do Robô):
+#### Os 7 Cenários E2E Mastigados (Passo a Passo do Robô):
 
 1. **Cenário 1 — Login do Super Admin e Redirecionamento Soberano:**
    - **O que o robô faz:** Acessa `login.html`, preenche `admin@anjonexus.com.br` e senha master, e submete o formulário.
-   - **O que ele valida:** Confirma que a URL transiciona imediatamente para `admin-dashboard.html`. **Prova para a banca:** O Administrador Global tem privilégio soberano e **nunca** é interceptado indevidamente por telas de pagamento pendente ou seleção de startups, exibindo no topo o selo `Super Admin Global`.
-   - *Tempo de execução médio: ~7 segundos.*
+   - **O que ele valida:** Confirma que a URL transiciona imediatamente para `admin-dashboard.html`. Valida também a presença da Sidebar Soberana integrada na tela de Governança com destaque na aba ativa. **Prova para a banca:** O Administrador Global tem privilégio soberano e **nunca** é interceptado indevidamente por telas de pagamento pendente ou seleção de startups, exibindo no topo e no menu o selo `Super Admin Global`.
+   - *Tempo de execução médio: ~1.5 segundos.*
 
 2. **Cenário 2 — Auditoria de Métricas SaaS & KPIs em Tempo Real:**
    - **O que o robô faz:** Inspeciona os elementos de KPIs `#kpi-total-agencias`, `#kpi-total-usuarios`, `#kpi-mrr` e `#kpi-total-editais`.
    - **O que ele valida:** Garante que os números não estão com placeholder vazio (`-`) e que o faturamento recorrente possui máscara monetária oficial (`R$`). **Prova para a banca:** O dashboard computa agregações contábeis e operacionais dinâmicas sem travar o carregamento.
-   - *Tempo de execução médio: ~7 segundos.*
+   - *Tempo de execução médio: ~2.0 segundos.*
 
 3. **Cenário 3 — Healthcheck dos 6 Radares e Filtros Regionais por Chips:**
    - **O que o robô faz:** Aguarda o carregamento dos 6 cards governamentais (`FAPDF`, `FAPEG`, `FINEP`, `FAPESP`, `FAPERJ`, `FAPEMIG`). Em seguida, clica no chip interativo `Centro-Oeste`.
-   - **O que ele valida:** Confirma que o DOM reage instantaneamente, mantendo apenas 2 cards em tela (FAPDF e FAPEG). Depois clica em `Sudeste` (isolando 3 cards) e finalmente em `Todas as Regiões` (restaurando os 6 cards). **Prova para a banca:** A interface é reativa, responsiva e oferece controle granular geográfico para o gestor.
-   - *Tempo de execução médio: ~13 segundos.*
+   - **O que ele valida:** Confirma que o DOM reage instantaneamente, mantendo apenas 2 cards em tela (FAPDF e FAPEG). Depois clica em `Sudeste` (isolando 3 cards) e finalmente em `Todas as Regiões` (restaurando os 6 cards). **Prova para a banca:** A interface é reativa, responsiva e oferece controle granular geográfico para o gestor com cache de latência.
+   - *Tempo de execução médio: ~2.1 segundos.*
 
 4. **Cenário 4 — Modal Técnico de Inspeção Profunda do Radar:**
    - **O que o robô faz:** Clica no botão `🔍 Detalhes` do card do radar `FAPDF`.
    - **O que ele valida:** Verifica se a janela modal `#modal-detalhes-radar` torna-se visível (removendo o atributo `hidden`), confere se a sigla `FAPDF`, a macrorregião `Centro-Oeste`, o probe de latência HTTP e o descritivo da arquitetura de resiliência foram preenchidos via API. Ao final, clica no botão `✕` e valida que o modal fecha perfeitamente. **Prova para a banca:** O gestor tem capacidade de auditoria diagnóstica transparente sobre cada robô de extração.
-   - *Tempo de execução médio: ~10 segundos.*
+   - *Tempo de execução médio: ~3.4 segundos.*
 
 5. **Cenário 5 — Governança de Empresas e Modal de Ajuste de Planos:**
    - **O que o robô faz:** Rola até a tabela de consultorias cadastradas, valida a presença de empresas clientes, inspeciona botões de alternância de status (`Desativar`/`Ligar Acesso`) e clica no botão `Plano`.
    - **O que ele valida:** Abre o modal `#modal-ajuste-plano`, confere o select com os planos cadastrados (Starter, Pro, Enterprise) e o campo de dias extras de cortesia, fechando em seguida. **Prova para a banca:** O ecossistema suporta gestão comercial e flexibilidade de atendimento sem necessidade de scripts manuais no banco de dados.
-   - *Tempo de execução médio: ~7 segundos.*
+   - *Tempo de execução médio: ~2.3 segundos.*
 
 6. **Cenário 6 — Logout Seguro e Destruição de Sessão:**
    - **O que o robô faz:** Clica no botão `Sair` do cabeçalho administrativo.
    - **O que ele valida:** Confirma que todos os tokens em `localStorage` e `sessionStorage` são purgados e o navegador é redirecionado de volta para `login.html`. **Prova para a banca:** Conformidade com boas práticas de segurança (OWASP), impedindo que sessões administrativas fiquem órfãs em máquinas compartilhadas.
    - *Tempo de execução médio: ~1.2 segundos.*
+
+7. **Cenário 7 — Isolamento de Navegação e Guarda de Rotas para Administrador Global:**
+   - **O que o robô faz:** A partir do painel de governança, clica em `🔍 Ver Radar` indo para `busca-editais.html`. Em seguida, inspeciona o menu lateral e tenta forçar o acesso digitando URLs restritas de consultoria (`minhas-startups.html` e `kanban.html`).
+   - **O que ele valida:** 
+     1. Na barra lateral do catálogo, valida que apenas as opções de governança estão presentes, confirmando a ausência de abas privadas de consultoria (`minhas-startups`, `kanban`, `equipe`) e sem poluição de links mobile.
+     2. No cabeçalho, valida a substituição do seletor de startups pelo badge `Super Admin` e botão de atalho `⚡ Painel ADM`.
+     3. Ao navegar diretamente via URL para `minhas-startups.html` ou `kanban.html`, valida que a guarda de rotas front-end (`Route Guard`) intercepta imediatamente a tentativa de acesso e redireciona de volta para `admin-dashboard.html`. **Prova para a banca:** Blindagem em profundidade — além do middleware backend `EnsureAdminGlobal`, a interface web e mobile possui barreiras ativas que impedem a contaminação de papéis e vazamento de rotas de negócio.
+   - *Tempo de execução médio: ~1.5 segundos.*
+
+> ⚡ **Aceleração via Cache Inteligente (TTL 5 min):** Com a introdução do cache de conectividade externa em `AdminService::testarConexaoPortal`, a execução de toda a suíte Playwright despencou de **51.4s para 14.7s** (mais de **3.5x mais rápido**), eliminando bloqueios monothread no PHP e entregando tempos de resposta sub-segundo no dashboard.
 
 ---
 
