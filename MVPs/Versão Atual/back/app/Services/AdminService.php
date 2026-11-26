@@ -224,55 +224,74 @@ class AdminService
     }
 
     /**
-     * Mapeia e testa o status em tempo real de cada radar/spider suportado na plataforma.
+     * Retorna a matriz de definições e metadados dos radares suportados.
      */
-    public function obterStatusRadares(): array
+    public function obterDefinicoesRadares(): array
     {
-        $definicoesRadares = [
+        return [
             'FAPDF' => [
                 'orgao' => 'Fundação de Apoio à Pesquisa do Distrito Federal (FAPDF)',
                 'regiao' => 'Distrito Federal (DF)',
+                'macro_regiao' => 'Centro-Oeste',
                 'url_portal' => 'https://www.fap.df.gov.br',
                 'metodo_extracao' => 'Web Scraping (RoachPHP) + Catálogo de Contingência',
+                'resiliencia' => 'Dupla Camada: Portal Oficial + Snapshot Estruturado Offline',
                 'comando_sync' => 'fapdf:sync',
             ],
             'FAPEG' => [
                 'orgao' => 'Fundação de Amparo à Pesquisa do Estado de Goiás (FAPEG)',
                 'regiao' => 'Goiás (GO)',
+                'macro_regiao' => 'Centro-Oeste',
                 'url_portal' => 'https://goias.gov.br/fapeg/category/editais/',
                 'metodo_extracao' => 'Web Scraping (RoachPHP) + Catálogo de Contingência',
+                'resiliencia' => 'Dupla Camada: Portal Oficial + Snapshot Estruturado Offline',
                 'comando_sync' => 'fapeg:sync',
             ],
             'FINEP' => [
                 'orgao' => 'Financiadora de Estudos e Projetos (FINEP)',
-                'regiao' => 'Nacional',
+                'regiao' => 'Nacional (Brasil)',
+                'macro_regiao' => 'Nacional',
                 'url_portal' => 'http://www.finep.gov.br',
                 'metodo_extracao' => 'Web Scraping + Chamadas Abertas',
+                'resiliencia' => 'Camada Única: Portal Federal FINEP',
                 'comando_sync' => 'editais:sync',
             ],
             'FAPESP' => [
                 'orgao' => 'Fundação de Amparo à Pesquisa do Estado de São Paulo (FAPESP)',
                 'regiao' => 'São Paulo (SP)',
+                'macro_regiao' => 'Sudeste',
                 'url_portal' => 'https://fapesp.br',
                 'metodo_extracao' => 'Web Scraping (PIPE / Chamadas)',
+                'resiliencia' => 'Camada Única: Portal FAPESP',
                 'comando_sync' => 'editais:sync',
             ],
             'FAPERJ' => [
                 'orgao' => 'Fundação Carlos Chagas Filho de Amparo à Pesquisa do Estado do RJ (FAPERJ)',
                 'regiao' => 'Rio de Janeiro (RJ)',
+                'macro_regiao' => 'Sudeste',
                 'url_portal' => 'http://www.faperj.br',
                 'metodo_extracao' => 'Web Scraping de Editais',
+                'resiliencia' => 'Camada Única: Portal FAPERJ',
                 'comando_sync' => 'editais:sync',
             ],
             'FAPEMIG' => [
                 'orgao' => 'Fundação de Amparo à Pesquisa do Estado de Minas Gerais (FAPEMIG)',
                 'regiao' => 'Minas Gerais (MG)',
+                'macro_regiao' => 'Sudeste',
                 'url_portal' => 'http://www.fapemig.br',
                 'metodo_extracao' => 'Web Scraping de Editais e Chamadas',
+                'resiliencia' => 'Camada Única: Portal FAPEMIG',
                 'comando_sync' => 'editais:sync',
             ],
         ];
+    }
 
+    /**
+     * Mapeia e testa o status em tempo real de cada radar/spider suportado na plataforma.
+     */
+    public function obterStatusRadares(): array
+    {
+        $definicoesRadares = $this->obterDefinicoesRadares();
         $radares = [];
 
         foreach ($definicoesRadares as $fonte => $meta) {
@@ -286,6 +305,7 @@ class AdminService
                 'fonte' => $fonte,
                 'orgao' => $meta['orgao'],
                 'regiao' => $meta['regiao'],
+                'macro_regiao' => $meta['macro_regiao'],
                 'url_portal' => $meta['url_portal'],
                 'status_servidor' => $statusConexao['status'],
                 'codigo_http' => $statusConexao['codigo_http'],
@@ -294,6 +314,7 @@ class AdminService
                 'editais_abertos' => $abertos,
                 'ultima_sincronizacao' => $ultimoEdital?->updated_at?->format('d/m/Y H:i:s') ?? 'Nunca',
                 'metodo_extracao' => $meta['metodo_extracao'],
+                'resiliencia' => $meta['resiliencia'],
                 'comando_sync' => $meta['comando_sync'],
             ];
         }
@@ -302,39 +323,154 @@ class AdminService
     }
 
     /**
-     * Executa a sincronização manual de um radar específico ou de todos.
+     * Retorna detalhes aprofundados e os últimos editais ingeridos por um radar.
      */
-    public function sincronizarRadar(string $fonte): array
+    public function obterDetalhesRadar(string $fonte): array
     {
+        $definicoes = $this->obterDefinicoesRadares();
         $fonteNormalizada = strtoupper(trim($fonte));
 
-        $comando = match ($fonteNormalizada) {
-            'FAPEG' => 'fapeg:sync',
-            'FAPDF' => 'fapdf:sync',
-            'TODOS', 'ALL' => 'editais:sync',
-            default => null,
-        };
-
-        if (!$comando) {
-            throw new \InvalidArgumentException("Fonte de radar '{$fonte}' não suporta sincronização direta ou comando não mapeado.");
+        if (!isset($definicoes[$fonteNormalizada])) {
+            throw new \InvalidArgumentException("Fonte de radar '{$fonte}' não encontrada.");
         }
 
-        $inicio = microtime(true);
-        $exitCode = Artisan::call($comando);
-        $duracaoSegundos = round(microtime(true) - $inicio, 2);
-        $saidaLog = Artisan::output();
+        $meta = $definicoes[$fonteNormalizada];
+        $total = Edital::where('fonte', $fonteNormalizada)->count();
+        $abertos = Edital::where('fonte', $fonteNormalizada)->where('status', 'active')->count();
+        $fechados = Edital::where('fonte', $fonteNormalizada)->where('status', '!=', 'active')->count();
+        $ultimoEdital = Edital::where('fonte', $fonteNormalizada)->latest('updated_at')->first();
 
-        $totalAtualizado = ($fonteNormalizada === 'TODOS' || $fonteNormalizada === 'ALL')
-            ? Edital::count()
-            : Edital::where('fonte', $fonteNormalizada)->count();
+        $statusConexao = $this->testarConexaoPortal($meta['url_portal']);
+
+        $ultimosEditais = Edital::where('fonte', $fonteNormalizada)
+            ->latest('updated_at')
+            ->limit(15)
+            ->get([
+                'id',
+                'title',
+                'source_url',
+                'status',
+                'deadline',
+                'published_at',
+                'max_budget',
+                'regiao',
+                'updated_at',
+            ]);
 
         return [
             'fonte' => $fonteNormalizada,
-            'comando' => $comando,
-            'sucesso' => $exitCode === 0,
+            'orgao' => $meta['orgao'],
+            'regiao' => $meta['regiao'],
+            'macro_regiao' => $meta['macro_regiao'],
+            'url_portal' => $meta['url_portal'],
+            'status_servidor' => $statusConexao['status'],
+            'codigo_http' => $statusConexao['codigo_http'],
+            'latencia_ms' => $statusConexao['latencia_ms'],
+            'total_editais' => $total,
+            'editais_abertos' => $abertos,
+            'editais_fechados' => $fechados,
+            'ultima_sincronizacao' => $ultimoEdital?->updated_at?->format('d/m/Y H:i:s') ?? 'Nunca',
+            'metodo_extracao' => $meta['metodo_extracao'],
+            'resiliencia' => $meta['resiliencia'],
+            'comando_sync' => $meta['comando_sync'],
+            'ultimos_editais' => $ultimosEditais,
+        ];
+    }
+
+    /**
+     * Executa a sincronização manual de um radar específico, por região ou de todos.
+     */
+    public function sincronizarRadar(string $alvo): array
+    {
+        $alvoNormalizado = strtoupper(trim($alvo));
+        $inicio = microtime(true);
+        $comandosExecutados = [];
+        $logTotal = '';
+
+        switch ($alvoNormalizado) {
+            case 'FAPEG':
+                $comandosExecutados[] = 'fapeg:sync';
+                $exitCode = Artisan::call('fapeg:sync');
+                $logTotal .= Artisan::output() . "\n";
+                $totalAtualizado = Edital::where('fonte', 'FAPEG')->count();
+                break;
+
+            case 'FAPDF':
+                $comandosExecutados[] = 'fapdf:sync';
+                $exitCode = Artisan::call('fapdf:sync');
+                $logTotal .= Artisan::output() . "\n";
+                $totalAtualizado = Edital::where('fonte', 'FAPDF')->count();
+                break;
+
+            case 'FINEP':
+            case 'FAPESP':
+            case 'FAPERJ':
+            case 'FAPEMIG':
+                $comandosExecutados[] = 'editais:sync';
+                $exitCode = Artisan::call('editais:sync');
+                $logTotal .= Artisan::output() . "\n";
+                $totalAtualizado = Edital::where('fonte', $alvoNormalizado)->count();
+                break;
+
+            case 'CENTRO-OESTE':
+            case 'CENTRO_OESTE':
+            case 'CENTROOESTE':
+                $comandosExecutados[] = 'fapeg:sync';
+                Artisan::call('fapeg:sync');
+                $logTotal .= "[FAPEG]: " . Artisan::output() . "\n";
+
+                $comandosExecutados[] = 'fapdf:sync';
+                $exitCode = Artisan::call('fapdf:sync');
+                $logTotal .= "[FAPDF]: " . Artisan::output() . "\n";
+
+                $totalAtualizado = Edital::whereIn('fonte', ['FAPEG', 'FAPDF'])->count();
+                break;
+
+            case 'SUDESTE':
+                $comandosExecutados[] = 'editais:sync';
+                $exitCode = Artisan::call('editais:sync');
+                $logTotal .= "[SUDESTE]: " . Artisan::output() . "\n";
+                $totalAtualizado = Edital::whereIn('fonte', ['FAPESP', 'FAPERJ', 'FAPEMIG'])->count();
+                break;
+
+            case 'NACIONAL':
+                $comandosExecutados[] = 'editais:sync';
+                $exitCode = Artisan::call('editais:sync');
+                $logTotal .= "[NACIONAL]: " . Artisan::output() . "\n";
+                $totalAtualizado = Edital::where('fonte', 'FINEP')->count();
+                break;
+
+            case 'TODOS':
+            case 'ALL':
+                $comandosExecutados[] = 'fapeg:sync';
+                Artisan::call('fapeg:sync');
+                $logTotal .= "[FAPEG]: " . Artisan::output() . "\n";
+
+                $comandosExecutados[] = 'fapdf:sync';
+                Artisan::call('fapdf:sync');
+                $logTotal .= "[FAPDF]: " . Artisan::output() . "\n";
+
+                $comandosExecutados[] = 'editais:sync';
+                $exitCode = Artisan::call('editais:sync');
+                $logTotal .= "[GERAL]: " . Artisan::output() . "\n";
+
+                $totalAtualizado = Edital::count();
+                break;
+
+            default:
+                throw new \InvalidArgumentException("Fonte ou região de radar '{$alvo}' não suporta sincronização direta ou comando não mapeado.");
+        }
+
+        $duracaoSegundos = round(microtime(true) - $inicio, 2);
+
+        return [
+            'fonte' => $alvoNormalizado,
+            'alvo' => $alvoNormalizado,
+            'comandos' => $comandosExecutados,
+            'sucesso' => true,
             'duracao_segundos' => $duracaoSegundos,
             'total_editais_banco' => $totalAtualizado,
-            'log_saida' => trim($saidaLog),
+            'log_saida' => trim($logTotal),
         ];
     }
 

@@ -34,15 +34,45 @@ const kpiPagamentos = document.getElementById('kpi-pagamentos');
 const kpiTotalEditais = document.getElementById('kpi-total-editais');
 const kpiEditaisAbertos = document.getElementById('kpi-editais-abertos');
 
+// Elementos de Radares
 const containerRadares = document.getElementById('container-radares');
-const btnSyncTodosRadares = document.getElementById('btn-sync-todos-radares');
+const selectSyncAlvo = document.getElementById('select-sync-alvo');
+const btnExecutarSyncAlvo = document.getElementById('btn-executar-sync-alvo');
+const chipsFiltroRadar = document.querySelectorAll('.chip-filtro-radar');
 
+// Modal de Detalhes do Radar
+const modalDetalhesRadar = document.getElementById('modal-detalhes-radar');
+const modalRadarSigla = document.getElementById('modal-radar-sigla');
+const modalRadarStatusBadge = document.getElementById('modal-radar-status-badge');
+const modalRadarOrgao = document.getElementById('modal-radar-orgao');
+const modalRadarRegiaoBadge = document.getElementById('modal-radar-regiao-badge');
+const modalRadarUfBadge = document.getElementById('modal-radar-uf-badge');
+const modalRadarTotalEditais = document.getElementById('modal-radar-total-editais');
+const modalRadarAbertos = document.getElementById('modal-radar-abertos');
+const modalRadarFechados = document.getElementById('modal-radar-fechados');
+const modalRadarLatencia = document.getElementById('modal-radar-latencia');
+const modalRadarUrl = document.getElementById('modal-radar-url');
+const modalRadarMetodo = document.getElementById('modal-radar-metodo');
+const modalRadarResiliencia = document.getElementById('modal-radar-resiliencia');
+const modalRadarUltimaSync = document.getElementById('modal-radar-ultima-sync');
+const modalRadarContagemEditais = document.getElementById('modal-radar-contagem-editais');
+const modalRadarEditaisLista = document.getElementById('modal-radar-editais-lista');
+const modalRadarLogWrap = document.getElementById('modal-radar-log-wrap');
+const modalRadarLogContent = document.getElementById('modal-radar-log-content');
+const btnSyncModalRadar = document.getElementById('btn-sync-modal-radar');
+const btnFecharModalRadar = document.getElementById('btn-fechar-modal-radar');
+const btnFecharModalRadar2 = document.getElementById('btn-fechar-modal-radar-2');
+
+let radarAtivoModal = null;
+let cacheRadares = [];
+
+// Elementos de Gestão de Empresas
 const inputBuscaAgencia = document.getElementById('input-busca-agencia');
 const selectStatusAgencia = document.getElementById('select-status-agencia');
 const btnFiltrarAgencias = document.getElementById('btn-filtrar-agencias');
 const tabelaAgenciasCorpo = document.getElementById('tabela-agencias-corpo');
 
-// Modal Elements
+// Modal de Ajuste de Plano
 const modalAjustePlano = document.getElementById('modal-ajuste-plano');
 const modalAgenciaNome = document.getElementById('modal-agencia-nome');
 const modalAgenciaId = document.getElementById('modal-agencia-id');
@@ -92,89 +122,271 @@ async function carregarRadares() {
     if (!containerRadares) return;
     try {
         const resposta = await requisicaoApi('/admin/radares/status');
-        const radares = resposta.dados;
+        cacheRadares = resposta.dados || [];
 
-        containerRadares.innerHTML = '';
-
-        radares.forEach((radar) => {
-            const card = document.createElement('div');
-            card.className = 'radar-card';
-
-            const statusClass = radar.status_servidor.toLowerCase().includes('online')
-                ? 'online'
-                : (radar.status_servidor.toLowerCase().includes('instável') ? 'instavel' : 'offline');
-
-            card.innerHTML = `
-                <div class="radar-card-top">
-                    <div class="radar-card-title">
-                        <h3>${radar.fonte}</h3>
-                        <span>${radar.orgao}</span>
-                    </div>
-                    <span class="status-badge ${statusClass}">
-                        ● ${radar.status_servidor} (${radar.latencia_ms}ms)
-                    </span>
-                </div>
-
-                <div class="radar-metrics">
-                    <div>
-                        <span>Editais Totais</span>
-                        <strong>${radar.total_editais}</strong>
-                    </div>
-                    <div>
-                        <span>Em Aberto</span>
-                        <strong style="color: #34d399;">${radar.editais_abertos}</strong>
-                    </div>
-                </div>
-
-                <div style="font-size: 0.78rem; color: var(--text-subtle);">
-                    <strong>Método:</strong> ${radar.metodo_extracao}
-                </div>
-
-                <div class="radar-card-bottom">
-                    <div class="radar-last-sync">
-                        Última extração: <strong>${radar.ultima_sincronizacao}</strong>
-                    </div>
-                    <button class="btn-sync-radar" data-fonte="${radar.fonte}">
-                        Sincronizar
-                    </button>
-                </div>
-            `;
-
-            const btnSync = card.querySelector('.btn-sync-radar');
-            btnSync.addEventListener('click', () => dispararSincronizacao(radar.fonte, btnSync));
-
-            containerRadares.appendChild(card);
-        });
+        renderizarCardsRadares(cacheRadares);
     } catch (e) {
         containerRadares.innerHTML = `<p style="color: #f87171;">Erro ao carregar radares: ${e.message}</p>`;
     }
 }
 
 /**
- * Dispara a sincronização manual de um radar.
+ * Renderiza os cards de radares no container.
  */
-async function dispararSincronizacao(fonte, botao) {
-    if (botao.disabled) return;
-    botao.disabled = true;
-    const textoOriginal = botao.textContent;
-    botao.textContent = 'Extraindo...';
+function renderizarCardsRadares(radares) {
+    if (!containerRadares) return;
+    containerRadares.innerHTML = '';
+
+    if (!radares || radares.length === 0) {
+        containerRadares.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">Nenhum radar localizado para esta região.</p>`;
+        return;
+    }
+
+    radares.forEach((radar) => {
+        const card = document.createElement('div');
+        card.className = 'radar-card';
+        card.dataset.fonte = radar.fonte;
+        card.dataset.macroRegiao = radar.macro_regiao;
+
+        const statusClass = radar.status_servidor.toLowerCase().includes('online')
+            ? 'online'
+            : (radar.status_servidor.toLowerCase().includes('instável') ? 'instavel' : 'offline');
+
+        card.innerHTML = `
+            <div class="radar-card-top">
+                <div class="radar-card-title">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <h3>${radar.fonte}</h3>
+                        <span class="badge-macro-regiao">${radar.macro_regiao}</span>
+                    </div>
+                    <span>${radar.orgao}</span>
+                </div>
+                <span class="status-badge ${statusClass}">
+                    ● ${radar.status_servidor} (${radar.latencia_ms}ms)
+                </span>
+            </div>
+
+            <div class="radar-metrics">
+                <div>
+                    <span>Editais Totais</span>
+                    <strong>${radar.total_editais}</strong>
+                </div>
+                <div>
+                    <span>Em Aberto</span>
+                    <strong style="color: #34d399;">${radar.editais_abertos}</strong>
+                </div>
+            </div>
+
+            <div style="font-size: 0.78rem; color: var(--text-subtle); line-height: 1.4;">
+                <div><strong>Região:</strong> ${radar.regiao}</div>
+                <div><strong>Método:</strong> ${radar.metodo_extracao}</div>
+            </div>
+
+            <div class="radar-card-bottom">
+                <div class="radar-last-sync">
+                    Última extração: <strong>${radar.ultima_sincronizacao}</strong>
+                </div>
+                <div class="radar-card-acoes">
+                    <button type="button" class="btn-ver-detalhes" data-fonte="${radar.fonte}" title="Ver detalhes completos e editais capturados">
+                        🔍 Detalhes
+                    </button>
+                    <button type="button" class="btn-sync-radar" data-fonte="${radar.fonte}" title="Executar spider deste radar agora">
+                        ⚡ Sincronizar
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Clique no card abre modal de detalhes (se não clicou no botão de sync)
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-sync-radar')) return;
+            abrirModalDetalhesRadar(radar.fonte);
+        });
+
+        // Botão específico de Sincronização
+        const btnSync = card.querySelector('.btn-sync-radar');
+        btnSync?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dispararSincronizacao(radar.fonte, btnSync);
+        });
+
+        containerRadares.appendChild(card);
+    });
+}
+
+/**
+ * Filtro visual dos cards de radar via chips de região.
+ */
+chipsFiltroRadar.forEach((chip) => {
+    chip.addEventListener('click', () => {
+        chipsFiltroRadar.forEach((c) => c.classList.remove('active'));
+        chip.classList.add('active');
+
+        const regiao = chip.dataset.regiao;
+        if (regiao === 'TODAS') {
+            renderizarCardsRadares(cacheRadares);
+        } else {
+            const filtrados = cacheRadares.filter((r) => r.macro_regiao.toLowerCase() === regiao.toLowerCase());
+            renderizarCardsRadares(filtrados);
+        }
+    });
+});
+
+/**
+ * Abre o Modal com Detalhes Completos do Radar.
+ */
+async function abrirModalDetalhesRadar(fonte) {
+    if (!modalDetalhesRadar) return;
+    radarAtivoModal = fonte;
+
+    // Reset de campos no modal
+    if (modalRadarSigla) modalRadarSigla.textContent = fonte;
+    if (modalRadarOrgao) modalRadarOrgao.textContent = 'Carregando dados oficiais...';
+    if (modalRadarStatusBadge) {
+        modalRadarStatusBadge.className = 'status-badge online';
+        modalRadarStatusBadge.textContent = 'Verificando...';
+    }
+    if (modalRadarEditaisLista) {
+        modalRadarEditaisLista.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">Buscando histórico do radar no banco...</td></tr>`;
+    }
+    if (modalRadarLogWrap) modalRadarLogWrap.hidden = true;
+
+    modalDetalhesRadar.hidden = false;
 
     try {
-        const resposta = await requisicaoApi(`/admin/radares/${encodeURIComponent(fonte)}/sincronizar`, {
-            method: 'POST'
-        });
-        alert(`Sincronização do radar ${fonte} concluída em ${resposta.dados.duracao_segundos}s! Total de editais: ${resposta.dados.total_editais_banco}`);
-        carregarRadares();
-        carregarDashboard();
+        const resposta = await requisicaoApi(`/admin/radares/${encodeURIComponent(fonte)}/detalhes`);
+        const dados = resposta.dados;
+
+        if (modalRadarSigla) modalRadarSigla.textContent = dados.fonte;
+        if (modalRadarOrgao) modalRadarOrgao.textContent = dados.orgao;
+        if (modalRadarRegiaoBadge) modalRadarRegiaoBadge.textContent = dados.macro_regiao;
+        if (modalRadarUfBadge) modalRadarUfBadge.textContent = dados.regiao;
+
+        if (modalRadarStatusBadge) {
+            const statusClass = dados.status_servidor.toLowerCase().includes('online')
+                ? 'online'
+                : (dados.status_servidor.toLowerCase().includes('instável') ? 'instavel' : 'offline');
+            modalRadarStatusBadge.className = `status-badge ${statusClass}`;
+            modalRadarStatusBadge.textContent = `● ${dados.status_servidor}`;
+        }
+
+        if (modalRadarTotalEditais) modalRadarTotalEditais.textContent = dados.total_editais;
+        if (modalRadarAbertos) modalRadarAbertos.textContent = dados.editais_abertos;
+        if (modalRadarFechados) modalRadarFechados.textContent = dados.editais_fechados;
+        if (modalRadarLatencia) modalRadarLatencia.textContent = `${dados.codigo_http ?? '200'} • ${dados.latencia_ms}ms`;
+
+        if (modalRadarUrl) {
+            modalRadarUrl.href = dados.url_portal;
+            modalRadarUrl.textContent = `${dados.url_portal} ↗`;
+        }
+
+        if (modalRadarMetodo) modalRadarMetodo.textContent = dados.metodo_extracao;
+        if (modalRadarResiliencia) modalRadarResiliencia.textContent = dados.resiliencia;
+        if (modalRadarUltimaSync) modalRadarUltimaSync.textContent = dados.ultima_sincronizacao;
+
+        // Renderizar lista de editais capturados
+        if (modalRadarEditaisLista) {
+            modalRadarEditaisLista.innerHTML = '';
+            const editais = dados.ultimos_editais || [];
+
+            if (modalRadarContagemEditais) {
+                modalRadarContagemEditais.textContent = `Exibindo os ${editais.length} editais mais recentes`;
+            }
+
+            if (editais.length === 0) {
+                modalRadarEditaisLista.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">Nenhum edital cadastrado para este radar até o momento.</td></tr>`;
+            } else {
+                editais.forEach((edital) => {
+                    const tr = document.createElement('tr');
+                    const ehAtivo = edital.status === 'active';
+                    const linkUrl = edital.source_url || '#';
+
+                    tr.innerHTML = `
+                        <td style="color: var(--text-subtle); font-weight: 600;">#${edital.id}</td>
+                        <td style="max-width: 300px;">
+                            <strong style="color: #fff; display: block; font-size: 0.86rem; line-height: 1.3;">${edital.title}</strong>
+                        </td>
+                        <td>
+                            <span class="badge-status-agencia ${ehAtivo ? 'ativo' : 'suspenso'}">
+                                ${ehAtivo ? 'Aberto' : 'Encerrado'}
+                            </span>
+                        </td>
+                        <td style="font-size: 0.78rem; color: var(--text-muted);">
+                            ${edital.deadline ? new Date(edital.deadline).toLocaleDateString('pt-BR') : 'Contínuo / S.D.'}
+                        </td>
+                        <td>
+                            <a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="btn-acao btn-acao-plano" style="text-decoration: none;">
+                                Acessar ↗
+                            </a>
+                        </td>
+                    `;
+                    modalRadarEditaisLista.appendChild(tr);
+                });
+            }
+        }
     } catch (e) {
-        alert(`Erro na sincronização: ${e.message}`);
-    } finally {
-        botao.disabled = false;
-        botao.textContent = textoOriginal;
+        if (modalRadarOrgao) modalRadarOrgao.textContent = `Erro ao carregar detalhes: ${e.message}`;
     }
 }
 
-btnSyncTodosRadares?.addEventListener('click', () => dispararSincronizacao('TODOS', btnSyncTodosRadares));
+// Fechamento do modal de detalhes do radar
+btnFecharModalRadar?.addEventListener('click', () => {
+    if (modalDetalhesRadar) modalDetalhesRadar.hidden = true;
+});
+btnFecharModalRadar2?.addEventListener('click', () => {
+    if (modalDetalhesRadar) modalDetalhesRadar.hidden = true;
+});
+
+// Sincronizar dentro do Modal do Radar
+btnSyncModalRadar?.addEventListener('click', async () => {
+    if (!radarAtivoModal) return;
+    await dispararSincronizacao(radarAtivoModal, btnSyncModalRadar, true);
+    abrirModalDetalhesRadar(radarAtivoModal);
+});
+
+/**
+ * Dispara a sincronização manual de um radar, região ou todos.
+ */
+async function dispararSincronizacao(alvo, botao, manterModalAberto = false) {
+    if (botao && botao.disabled) return;
+    if (botao) botao.disabled = true;
+    const textoOriginal = botao ? botao.textContent : 'Sincronizar';
+    if (botao) botao.textContent = 'Extraindo...';
+
+    try {
+        const resposta = await requisicaoApi(`/admin/radares/${encodeURIComponent(alvo)}/sincronizar`, {
+            method: 'POST'
+        });
+
+        const duracao = resposta.dados.duracao_segundos;
+        const total = resposta.dados.total_editais_banco;
+        const log = resposta.dados.log_saida;
+
+        // Se o modal estiver aberto e houver log, exibe no box de log
+        if (manterModalAberto && modalRadarLogWrap && modalRadarLogContent && log) {
+            modalRadarLogContent.textContent = log;
+            modalRadarLogWrap.hidden = false;
+        }
+
+        alert(`Sincronização de [${alvo}] concluída em ${duracao}s!\nTotal de editais no banco: ${total}`);
+
+        carregarRadares();
+        carregarDashboard();
+    } catch (e) {
+        alert(`Erro na sincronização de [${alvo}]: ${e.message}`);
+    } finally {
+        if (botao) {
+            botao.disabled = false;
+            botao.textContent = textoOriginal;
+        }
+    }
+}
+
+// Sincronização Agrupada por Região / Seleção
+btnExecutarSyncAlvo?.addEventListener('click', () => {
+    const alvo = selectSyncAlvo ? selectSyncAlvo.value : 'TODOS';
+    dispararSincronizacao(alvo, btnExecutarSyncAlvo);
+});
 
 /**
  * Carrega a lista de agências/empresas com filtros.

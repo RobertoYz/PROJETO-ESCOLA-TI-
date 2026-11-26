@@ -96,6 +96,28 @@ class AdminController extends Controller
         ]);
     }
 
+    public function obterDetalhesRadar(string $fonte, AdminService $service): JsonResponse
+    {
+        try {
+            $dados = $service->obterDetalhesRadar($fonte);
+
+            return response()->json([
+                'status' => 'sucesso',
+                'dados' => $dados,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'status' => 'erro',
+                'message' => $e->getMessage(),
+            ], 404);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'erro',
+                'message' => 'Erro ao carregar detalhes do radar: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function sincronizarRadar(string $fonte, AdminService $service): JsonResponse
     {
         try {

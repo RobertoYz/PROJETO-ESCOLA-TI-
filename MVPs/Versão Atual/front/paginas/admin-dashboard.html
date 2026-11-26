@@ -61,13 +61,44 @@
         <!-- Seção 1: Saúde dos Radares de Editais (O que o Roberto pediu) -->
         <section class="admin-section">
             <div class="admin-section-header">
-                <h2>
-                    <span>📡</span> Saúde dos Radares & Métodos de Extração (Healthcheck)
-                </h2>
-                <button id="btn-sync-todos-radares" class="btn-sync-radar" type="button">
-                    ⚡ Sincronizar Todos os Radares
-                </button>
+                <div>
+                    <h2>
+                        <span>📡</span> Saúde dos Radares & Métodos de Extração (Healthcheck)
+                    </h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+                        Clique em qualquer radar para abrir a inspeção técnica e ver os últimos editais ingeridos.
+                    </p>
+                </div>
+                <div class="radares-sync-controls">
+                    <select id="select-sync-alvo" class="select-filtro-admin select-sync-regiao">
+                        <option value="TODOS">🌐 Sincronizar: Todos os Radares</option>
+                        <option value="CENTRO-OESTE">🏛️ Sincronizar Região: Centro-Oeste (DF + GO)</option>
+                        <option value="SUDESTE">🏙️ Sincronizar Região: Sudeste (SP, RJ, MG)</option>
+                        <option value="NACIONAL">🇧🇷 Sincronizar Região: Nacional (FINEP)</option>
+                        <optgroup label="Sincronizar por Órgão Específico">
+                            <option value="FAPDF">FAPDF (Distrito Federal)</option>
+                            <option value="FAPEG">FAPEG (Goiás)</option>
+                            <option value="FINEP">FINEP (Nacional)</option>
+                            <option value="FAPESP">FAPESP (São Paulo)</option>
+                            <option value="FAPERJ">FAPERJ (Rio de Janeiro)</option>
+                            <option value="FAPEMIG">FAPEMIG (Minas Gerais)</option>
+                        </optgroup>
+                    </select>
+                    <button id="btn-executar-sync-alvo" class="btn-sync-radar" type="button">
+                        ⚡ Sincronizar
+                    </button>
+                </div>
             </div>
+
+            <!-- Filtros de Visualização por Região -->
+            <div class="radares-filtro-chips">
+                <span class="filtro-chip-label">Visualizar por Região:</span>
+                <button type="button" class="chip-filtro-radar active" data-regiao="TODAS">Todas as Regiões</button>
+                <button type="button" class="chip-filtro-radar" data-regiao="Centro-Oeste">Centro-Oeste (DF, GO)</button>
+                <button type="button" class="chip-filtro-radar" data-regiao="Sudeste">Sudeste (SP, RJ, MG)</button>
+                <button type="button" class="chip-filtro-radar" data-regiao="Nacional">Nacional (FINEP)</button>
+            </div>
+
             <div id="container-radares" class="radares-grid">
                 <!-- Inserido dinamicamente via JS -->
                 <p style="color: var(--text-muted); font-size: 0.9rem;">Verificando conexão com os portais governamentais...</p>
@@ -151,6 +182,113 @@
                     <button type="submit" id="btn-confirmar-modal" class="btn-sync-radar">Salvar Ajuste</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes e Inspeção do Radar -->
+    <div id="modal-detalhes-radar" class="modal-admin-backdrop" hidden>
+        <div class="modal-admin-card modal-radar-detalhes">
+            <div class="modal-header-radar">
+                <div class="modal-radar-title-group">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <h3 id="modal-radar-sigla" style="font-size: 1.4rem; font-weight: 800; color: #fff;">--</h3>
+                        <span id="modal-radar-status-badge" class="status-badge online">● Online</span>
+                    </div>
+                    <p id="modal-radar-orgao" style="color: var(--text-muted); font-size: 0.88rem; margin-top: 4px;"></p>
+                    <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <span id="modal-radar-regiao-badge" class="badge-macro-regiao">--</span>
+                        <span id="modal-radar-uf-badge" style="font-size: 0.78rem; color: var(--text-subtle);"></span>
+                    </div>
+                </div>
+                <button type="button" id="btn-fechar-modal-radar" class="btn-modal-close" aria-label="Fechar modal">✕</button>
+            </div>
+
+            <div class="modal-body-radar">
+                <!-- Grid de Métricas Rápidas -->
+                <div class="radar-modal-kpis">
+                    <div class="modal-kpi">
+                        <span class="modal-kpi-num" id="modal-radar-total-editais">0</span>
+                        <span class="modal-kpi-desc">Total Ingeridos</span>
+                    </div>
+                    <div class="modal-kpi">
+                        <span class="modal-kpi-num" id="modal-radar-abertos" style="color: #34d399;">0</span>
+                        <span class="modal-kpi-desc">Inscrições Abertas</span>
+                    </div>
+                    <div class="modal-kpi">
+                        <span class="modal-kpi-num" id="modal-radar-fechados" style="color: #94a3b8;">0</span>
+                        <span class="modal-kpi-desc">Encerrados</span>
+                    </div>
+                    <div class="modal-kpi">
+                        <span class="modal-kpi-num" id="modal-radar-latencia" style="color: #a5b4fc; font-size: 1.15rem;">--</span>
+                        <span class="modal-kpi-desc">Latência HTTP</span>
+                    </div>
+                </div>
+
+                <!-- Painel Técnico da Arquitetura -->
+                <div class="radar-tech-grid">
+                    <div class="radar-tech-item">
+                        <span class="tech-label">Portal Governamental</span>
+                        <a id="modal-radar-url" href="#" target="_blank" rel="noopener noreferrer" class="tech-link">
+                            Acessar Portal Oficial ↗
+                        </a>
+                    </div>
+                    <div class="radar-tech-item">
+                        <span class="tech-label">Método de Ingestão</span>
+                        <span id="modal-radar-metodo" class="tech-value"></span>
+                    </div>
+                    <div class="radar-tech-item">
+                        <span class="tech-label">Arquitetura de Resiliência</span>
+                        <span id="modal-radar-resiliencia" class="tech-value"></span>
+                    </div>
+                    <div class="radar-tech-item">
+                        <span class="tech-label">Última Sincronização</span>
+                        <span id="modal-radar-ultima-sync" class="tech-value"></span>
+                    </div>
+                </div>
+
+                <!-- Tabela de Últimos Editais Capturados -->
+                <div class="radar-editais-section">
+                    <div class="radar-editais-header">
+                        <h4>📋 Últimos Editais Capturados por este Radar</h4>
+                        <span id="modal-radar-contagem-editais" style="font-size: 0.78rem; color: var(--text-subtle);"></span>
+                    </div>
+                    <div class="table-responsive radar-editais-table-wrap">
+                        <table class="admin-table radar-mini-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Título / Chamada</th>
+                                    <th>Status</th>
+                                    <th>Prazo</th>
+                                    <th>Link</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal-radar-editais-lista">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">
+                                        Carregando editais do radar...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Terminal / Log Output de Execução -->
+                <div id="modal-radar-log-wrap" class="radar-log-box" hidden>
+                    <h5>Terminal Log da Última Extração:</h5>
+                    <pre id="modal-radar-log-content"></pre>
+                </div>
+            </div>
+
+            <div class="modal-footer-radar">
+                <button type="button" id="btn-sync-modal-radar" class="btn-sync-radar">
+                    ⚡ Sincronizar Este Radar Agora
+                </button>
+                <button type="button" id="btn-fechar-modal-radar-2" class="btn-header-action">
+                    Fechar
+                </button>
+            </div>
         </div>
     </div>
 

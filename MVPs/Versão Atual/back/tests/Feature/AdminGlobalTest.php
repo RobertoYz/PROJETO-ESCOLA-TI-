@@ -269,6 +269,48 @@ class AdminGlobalTest extends TestCase
         $this->assertNotEmpty($resposta->json('dados.log_saida'));
     }
 
+    public function test_admin_global_obtem_detalhes_completos_de_um_radar(): void
+    {
+        $resposta = $this->actingAs($this->adminGlobal)
+            ->getJson('/api/admin/radares/FAPDF/detalhes')
+            ->assertOk()
+            ->assertJsonPath('status', 'sucesso')
+            ->assertJsonPath('dados.fonte', 'FAPDF')
+            ->assertJsonPath('dados.macro_regiao', 'Centro-Oeste');
+
+        $dados = $resposta->json('dados');
+        $this->assertArrayHasKey('orgao', $dados);
+        $this->assertArrayHasKey('regiao', $dados);
+        $this->assertArrayHasKey('url_portal', $dados);
+        $this->assertArrayHasKey('status_servidor', $dados);
+        $this->assertArrayHasKey('total_editais', $dados);
+        $this->assertArrayHasKey('editais_abertos', $dados);
+        $this->assertArrayHasKey('resiliencia', $dados);
+        $this->assertArrayHasKey('ultimos_editais', $dados);
+        $this->assertIsArray($dados['ultimos_editais']);
+    }
+
+    public function test_obter_detalhes_de_radar_inexistente_retorna_404(): void
+    {
+        $this->actingAs($this->adminGlobal)
+            ->getJson('/api/admin/radares/FONTE_INEXISTENTE/detalhes')
+            ->assertNotFound();
+    }
+
+    public function test_admin_global_sincroniza_radar_por_regiao(): void
+    {
+        $resposta = $this->actingAs($this->adminGlobal)
+            ->postJson('/api/admin/radares/CENTRO-OESTE/sincronizar')
+            ->assertOk()
+            ->assertJsonPath('status', 'sucesso')
+            ->assertJsonPath('dados.fonte', 'CENTRO-OESTE')
+            ->assertJsonPath('dados.sucesso', true);
+
+        $this->assertIsArray($resposta->json('dados.comandos'));
+        $this->assertContains('fapeg:sync', $resposta->json('dados.comandos'));
+        $this->assertContains('fapdf:sync', $resposta->json('dados.comandos'));
+    }
+
     public function test_sincronizacao_com_fonte_invalida_retorna_422(): void
     {
         $this->actingAs($this->adminGlobal)

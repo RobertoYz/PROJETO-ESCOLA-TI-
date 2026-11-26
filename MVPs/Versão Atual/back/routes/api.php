@@ -152,5 +152,6 @@ Route::middleware(['auth:sanctum', 'admin.global'])->prefix('admin')->group(func
 
     // Monitoramento e Saúde dos Radares de Editais
     Route::get('/radares/status', [AdminController::class, 'statusRadares']);
+    Route::get('/radares/{fonte}/detalhes', [AdminController::class, 'obterDetalhesRadar']);
     Route::post('/radares/{fonte}/sincronizar', [AdminController::class, 'sincronizarRadar']);
 });

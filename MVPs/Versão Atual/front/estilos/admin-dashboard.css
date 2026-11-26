@@ -220,14 +220,62 @@
     line-height: 1.3;
 }
 
-/* Botão Sincronizar Todos */
-#btn-sync-todos-radares {
-    padding: 9px 18px;
-    font-size: 0.86rem;
-    display: inline-flex;
+/* Controles de Sincronização por Região */
+.radares-sync-controls {
+    display: flex;
+    gap: 10px;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.select-sync-regiao {
+    min-width: 280px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: #fff;
+    padding: 9px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+}
+
+/* Chips de Filtro por Região */
+.radares-filtro-chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.filtro-chip-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.chip-filtro-radar {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    padding: 5px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chip-filtro-radar:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.chip-filtro-radar.active {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+    border-color: rgba(99, 102, 241, 0.6);
 }
 
 /* Grid de Radares (Healthcheck) */
@@ -248,11 +296,54 @@
     gap: 14px;
     transition: all 0.2s ease;
     box-sizing: border-box;
+    cursor: pointer;
+    position: relative;
 }
 
 .radar-card:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+.badge-macro-regiao {
+    background: rgba(99, 102, 241, 0.15);
+    color: #a5b4fc;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.radar-card-acoes {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-ver-detalhes {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.btn-ver-detalhes:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
 .radar-card-top {
@@ -589,6 +680,193 @@
     box-sizing: border-box;
 }
 
+/* Modal de Detalhes do Radar */
+.modal-radar-detalhes {
+    max-width: 820px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+}
+
+.modal-header-radar {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    background: rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
+}
+
+.btn-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    line-height: 1;
+    transition: all 0.2s;
+}
+
+.btn-modal-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-body-radar {
+    padding: 22px 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+}
+
+.radar-modal-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.modal-kpi {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    text-align: center;
+}
+
+.modal-kpi-num {
+    display: block;
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.modal-kpi-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+    display: block;
+}
+
+.radar-tech-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.radar-tech-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+}
+
+.tech-label {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.tech-value {
+    font-size: 0.88rem;
+    color: #fff;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.tech-link {
+    font-size: 0.88rem;
+    color: #818cf8;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.tech-link:hover {
+    text-decoration: underline;
+    color: #a5b4fc;
+}
+
+.radar-editais-section {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+}
+
+.radar-editais-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.radar-editais-header h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.radar-editais-table-wrap {
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.radar-mini-table {
+    font-size: 0.82rem;
+    min-width: 580px;
+}
+
+.radar-mini-table th,
+.radar-mini-table td {
+    padding: 8px 12px;
+}
+
+.radar-log-box {
+    background: #030712;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+}
+
+.radar-log-box h5 {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.radar-log-box pre {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #34d399;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.modal-footer-radar {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
+}
+
 /* ==========================================================================
    MEDIA QUERIES — ADAPTABILIDADE RESPONSIVA
    ========================================================================== */
@@ -672,10 +950,34 @@
         gap: 12px;
     }
 
-    #btn-sync-todos-radares {
+    .radares-sync-controls {
         width: 100%;
-        padding: 11px 16px;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .select-sync-regiao,
+    #btn-executar-sync-alvo {
+        width: 100%;
+        min-width: 0;
         min-height: 42px;
+    }
+
+    .radares-filtro-chips {
+        gap: 6px;
+    }
+
+    .chip-filtro-radar {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+
+    .radar-tech-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .radar-modal-kpis {
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .filtros-agencias {
