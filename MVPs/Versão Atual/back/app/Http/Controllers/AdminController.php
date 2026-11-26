@@ -90,11 +90,13 @@ class AdminController extends Controller
         ]);
     }
 
-    public function statusRadares(AdminService $service): JsonResponse
+    public function statusRadares(Request $request, AdminService $service): JsonResponse
     {
+        $forcar = $request->boolean('refresh') || $request->boolean('forcar');
+
         return response()->json([
             'status' => 'sucesso',
-            'dados' => $service->obterStatusRadares(),
+            'dados' => $service->obterStatusRadares($forcar),
         ]);
     }
 

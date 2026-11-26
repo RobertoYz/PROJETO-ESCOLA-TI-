@@ -132,10 +132,11 @@ async function carregarDashboard() {
 /**
  * Carrega a saúde e status dos radares de editais.
  */
-async function carregarRadares() {
+async function carregarRadares(forcar = false) {
     if (!containerRadares) return;
     try {
-        const resposta = await requisicaoApi('/admin/radares/status');
+        const endpoint = forcar ? '/admin/radares/status?refresh=1' : '/admin/radares/status';
+        const resposta = await requisicaoApi(endpoint);
         cacheRadares = resposta.dados || [];
 
         renderizarCardsRadares(cacheRadares);
@@ -384,7 +385,7 @@ async function dispararSincronizacao(alvo, botao, manterModalAberto = false) {
 
         alert(`Sincronização de [${alvo}] concluída em ${duracao}s!\nTotal de editais no banco: ${total}`);
 
-        carregarRadares();
+        carregarRadares(true);
         carregarDashboard();
     } catch (e) {
         alert(`Erro na sincronização de [${alvo}]: ${e.message}`);

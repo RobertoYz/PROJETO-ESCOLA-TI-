@@ -10,6 +10,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -311,8 +312,10 @@ class AdminService
 
     /**
      * Mapeia e testa o status em tempo real de cada radar/spider suportado na plataforma.
+     * Utiliza cache inteligente de 5 minutos para os pings de conectividade externa,
+     * garantindo tempo de resposta sub-segundo e liberando a fila do servidor.
      */
-    public function obterStatusRadares(): array
+    public function obterStatusRadares(bool $forcarAtualizacao = false): array
     {
         $definicoesRadares = $this->obterDefinicoesRadares();
         $radares = [];
@@ -322,7 +325,7 @@ class AdminService
             $abertos = Edital::where('fonte', $fonte)->where('status', 'active')->count();
             $ultimoEdital = Edital::where('fonte', $fonte)->latest('updated_at')->first();
 
-            $statusConexao = $this->testarConexaoPortal($meta['url_portal']);
+            $statusConexao = $this->testarConexaoPortal($meta['url_portal'], $fonte, $forcarAtualizacao);
 
             $radares[] = [
                 'fonte' => $fonte,
@@ -490,6 +493,16 @@ class AdminService
 
         $duracaoSegundos = round(microtime(true) - $inicio, 2);
 
+        // Invalida o cache de conectividade daquele radar para forçar reavaliação imediata
+        if ($alvoNormalizado === 'TODOS') {
+            foreach ($this->obterDefinicoesRadares() as $f => $m) {
+                Cache::forget('radar_healthcheck_' . md5($m['url_portal'] . '_' . $f));
+            }
+        } elseif (isset($this->obterDefinicoesRadares()[$alvoNormalizado])) {
+            $metaAlvo = $this->obterDefinicoesRadares()[$alvoNormalizado];
+            Cache::forget('radar_healthcheck_' . md5($metaAlvo['url_portal'] . '_' . $alvoNormalizado));
+        }
+
         return [
             'fonte' => $alvoNormalizado,
             'alvo' => $alvoNormalizado,
@@ -502,9 +515,9 @@ class AdminService
     }
 
     /**
-     * Realiza um ping HTTP de verificação de disponibilidade do portal.
+     * Realiza um ping HTTP de verificação de disponibilidade do portal com cache de 5 minutos.
      */
-    protected function testarConexaoPortal(string $url): array
+    protected function testarConexaoPortal(string $url, string $fonte = '', bool $forcarAtualizacao = false): array
     {
         if (app()->runningUnitTests()) {
             return [
@@ -514,9 +527,16 @@ class AdminService
             ];
         }
 
+        $chaveCache = 'radar_healthcheck_' . md5($url . '_' . $fonte);
+
+        if (!$forcarAtualizacao && Cache::has($chaveCache)) {
+            return Cache::get($chaveCache);
+        }
+
         $inicio = microtime(true);
         try {
-            $resposta = Http::timeout(4)->withoutVerifying()->head($url);
+            // Timeout de 2.5s para evitar travar a execução quando o portal do governo estiver offline
+            $resposta = Http::timeout(2.5)->withoutVerifying()->head($url);
             $latencia = round((microtime(true) - $inicio) * 1000);
             $codigo = $resposta->status();
 
@@ -528,18 +548,23 @@ class AdminService
                 $status = 'Offline';
             }
 
-            return [
+            $resultado = [
                 'status' => $status,
                 'codigo_http' => $codigo,
                 'latencia_ms' => $latencia,
             ];
         } catch (\Throwable $e) {
             $latencia = round((microtime(true) - $inicio) * 1000);
-            return [
+            $resultado = [
                 'status' => 'Offline / Timeout',
                 'codigo_http' => null,
                 'latencia_ms' => $latencia,
             ];
         }
+
+        // Armazena no cache por 300 segundos (5 minutos)
+        Cache::put($chaveCache, $resultado, 300);
+
+        return $resultado;
     }
 }
