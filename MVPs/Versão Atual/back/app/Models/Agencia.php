@@ -114,4 +114,9 @@ class Agencia extends Model
     {
         return $this->hasMany(KanbanBoard::class, 'agencia_id');
     }
+
+    public function termosAceites(): HasMany
+    {
+        return $this->hasMany(TermoAceite::class, 'agencia_id');
+    }
 }

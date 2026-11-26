@@ -232,7 +232,7 @@ class AuthController extends Controller
 
         $agencia = $usuario->agencia;
 
-        if ($agencia && !$agencia->isPagamentoAtivo()) {
+        if ($usuario->perfil_acesso !== 'admin_global' && $agencia && !$agencia->isPagamentoAtivo()) {
             $tokenPendencia = $usuario->createToken('token_pendencia', ['pagamento:gerenciar'])->plainTextToken;
 
             return response()->json([

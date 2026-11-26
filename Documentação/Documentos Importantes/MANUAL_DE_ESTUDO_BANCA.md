@@ -41,7 +41,14 @@ A coleta automatizada de editais é executada pela camada de Spiders (baseada no
      - Spiders especializados com raspagem ativa no portal institucional e ingestão de catálogo estruturado oficial de contingência (`syncCatalogoEstruturado`).
      - Integração completa no frontend Web e Mobile (Capacitor) com filtros reativos por fonte, abrangência regional e badges visuais dedicadas (`.agency-fapeg` e `.agency-fapdf`).
 
-7. Pipeline de Processamento e Idempotência (SalvarNoBancoProcessor.php):
+7. Painel do Administrador Global (ADM) — Governança SaaS, Gestão de Empresas e Healthcheck de Radares (ADR 023 / EDTAN-302):
+   - Desafio Técnico: Necessidade de supervisão operacional centralizada pelos fundadores sem expor dados internos aos usuários comuns, garantindo visibilidade em tempo real sobre a saúde dos robôs de extração e o controle de acesso das empresas.
+   - Solução em Código:
+     - Middleware de segurança dedicado `EnsureAdminGlobal` protegendo todas as rotas `/api/admin/*` (`403 Forbidden` com `codigo_erro: 'ACESSO_NEGADO_ADMIN_GLOBAL'`).
+     - `AdminService` centralizando métricas de negócio (MRR, planos, pagamentos), gestão atômica de consultorias (ativar/desativar status, conceder dias/planos e exclusão em cascata) e probes HTTP ao vivo para diagnosticar a disponibilidade dos portais governamentais (Online, Instável ou Offline), com suporte a disparo manual de sincronizações (`POST /api/admin/radares/{fonte}/sincronizar`).
+     - Testes automatizados na suíte `AdminGlobalTest.php` com 100% de aprovação.
+
+8. Pipeline de Processamento e Idempotência (SalvarNoBancoProcessor.php):
    - Cada Spider emite dados via `yield $this->item([...])` (PHP Generator lazy, que consome memória próxima de zero).
    - O item passa pelo `SalvarNoBancoProcessor`, que executa:
      ```php

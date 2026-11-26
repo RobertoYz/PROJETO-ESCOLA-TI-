@@ -26,6 +26,7 @@ Este catálogo reúne as 20 Decisões Arquiteturais que norteiam o desenvolvimen
 | **020** | Modelo de Custos, Precificação SaaS e Benchmark Competitivo | Risco de custos imprevisíveis com IA e falta de sustentabilidade de negócio | Garante viabilidade econômica com margem bruta >95%, cotas estritas de IA e vantagem contra consultorias tradicionais. |
 | **021** | Módulo Radar Mato Grosso (FAPEMAT) — Arquitetura de Raspagem e Ingestão Resiliente (EDTAN-364 / EDTAN-289) | Expansão de inteligência de fomento para a região Centro-Oeste e instabilidade de portais estaduais | Estratégia híbrida com spider ativo + catálogo estruturado de contingência local, idempotência e paridade web/mobile. |
 | **022** | Módulo Radar Goiás (FAPEG) e Distrito Federal (FAPDF) — Expansão Regional de Fomento e Ingestão Resiliente (EDTAN-364 / EDTAN-295) | Expansão de fomento para Goiás e DF e contingência de portais estaduais | Spiders híbridos com raspagem ativa + catálogo estruturado local oficial, comandos artisan dedicados e paridade web/mobile. |
+| **023** | Módulo Back-end do Painel do Administrador Global (ADM) — Gestão de Empresas, Métricas e Healthcheck de Radares (EDTAN-364 / EDTAN-302) | Necessidade de controle operacional centralizado, métricas de negócio, suspensão/ativação/exclusão de empresas e monitoramento da saúde dos robôs de extração | Middleware dedicado `EnsureAdminGlobal`, serviço centralizado `AdminService`, CRUD e controle de status de consultorias, probes HTTP ao vivo de radares e disparo manual de sincronizações. |
 
 ---
 
