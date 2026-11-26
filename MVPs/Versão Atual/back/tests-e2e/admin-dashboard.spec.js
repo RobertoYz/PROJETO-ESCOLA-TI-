@@ -42,6 +42,7 @@ test.describe('Painel do Administrador Global & Inteligência de Radares (E2E)',
     await expect(sidebar.locator('a.nav-item.active')).toContainText(/Painel de Governança/i);
     await expect(sidebar).toContainText(/Catálogo de Editais/i);
     await expect(sidebar.locator('a[href*="minhas-startups"]')).toHaveCount(0);
+    await expect(sidebar.locator('a[href*="baixar-app"]')).toHaveCount(0);
   });
 
   test('Cenário 2: KPIs de Governança e Métricas SaaS em Tempo Real', async ({ page }) => {
@@ -193,10 +194,11 @@ test.describe('Painel do Administrador Global & Inteligência de Radares (E2E)',
     await expect(sidebar).toContainText(/Painel de Governança/i);
     await expect(sidebar).toContainText(/Catálogo de Editais/i);
 
-    // Assegura que abas privadas de consultoria NÃO estão presentes na barra lateral
+    // Assegura que abas privadas de consultoria e app mobile NÃO estão presentes na barra lateral
     await expect(sidebar.locator('a[href*="minhas-startups"]')).toHaveCount(0);
     await expect(sidebar.locator('a[href*="kanban"]')).toHaveCount(0);
     await expect(sidebar.locator('a[href*="equipe"]')).toHaveCount(0);
+    await expect(sidebar.locator('a[href*="baixar-app"]')).toHaveCount(0);
 
     // 3. Valida Topbar com Badge Soberano e Botão de Retorno ao Painel ADM
     const topbarWidget = page.locator('#container-seletor-global');
