@@ -155,3 +155,22 @@ Route::middleware(['auth:sanctum', 'admin.global'])->prefix('admin')->group(func
     Route::get('/radares/{fonte}/detalhes', [AdminController::class, 'obterDetalhesRadar']);
     Route::post('/radares/{fonte}/sincronizar', [AdminController::class, 'sincronizarRadar']);
 });
+
+// Rota utilitária de Deploy para hospedagem compartilhada sem SSH/Terminal (HostGator/cPanel)
+Route::get('/deploy/executar-migracoes', function (\Illuminate\Http\Request $request) {
+    $chave = $request->query('token');
+    if ($chave !== 'AnjoNexusDeploy2026') {
+        return response()->json(['erro' => 'Acesso negado'], 403);
+    }
+
+    \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+    $out1 = \Illuminate\Support\Facades\Artisan::output();
+
+    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'AdminGlobalSeeder', '--force' => true]);
+    $out2 = \Illuminate\Support\Facades\Artisan::output();
+
+    \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+    $out3 = \Illuminate\Support\Facades\Artisan::output();
+
+    return response("<pre style='background:#0f172a;color:#38bdf8;padding:20px;border-radius:8px;font-family:monospace;font-size:14px;'><strong>🚀 DEPLOY EXECUTADO COM SUCESSO:</strong>\n\n[1] MIGRATIONS:\n{$out1}\n[2] SEEDER ADMIN GLOBAL:\n{$out2}\n[3] LIMPEZA DE CACHE:\n{$out3}</pre>");
+});
