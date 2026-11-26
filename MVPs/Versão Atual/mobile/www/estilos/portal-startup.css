@@ -103,3 +103,12 @@ body:not(.dark-mode) .dialogo-portal {
 .dialogo-portal .fechar { flex: none; width: 2.6rem; height: 2.6rem; padding: 0; font-size: 1.4rem; }
 .dialogo-portal button[type=submit] { background: var(--accent-blue); color: white; font-weight: 600; }
 .dialogo-portal button:disabled { cursor: wait; opacity: .7; }
+
+.menu-startup { position: fixed; z-index: 20; inset: auto; margin: 0; padding: .35rem; border: 1px solid #94a3b8; border-radius: .6rem; background: white; color: #193352; box-shadow: 0 6px 18px #0003; }
+.dark-mode .menu-startup { background: #202733; color: #f1f5f9; border-color: #475569; }
+.menu-startup button { display: block; width: 100%; text-align: left; padding: .55rem .75rem; }
+.menu-startup button:hover, .menu-startup button:focus-visible { background: #7996bd33; }
+#dialogoArquivos form { width: min(100%, 36rem); }
+#listaArquivos { margin: 0; padding: 0; list-style: none; }
+#listaArquivos li { display: grid; gap: .45rem; padding: .8rem 0; border-top: 1px solid var(--border-subtle); overflow-wrap: anywhere; }
+#listaArquivos button { margin-right: .5rem; }

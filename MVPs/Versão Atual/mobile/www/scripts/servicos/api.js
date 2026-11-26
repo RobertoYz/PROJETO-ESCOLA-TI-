@@ -23,7 +23,7 @@ const URL_PADRAO = ehDevNavegadorLocal
     ? 'http://127.0.0.1:8000/api'
     : 'https://anjonexus.com.br/api';
 
-const URL_BASE_API = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
+export const URL_BASE_API = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
 
 if (typeof window !== 'undefined') {
     const marcarCapacitor = () => {
@@ -87,6 +87,8 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
         ...opcoes,
         headers: cabecalhos
     });
+
+    if (resposta.ok && opcoes.respostaBlob) return resposta.blob();
 
     let dados = null;
     try {

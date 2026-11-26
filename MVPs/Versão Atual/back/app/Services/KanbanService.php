@@ -37,7 +37,7 @@ class KanbanService
                 }
                 $q->orderBy('position');
             },
-            'columns.cards.edital'
+            'columns.cards.anexos', 'columns.cards.edital'
         ])->first();
 
         if (!$board) {
@@ -63,7 +63,7 @@ class KanbanService
                 return $newBoard;
             });
 
-            $board->load(['columns.cards.edital']);
+            $board->load(['columns.cards.anexos', 'columns.cards.edital']);
         }
 
         return $board;

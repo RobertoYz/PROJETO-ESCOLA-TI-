@@ -859,13 +859,13 @@ class AuthController extends Controller
 
                 // 4. Kanban (Cards, Colunas e Boards)
                 if (!empty($idsCards)) {
-                    KanbanCard::whereIn('id', $idsCards)->delete();
+                    KanbanCard::whereIn('id', $idsCards)->eachById(fn ($card) => $card->delete());
                 }
                 if (!empty($idsColumns)) {
-                    KanbanColumn::whereIn('id', $idsColumns)->delete();
+                    KanbanColumn::whereIn('id', $idsColumns)->eachById(fn ($item) => $item->delete());
                 }
                 if (!empty($idsBoards)) {
-                    KanbanBoard::whereIn('id', $idsBoards)->delete();
+                    KanbanBoard::whereIn('id', $idsBoards)->eachById(fn ($item) => $item->delete());
                 }
 
                 // 5. Startups

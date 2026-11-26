@@ -208,8 +208,8 @@ class PortalStartupTest extends TestCase
         $this->getJson('/api/portal/acompanhamento')->assertOk()->assertJsonPath('processos.0.id', $id);
         $this->usar('');
         $this->getJson('/api/kanban?agencia_id='.$this->titular->agencia_id)
-            ->assertOk()->assertJsonPath('data.agencia_id', null)->assertDontSee('Edital em preparação');
-        $this->deleteJson("/api/kanban/cards/$id")->assertNotFound();
+            ->assertUnauthorized()->assertDontSee('Edital em preparação');
+        $this->deleteJson("/api/kanban/cards/$id")->assertUnauthorized();
     }
 
     public function test_apenas_cards_da_startup_e_quadro_da_mesma_agencia(): void

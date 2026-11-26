@@ -45,3 +45,6 @@ foreach ($radaresEscalonados as $fonte => $horario) {
         ->withoutOverlapping()
         ->appendOutputTo(storage_path('logs/cron_editais.log'));
 }
+
+Schedule::call(fn () => app(\App\Services\ArmazenamentoKanbanService::class)->limparPendencias())
+    ->name('kanban:limpar-anexos')->hourly()->withoutOverlapping();
