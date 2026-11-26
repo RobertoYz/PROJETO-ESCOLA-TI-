@@ -10,17 +10,96 @@
 .pagina-portal #resumo { background: #e8f1fc; margin: 1rem 0 2rem; }
 .pagina-portal #processos { display: grid; gap: .8rem; }
 .pagina-portal .urgente { color: #92410c; font-weight: 700; }
-.pagina-portal button, .dialogo-portal button { padding: .55rem .9rem; border-radius: .55rem; cursor: pointer; }
+.pagina-portal button { padding: .55rem .9rem; border-radius: .55rem; cursor: pointer; }
 .card-item-startup { flex-wrap: wrap; }
-.rodape-portal { flex: 1 0 100%; display: flex; gap: .6rem; align-items: center; border-top: 1px solid #64748b55; padding-top: .7rem; }
+.rodape-portal { width: 100%; display: flex; justify-content: space-between; gap: .6rem; align-items: center; border-top: 1px solid #64748b55; padding-top: .7rem; }
 .rodape-portal button { color: inherit; background: transparent; border: 0; cursor: pointer; padding: .4rem; }
 .rodape-portal .estado { margin-right: auto; background: #e4e8ee; color: #475569; padding: .2rem .65rem; border-radius: 1rem; }
 .rodape-portal .ativo { background: #d6f5e8; color: #145941; }
-.dialogo-portal { box-sizing: border-box; width: min(92vw, 28rem); border: 1px solid #bdcfe3; border-radius: 1rem; color: #193352; padding: 1.5rem; }
-.dialogo-portal::backdrop { background: #132239aa; }
-.dialogo-portal h2 { margin: 0; }
-.dialogo-portal form { display: grid; gap: .85rem; }
-.dialogo-portal input:not([type=checkbox]) { width: 100%; box-sizing: border-box; padding: .65rem; }
-.dialogo-portal button { background: #edf4fe; color: #214d7e; border: 1px solid #b9cde4; }
-.dialogo-portal button[type=submit] { background: #245993; color: white; }
-.dialogo-portal .fechar { float: right; }
+
+.dialogo-portal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 16px;
+    border: 0;
+    background: transparent;
+    color: var(--text-light);
+    color-scheme: dark;
+}
+
+.dialogo-portal[open] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dialogo-portal::backdrop {
+    background: rgba(0, 0, 0, .65);
+    backdrop-filter: blur(2px);
+}
+
+body:not(.dark-mode) .dialogo-portal {
+    color-scheme: light;
+    --card-bg: #fff;
+    --navbar-bg: #f8fafc;
+    --text-light: #0f172a;
+    --text-muted: #475569;
+    --border-subtle: #cbd5e1;
+}
+
+.dialogo-portal form {
+    display: grid;
+    gap: .9rem;
+    width: min(100%, 29rem);
+    max-height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: clamp(1rem, 4vw, 1.65rem);
+    background: var(--card-bg);
+    border: 1px solid var(--border-subtle, #374151);
+    border-radius: 1rem;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, .25);
+}
+
+.dialogo-portal header, .dialogo-portal .estado-acesso, .dialogo-portal .acoes-credenciais {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+}
+
+.dialogo-portal header { justify-content: space-between; }
+.dialogo-portal h2 { margin: 0; font-size: 1.2rem; overflow-wrap: anywhere; }
+.dialogo-portal .estado-acesso[hidden] { display: none; }
+.dialogo-portal input[type=checkbox] { width: 1.1rem; height: 1.1rem; accent-color: var(--accent-blue); }
+.dialogo-portal small, .dialogo-portal [role=status] { color: var(--text-muted); }
+.dialogo-portal [role=status]:empty { display: none; }
+
+.dialogo-portal input:not([type=checkbox]), .dialogo-portal button {
+    box-sizing: border-box;
+    padding: .65rem .85rem;
+    border: 1px solid var(--border-subtle, #374151);
+    border-radius: .55rem;
+    background: var(--navbar-bg);
+    color: inherit;
+    font: inherit;
+}
+
+.dialogo-portal input:not([type=checkbox]) { width: 100%; margin-top: .3rem; }
+.dialogo-portal input:focus, .dialogo-portal button:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+.dialogo-portal .acoes-credenciais { flex-wrap: wrap; }
+.dialogo-portal .acoes-credenciais button { flex: 1 1 10rem; }
+.dialogo-portal button { cursor: pointer; }
+.dialogo-portal .fechar { flex: none; width: 2.6rem; height: 2.6rem; padding: 0; font-size: 1.4rem; }
+.dialogo-portal button[type=submit] { background: var(--accent-blue); color: white; font-weight: 600; }
+.dialogo-portal button:disabled { cursor: wait; opacity: .7; }

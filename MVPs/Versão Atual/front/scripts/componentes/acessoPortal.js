@@ -1,5 +1,4 @@
 import { requisicaoApi } from '../servicos/api.js';
-import { exibirToastFeedback } from '../servicos/servicoEditais.js';
 
 const dialogo = document.getElementById('dialogoPortal');
 const form = dialogo.querySelector('form');
@@ -63,7 +62,6 @@ form.onsubmit = async evento => {
         });
         document.dispatchEvent(new Event('portal-atualizado'));
         dialogo.close();
-        exibirToastFeedback('Acesso ao portal salvo.');
     } catch (erro) {
         aviso.textContent = erro.message;
     } finally {
@@ -90,14 +88,6 @@ export function rodapePortal(startup, podeEditar) {
         estado.textContent = perfil.ativo ? '● Portal ativo' : '○ Portal pausado';
         rodape.append(estado);
         if (podeEditar) {
-            if (perfil.ativo) botao('Copiar usuário', 'Copiar usuário', async () => {
-                try {
-                    await navigator.clipboard.writeText(perfil.login);
-                    exibirToastFeedback('Usuário copiado.');
-                } catch {
-                    exibirToastFeedback('Cópia bloqueada pelo navegador.');
-                }
-            });
             botao('⚙', 'Configurar acesso ao portal', () => abrir(startup));
         }
     } else if (podeEditar) {

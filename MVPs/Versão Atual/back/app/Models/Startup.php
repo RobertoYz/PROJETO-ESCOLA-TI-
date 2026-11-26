@@ -10,6 +10,25 @@ class Startup extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Startup $startup) {
+            $perfil = $startup->portalAcesso()->lockForUpdate()->first();
+            if ($perfil) {
+                $perfil->tokens()->delete();
+                $perfil->delete();
+            }
+        });
+    }
+
+    public function delete()
+    {
+        return $this->getConnection()->transaction(function () {
+            $this->newQueryWithoutScopes()->whereKey($this->getKey())->lockForUpdate()->first();
+            return parent::delete();
+        });
+    }
+
     public function portalAcesso()
     {
         return $this->hasOne(StartupPortalAcesso::class);

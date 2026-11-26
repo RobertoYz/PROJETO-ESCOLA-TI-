@@ -9,6 +9,13 @@ class StartupPortalAcesso extends Authenticatable
 {
     use HasApiTokens;
 
+    public const FORMATO_LOGIN = '/^[A-Za-z0-9._-]{3,60}$/D';
+
+    public static function normalizarLogin(string $login): string
+    {
+        return strtolower(trim($login));
+    }
+
     protected $table = 'startup_portal_acessos';
     protected $fillable = ['login', 'password', 'ativo'];
     protected $hidden = ['password'];
@@ -26,7 +33,7 @@ class StartupPortalAcesso extends Authenticatable
 
     public function setLoginAttribute(string $login): void
     {
-        $this->attributes['login'] = strtolower(trim($login));
+        $this->attributes['login'] = self::normalizarLogin($login);
     }
 
     public function disponivel(): bool

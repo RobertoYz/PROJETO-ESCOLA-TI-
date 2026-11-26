@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Startup;
+use App\Models\StartupPortalAcesso;
 use App\Services\StartupPortalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -17,14 +18,14 @@ class StartupPortalController extends Controller
         Gate::authorize('update', $startup);
         $criar = $request->isMethod('post');
         if (is_string($request->login)) {
-            $request->merge(['login' => strtolower(trim($request->login))]);
+            $request->merge(['login' => StartupPortalAcesso::normalizarLogin($request->login)]);
         }
         $unico = Rule::unique('startup_portal_acessos', 'login');
         if (!$criar && $startup->portalAcesso) {
             $unico->ignore($startup->portalAcesso);
         }
         $dados = $request->validate([
-            'login' => [$criar ? 'required' : 'sometimes', 'string', 'regex:/^[a-z0-9._-]{3,60}$/D', $unico],
+            'login' => [$criar ? 'required' : 'sometimes', 'string', 'regex:'.StartupPortalAcesso::FORMATO_LOGIN, $unico],
             'password' => [$criar ? 'required' : 'nullable', 'string', 'min:8', 'max:72'],
             'ativo' => [$criar ? 'prohibited' : 'sometimes', 'boolean'],
         ]);

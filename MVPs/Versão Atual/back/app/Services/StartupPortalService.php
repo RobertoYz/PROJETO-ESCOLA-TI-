@@ -14,8 +14,11 @@ class StartupPortalService
 {
     public function autenticar(string $login, string $senha): array
     {
+        $login = StartupPortalAcesso::normalizarLogin($login);
+        abort_unless(preg_match(StartupPortalAcesso::FORMATO_LOGIN, $login), 401, 'Credenciais incorretas.');
+
         return DB::transaction(function () use ($login, $senha) {
-            $perfil = StartupPortalAcesso::where('login', strtolower(trim($login)))->lockForUpdate()->first();
+            $perfil = StartupPortalAcesso::where('login', $login)->lockForUpdate()->first();
             abort_unless($perfil && Hash::check($senha, $perfil->password), 401, 'Credenciais incorretas.');
             if (!$perfil->disponivel()) {
                 abort(response()->json(['codigo_erro' => 'PORTAL_DESATIVADO', 'message' => 'Acesso ao portal desativado.'], 403));

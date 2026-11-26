@@ -77,6 +77,53 @@ class PortalStartupTest extends TestCase
         $this->getJson("/api/startups/{$this->startup->id}")->assertJsonPath('portal_acesso.login', 'cliente');
     }
 
+    public function test_login_aceita_maiusculas_na_criacao_edicao_e_autenticacao(): void
+    {
+        $dados = ['login' => 'Nestle.BR'] + $this->credenciais;
+        $this->postJson($this->rota, $dados)->assertCreated()->assertJsonPath('login', 'nestle.br');
+        $this->assertDatabaseHas('startup_portal_acessos', ['startup_id' => $this->startup->id, 'login' => 'nestle.br']);
+        $outra = $this->startup($this->titular);
+        $this->postJson("/api/startups/{$outra->id}/portal-acesso", ['login' => 'NESTLE.BR'] + $dados)
+            ->assertUnprocessable()->assertJsonValidationErrors('login');
+
+        $this->usar('');
+        foreach (['Nestle.BR', 'nestle.br'] as $login) {
+            $this->postJson('/api/auth/login', ['login' => $login] + $dados)->assertOk()->assertJsonPath('login', 'nestle.br');
+        }
+        $this->usar($this->tokenAgencia);
+        $this->patchJson($this->rota, ['login' => ' NOVO.Br '])->assertOk()->assertJsonPath('login', 'novo.br');
+    }
+
+    public function test_exclusao_logica_e_fisica_revogam_tokens_e_liberam_login(): void
+    {
+        foreach ([false, true] as $fisica) {
+            $startup = $this->startup($this->titular);
+            $this->usar($this->tokenAgencia);
+            $this->postJson("/api/startups/{$startup->id}/portal-acesso", $this->credenciais)->assertCreated();
+            $perfil = $startup->portalAcesso;
+            $tokens = [$this->entrar(), $this->entrar()];
+
+            if ($fisica) {
+                $startup->forceDelete();
+                $this->assertDatabaseMissing('startups', ['id' => $startup->id]);
+            } else {
+                $this->usar($this->tokenAgencia);
+                $this->deleteJson("/api/startups/{$startup->id}")->assertOk();
+                $this->assertSoftDeleted($startup);
+            }
+            $this->assertDatabaseMissing('startup_portal_acessos', ['id' => $perfil->id]);
+            $this->assertDatabaseMissing('personal_access_tokens', [
+                'tokenable_type' => $perfil->getMorphClass(), 'tokenable_id' => $perfil->id,
+            ]);
+            foreach ($tokens as $token) {
+                $this->usar($token);
+                $this->getJson('/api/portal/acompanhamento')->assertUnauthorized();
+            }
+        }
+        $this->usar($this->tokenAgencia);
+        $this->postJson($this->rota, $this->credenciais)->assertCreated();
+    }
+
     public function test_validacao_unicidade_e_perfil_unico(): void
     {
         foreach (['ab', 'x@y', 'cli ente', 'cli/ente'] as $login) {
