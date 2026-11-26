@@ -1,3 +1,5 @@
+import { rodapePortal } from '../componentes/acessoPortal.js';
+import { escapeHtml } from '../servicos/servicoEditais.js';
 import { inicializarSidebarGlobal } from '../componentes/sidebarGlobal.js';
 import { inicializarSeletorGlobal } from '../componentes/seletorGlobalStartup.js';
 import {
@@ -195,13 +197,13 @@ function renderizarListaStartups(startups) {
 
         card.innerHTML = `
             <div class="card-startup-esquerda">
-                <div class="card-startup-sigla">${sigla}</div>
+                <div class="card-startup-sigla">${escapeHtml(sigla)}</div>
                 <div class="card-startup-dados">
-                    <div class="card-startup-nome">${nomeExibicao}</div>
+                    <div class="card-startup-nome">${escapeHtml(nomeExibicao)}</div>
                     <div class="card-startup-subinfo">
-                        <span>${cnpjTexto}</span>
-                        <span>${nichoTexto}</span>
-                        <span>${localTexto}</span>
+                        <span>${escapeHtml(cnpjTexto)}</span>
+                        <span>${escapeHtml(nichoTexto)}</span>
+                        <span>${escapeHtml(localTexto)}</span>
                     </div>
                     ${ehEmUso ? `<div class="texto-startup-em-uso">● Sendo utilizada no momento</div>` : ''}
                 </div>
@@ -215,9 +217,12 @@ function renderizarListaStartups(startups) {
             abrirDetalhesStartup(st.id);
         });
 
+        card.append(rodapePortal(st, usuarioPodeEditarStartup(st)));
         containerLista.appendChild(card);
     });
 }
+
+document.addEventListener('portal-atualizado', () => renderizarListaStartups(listaStartupsCache));
 
 async function carregarListaStartups(termo = '') {
     if (alertaLista) alertaLista.style.display = 'none';

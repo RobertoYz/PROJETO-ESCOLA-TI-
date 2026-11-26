@@ -31,6 +31,23 @@ class KanbanController extends Controller
             ], 403);
         }
 
+        $agenciaId = $usuario?->agencia_id;
+        $quadros = \App\Models\KanbanBoard::where('agencia_id', $agenciaId)->select('id');
+        $quadroId = $request->integer('board_id') ?: null;
+        if ($request->route('id')) {
+            $card = \App\Models\KanbanCard::whereIn('board_id', $quadros)->findOrFail($request->route('id'));
+            $quadroId = $card->board_id;
+        }
+        if ($quadroId) {
+            abort_unless((clone $quadros)->whereKey($quadroId)->exists(), 404);
+        }
+        $colunaId = $request->integer('target_column_id') ?: $request->integer('column_id');
+        if ($colunaId) {
+            $coluna = \App\Models\KanbanColumn::whereIn('board_id', $quadros)->findOrFail($colunaId);
+            abort_if($quadroId && $coluna->board_id != $quadroId, 422);
+            $request->merge(['board_id' => $coluna->board_id]);
+        }
+
         return null;
     }
 
@@ -40,11 +57,12 @@ class KanbanController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $agenciaId = $request->query('agencia_id');
+            $agenciaId = $request->user('sanctum')?->agencia_id;
             $startupName = $request->query('startup_name');
             $board = $this->kanbanService->getOrCreateBoard(
                 $agenciaId ? (int)$agenciaId : null,
-                $startupName ? trim($startupName) : null
+                $startupName ? trim($startupName) : null,
+                $request->integer('startup_id') ?: null
             );
 
             return response()->json([
@@ -75,9 +93,16 @@ class KanbanController extends Controller
             'edital_id' => 'nullable|integer|exists:editals,id',
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
+            'startup_id' => 'nullable|integer',
             'startup_name' => 'nullable|string|max:255',
             'metadata' => 'nullable|array'
         ]);
+
+        $dados['agencia_id'] = $request->user('sanctum')?->agencia_id;
+        if (isset($dados['startup_id'])) {
+            $startup = \App\Models\Startup::where('agencia_id', $dados['agencia_id'])->findOrFail($dados['startup_id']);
+            $dados['startup_name'] = $startup->nome_fantasia ?: $startup->razao_social;
+        }
 
         if (empty($dados['title']) && empty($dados['edital_id'])) {
             return response()->json([

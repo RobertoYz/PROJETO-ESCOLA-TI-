@@ -15,6 +15,7 @@ class KanbanCard extends Model
         'edital_id',
         'title',
         'description',
+        'startup_id',
         'startup_name',
         'position',
         'metadata'

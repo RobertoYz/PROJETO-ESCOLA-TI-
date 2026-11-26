@@ -616,6 +616,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="../estilos/portal-startup.css">
 </head>
 <body>
     <aside class="sidebar" id="sidebar"></aside>
@@ -885,6 +886,24 @@
             }
         })();
     </script>
+    <dialog id="dialogoPortal" class="dialogo-portal" aria-labelledby="tituloPortal" role="dialog" aria-modal="true">
+        <form>
+            <header>
+                <h2 id="tituloPortal">Acesso ao portal</h2>
+                <button class="fechar" type="button" aria-label="Fechar">×</button>
+            </header>
+            <label class="estado-acesso"><input name="ativo" type="checkbox" role="switch"> <span id="estadoPortal">Acesso ativo</span></label>
+            <label>Login (usuário)<input name="login" required minlength="3" maxlength="60" pattern="[A-Za-z0-9._\-]{3,60}" autocomplete="off" aria-describedby="dicaPortal"></label>
+            <small id="dicaPortal">Sem espaços e sem @ (não diferencia maiúsculas de minúsculas).</small>
+            <label><span id="rotuloSenhaPortal">Senha</span><input name="password" type="password" minlength="8" autocomplete="new-password"></label>
+            <div class="acoes-credenciais">
+                <button name="gerar" type="button">Gerar senha segura</button>
+                <button name="copiar" type="button">Copiar credenciais</button>
+            </div>
+            <div role="status" aria-live="polite"></div>
+            <button name="salvar" type="submit">Criar acesso</button>
+        </form>
+    </dialog>
 </body>
 </html>
 

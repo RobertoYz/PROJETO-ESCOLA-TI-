@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Startup;
+use App\Models\StartupPortalAcesso;
 use App\Services\PlanoQuotaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -23,7 +24,7 @@ class StartupController extends Controller
         $agenciaId = $user->agencia_id;
         $termoBusca = $request->query('busca');
 
-        $query = Startup::where('agencia_id', $agenciaId);
+        $query = Startup::with('portalAcesso:id,startup_id,ativo,login,ultimo_acesso_em')->where('agencia_id', $agenciaId);
 
         if (!empty($termoBusca)) {
             $query->where(function ($q) use ($termoBusca) {
@@ -47,6 +48,7 @@ class StartupController extends Controller
 
         $startupsTransformadas = $startups->map(function (Startup $startup) use ($cota, $podeExcluirStartup, $podeCriarEditarStartup) {
             $item = $startup->toArray();
+            $item['portal_acesso'] = StartupPortalAcesso::resumo($startup->portalAcesso);
             $item['cota'] = $cota;
             $item['pode_excluir_startup'] = $podeExcluirStartup;
             $item['pode_editar_startup'] = $podeCriarEditarStartup;
@@ -131,7 +133,7 @@ class StartupController extends Controller
 
     public function show(Request $request, $id)
     {
-        $startup = Startup::findOrFail($id);
+        $startup = Startup::with('portalAcesso:id,startup_id,ativo,login,ultimo_acesso_em')->findOrFail($id);
         Gate::authorize('view', $startup);
 
         $user = $request->user();
@@ -139,6 +141,7 @@ class StartupController extends Controller
         $podeCriarEditarStartup = $user->temPermissao(\App\Enums\Permissao::STARTUPS_CRIAR_EDITAR);
 
         $payload = $startup->toArray();
+        $payload['portal_acesso'] = StartupPortalAcesso::resumo($startup->portalAcesso);
         $payload['pode_excluir_startup'] = $podeExcluirStartup;
         $payload['pode_editar_startup'] = $podeCriarEditarStartup;
 

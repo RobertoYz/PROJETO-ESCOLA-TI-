@@ -1,3 +1,5 @@
+import './guardaPortal.js';
+
 // Detecta se o aplicativo está rodando em ambiente Capacitor (APK Android)
 const ehCapacitorApp = typeof window !== 'undefined' && (
     window.Capacitor !== undefined ||
@@ -61,7 +63,7 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
         ...(opcoes.headers || {})
     };
 
-    if (token && !cabecalhos['Authorization']) {
+    if (token && endpoint !== '/auth/login' && !cabecalhos['Authorization']) {
         cabecalhos['Authorization'] = `Bearer ${token}`;
     }
 
@@ -152,6 +154,7 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
                 || caminho.endsWith('/front/');
 
             if (!ehTelaPublica && !endpoint.includes('/auth/login')) {
+                localStorage.removeItem('tipo_acesso');
                 localStorage.removeItem('token_autenticacao');
                 localStorage.removeItem('usuario_logado');
                 window.location.href = 'login.html';

@@ -41,6 +41,7 @@ export async function enviarEditalParaKanban(editalId, startupName) {
         method: 'POST',
         body: JSON.stringify({
             edital_id: Number(editalId),
+            startup_id: localStorage.getItem('startup_ativa_id') || null,
             startup_name: startupName || 'Startup Assessorada'
         })
     });
