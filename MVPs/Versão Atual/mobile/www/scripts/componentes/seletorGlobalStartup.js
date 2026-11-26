@@ -2306,6 +2306,24 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
+    const usuarioLogadoAdm = obterUsuarioLogado();
+    if (usuarioLogadoAdm?.perfil_acesso === 'admin_global') {
+        container.className = 'header-right-group';
+        container.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 5px 12px; border-radius: 9999px; font-size: 0.8rem; color: #e2e8f0;">
+                    <span>🛡️</span>
+                    <span style="font-weight: 600;">${usuarioLogadoAdm.name || 'Admin'}</span>
+                    <span style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #000; font-size: 0.65rem; font-weight: 800; padding: 2px 7px; border-radius: 9999px; text-transform: uppercase;">Super Admin</span>
+                </div>
+                <a href="admin-dashboard.html" style="background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%); color: #fff; padding: 6px 14px; border-radius: 9999px; font-weight: 700; text-decoration: none; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 10px rgba(2, 132, 199, 0.3);">
+                    ⚡ Painel ADM
+                </a>
+            </div>
+        `;
+        return;
+    }
+
     let startupAtiva = obterStartupAtiva();
     if (!startupAtiva) {
         startupAtiva = { id: '1', nome: 'Startup Piloto (Demonstração)' };

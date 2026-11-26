@@ -10,6 +10,11 @@ if (!usuarioEstaAutenticado()) {
     window.location.href = 'login.html';
 }
 
+const usuarioLogado = obterUsuarioLogado();
+if (usuarioLogado?.perfil_acesso === 'admin_global') {
+    window.location.replace('admin-dashboard.html');
+}
+
 const badgeConsultor = document.getElementById('consultor-identificacao');
 const nomeConsultorTopbar = document.getElementById('nome-consultor-topbar');
 const botaoSairSessao = document.getElementById('botao-sair-sessao');

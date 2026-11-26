@@ -20,6 +20,11 @@ if (!usuarioEstaAutenticado()) {
     window.location.href = 'login.html';
 }
 
+const usuarioLogado = obterUsuarioLogado();
+if (usuarioLogado?.perfil_acesso === 'admin_global') {
+    window.location.replace('admin-dashboard.html');
+}
+
 const secaoLista = document.getElementById('secaoListaStartups');
 const secaoDetalhes = document.getElementById('secaoDetalhesStartup');
 const containerLista = document.getElementById('containerListaStartups');

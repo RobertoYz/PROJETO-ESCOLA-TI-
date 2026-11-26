@@ -10,6 +10,9 @@ test.describe('Painel do Administrador Global & Inteligência de Radares (E2E)',
         console.log(`[Browser Console Error]: ${msg.text()}`);
       }
     });
+    page.on('pageerror', err => {
+      console.log(`[Browser Page Error]: ${err.message} \n ${err.stack}`);
+    });
   });
 
   test('Cenário 1: Login de Administrador Global e Redirecionamento Soberano', async ({ page }) => {
@@ -162,6 +165,45 @@ test.describe('Painel do Administrador Global & Inteligência de Radares (E2E)',
     // Valida redirecionamento de volta para o login
     await page.waitForURL('**/paginas/login.html');
     expect(page.url()).toContain('login.html');
+  });
+
+  test('Cenário 7: Isolamento de Navegação e Guarda de Rotas para Administrador Global', async ({ page }) => {
+    await page.goto('/paginas/login.html');
+    await page.fill('#campo-email', 'admin@anjonexus.com.br');
+    await page.fill('#campo-senha', 'AnjoNexus@2026Admin!');
+    await page.click('#botao-confirmar');
+    await page.waitForURL('**/paginas/admin-dashboard.html');
+
+    // 1. Clica no botão 'Ver Radar' no cabeçalho do Admin
+    await page.click('#btn-ver-radar');
+    await page.waitForURL('**/paginas/busca-editais.html');
+    expect(page.url()).toContain('busca-editais.html');
+
+    // 2. Valida Sidebar Exclusiva do Super Admin (sem abas de consultoria)
+    const sidebar = page.locator('#sidebar');
+    await expect(sidebar).toContainText(/Super Admin Global/i);
+    await expect(sidebar).toContainText(/Painel de Governança/i);
+    await expect(sidebar).toContainText(/Catálogo de Editais/i);
+
+    // Assegura que abas privadas de consultoria NÃO estão presentes na barra lateral
+    await expect(sidebar.locator('a[href*="minhas-startups"]')).toHaveCount(0);
+    await expect(sidebar.locator('a[href*="kanban"]')).toHaveCount(0);
+    await expect(sidebar.locator('a[href*="equipe"]')).toHaveCount(0);
+
+    // 3. Valida Topbar com Badge Soberano e Botão de Retorno ao Painel ADM
+    const topbarWidget = page.locator('#container-seletor-global');
+    await expect(topbarWidget).toContainText(/Super Admin/i);
+    await expect(topbarWidget).toContainText(/Painel ADM/i);
+
+    // 4. Teste de Invasão/Navegação direta: Admin tentando acessar Minhas Startups
+    await page.goto('/paginas/minhas-startups.html');
+    await page.waitForURL('**/paginas/admin-dashboard.html');
+    expect(page.url()).toContain('admin-dashboard.html');
+
+    // 5. Teste de Invasão/Navegação direta: Admin tentando acessar Pipeline Kanban
+    await page.goto('/paginas/kanban.html');
+    await page.waitForURL('**/paginas/admin-dashboard.html');
+    expect(page.url()).toContain('admin-dashboard.html');
   });
 
 });
