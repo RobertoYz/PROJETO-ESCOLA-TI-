@@ -95,6 +95,24 @@ body.is-capacitor .link-download-app-header {
     display: none !important;
 }
 
+/* Espaçamento seguro do topo no APK Android (Status Bar / Notch / Edge-to-Edge) */
+body.is-capacitor .top-navbar,
+body.is-capacitor .admin-header {
+    padding-top: max(48px, calc(var(--safe-area-top) + 22px)) !important;
+}
+
+body.is-capacitor .sidebar {
+    padding-top: max(52px, calc(var(--safe-area-top) + 24px)) !important;
+}
+
+body.is-capacitor .detail-panel {
+    padding-top: max(48px, calc(var(--safe-area-top) + 22px)) !important;
+}
+
+body.is-capacitor:not(:has(.top-navbar)):not(:has(.admin-header)) {
+    padding-top: max(48px, calc(var(--safe-area-top) + 22px)) !important;
+}
+
 .card-mobile-actions,
 .btn-fechar-detalhes-mobile {
     display: none;
