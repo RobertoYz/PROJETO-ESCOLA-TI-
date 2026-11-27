@@ -32,14 +32,19 @@ const URL_BASE_API = (customApiSalva && !customApiSalva.includes('intalenti.com.
 
 if (typeof window !== 'undefined') {
     const marcarCapacitor = () => {
-        if (window.Capacitor || window.location.protocol === 'capacitor:' || window.navigator.userAgent.includes('wv')) {
+        const ua = (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '';
+        if (
+            window.Capacitor !== undefined ||
+            window.location.protocol === 'capacitor:' ||
+            /\bwv\b/i.test(ua) ||
+            /Android.*Version\/\d+/i.test(ua)
+        ) {
             document.body?.classList.add('is-capacitor');
         }
     };
+    marcarCapacitor();
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', marcarCapacitor);
-    } else {
-        marcarCapacitor();
     }
 }
 

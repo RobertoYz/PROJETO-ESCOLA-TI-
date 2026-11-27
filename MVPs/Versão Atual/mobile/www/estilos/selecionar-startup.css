@@ -601,7 +601,27 @@ body.dark-mode .startup-item-acao {
 /* Responsividade Mobile e Tablet */
 @media (max-width: 680px) {
     .topbar-institucional {
-        padding: max(12px, env(safe-area-inset-top, 12px)) 16px 12px;
+        padding: max(12px, env(safe-area-inset-top, 12px)) 12px 12px;
+        gap: 8px;
+    }
+
+    .brand-title {
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .topbar-actions {
+        gap: 6px;
+    }
+
+    .btn-topbar-assinatura,
+    .btn-topbar-sair {
+        height: 32px;
+        padding: 0 8px;
+        font-size: 11px;
+        white-space: nowrap;
     }
 
     .brand-divider,
@@ -613,6 +633,14 @@ body.dark-mode .startup-item-acao {
     .pagina-conteudo {
         padding: 24px 16px max(32px, env(safe-area-inset-bottom, 24px));
         gap: 18px;
+    }
+
+    body.is-capacitor .topbar-institucional {
+        padding-top: max(54px, calc(env(safe-area-inset-top, 0px) + 24px)) !important;
+    }
+
+    body.is-capacitor .pagina-conteudo {
+        padding-bottom: max(72px, calc(env(safe-area-inset-bottom, 0px) + 52px)) !important;
     }
 
     .cabecalho-secao h1 {
