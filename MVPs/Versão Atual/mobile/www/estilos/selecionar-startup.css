@@ -657,7 +657,49 @@ body.dark-mode .startup-item-acao {
     }
 
     .botao-item-startup {
-        padding: 14px 16px;
+        padding: 14px;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .startup-item-esquerda {
+        gap: 12px;
+        align-items: flex-start;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .startup-dados {
+        flex: 1;
+        min-width: 0;
+        gap: 6px;
+    }
+
+    .startup-nome {
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.3;
+    }
+
+    .startup-subtitulo {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .startup-subtitulo > span[aria-hidden="true"] {
+        display: none;
+    }
+
+    .startup-tag-meta {
+        line-height: 1.35;
+        word-break: break-word;
+    }
+
+    .startup-item-direita {
+        flex-shrink: 0;
+        align-self: center;
+        gap: 6px;
     }
 
     .startup-item-acao span {
