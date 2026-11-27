@@ -1,5 +1,7 @@
 FROM php:8.2-cli-bookworm
 
+COPY docker/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+
 # Evita prompts interativos durante instalacao de pacotes apt
 ENV DEBIAN_FRONTEND=noninteractive
 

@@ -50,12 +50,26 @@ class EditalController extends Controller
         }
 
         $editais = $query->get();
+
+        $startup = null;
+        if ($usuario) {
+            if ($request->filled('startup_id')) {
+                $startup = Startup::where('id', (int)$request->startup_id)
+                    ->where('agencia_id', $usuario->agencia_id)
+                    ->first();
+            }
+            if (!$startup && $usuario->agencia_id) {
+                $startup = Startup::where('agencia_id', $usuario->agencia_id)->first();
+            }
+        }
         
         // Formata os dados para a interface Front-end com cálculo dinâmico de Match por Startup
         $formattedEditais = $editais->map(function($edital) use ($favoritosIds, $startup) {
             $diagnostico = !empty($edital->ai_diagnosis) 
                 ? $edital->ai_diagnosis 
                 : [[ 'type' => 'info', 'text' => 'Edital Cadastrado - Dados Pré-Formatados' ]];
+
+            $matchScore = $this->calcularScoreMatch($edital, $startup);
 
             $formatarData = function($dataRaw) {
                 if (empty($dataRaw)) return '--';
@@ -76,8 +90,6 @@ class EditalController extends Controller
                 $deadlineFormatada = 'Fluxo contínuo';
             }
 
-            $matchCalculado = $this->calcularScoreMatch($edital, $startup);
-
             return [
                 'id' => $edital->id,
                 'name' => $edital->title,
@@ -86,7 +98,7 @@ class EditalController extends Controller
                 'deadline' => $deadlineFormatada,
                 'status' => 'Aberto',
                 'statusClass' => 'badge-aberto',
-                'match' => $matchCalculado,
+                'match' => $matchScore,
                 'target' => $edital->publico ?? 'Startup / Empresa / Pesquisador',
                 'region' => $edital->regiao ?? 'Nacional', 
                 'objetivo' => !empty($edital->objetivo) ? $edital->objetivo : (!empty($edital->conteudo_completo) ? mb_substr(strip_tags($edital->conteudo_completo), 0, 1500) . '...' : 'Sem descrição para exibir no resumo.'),

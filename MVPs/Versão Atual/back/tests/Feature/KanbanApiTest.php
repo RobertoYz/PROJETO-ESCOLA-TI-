@@ -15,6 +15,17 @@ class KanbanApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    private \App\Models\Agencia $agencia;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(\Database\Seeders\PlanoSeeder::class);
+        $this->agencia = \App\Models\Agencia::create(['nome' => 'Agência Kanban', 'plano_id' => 1, 'status_pagamento' => 'ativo']);
+        $usuario = \App\Models\User::factory()->create(['agencia_id' => $this->agencia->id, 'perfil_acesso' => 'consultor_admin']);
+        $this->actingAs($usuario, 'sanctum');
+    }
+
     /**
      * RF-26: Teste de carregamento e inicialização automática do quadro Kanban com colunas padrão.
      */
@@ -50,7 +61,7 @@ class KanbanApiTest extends TestCase
      */
     public function test_store_card_cria_card_com_sucesso(): void
     {
-        $board = KanbanBoard::create(['title' => 'Pipeline de Editais']);
+        $board = KanbanBoard::create(['agencia_id' => $this->agencia->id, 'title' => 'Pipeline de Editais']);
         $column = KanbanColumn::create([
             'board_id' => $board->id,
             'title' => 'Backlog',
@@ -111,7 +122,7 @@ class KanbanApiTest extends TestCase
      */
     public function test_mover_card_atualiza_coluna_e_posicao(): void
     {
-        $board = KanbanBoard::create(['title' => 'Pipeline Teste']);
+        $board = KanbanBoard::create(['agencia_id' => $this->agencia->id, 'title' => 'Pipeline Teste']);
         $colunaA = KanbanColumn::create(['board_id' => $board->id, 'title' => 'Coluna A', 'slug' => 'col-a', 'position' => 1000.0]);
         $colunaB = KanbanColumn::create(['board_id' => $board->id, 'title' => 'Coluna B', 'slug' => 'col-b', 'position' => 2000.0]);
 
@@ -146,7 +157,7 @@ class KanbanApiTest extends TestCase
      */
     public function test_atualizar_dados_anexos_do_card(): void
     {
-        $board = KanbanBoard::create(['title' => 'Pipeline Teste']);
+        $board = KanbanBoard::create(['agencia_id' => $this->agencia->id, 'title' => 'Pipeline Teste']);
         $coluna = KanbanColumn::create(['board_id' => $board->id, 'title' => 'Triagem', 'slug' => 'triagem', 'position' => 1000.0]);
 
         $card = KanbanCard::create([
@@ -181,7 +192,7 @@ class KanbanApiTest extends TestCase
      */
     public function test_excluir_card_remove_do_banco(): void
     {
-        $board = KanbanBoard::create(['title' => 'Pipeline Teste']);
+        $board = KanbanBoard::create(['agencia_id' => $this->agencia->id, 'title' => 'Pipeline Teste']);
         $coluna = KanbanColumn::create(['board_id' => $board->id, 'title' => 'Triagem', 'slug' => 'triagem', 'position' => 1000.0]);
 
         $card = KanbanCard::create([
@@ -205,13 +216,13 @@ class KanbanApiTest extends TestCase
     }
 
     /**
-     * EDTAN-170: Upload válido de documentação dentro do limite de 10 MB é aceito.
+     * EDTAN-170: Upload válido de documentação dentro do limite de 50 MB é aceito.
      */
     public function test_upload_anexo_valido_dentro_do_limite(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
-        $board = KanbanBoard::create(['title' => 'Pipeline Teste']);
+        $board = KanbanBoard::create(['agencia_id' => $this->agencia->id, 'title' => 'Pipeline Teste']);
         $coluna = KanbanColumn::create(['board_id' => $board->id, 'title' => 'Triagem', 'slug' => 'triagem', 'position' => 1000.0]);
         $card = KanbanCard::create([
             'board_id' => $board->id,
@@ -230,18 +241,18 @@ class KanbanApiTest extends TestCase
             ->assertJson(['status' => 'sucesso']);
 
         $cardAtualizado = $card->fresh();
-        $this->assertCount(1, $cardAtualizado->metadata['anexos']);
-        $this->assertEquals('cnd_federal.pdf', $cardAtualizado->metadata['anexos'][0]['nome']);
+        $this->assertCount(1, $cardAtualizado->anexos);
+        $this->assertEquals('cnd_federal.pdf', $cardAtualizado->anexos[0]->nome_arquivo);
     }
 
     /**
-     * EDTAN-170: Upload de arquivo maior que 10 MB deve retornar 422.
+     * EDTAN-170: Upload de arquivo maior que 50 MB deve retornar 422.
      */
-    public function test_upload_anexo_maior_que_10mb_retorna_422(): void
+    public function test_upload_anexo_maior_que_50mb_retorna_422(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
-        $board = KanbanBoard::create(['title' => 'Pipeline Teste']);
+        $board = KanbanBoard::create(['agencia_id' => $this->agencia->id, 'title' => 'Pipeline Teste']);
         $coluna = KanbanColumn::create(['board_id' => $board->id, 'title' => 'Triagem', 'slug' => 'triagem', 'position' => 1000.0]);
         $card = KanbanCard::create([
             'board_id' => $board->id,
@@ -250,8 +261,8 @@ class KanbanApiTest extends TestCase
             'position' => 1000.0
         ]);
 
-        // 10241 KB > 10240 KB (10 MB)
-        $arquivoGrande = UploadedFile::fake()->create('orcamento_pesado.pdf', 10241, 'application/pdf');
+        // 51201 KB > 51200 KB (50 MB)
+        $arquivoGrande = UploadedFile::fake()->create('orcamento_pesado.pdf', 51201, 'application/pdf');
 
         $response = $this->post("/api/kanban/cards/{$card->id}/dados-anexos", [
             'arquivo' => $arquivoGrande
@@ -260,7 +271,7 @@ class KanbanApiTest extends TestCase
         $response->assertStatus(422)
             ->assertJson(['status' => 'erro']);
 
-        $this->assertEmpty($card->fresh()->metadata['anexos'] ?? []);
+        $this->assertEmpty($card->fresh()->anexos->all());
     }
 
     /**
@@ -268,9 +279,9 @@ class KanbanApiTest extends TestCase
      */
     public function test_upload_anexo_formato_invalido_retorna_422(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
-        $board = KanbanBoard::create(['title' => 'Pipeline Teste']);
+        $board = KanbanBoard::create(['agencia_id' => $this->agencia->id, 'title' => 'Pipeline Teste']);
         $coluna = KanbanColumn::create(['board_id' => $board->id, 'title' => 'Triagem', 'slug' => 'triagem', 'position' => 1000.0]);
         $card = KanbanCard::create([
             'board_id' => $board->id,
@@ -290,29 +301,26 @@ class KanbanApiTest extends TestCase
     }
 
     /**
-     * EDTAN-170: Upload que ultrapassa o limite acumulado de 25 MB no card deve retornar 422.
+     * EDTAN-170: Upload que ultrapassa o limite acumulado de 25 MB na agência deve retornar 422.
      */
-    public function test_upload_anexo_excede_limite_total_do_card_retorna_422(): void
+    public function test_upload_anexo_excede_limite_total_da_agencia_retorna_422(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
-        $board = KanbanBoard::create(['title' => 'Pipeline Teste']);
+        $board = KanbanBoard::create(['agencia_id' => $this->agencia->id, 'title' => 'Pipeline Teste']);
         $coluna = KanbanColumn::create(['board_id' => $board->id, 'title' => 'Triagem', 'slug' => 'triagem', 'position' => 1000.0]);
         $card = KanbanCard::create([
             'board_id' => $board->id,
             'column_id' => $coluna->id,
             'title' => 'Card Limite Total',
             'position' => 1000.0,
-            'metadata' => [
-                'anexos' => [
-                    ['id' => '1', 'nome' => 'doc1.pdf', 'caminho' => '/storage/a.pdf', 'tamanho' => 10 * 1024 * 1024],
-                    ['id' => '2', 'nome' => 'doc2.pdf', 'caminho' => '/storage/b.pdf', 'tamanho' => 10 * 1024 * 1024],
-                    ['id' => '3', 'nome' => 'doc3.pdf', 'caminho' => '/storage/c.pdf', 'tamanho' => 4 * 1024 * 1024],
-                ]
-            ]
         ]);
+        $this->agencia->plano->update(['limite_armazenamento_mb' => 25]);
+        foreach ([10, 10, 4] as $indice => $mb) {
+            $card->anexos()->create(['nome_arquivo' => "doc$indice.pdf", 'caminho' => "doc$indice.pdf",
+                'disco' => 'local', 'tamanho_bytes' => $mb * 1048576]);
+        }
 
-        // Card já tem 24 MB; enviar 2 MB ultrapassa os 25 MB permitidos
         $arquivoExcedente = UploadedFile::fake()->create('doc4.pdf', 2048, 'application/pdf');
 
         $response = $this->post("/api/kanban/cards/{$card->id}/dados-anexos", [
@@ -322,6 +330,6 @@ class KanbanApiTest extends TestCase
         $response->assertStatus(422)
             ->assertJson(['status' => 'erro']);
 
-        $this->assertCount(3, $card->fresh()->metadata['anexos']);
+        $this->assertCount(3, $card->fresh()->anexos);
     }
 }

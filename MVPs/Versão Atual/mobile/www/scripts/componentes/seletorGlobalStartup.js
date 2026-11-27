@@ -1237,6 +1237,10 @@ function injetarEstilosHeaderGlobal() {
             border: 1px solid rgba(239, 68, 68, 0.45);
         }
 
+        #detalheConsumoPlano progress { display: block; width: 100%; height: .75rem; margin: .35rem 0 .8rem; accent-color: #3483dd; }
+        #detalheConsumoPlano progress.atencao { accent-color: #b8750a; }
+        #detalheConsumoPlano progress.critico { accent-color: #d34242; }
+        #detalheConsumoPlano p { margin: .4rem 0; overflow-wrap: anywhere; }
         .assinatura-consumo-box {
             background: #0d1017;
             border: 1px solid #222836;
@@ -1850,7 +1854,7 @@ function garantirModalMinhaAssinatura() {
 
                 <!-- Consumo Atual vs Limites -->
                 <div class="assinatura-consumo-box">
-                    <div style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 700;">Consumo Atual vs Limites do Plano</div>
+                    <div style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 700;">Consumo do Plano</div>
                     <div class="assinatura-consumo-linha">
                         <span>Startups Cadastradas</span>
                         <strong id="assinaturaUsoStartups">0 / 0</strong>
@@ -1859,10 +1863,7 @@ function garantirModalMinhaAssinatura() {
                         <span>Membros de Equipe</span>
                         <strong id="assinaturaUsoMembros">0 / 0</strong>
                     </div>
-                    <div class="assinatura-consumo-linha">
-                        <span>Minutas IA (Ciclo Mensal)</span>
-                        <strong id="assinaturaUsoMinutas">0 / 0</strong>
-                    </div>
+                    <div id="detalheConsumoPlano"></div>
                 </div>
 
                 <!-- Aviso da Janela de Renovação -->
@@ -2049,7 +2050,46 @@ function garantirModalMinhaAssinatura() {
     });
 }
 
+function preencherConsumoPlano(armazenamento, creditos) {
+    const painel = document.getElementById('detalheConsumoPlano');
+    painel.replaceChildren();
+    if (!armazenamento || !creditos) return;
+    function texto(tag, valor) {
+        const el = document.createElement(tag);
+        el.textContent = valor;
+        painel.append(el);
+    }
+    function barra(rotulo, usado, limite) {
+        const percentual = limite ? 100 * usado / limite : 0;
+        const el = document.createElement('progress');
+        el.setAttribute('aria-label', rotulo);
+        el.max = 100;
+        el.value = Math.min(100, percentual);
+        el.className = percentual >= 100 ? 'critico' : percentual >= 80 ? 'atencao' : '';
+        painel.append(el);
+    }
+    const mb = valor => valor.toLocaleString('pt-BR');
+    texto('strong', 'Créditos de Minutas (IA)');
+    texto('p', creditos.usadas + ' de ' + creditos.limite + ' usados no mês');
+    barra('Créditos de Minutas (IA)', creditos.usadas, creditos.limite);
+    texto('strong', 'Armazenamento no Kanban');
+    texto('p', mb(armazenamento.usado_mb) + ' MB de ' + mb(armazenamento.limite_mb) + ' MB usados');
+    barra('Armazenamento no Kanban', armazenamento.usado_bytes, armazenamento.limite_bytes);
+    texto('small', 'Máx. ' + armazenamento.limite_arquivo_mb + ' MB por arquivo');
+    if (armazenamento.acima_do_limite) texto('p', 'Cota excedida. Os arquivos existentes estão preservados. Novos uploads estão pausados até liberar espaço ou ampliar o plano.');
+    texto('h3', 'Uso por Startup');
+    if (!armazenamento.por_startup.length) texto('p', 'Nenhuma startup cadastrada.');
+    function linha(nome, quantidade, bytes, usadoMb) {
+        texto('p', nome + ' · ' + quantidade + ' arquivo(s) · ' + mb(usadoMb) + ' MB');
+        barra(nome, bytes, armazenamento.usado_bytes);
+    }
+    for (const st of armazenamento.por_startup) linha(st.nome, st.total_arquivos, st.usado_bytes, st.usado_mb);
+    const sem = armazenamento.sem_startup;
+    if (sem.bytes > 0) linha('Cards sem startup vinculada', sem.total_arquivos, sem.bytes, sem.mb);
+}
+
 function preencherDadosModalAssinatura(dados) {
+    preencherConsumoPlano(dados.armazenamento, dados.creditos_minutas);
     const plano = dados?.plano || {};
     const uso = dados?.uso_atual || {};
     const diasRestantes = Number(dados?.dias_restantes ?? 0);
@@ -2073,7 +2113,6 @@ function preencherDadosModalAssinatura(dados) {
     const elRepeticao = document.getElementById('assinaturaDataRepeticao');
     const elUsoStartups = document.getElementById('assinaturaUsoStartups');
     const elUsoMembros = document.getElementById('assinaturaUsoMembros');
-    const elUsoMinutas = document.getElementById('assinaturaUsoMinutas');
     const elAviso = document.getElementById('assinaturaAvisoRenovacao');
     const btnRenovar = document.getElementById('btnAcaoRenovarAssinaturaPix');
     const btnAbrirAtualizar = document.getElementById('btnAbrirAtualizarFormaPagamento');
@@ -2141,7 +2180,6 @@ function preencherDadosModalAssinatura(dados) {
 
     if (elUsoStartups) elUsoStartups.textContent = `${uso.startups_cadastradas ?? 0} / ${plano.limite_startups ?? 0}`;
     if (elUsoMembros) elUsoMembros.textContent = `${uso.membros_equipe ?? 0} / ${plano.limite_membros_equipe ?? 0}`;
-    if (elUsoMinutas) elUsoMinutas.textContent = `${uso.minutas_ia ?? 0} / ${plano.limite_minutas_ia ?? 5}`;
 
     if (btnRenovar) {
         btnRenovar.dataset.perfilAcesso = perfilAcesso;
@@ -2668,7 +2706,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         toast.className = 'anjo-toast-notificacao';
         toast.style.cssText = `
             position: fixed;
-            top: 24px;
+            top: 82px;
             right: 24px;
             max-width: 410px;
             width: calc(100% - 32px);
@@ -2716,6 +2754,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
         document.body.appendChild(toast);
 
         const fechar = () => {
+            sessionStorage.setItem('anjo_popup_silenciado_sessao', '1');
             if (alerta.id) {
                 // Grava permanentemente que o usuário já fechou/dispensou este alerta
                 localStorage.setItem(`anjo_notif_dispensada_${alerta._tipo}_${alerta.id}`, '1');
@@ -2724,15 +2763,16 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
             setTimeout(() => toast.remove(), 260);
         };
 
-        toast.querySelector('#btnFecharToast')?.addEventListener('click', fechar);
-        toast.querySelector('#btnDispensarToast')?.addEventListener('click', () => {
-            if (alerta.id) {
-                localStorage.setItem(`anjo_notif_dispensada_${alerta._tipo}_${alerta.id}`, '1');
+        const dispensarEFechar = () => {
+            if (alerta.id && !String(alerta.id).startsWith('fallback_')) {
                 if (ehPrazo) marcarAlertaPrazoComoLido(alerta.id);
                 else marcarAlertaComoLido(alerta.id);
             }
             fechar();
-        });
+        };
+
+        toast.querySelector('#btnFecharToast')?.addEventListener('click', dispensarEFechar);
+        toast.querySelector('#btnDispensarToast')?.addEventListener('click', dispensarEFechar);
 
         toast.querySelector('#btnVerEditalToast')?.addEventListener('click', () => {
             fechar();
@@ -2813,7 +2853,7 @@ export async function inicializarSeletorGlobal(containerId, options = {}) {
                 || alertasPrazos.find(a => !a.lido && a.nivel_urgencia === 'urgente')
                 || alertasMatch.find(a => !a.lido && (a.score_match || 0) >= 85);
 
-            if (alertaMaisCritico) {
+            if (alertaMaisCritico && !sessionStorage.getItem('anjo_popup_silenciado_sessao')) {
                 // Guarda no localStorage permanente para nunca reaparecer após dispensado/fechado
                 const chaveDispensado = `anjo_notif_dispensada_${alertaMaisCritico._tipo}_${alertaMaisCritico.id}`;
                 if (!localStorage.getItem(chaveDispensado)) {

@@ -1,3 +1,5 @@
+import './guardaPortal.js';
+
 // Detecta se o aplicativo está rodando em ambiente Capacitor (APK Android)
 const ehCapacitorApp = typeof window !== 'undefined' && (
     window.Capacitor !== undefined ||
@@ -26,7 +28,7 @@ if (customApiSalva && customApiSalva.includes('intalenti.com.br')) {
     localStorage.removeItem('api_base_url_custom');
 }
 
-const URL_BASE_API = (customApiSalva && !customApiSalva.includes('intalenti.com.br'))
+export const URL_BASE_API = (customApiSalva && !customApiSalva.includes('intalenti.com.br'))
     ? customApiSalva
     : URL_PADRAO;
 
@@ -73,7 +75,7 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
         ...(opcoes.headers || {})
     };
 
-    if (token && !cabecalhos['Authorization']) {
+    if (token && endpoint !== '/auth/login' && !cabecalhos['Authorization']) {
         cabecalhos['Authorization'] = `Bearer ${token}`;
     }
 
@@ -97,6 +99,8 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
         ...opcoes,
         headers: cabecalhos
     });
+
+    if (resposta.ok && opcoes.respostaBlob) return resposta.blob();
 
     let dados = null;
     try {
@@ -172,6 +176,7 @@ export async function requisicaoApi(endpoint, opcoes = {}) {
                 || caminho.endsWith('/front/');
 
             if (!ehTelaPublica && !endpoint.includes('/auth/login')) {
+                localStorage.removeItem('tipo_acesso');
                 localStorage.removeItem('token_autenticacao');
                 localStorage.removeItem('usuario_logado');
                 window.location.href = 'login.html';

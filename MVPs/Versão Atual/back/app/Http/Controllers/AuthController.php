@@ -190,12 +190,25 @@ class AuthController extends Controller
         }
     }
 
+    public function logout(Request $requisicao): JsonResponse
+    {
+        $requisicao->user()->currentAccessToken()->delete();
+        return response()->json(['message' => 'Sessão encerrada.']);
+    }
+
     /**
      * 3. Login com verificação do pagamento da assinatura
      * POST /api/auth/login
      */
-    public function login(Request $requisicao): JsonResponse
+    public function login(Request $requisicao, \App\Services\StartupPortalService $portal): JsonResponse
     {
+        $identificador = $requisicao->input('email') ?? $requisicao->input('identificador') ?? $requisicao->input('login');
+        $requisicao->merge(['email' => $identificador]);
+        if (is_string($identificador) && trim($identificador) !== '' && !str_contains($identificador, '@')) {
+            $requisicao->validate(['password' => ['required', 'string']]);
+            return response()->json($portal->autenticar($identificador, $requisicao->password));
+        }
+
         $validacao = $requisicao->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
@@ -273,6 +286,7 @@ class AuthController extends Controller
         return response()->json([
             'status' => 'sucesso',
             'message' => 'Login realizado com sucesso!',
+            'tipo_acesso' => 'agencia',
             'token' => $token,
             'access_token' => $token,
             'dados' => [
@@ -875,13 +889,13 @@ class AuthController extends Controller
 
                 // 4. Kanban (Cards, Colunas e Boards)
                 if (!empty($idsCards)) {
-                    KanbanCard::whereIn('id', $idsCards)->delete();
+                    KanbanCard::whereIn('id', $idsCards)->eachById(fn ($card) => $card->delete());
                 }
                 if (!empty($idsColumns)) {
-                    KanbanColumn::whereIn('id', $idsColumns)->delete();
+                    KanbanColumn::whereIn('id', $idsColumns)->eachById(fn ($item) => $item->delete());
                 }
                 if (!empty($idsBoards)) {
-                    KanbanBoard::whereIn('id', $idsBoards)->delete();
+                    KanbanBoard::whereIn('id', $idsBoards)->eachById(fn ($item) => $item->delete());
                 }
 
                 // 5. Startups

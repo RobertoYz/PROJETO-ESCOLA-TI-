@@ -21,16 +21,15 @@ class KanbanService
      * Retorna o quadro padrão da agência com suas colunas e cartões (com dados do edital).
      * Se o quadro ou as colunas não existirem, cria a estrutura inicial padrão.
      */
-    public function getOrCreateBoard(?int $agenciaId = null, ?string $startupName = null): KanbanBoard
+    public function getOrCreateBoard(?int $agenciaId = null, ?string $startupName = null, ?int $startupId = null): KanbanBoard
     {
-        $query = KanbanBoard::query();
-        if ($agenciaId) {
-            $query->where('agencia_id', $agenciaId);
-        }
+        $query = KanbanBoard::where('agencia_id', $agenciaId);
 
         $board = $query->with([
-            'columns.cards' => function ($q) use ($startupName) {
-                if (!empty($startupName)) {
+            'columns.cards' => function ($q) use ($startupName, $startupId) {
+                if ($startupId) {
+                    $q->where('startup_id', $startupId);
+                } elseif (!empty($startupName)) {
                     $q->where(function ($sub) use ($startupName) {
                         $sub->where('startup_name', $startupName)
                             ->orWhere('startup_name', 'like', "%{$startupName}%");
@@ -38,7 +37,7 @@ class KanbanService
                 }
                 $q->orderBy('position');
             },
-            'columns.cards.edital'
+            'columns.cards.anexos', 'columns.cards.edital'
         ])->first();
 
         if (!$board) {
@@ -64,7 +63,7 @@ class KanbanService
                 return $newBoard;
             });
 
-            $board->load(['columns.cards.edital']);
+            $board->load(['columns.cards.anexos', 'columns.cards.edital']);
         }
 
         return $board;
@@ -123,6 +122,7 @@ class KanbanService
             'edital_id' => $editalId,
             'title' => $title ?: 'Novo Card',
             'description' => $description,
+            'startup_id' => $dados['startup_id'] ?? null,
             'startup_name' => $dados['startup_name'] ?? 'Startup X',
             'position' => $position,
             'metadata' => $metadata

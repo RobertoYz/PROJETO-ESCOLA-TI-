@@ -5,6 +5,11 @@
 
     RewriteEngine On
 
+    # Forcar HTTPS em producao (desative apenas se testar via http local)
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1) [NC]
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -13,23 +18,12 @@
     RewriteCond %{HTTP:x-xsrf-token} .
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
-    # Redirect Trailing Slashes If Not A Folder...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_URI} (.+)/$
-    RewriteRule ^ %1 [L,R=301]
-
-    # Encaminha chamadas /api para o laravel_api.php caso exista
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{DOCUMENT_ROOT}/laravel_api.php -f
-    RewriteRule ^api(/.*)?$ laravel_api.php [L,QSA]
-
-    # Send Requests To Front Controller...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{DOCUMENT_ROOT}/laravel_api.php -f
+    # Encaminhar chamadas de API, Sanctum, Health e Storage para o Laravel
+    RewriteCond %{REQUEST_URI} ^/(api|sanctum|up|storage)(/|$) [NC]
     RewriteRule ^ laravel_api.php [L]
 
+    # Para o restante (Front-end estatico), manter arquivos reais ou cair no index.html
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ index.php [L]
+    RewriteRule ^ index.html [L]
 </IfModule>

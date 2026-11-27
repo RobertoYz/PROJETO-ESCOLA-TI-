@@ -254,6 +254,7 @@ export function obterToken() {
 }
 
 export function removerToken() {
+    localStorage.removeItem('tipo_acesso');
     localStorage.removeItem(CHAVE_TOKEN);
     limparStartupAtiva();
     limparUsuarioLogado();

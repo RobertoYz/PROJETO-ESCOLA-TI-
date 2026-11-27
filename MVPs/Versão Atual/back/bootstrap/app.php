@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
+        $middleware->api(prepend: [\App\Http\Middleware\IsolarPortalStartup::class]);
         $middleware->alias([
             'check.pagamento' => \App\Http\Middleware\CheckPagamentoAtivo::class,
             'startup.ativa' => \App\Http\Middleware\VerificarStartupAtiva::class,
@@ -20,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (\Illuminate\Http\Exceptions\PostTooLargeException $erro, \Illuminate\Http\Request $request) {
+            if ($request->is('api/kanban/cards/*/dados-anexos')) {
+                return response()->json(['status' => 'erro', 'codigo_erro' => 'LIMITE_TAMANHO_ARQUIVO_EXCEDIDO',
+                    'message' => 'O envio excedeu o tamanho máximo permitido.'], 422);
+            }
+        });
         $exceptions->render(function (\App\Exceptions\PlanLimitExceededException $e, \Illuminate\Http\Request $request) {
             return response()->json([
                 'message' => $e->getMessage(),

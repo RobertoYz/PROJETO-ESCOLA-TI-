@@ -141,6 +141,8 @@ class AssinaturaController extends Controller
         }
 
         return response()->json([
+            'creditos_minutas' => $consumoMinutas,
+            'armazenamento' => app(\App\Services\ArmazenamentoKanbanService::class)->consumo($agencia),
             'plano' => [
                 'id' => $plano?->id,
                 'nome' => $plano?->nome ?? 'Plano Padrão',

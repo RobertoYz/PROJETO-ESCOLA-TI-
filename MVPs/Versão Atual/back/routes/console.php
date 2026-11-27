@@ -25,3 +25,26 @@ Artisan::command('auth:limpar-verificacoes-email', function () {
 Schedule::command('auth:limpar-verificacoes-email')->dailyAt('03:10');
 
 Schedule::command('termos:expurgar-aceites-vencidos')->dailyAt('03:25');
+
+// Sincronização escalonada dos radares de editais na madrugada (evita pico de memória/CPU)
+$radaresEscalonados = [
+    'FINEP'   => '03:30',
+    'FAPESP'  => '03:45',
+    'FAPESC'  => '04:00',
+    'FAPEMIG' => '04:15',
+    'FAPERJ'  => '04:30',
+    'FAPERGS' => '04:45',
+    'FAPEMAT' => '05:00',
+    'FAPEG'   => '05:15',
+    'FAPDF'   => '05:30',
+];
+
+foreach ($radaresEscalonados as $fonte => $horario) {
+    Schedule::command("editais:sync --fonte={$fonte}")
+        ->dailyAt($horario)
+        ->withoutOverlapping()
+        ->appendOutputTo(storage_path('logs/cron_editais.log'));
+}
+
+Schedule::call(fn () => app(\App\Services\ArmazenamentoKanbanService::class)->limparPendencias())
+    ->name('kanban:limpar-anexos')->hourly()->withoutOverlapping();

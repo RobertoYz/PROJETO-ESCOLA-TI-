@@ -2,11 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\ExcluiAnexosDoKanban;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class KanbanCard extends Model
 {
+    use ExcluiAnexosDoKanban;
+
+    protected const CHAVE_CARD = 'id';
+
     protected $table = 'kanban_cards';
 
     protected $fillable = [
@@ -15,6 +21,7 @@ class KanbanCard extends Model
         'edital_id',
         'title',
         'description',
+        'startup_id',
         'startup_name',
         'position',
         'metadata'
@@ -24,6 +31,11 @@ class KanbanCard extends Model
         'position' => 'double',
         'metadata' => 'array'
     ];
+
+    public function anexos(): HasMany
+    {
+        return $this->hasMany(KanbanAnexo::class, 'card_id')->orderByDesc('tamanho_bytes')->orderBy('id');
+    }
 
     public function board(): BelongsTo
     {
