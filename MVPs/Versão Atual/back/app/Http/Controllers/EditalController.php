@@ -6,11 +6,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\Edital;
 use App\Models\EditalFavorito;
+use App\Models\Startup;
 
 class EditalController extends Controller
 {
     /**
-     * RF-10 / RF-11: Listagem de editais com identificação dinâmica de favoritos
+     * RF-10 / RF-11: Listagem de editais com identificação dinâmica de favoritos e cálculo de match contextualizado por startup
      */
     public function index(Request $request): JsonResponse
     {
@@ -23,6 +24,11 @@ class EditalController extends Controller
         // Identifica usuário autenticado via Sanctum se houver token
         $usuario = $request->user('sanctum') ?? auth('sanctum')->user();
         $favoritosIds = [];
+        $startup = null;
+
+        if ($request->filled('startup_id')) {
+            $startup = Startup::find($request->startup_id);
+        }
 
         if ($usuario) {
             $favQuery = EditalFavorito::where('user_id', $usuario->id);
@@ -45,8 +51,8 @@ class EditalController extends Controller
 
         $editais = $query->get();
         
-        // Formata os dados para a interface Front-end (Custo Zero de IA)
-        $formattedEditais = $editais->map(function($edital) use ($favoritosIds) {
+        // Formata os dados para a interface Front-end com cálculo dinâmico de Match por Startup
+        $formattedEditais = $editais->map(function($edital) use ($favoritosIds, $startup) {
             $diagnostico = !empty($edital->ai_diagnosis) 
                 ? $edital->ai_diagnosis 
                 : [[ 'type' => 'info', 'text' => 'Edital Cadastrado - Dados Pré-Formatados' ]];
@@ -70,6 +76,8 @@ class EditalController extends Controller
                 $deadlineFormatada = 'Fluxo contínuo';
             }
 
+            $matchCalculado = $this->calcularScoreMatch($edital, $startup);
+
             return [
                 'id' => $edital->id,
                 'name' => $edital->title,
@@ -78,7 +86,7 @@ class EditalController extends Controller
                 'deadline' => $deadlineFormatada,
                 'status' => 'Aberto',
                 'statusClass' => 'badge-aberto',
-                'match' => $edital->ai_match ?? 0,
+                'match' => $matchCalculado,
                 'target' => $edital->publico ?? 'Startup / Empresa / Pesquisador',
                 'region' => $edital->regiao ?? 'Nacional', 
                 'objetivo' => !empty($edital->objetivo) ? $edital->objetivo : (!empty($edital->conteudo_completo) ? mb_substr(strip_tags($edital->conteudo_completo), 0, 1500) . '...' : 'Sem descrição para exibir no resumo.'),
@@ -96,6 +104,95 @@ class EditalController extends Controller
         });
 
         return response()->json($formattedEditais);
+    }
+
+    /**
+     * Calcula dinamicamente o percentual de compatibilidade (Match) entre o edital e a startup selecionada.
+     */
+    private function calcularScoreMatch(Edital $edital, ?Startup $startup): int
+    {
+        $base = (int) ($edital->ai_match ?? 0);
+
+        if (!$startup) {
+            if ($base > 0) {
+                return $base;
+            }
+            // Score base determinístico do edital quando não há startup filtrada
+            $scoreEdital = 50 + ($edital->id % 15);
+            if ($edital->max_budget > 0) $scoreEdital += 10;
+            if (!empty($edital->deadline)) $scoreEdital += 8;
+            return min(92, $scoreEdital);
+        }
+
+        // Quando há uma startup selecionada, calcula aderência semântica (Nicho + Pitch + Porte + Estado + Orçamento)
+        $score = 45 + (($edital->id * 7 + $startup->id * 3) % 12);
+
+        $textoEdital = mb_strtolower(
+            ($edital->title ?? '') . ' ' .
+            ($edital->objetivo ?? '') . ' ' .
+            ($edital->ai_nicho ?? '') . ' ' .
+            ($edital->nicho ?? '') . ' ' .
+            ($edital->publico ?? '')
+        );
+
+        $textoStartup = mb_strtolower(
+            ($startup->nicho_atuacao ?? '') . ' ' .
+            ($startup->pitch ?? '') . ' ' .
+            ($startup->nome_fantasia ?? '') . ' ' .
+            ($startup->razao_social ?? '')
+        );
+
+        // Extrai palavras-chave relevantes (>= 4 letras) da startup
+        $palavrasStartup = array_unique(array_filter(
+            preg_split('/[\s,;\-\/\.\(\)]+/u', $textoStartup),
+            fn($p) => mb_strlen($p) >= 4 && !in_array($p, ['para', 'como', 'mais', 'pela', 'pelo', 'seus', 'suas', 'ltda', 'eireli', 'centro'])
+        ));
+
+        $matchesPalavras = 0;
+        foreach ($palavrasStartup as $palavra) {
+            if (str_contains($textoEdital, $palavra)) {
+                $matchesPalavras++;
+            }
+        }
+
+        // Bônus por afinidade semântica de palavras-chave (até +28 pontos)
+        $score += min(28, $matchesPalavras * 9);
+
+        // Bônus por elegibilidade de porte/público (+10 pontos)
+        $publico = mb_strtolower($edital->publico ?? '');
+        $porte = mb_strtolower($startup->porte ?? '');
+        if (
+            str_contains($publico, 'startup') ||
+            str_contains($publico, 'empresa') ||
+            str_contains($publico, 'ict') ||
+            str_contains($publico, 'pesquisa') ||
+            (!empty($porte) && str_contains($publico, $porte))
+        ) {
+            $score += 10;
+        }
+
+        // Bônus por abrangência regional ou agência do mesmo estado (+8 pontos)
+        $uf = strtoupper(trim($startup->estado ?? ''));
+        $fonte = strtoupper($edital->fonte ?? '');
+        if ($fonte === 'FINEP' || ($uf === 'SC' && $fonte === 'FAPESC') || ($uf === 'SP' && $fonte === 'FAPESP') || ($uf === 'MG' && $fonte === 'FAPEMIG') || ($uf === 'RJ' && $fonte === 'FAPERJ') || ($uf === 'RS' && $fonte === 'FAPERGS') || ($uf === 'GO' && $fonte === 'FAPEG') || ($uf === 'DF' && $fonte === 'FAPDF') || ($uf === 'MT' && $fonte === 'FAPEMAT')) {
+            $score += 8;
+        }
+
+        // Bônus por orçamento explícito (+5 pontos)
+        if ($edital->max_budget > 0) {
+            $score += 5;
+        }
+
+        // Se o edital já estava encerrado no passado, reduz levemente a prioridade frente aos abertos
+        if (!empty($edital->deadline)) {
+            try {
+                if (\Carbon\Carbon::parse($edital->deadline)->isPast()) {
+                    $score = max(35, $score - 15);
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        return min(98, max(35, $score));
     }
 
     /**

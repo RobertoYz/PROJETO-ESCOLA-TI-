@@ -19,11 +19,16 @@ const ehDevNavegadorLocal = typeof window !== 'undefined' &&
 
 const URL_PADRAO = ehDevNavegadorLocal
     ? 'http://127.0.0.1:8000/api'
-    : (typeof window !== 'undefined' && window.location?.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file:') && !window.location.origin.startsWith('capacitor:')
-        ? `${window.location.origin}/api`
-        : 'https://anjonexus.com.br/api');
+    : 'https://anjonexus.com.br/api';
 
-const URL_BASE_API = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
+const customApiSalva = localStorage.getItem('api_base_url_custom');
+if (customApiSalva && customApiSalva.includes('intalenti.com.br')) {
+    localStorage.removeItem('api_base_url_custom');
+}
+
+const URL_BASE_API = (customApiSalva && !customApiSalva.includes('intalenti.com.br'))
+    ? customApiSalva
+    : URL_PADRAO;
 
 if (typeof window !== 'undefined') {
     const marcarCapacitor = () => {

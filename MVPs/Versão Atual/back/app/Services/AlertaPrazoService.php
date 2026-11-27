@@ -137,7 +137,7 @@ class AlertaPrazoService
                 ? "🚨 CRÍTICO — Restam {$dias} dia(s)"
                 : "⚠️ URGENTE — Restam {$dias} dia(s)";
 
-            $linkRadar = config('app.frontend_url', 'https://anjonexus.intalenti.com.br') . "/paginas/busca-editais.html?edital_id={$alerta->edital_id}";
+            $linkRadar = config('app.frontend_url', 'https://anjonexus.com.br') . "/paginas/busca-editais.html?edital_id={$alerta->edital_id}";
 
             $htmlEmail = "
             <div style='font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto; background-color: #0b0e14; color: #f8fafc; padding: 32px; border-radius: 14px; border: 1px solid #1e2430;'>

@@ -19,7 +19,6 @@ const badgeConsultor = document.getElementById('consultor-identificacao');
 const nomeConsultorTopbar = document.getElementById('nome-consultor-topbar');
 const botaoSairSessao = document.getElementById('botao-sair-sessao');
 
-const usuarioLogado = obterUsuarioLogado();
 if (usuarioLogado && (usuarioLogado.name || usuarioLogado.email) && badgeConsultor && nomeConsultorTopbar) {
     nomeConsultorTopbar.textContent = usuarioLogado.name || usuarioLogado.email;
     badgeConsultor.hidden = false;

@@ -18,7 +18,17 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
+    # Encaminha chamadas /api para o laravel_api.php caso exista
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{DOCUMENT_ROOT}/laravel_api.php -f
+    RewriteRule ^api(/.*)?$ laravel_api.php [L,QSA]
+
     # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{DOCUMENT_ROOT}/laravel_api.php -f
+    RewriteRule ^ laravel_api.php [L]
+
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]

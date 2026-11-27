@@ -482,9 +482,16 @@
 
         const URL_PADRAO = ehDevNavegadorLocal
             ? 'http://127.0.0.1:8000/api'
-            : 'https://anjonexus.intalenti.com.br/api';
+            : 'https://anjonexus.com.br/api';
 
-        const API_BASE = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
+        const customApiSalva = localStorage.getItem('api_base_url_custom');
+        if (customApiSalva && customApiSalva.includes('intalenti.com.br')) {
+            localStorage.removeItem('api_base_url_custom');
+        }
+
+        const API_BASE = (customApiSalva && !customApiSalva.includes('intalenti.com.br'))
+            ? customApiSalva
+            : URL_PADRAO;
         let currentBoard = null;
         let todosCardsKanban = [];
 
