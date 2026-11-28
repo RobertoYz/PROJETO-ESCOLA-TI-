@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#F4F6FB">
+    <title>Design system — AnjoNexus</title>
+    <script src="../scripts/componentes/tema-inicial.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="../vendor/phosphor/regular/style.css">
+    <link rel="stylesheet" href="../vendor/phosphor/fill/style.css">
+    <link rel="stylesheet" href="../estilos/tokens.css">
+    <link rel="stylesheet" href="../estilos/base.css">
+    <link rel="stylesheet" href="../estilos/componentes.css">
+    <link rel="stylesheet" href="../estilos/amostra-design.css">
+</head>
+<body>
+    <a class="pular-conteudo" href="#conteudo">Pular para o conteúdo</a>
+
+    <header class="amostra-topo">
+        <a class="logo" href="#">
+            <img class="logo-claro" src="../imagens/logo-marca.png" alt="" width="55" height="32">
+            <img class="logo-escuro" src="../imagens/logo-marca-escuro.png" alt="" width="55" height="32">
+            <span>AnjoNexus</span>
+        </a>
+        <button type="button" class="btn btn-fantasma btn-icone" data-acao="alternar-tema" aria-label="Alternar tema">
+            <i class="ph ph-moon" aria-hidden="true"></i>
+        </button>
+    </header>
+
+    <main id="conteudo" class="pagina">
+        <!-- Página com Voltar -->
+        <div class="pagina-cabecalho">
+            <a class="btn btn-voltar" href="#">
+                <i class="ph ph-arrow-left" aria-hidden="true"></i> Voltar
+            </a>
+            <div class="pagina-titulo-linha">
+                <h1 class="pagina-titulo">Design system</h1>
+                <div class="pagina-acoes">
+                    <button type="button" class="btn btn-secundario"><i class="ph ph-download-simple" aria-hidden="true"></i> Exportar</button>
+                    <button type="button" class="btn btn-primario"><i class="ph ph-plus" aria-hidden="true"></i> Novo item</button>
+                </div>
+            </div>
+            <p class="pagina-descricao">Tokens e componentes base usados em todas as telas. Este é o modelo de "página com Voltar": o botão fica sempre no mesmo lugar, acima do título.</p>
+        </div>
+
+        <!-- Cores -->
+        <section class="secao" aria-labelledby="t-cores">
+            <h2 id="t-cores" class="secao-titulo">Cores</h2>
+            <div class="amostra-cores">
+                <div class="amostra-cor"><span style="background: var(--marca-navy)"></span><strong>Navy</strong><code>#00214C</code></div>
+                <div class="amostra-cor"><span style="background: var(--marca-azul)"></span><strong>Azul (marca)</strong><code>#5170FF</code></div>
+                <div class="amostra-cor"><span style="background: var(--cor-primaria)"></span><strong>Ação</strong><code>#4262FA</code></div>
+                <div class="amostra-cor"><span style="background: var(--marca-indigo)"></span><strong>Índigo</strong><code>#1800AD</code></div>
+                <div class="amostra-cor"><span style="background: var(--marca-ciano)"></span><strong>Ciano (acento)</strong><code>#0BDBE7</code></div>
+                <div class="amostra-cor"><span style="background: var(--cor-sucesso)"></span><strong>Sucesso</strong><code>--cor-sucesso</code></div>
+                <div class="amostra-cor"><span style="background: var(--cor-aviso)"></span><strong>Aviso</strong><code>--cor-aviso</code></div>
+                <div class="amostra-cor"><span style="background: var(--cor-erro)"></span><strong>Erro</strong><code>--cor-erro</code></div>
+            </div>
+        </section>
+
+        <!-- Tipografia -->
+        <section class="secao" aria-labelledby="t-tipo">
+            <h2 id="t-tipo" class="secao-titulo">Tipografia — Plus Jakarta Sans</h2>
+            <div class="cartao pilha">
+                <p class="amostra-tipo" style="font-size: var(--texto-4xl); font-weight: 800">Radar de editais 36</p>
+                <p class="amostra-tipo" style="font-size: var(--texto-3xl); font-weight: 800">Título de página 30</p>
+                <p class="amostra-tipo" style="font-size: var(--texto-2xl); font-weight: 700">Título de seção 24</p>
+                <p class="amostra-tipo" style="font-size: var(--texto-lg)">Texto de destaque 18 — descrições de página e introduções.</p>
+                <p class="amostra-tipo">Corpo 16 — o tamanho padrão para conteúdo. Linhas curtas, alinhadas à esquerda, nunca justificadas.</p>
+                <p class="amostra-tipo texto-discreto">Apoio 14 — o menor tamanho permitido (datas, metadados, ajuda de campo).</p>
+            </div>
+        </section>
+
+        <!-- Botões -->
+        <section class="secao" aria-labelledby="t-botoes">
+            <h2 id="t-botoes" class="secao-titulo">Botões</h2>
+            <div class="cartao pilha">
+                <div class="linha">
+                    <button type="button" class="btn btn-primario">Primário</button>
+                    <button type="button" class="btn btn-secundario">Secundário</button>
+                    <button type="button" class="btn">Neutro</button>
+                    <button type="button" class="btn btn-fantasma">Fantasma</button>
+                    <button type="button" class="btn btn-perigo">Excluir</button>
+                    <button type="button" class="btn btn-perigo-contorno">Remover</button>
+                    <button type="button" class="btn btn-link">Link</button>
+                </div>
+                <div class="linha">
+                    <button type="button" class="btn btn-primario btn-lg"><i class="ph ph-sparkle" aria-hidden="true"></i> Grande</button>
+                    <button type="button" class="btn btn-primario">Médio</button>
+                    <button type="button" class="btn btn-primario btn-sm">Pequeno</button>
+                    <button type="button" class="btn btn-primario" id="btn-demo-carregar">Salvar (clique)</button>
+                    <button type="button" class="btn btn-primario" disabled>Desabilitado</button>
+                    <button type="button" class="btn btn-icone" aria-label="Configurações"><i class="ph ph-gear" aria-hidden="true"></i></button>
+                    <button type="button" class="btn btn-fantasma btn-icone" aria-label="Mais opções"><i class="ph ph-dots-three-vertical" aria-hidden="true"></i></button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Formulário -->
+        <section class="secao" aria-labelledby="t-form">
+            <h2 id="t-form" class="secao-titulo">Formulário</h2>
+            <form class="cartao formulario" id="form-demo" novalidate>
+                <p class="formulario-legenda"><span class="campo-obrigatorio" aria-hidden="true">*</span> indica campo obrigatório</p>
+                <div class="grade-campos">
+                    <div class="campo">
+                        <label class="campo-rotulo" for="d-nome">Nome da startup <span class="campo-obrigatorio" aria-hidden="true">*</span></label>
+                        <input class="entrada" id="d-nome" name="nome" type="text" required autocomplete="organization" placeholder="Ex.: Nexus Tech…">
+                    </div>
+                    <div class="campo">
+                        <label class="campo-rotulo" for="d-cnpj">CNPJ <span class="campo-opcional">(opcional)</span></label>
+                        <input class="entrada numerico" id="d-cnpj" name="cnpj" type="text" inputmode="numeric" autocomplete="off" aria-describedby="d-cnpj-ajuda" placeholder="00.000.000/0000-00">
+                        <p class="campo-ajuda" id="d-cnpj-ajuda">Ajuda a encontrar editais que exigem empresa formalizada.</p>
+                    </div>
+                    <div class="campo">
+                        <label class="campo-rotulo" for="d-email">E-mail <span class="campo-obrigatorio" aria-hidden="true">*</span></label>
+                        <input class="entrada" id="d-email" name="email" type="email" required autocomplete="email" spellcheck="false" aria-invalid="true" aria-describedby="d-email-erro" value="joao@">
+                        <p class="campo-erro" id="d-email-erro">Digite um e-mail completo, como nome@empresa.com.</p>
+                    </div>
+                    <div class="campo">
+                        <label class="campo-rotulo" for="d-area">Área de atuação <span class="campo-obrigatorio" aria-hidden="true">*</span></label>
+                        <select class="selecao" id="d-area" name="area" required>
+                            <option value="">Selecione…</option>
+                            <option>Saúde</option>
+                            <option>Educação</option>
+                            <option>Agro</option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label class="campo-rotulo" for="d-senha">Senha <span class="campo-obrigatorio" aria-hidden="true">*</span></label>
+                        <div class="entrada-grupo">
+                            <input class="entrada" id="d-senha" name="senha" type="password" required autocomplete="new-password" aria-describedby="d-senha-regras">
+                            <button type="button" class="btn btn-fantasma btn-icone entrada-acao" data-acao="mostrar-senha" aria-controls="d-senha" aria-label="Mostrar senha"><i class="ph ph-eye" aria-hidden="true"></i></button>
+                        </div>
+                        <ul class="checklist" id="d-senha-regras" aria-live="polite">
+                            <li data-regra="tamanho">Pelo menos 8 caracteres</li>
+                            <li data-regra="maiuscula">Uma letra maiúscula</li>
+                            <li data-regra="numero">Um número</li>
+                        </ul>
+                    </div>
+                    <div class="campo">
+                        <label class="campo-rotulo" for="d-busca">Buscar</label>
+                        <div class="entrada-grupo">
+                            <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+                            <input class="entrada" id="d-busca" name="busca" type="search" autocomplete="off" placeholder="Buscar editais…">
+                        </div>
+                    </div>
+                    <div class="campo campo-largo">
+                        <label class="campo-rotulo" for="d-desc">Descrição <span class="campo-opcional">(opcional)</span></label>
+                        <textarea class="area-texto" id="d-desc" name="descricao" aria-describedby="d-desc-ajuda" placeholder="Em poucas frases, o que a startup faz…"></textarea>
+                        <p class="campo-ajuda" id="d-desc-ajuda">Usada pela IA para avaliar a compatibilidade com cada edital.</p>
+                    </div>
+                </div>
+                <div class="linha">
+                    <label class="opcao"><input type="checkbox" name="termos"> Li e aceito os Termos de Uso</label>
+                    <label class="interruptor"><input type="checkbox" role="switch" checked> Receber alertas por e-mail</label>
+                </div>
+                <div class="linha">
+                    <button type="submit" class="btn btn-primario">Salvar</button>
+                    <button type="button" class="btn btn-fantasma">Cancelar</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Cards, selos, chips -->
+        <section class="secao" aria-labelledby="t-cards">
+            <h2 id="t-cards" class="secao-titulo">Cards, selos e chips</h2>
+            <div class="amostra-grade-3">
+                <a class="cartao cartao-interativo pilha-sm" href="#">
+                    <span class="cartao-icone"><i class="ph ph-crosshair" aria-hidden="true"></i></span>
+                    <h3 class="cartao-titulo">Radar de editais</h3>
+                    <p class="texto-apoio">Card clicável. No hover, a sombra deslocada lembra as camadas do logo.</p>
+                </a>
+                <article class="cartao pilha-sm">
+                    <div class="linha-entre">
+                        <span class="selo selo-sucesso"><i class="ph ph-check" aria-hidden="true"></i> Aberto</span>
+                        <span class="texto-discreto numerico">até 12/12/2026</span>
+                    </div>
+                    <h3 class="cartao-titulo">Centelha 3 — Fase 2</h3>
+                    <p class="texto-apoio">FINEP · Subvenção de até R$ 100 mil para startups em estágio inicial.</p>
+                </article>
+                <article class="cartao pilha-sm">
+                    <h3 class="cartao-titulo">Selos</h3>
+                    <div class="linha">
+                        <span class="selo">Neutro</span>
+                        <span class="selo selo-primario">Em elaboração</span>
+                        <span class="selo selo-sucesso">Pronta</span>
+                        <span class="selo selo-aviso">Prazo próximo</span>
+                        <span class="selo selo-erro">Encerrado</span>
+                    </div>
+                </article>
+            </div>
+            <div class="linha" role="group" aria-label="Filtros de exemplo">
+                <button type="button" class="chip" aria-pressed="true">Abertos <span class="chip-contador">12</span></button>
+                <button type="button" class="chip" aria-pressed="false">Saúde</button>
+                <button type="button" class="chip" aria-pressed="false">Até R$ 500 mil</button>
+                <button type="button" class="chip" aria-pressed="false"><i class="ph ph-sliders-horizontal" aria-hidden="true"></i> Mais filtros</button>
+            </div>
+        </section>
+
+        <!-- Tabela -->
+        <section class="secao" aria-labelledby="t-tabela">
+            <h2 id="t-tabela" class="secao-titulo">Tabela</h2>
+            <div class="tabela-container">
+                <table class="tabela">
+                    <thead>
+                        <tr><th scope="col">Usuário</th><th scope="col">Papel</th><th scope="col">Status</th><th scope="col" class="coluna-acoes"><span class="sr-only">Ações</span></th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><div class="linha"><span class="avatar avatar-sm" aria-hidden="true">MA</span><div><strong>Maria Alves</strong><div class="texto-discreto">maria@anjo.com</div></div></div></td>
+                            <td>Administrador</td>
+                            <td><span class="selo selo-sucesso">Ativo</span></td>
+                            <td class="coluna-acoes"><button type="button" class="btn btn-fantasma btn-icone" aria-label="Opções de Maria Alves"><i class="ph ph-dots-three-vertical" aria-hidden="true"></i></button></td>
+                        </tr>
+                        <tr>
+                            <td><div class="linha"><span class="avatar avatar-sm" aria-hidden="true">JS</span><div><strong>João Souza</strong><div class="texto-discreto">joao@anjo.com</div></div></div></td>
+                            <td>Usuário</td>
+                            <td><span class="selo selo-aviso">Convite pendente</span></td>
+                            <td class="coluna-acoes"><button type="button" class="btn btn-fantasma btn-icone" aria-label="Opções de João Souza"><i class="ph ph-dots-three-vertical" aria-hidden="true"></i></button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Estados -->
+        <section class="secao" aria-labelledby="t-estados">
+            <h2 id="t-estados" class="secao-titulo">Estados: vazio, carregando, erro</h2>
+            <div class="amostra-grade-3">
+                <div class="estado">
+                    <div class="estado-icone"><i class="ph ph-kanban" aria-hidden="true"></i></div>
+                    <p class="estado-titulo">Nenhum edital no Kanban</p>
+                    <p class="estado-texto">Envie editais pelo Radar para acompanhar cada etapa aqui.</p>
+                    <div class="estado-acoes"><a class="btn btn-primario" href="#">Abrir Radar</a></div>
+                </div>
+                <div class="estado" role="status" aria-live="polite">
+                    <span class="carregador" aria-hidden="true"></span>
+                    <p class="estado-titulo">Carregando editais…</p>
+                    <div class="amostra-esqueletos" aria-hidden="true">
+                        <span class="esqueleto esqueleto-titulo"></span>
+                        <span class="esqueleto esqueleto-linha"></span>
+                        <span class="esqueleto esqueleto-linha" style="width: 80%"></span>
+                    </div>
+                </div>
+                <div class="estado estado-erro" role="alert">
+                    <div class="estado-icone"><i class="ph ph-wifi-slash" aria-hidden="true"></i></div>
+                    <p class="estado-titulo">Não foi possível carregar</p>
+                    <p class="estado-texto">Verifique sua conexão e tente de novo.</p>
+                    <div class="estado-acoes"><button type="button" class="btn">Tentar novamente</button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Alertas -->
+        <section class="secao" aria-labelledby="t-alertas">
+            <h2 id="t-alertas" class="secao-titulo">Mensagens</h2>
+            <div class="pilha">
+                <div class="alerta alerta-sucesso" role="status"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><p class="alerta-titulo">Conta ativada com sucesso</p><p>Você já pode entrar com seu e-mail e senha.</p></div></div>
+                <div class="alerta alerta-erro" role="alert"><i class="ph-fill ph-x-circle" aria-hidden="true"></i><div><p class="alerta-titulo">E-mail ou senha incorretos</p><p>Confira os dados e tente novamente.</p></div></div>
+                <div class="alerta alerta-aviso"><i class="ph-fill ph-warning" aria-hidden="true"></i><p>O prazo deste edital termina em 3 dias.</p></div>
+                <div class="alerta"><i class="ph-fill ph-info" aria-hidden="true"></i><p>Enviamos um link de confirmação para o seu e-mail.</p></div>
+            </div>
+        </section>
+
+        <!-- Navegação & sobreposições -->
+        <section class="secao" aria-labelledby="t-outros">
+            <h2 id="t-outros" class="secao-titulo">Passo a passo, menu, modal e toast</h2>
+            <div class="cartao pilha-lg">
+                <ol class="etapas" aria-label="Progresso da minuta">
+                    <li class="etapa etapa-concluida">1. Edital</li>
+                    <li class="etapa" aria-current="step">2. Sobre a startup</li>
+                    <li class="etapa">3. Proposta</li>
+                    <li class="etapa">4. Revisão</li>
+                </ol>
+                <div class="linha amostra-menu-area">
+                    <div class="amostra-menu-ancora">
+                        <button type="button" class="btn" id="btn-menu" aria-haspopup="menu" aria-expanded="false" aria-controls="menu-demo">
+                            <span class="avatar avatar-sm" aria-hidden="true">NT</span> Nexus Tech <i class="ph ph-caret-down" aria-hidden="true"></i>
+                        </button>
+                        <div class="menu" id="menu-demo" role="menu" hidden>
+                            <button type="button" class="menu-item" role="menuitem"><i class="ph ph-pencil-simple" aria-hidden="true"></i> Editar</button>
+                            <button type="button" class="menu-item" role="menuitem"><i class="ph ph-eye" aria-hidden="true"></i> Perfil de visualização</button>
+                            <div class="menu-separador" role="separator"></div>
+                            <button type="button" class="menu-item menu-item-perigo" role="menuitem"><i class="ph ph-trash" aria-hidden="true"></i> Excluir</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-perigo-contorno" id="btn-abrir-modal"><i class="ph ph-trash" aria-hidden="true"></i> Excluir startup (modal)</button>
+                    <button type="button" class="btn btn-secundario" id="btn-toast">Mostrar toast</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <dialog class="modal" id="modal-demo" aria-labelledby="modal-demo-titulo">
+        <div class="modal-cabecalho">
+            <h2 class="modal-titulo" id="modal-demo-titulo">Excluir a startup Nexus Tech?</h2>
+            <button type="button" class="btn btn-fantasma btn-icone" data-fechar aria-label="Fechar"><i class="ph ph-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="modal-corpo">
+            <p>Os editais salvos, o Kanban e as minutas desta startup serão apagados. Essa ação não pode ser desfeita.</p>
+        </div>
+        <div class="modal-rodape">
+            <button type="button" class="btn btn-fantasma" data-fechar>Cancelar</button>
+            <button type="button" class="btn btn-perigo" data-fechar>Excluir startup</button>
+        </div>
+    </dialog>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+
+    <script type="module" src="../scripts/paginas/amostraDesign.js"></script>
+</body>
+</html>

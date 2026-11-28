@@ -1,0 +1,13 @@
+Explicações - Os números de 1 a 9 na imagem são apenas marcações de referência para esta legenda — não renderize esses números na interface final. 
+
+1 - LOGO
+2 - Scroll lateral (tela escrolável)
+3 - Caso A: As senhas digitadas não coincidem.
+Caso B: A senha deve ter no mínimo 8 caracteres.
+Caso C: O link de recuperação expirou (60 min.), gere um novo link. 
+4 - Email de quem está fazendo a recuperação da senha
+5 - Botão para mostrar ou esconder a senha digitada
+6 - Botão para mostrar ou esconder a senha digitada
+7 - Cada afirmativa dessa caixa de verificação deve ficar verde caso as senhas correspondam, caso contrario, ficam vermelhas.
+8 - Botão que leva a página: esqueci-senha.html
+9 - Botão que leva a página: login.html

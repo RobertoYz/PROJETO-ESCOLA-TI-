@@ -1,0 +1,83 @@
+/* Estilos exclusivos da página de amostra do design system. */
+.amostra-topo {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-cabecalho);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+    padding: 0 var(--esp-10);
+    background: var(--cor-superficie);
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+.amostra-cores {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--esp-4);
+}
+
+.amostra-cor {
+    display: grid;
+    gap: var(--esp-1);
+    padding: var(--esp-3);
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-lg);
+    background: var(--cor-superficie);
+}
+
+.amostra-cor span {
+    height: 3.5rem;
+    margin-bottom: var(--esp-2);
+    border-radius: var(--raio-md);
+}
+
+.amostra-cor code {
+    font-family: var(--fonte-mono);
+    font-size: var(--texto-sm);
+    color: var(--cor-texto-3);
+}
+
+.amostra-tipo {
+    margin: 0;
+}
+
+.amostra-grade-3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--esp-6);
+    align-items: start;
+}
+
+.amostra-esqueletos {
+    display: grid;
+    gap: var(--esp-3);
+    width: 100%;
+    max-width: 16rem;
+    margin-top: var(--esp-2);
+}
+
+.amostra-menu-ancora {
+    position: relative;
+}
+
+.amostra-menu-ancora .menu {
+    top: calc(100% + var(--esp-2));
+    left: 0;
+}
+
+.amostra-menu-area {
+    min-height: 12rem;
+    align-items: flex-start;
+}
+
+@media (max-width: 960px) {
+    .amostra-cores {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .amostra-grade-3 {
+        grid-template-columns: 1fr;
+    }
+}

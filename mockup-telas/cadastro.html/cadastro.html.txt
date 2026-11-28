@@ -1,0 +1,28 @@
+Explicações - Os números 1 a 12 nas imagens são apenas marcações de referência para esta legenda — não renderize esses números na interface final. 
+
+
+ETAPA 1:
+
+1 - LOGO
+2 - side-scroll lateral (necessário pois a página se alongou)
+3 - MENSAGENS DE ERRO: 
+Caso A - Este e-mail já está cadastrado. Faça login para continuar.
+Caso B - Leia os termos de aceite e privacidade e marque a caixa de ciência de leitura.
+Caso C - A senha deve ter no mínimo 8 caracteres.
+4 - Botão para mostrar ou esconder a senha digitada
+5 - Ao clicar em "Termos de Uso" ou "Política de Privacidade", as caixas correspondentes devem aparecer no centro da tela como um modal, fazendo blur no resto da tela atrás.
+6 - Botão que leva a página: login.html
+7 - Botão que leva a página: baixar-app.html
+
+--- Transição: Ao clicar em "Enviar código de confirmação", a tela muda mas continua na mesma página "cadastro.html" e aparecem os elementos da etapa 2 ---
+
+ETAPA 2:
+
+8 - MENSAGEM DE ERRO caso o código não seja o que foi enviado por Email
+9 - Texto informando para qual email (aquele que foi utilizado na etapa 1) a mensagem foi enviada.
+10 - Botão para voltar a etapa anterior
+11 - Botão que leva a página: login.html
+12 - Botão que após um timer VISUAL no mesmo texto de 60 segundos, possibilita reenviar o código.
+
+
+

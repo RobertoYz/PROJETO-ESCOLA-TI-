@@ -1,0 +1,187 @@
+/* ==========================================================================
+   AnjoNexus — Base (reset, tipografia, foco, utilitários)
+   Requer: tokens.css
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    background: var(--cor-fundo);
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--fonte-base);
+    font-size: var(--texto-md);
+    line-height: var(--altura-linha-corpo);
+    color: var(--cor-texto);
+    background: var(--cor-fundo);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    line-height: var(--altura-linha-titulo);
+    font-weight: var(--peso-forte);
+    color: var(--cor-texto);
+    text-wrap: balance;
+    scroll-margin-top: 5rem;
+}
+
+h1 { font-size: var(--texto-3xl); font-weight: var(--peso-extra); letter-spacing: -0.02em; }
+h2 { font-size: var(--texto-2xl); letter-spacing: -0.01em; }
+h3 { font-size: var(--texto-xl); }
+h4 { font-size: var(--texto-lg); }
+
+p {
+    margin: 0;
+    text-wrap: pretty;
+}
+
+/* Nunca justificar: evita "rios" de espaço em branco. */
+p, li, dd, td {
+    text-align: start;
+}
+
+a {
+    color: var(--cor-primaria-texto);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+}
+
+a:hover {
+    text-decoration-thickness: 2px;
+}
+
+img, svg, video {
+    display: block;
+    max-width: 100%;
+}
+
+button, input, select, textarea {
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+[hidden] {
+    display: none;
+}
+
+::selection {
+    background: var(--cor-primaria-suave-borda);
+    color: var(--cor-texto);
+}
+
+/* ---- Foco visível e consistente (só teclado) ---- */
+:focus-visible {
+    outline: 2px solid var(--cor-foco);
+    outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* ---- Ícones (Phosphor): tamanho acompanha o texto ---- */
+.ph, .ph-fill {
+    font-size: 1.25em;
+    line-height: 1;
+    flex-shrink: 0;
+    vertical-align: -0.2em;
+}
+
+/* ---- Logo: troca automática por tema ---- */
+.logo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--esp-3);
+    color: var(--cor-texto);
+    text-decoration: none;
+    font-weight: var(--peso-extra);
+    font-size: var(--texto-lg);
+    letter-spacing: -0.01em;
+}
+
+.logo img {
+    height: 32px;
+    width: auto;
+}
+
+.logo .logo-claro { display: var(--logo-claro-display); }
+.logo .logo-escuro { display: var(--logo-escuro-display); }
+
+.logo-lg img {
+    height: 56px;
+}
+
+/* ---- Utilitários ---- */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.pular-conteudo {
+    position: absolute;
+    left: var(--esp-4);
+    top: -100px;
+    z-index: var(--z-toast);
+    padding: var(--esp-3) var(--esp-4);
+    background: var(--cor-primaria);
+    color: var(--cor-sobre-primaria);
+    border-radius: var(--raio-md);
+    font-weight: var(--peso-semi);
+    text-decoration: none;
+}
+
+.pular-conteudo:focus {
+    top: var(--esp-4);
+}
+
+.texto-apoio {
+    color: var(--cor-texto-2);
+}
+
+.texto-discreto {
+    color: var(--cor-texto-3);
+    font-size: var(--texto-sm);
+}
+
+.numerico {
+    font-variant-numeric: tabular-nums;
+}
+
+.pilha { display: flex; flex-direction: column; gap: var(--esp-4); }
+.pilha-sm { display: flex; flex-direction: column; gap: var(--esp-2); }
+.pilha-lg { display: flex; flex-direction: column; gap: var(--esp-8); }
+.linha { display: flex; align-items: center; gap: var(--esp-3); flex-wrap: wrap; }
+.linha-entre { display: flex; align-items: center; justify-content: space-between; gap: var(--esp-4); flex-wrap: wrap; }
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+        transition-duration: 0.01ms;
+        scroll-behavior: auto;
+    }
+}

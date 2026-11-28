@@ -1,0 +1,184 @@
+/* ==========================================================================
+   AnjoNexus — Design tokens (ÚNICA fonte de :root do front desktop)
+   --------------------------------------------------------------------------
+   - Paleta derivada do logo: navy #00214C, azul #5170FF, índigo #1800AD,
+     ciano #0BDBE7 (acento, usar com moderação — nunca como cor de texto).
+   - Tema escuro: atributo data-tema="escuro" no <html>
+     (aplicado por scripts/componentes/tema-inicial.js antes da pintura).
+   - Componentes NUNCA usam hex direto: sempre var(--cor-*).
+   ========================================================================== */
+
+:root {
+    /* ---- Marca (valores fixos, iguais nos dois temas) ---- */
+    --marca-navy: #00214C;
+    --marca-azul: #5170FF;
+    --marca-indigo: #1800AD;
+    --marca-ciano: #0BDBE7;
+
+    /* ---- Tipografia ---- */
+    --fonte-base: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --fonte-mono: "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+
+    --texto-sm: 0.875rem;   /* 14px — mínimo para conteúdo */
+    --texto-md: 1rem;       /* 16px — corpo */
+    --texto-lg: 1.125rem;   /* 18px */
+    --texto-xl: 1.25rem;    /* 20px */
+    --texto-2xl: 1.5rem;    /* 24px */
+    --texto-3xl: 1.875rem;  /* 30px */
+    --texto-4xl: 2.25rem;   /* 36px */
+
+    --peso-normal: 400;
+    --peso-medio: 500;
+    --peso-semi: 600;
+    --peso-forte: 700;
+    --peso-extra: 800;
+
+    --altura-linha-corpo: 1.55;
+    --altura-linha-titulo: 1.2;
+
+    /* ---- Espaçamento (base 4px) ---- */
+    --esp-1: 0.25rem;  /* 4 */
+    --esp-2: 0.5rem;   /* 8 */
+    --esp-3: 0.75rem;  /* 12 */
+    --esp-4: 1rem;     /* 16 */
+    --esp-5: 1.25rem;  /* 20 */
+    --esp-6: 1.5rem;   /* 24 */
+    --esp-8: 2rem;     /* 32 */
+    --esp-10: 2.5rem;  /* 40 */
+    --esp-12: 3rem;    /* 48 */
+    --esp-16: 4rem;    /* 64 */
+    --esp-20: 5rem;    /* 80 */
+
+    /* ---- Raios ---- */
+    --raio-sm: 6px;
+    --raio-md: 10px;
+    --raio-lg: 14px;
+    --raio-xl: 20px;
+    --raio-pilula: 999px;
+
+    /* ---- Dimensões de controle ---- */
+    --controle-sm: 2.5rem;    /* 40px */
+    --controle-md: 2.75rem;   /* 44px — alvo mínimo de clique */
+    --controle-lg: 3.25rem;   /* 52px */
+    --largura-conteudo: 1200px;
+    --largura-formulario: 640px;
+    --largura-leitura: 72ch;
+
+    /* ---- Movimento ---- */
+    --duracao-rapida: 150ms;
+    --duracao-media: 220ms;
+    --duracao-lenta: 320ms;
+    --curva-padrao: cubic-bezier(0.2, 0, 0, 1);
+
+    /* ---- Camadas ---- */
+    --z-cabecalho: 100;
+    --z-lateral: 110;
+    --z-menu: 200;
+    --z-modal: 300;
+    --z-toast: 400;
+
+    /* ---- Assinatura visual: diagonal do logo ---- */
+    --diagonal: -18deg;
+
+    /* ======================= TEMA CLARO (padrão) ======================= */
+    color-scheme: light;
+
+    --cor-fundo: #F4F6FB;
+    --cor-superficie: #FFFFFF;
+    --cor-superficie-2: #EEF2FA;   /* áreas sutis, hover de linha */
+    --cor-superficie-3: #E2E8F5;   /* trilhos, skeleton */
+    --cor-borda: #DCE2EE;
+    --cor-borda-forte: #B8C2D6;
+    --cor-borda-controle: #7D89A1; /* 3:1 — bordas de campos (WCAG 1.4.11) */
+
+    --cor-texto: #0B1B33;          /* 16.9:1 sobre branco */
+    --cor-texto-2: #3F4D66;        /* 8.6:1 */
+    --cor-texto-3: #5B6880;        /* 5.6:1 — mínimo para textos de apoio */
+    --cor-texto-inverso: #FFFFFF;
+
+    /* Ação: #4262FA é o azul da marca levemente aprofundado para que
+       texto branco tenha 4.8:1 (o #5170FF puro fica em 4.1:1). */
+    --cor-primaria: #4262FA;
+    --cor-primaria-hover: var(--marca-indigo);
+    --cor-primaria-texto: #3653E8; /* links/texto azul sobre fundo claro */
+    --cor-primaria-suave: #E9EDFF;
+    --cor-primaria-suave-borda: #C6D0FF;
+    --cor-sobre-primaria: #FFFFFF;
+
+    --cor-acento: var(--marca-ciano);
+
+    --cor-sucesso: #13773A;
+    --cor-sucesso-suave: #E7F6EC;
+    --cor-sucesso-borda: #A7DDB8;
+    --cor-erro: #C81E1E;
+    --cor-erro-hover: #A11414;
+    --cor-erro-suave: #FDECEC;
+    --cor-erro-borda: #F3B4B4;
+    --cor-aviso: #9A5B00;
+    --cor-aviso-suave: #FFF4DE;
+    --cor-aviso-borda: #F2CF8C;
+    --cor-info: var(--cor-primaria-texto);
+    --cor-info-suave: var(--cor-primaria-suave);
+    --cor-info-borda: var(--cor-primaria-suave-borda);
+
+    --cor-foco: #4262FA;
+    --cor-veu: rgba(8, 18, 38, 0.48); /* fundo de modal */
+
+    --sombra-sm: 0 1px 2px rgba(11, 27, 51, 0.06);
+    --sombra-md: 0 4px 16px rgba(11, 27, 51, 0.08);
+    --sombra-lg: 0 16px 40px rgba(11, 27, 51, 0.14);
+    /* Sombra deslocada (camadas do logo) */
+    --sombra-camada: 6px 6px 0 rgba(0, 33, 76, 0.10);
+    --sombra-camada-ativa: 8px 8px 0 rgba(66, 98, 250, 0.22);
+
+    --logo-claro-display: inline-block;
+    --logo-escuro-display: none;
+}
+
+/* =========================== TEMA ESCURO =========================== */
+:root[data-tema="escuro"] {
+    color-scheme: dark;
+
+    --cor-fundo: #080F1F;
+    --cor-superficie: #0F1A30;
+    --cor-superficie-2: #16233D;
+    --cor-superficie-3: #1E2D4C;
+    --cor-borda: #24345A;
+    --cor-borda-forte: #3A4D78;
+    --cor-borda-controle: #5F74A3;
+
+    --cor-texto: #EDF1FA;          /* 15.5:1 sobre superfície */
+    --cor-texto-2: #BAC5DA;        /* 9.6:1 */
+    --cor-texto-3: #8D9BB5;        /* 5.9:1 */
+    --cor-texto-inverso: #0B1B33;
+
+    --cor-primaria: #4262FA;
+    --cor-primaria-hover: #2E4BE0;
+    --cor-primaria-texto: #93A7FF; /* 7.2:1 sobre superfície */
+    --cor-primaria-suave: #1A2655;
+    --cor-primaria-suave-borda: #34459A;
+    --cor-sobre-primaria: #FFFFFF;
+
+    --cor-sucesso: #4ADE80;
+    --cor-sucesso-suave: #0F2A1E;
+    --cor-sucesso-borda: #1F6B42;
+    --cor-erro: #FF8A8A;
+    --cor-erro-hover: #FFA3A3;
+    --cor-erro-suave: #33141A;
+    --cor-erro-borda: #7A2A33;
+    --cor-aviso: #FBBF24;
+    --cor-aviso-suave: #2E2410;
+    --cor-aviso-borda: #6E5313;
+
+    --cor-foco: #93A7FF;
+    --cor-veu: rgba(2, 6, 16, 0.66);
+
+    --sombra-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --sombra-md: 0 6px 18px rgba(0, 0, 0, 0.35);
+    --sombra-lg: 0 18px 44px rgba(0, 0, 0, 0.5);
+    --sombra-camada: 6px 6px 0 rgba(0, 0, 0, 0.35);
+    --sombra-camada-ativa: 8px 8px 0 rgba(81, 112, 255, 0.28);
+
+    --logo-claro-display: none;
+    --logo-escuro-display: inline-block;
+}

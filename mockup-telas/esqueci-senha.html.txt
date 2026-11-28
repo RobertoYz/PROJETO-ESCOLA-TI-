@@ -1,0 +1,9 @@
+Explicações - Os números de 1 a 6 na imagem são apenas marcações de referência para esta legenda — não renderize esses números na interface final. 
+
+1 - LOGO
+2 - Caso A: Mensagem vermelha, avisando que o email é inválido, SOMENTE após clicar em Enviar Link Recuperação e a verificação se o email é valido. 
+Caso B: Mensagem VERDE de confirmação, ao clicar em "Enviar Link Recuperação", a verificação de existência de conta é feita, e a mensagem aparece ao usuário.
+3 - Ao clicar neste botão, e a mensagem for enviada corretamente, inicia-se um timer de 30 segundos no lugar do botão, sendo substituído novamente pelo "Enviar Link Recuperação" após finalizar.
+4 - Deve levar a página "cadastro.html"
+5 - Deve levar a página "login.html"
+6 - Deve levar a página "baixar-app.html"

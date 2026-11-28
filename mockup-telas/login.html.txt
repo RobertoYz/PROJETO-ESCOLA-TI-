@@ -1,0 +1,8 @@
+Explicações - Os números de 1 a 6 na imagem são apenas marcações de referência para esta legenda — não renderize esses números na interface final. 
+
+1 - LOGO
+2 - Mensagem que SOMENTE aparece quando a senha ou usuário estão incorretos (existindo ou não)
+3 - Botão para mostrar ou esconder a senha digitada
+4 - Botão que leva a página: baixar-app.html
+5 - Botão que leva a página: esqueci-senha.html
+6 - Botão que leva a página: cadastro.html
