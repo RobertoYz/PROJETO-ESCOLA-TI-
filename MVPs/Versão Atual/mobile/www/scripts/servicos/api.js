@@ -23,18 +23,30 @@ const URL_PADRAO = ehDevNavegadorLocal
     ? 'http://127.0.0.1:8000/api'
     : 'https://anjonexus.com.br/api';
 
-export const URL_BASE_API = localStorage.getItem('api_base_url_custom') || URL_PADRAO;
+const customApiSalva = localStorage.getItem('api_base_url_custom');
+if (customApiSalva && customApiSalva.includes('intalenti.com.br')) {
+    localStorage.removeItem('api_base_url_custom');
+}
+
+export const URL_BASE_API = (customApiSalva && !customApiSalva.includes('intalenti.com.br'))
+    ? customApiSalva
+    : URL_PADRAO;
 
 if (typeof window !== 'undefined') {
     const marcarCapacitor = () => {
-        if (window.Capacitor || window.location.protocol === 'capacitor:' || window.navigator.userAgent.includes('wv')) {
+        const ua = (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '';
+        if (
+            window.Capacitor !== undefined ||
+            window.location.protocol === 'capacitor:' ||
+            /\bwv\b/i.test(ua) ||
+            /Android.*Version\/\d+/i.test(ua)
+        ) {
             document.body?.classList.add('is-capacitor');
         }
     };
+    marcarCapacitor();
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', marcarCapacitor);
-    } else {
-        marcarCapacitor();
     }
 }
 

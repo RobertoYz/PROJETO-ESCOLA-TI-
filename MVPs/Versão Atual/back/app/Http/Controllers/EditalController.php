@@ -11,7 +11,7 @@ use App\Models\Startup;
 class EditalController extends Controller
 {
     /**
-     * RF-10 / RF-11: Listagem de editais com identificação dinâmica de favoritos
+     * RF-10 / RF-11: Listagem de editais com identificação dinâmica de favoritos e cálculo de match contextualizado por startup
      */
     public function index(Request $request): JsonResponse
     {
@@ -24,6 +24,11 @@ class EditalController extends Controller
         // Identifica usuário autenticado via Sanctum se houver token
         $usuario = $request->user('sanctum') ?? auth('sanctum')->user();
         $favoritosIds = [];
+        $startup = null;
+
+        if ($request->filled('startup_id')) {
+            $startup = Startup::find($request->startup_id);
+        }
 
         if ($usuario) {
             $favQuery = EditalFavorito::where('user_id', $usuario->id);
@@ -58,7 +63,7 @@ class EditalController extends Controller
             }
         }
         
-        // Formata os dados para a interface Front-end (Custo Zero de IA)
+        // Formata os dados para a interface Front-end com cálculo dinâmico de Match por Startup
         $formattedEditais = $editais->map(function($edital) use ($favoritosIds, $startup) {
             $diagnostico = !empty($edital->ai_diagnosis) 
                 ? $edital->ai_diagnosis 
@@ -114,6 +119,95 @@ class EditalController extends Controller
     }
 
     /**
+     * Calcula dinamicamente o percentual de compatibilidade (Match) entre o edital e a startup selecionada.
+     */
+    private function calcularScoreMatch(Edital $edital, ?Startup $startup): int
+    {
+        $base = (int) ($edital->ai_match ?? 0);
+
+        if (!$startup) {
+            if ($base > 0) {
+                return $base;
+            }
+            // Score base determinístico do edital quando não há startup filtrada
+            $scoreEdital = 50 + ($edital->id % 15);
+            if ($edital->max_budget > 0) $scoreEdital += 10;
+            if (!empty($edital->deadline)) $scoreEdital += 8;
+            return min(92, $scoreEdital);
+        }
+
+        // Quando há uma startup selecionada, calcula aderência semântica (Nicho + Pitch + Porte + Estado + Orçamento)
+        $score = 45 + (($edital->id * 7 + $startup->id * 3) % 12);
+
+        $textoEdital = mb_strtolower(
+            ($edital->title ?? '') . ' ' .
+            ($edital->objetivo ?? '') . ' ' .
+            ($edital->ai_nicho ?? '') . ' ' .
+            ($edital->nicho ?? '') . ' ' .
+            ($edital->publico ?? '')
+        );
+
+        $textoStartup = mb_strtolower(
+            ($startup->nicho_atuacao ?? '') . ' ' .
+            ($startup->pitch ?? '') . ' ' .
+            ($startup->nome_fantasia ?? '') . ' ' .
+            ($startup->razao_social ?? '')
+        );
+
+        // Extrai palavras-chave relevantes (>= 4 letras) da startup
+        $palavrasStartup = array_unique(array_filter(
+            preg_split('/[\s,;\-\/\.\(\)]+/u', $textoStartup),
+            fn($p) => mb_strlen($p) >= 4 && !in_array($p, ['para', 'como', 'mais', 'pela', 'pelo', 'seus', 'suas', 'ltda', 'eireli', 'centro'])
+        ));
+
+        $matchesPalavras = 0;
+        foreach ($palavrasStartup as $palavra) {
+            if (str_contains($textoEdital, $palavra)) {
+                $matchesPalavras++;
+            }
+        }
+
+        // Bônus por afinidade semântica de palavras-chave (até +28 pontos)
+        $score += min(28, $matchesPalavras * 9);
+
+        // Bônus por elegibilidade de porte/público (+10 pontos)
+        $publico = mb_strtolower($edital->publico ?? '');
+        $porte = mb_strtolower($startup->porte ?? '');
+        if (
+            str_contains($publico, 'startup') ||
+            str_contains($publico, 'empresa') ||
+            str_contains($publico, 'ict') ||
+            str_contains($publico, 'pesquisa') ||
+            (!empty($porte) && str_contains($publico, $porte))
+        ) {
+            $score += 10;
+        }
+
+        // Bônus por abrangência regional ou agência do mesmo estado (+8 pontos)
+        $uf = strtoupper(trim($startup->estado ?? ''));
+        $fonte = strtoupper($edital->fonte ?? '');
+        if ($fonte === 'FINEP' || ($uf === 'SC' && $fonte === 'FAPESC') || ($uf === 'SP' && $fonte === 'FAPESP') || ($uf === 'MG' && $fonte === 'FAPEMIG') || ($uf === 'RJ' && $fonte === 'FAPERJ') || ($uf === 'RS' && $fonte === 'FAPERGS') || ($uf === 'GO' && $fonte === 'FAPEG') || ($uf === 'DF' && $fonte === 'FAPDF') || ($uf === 'MT' && $fonte === 'FAPEMAT')) {
+            $score += 8;
+        }
+
+        // Bônus por orçamento explícito (+5 pontos)
+        if ($edital->max_budget > 0) {
+            $score += 5;
+        }
+
+        // Se o edital já estava encerrado no passado, reduz levemente a prioridade frente aos abertos
+        if (!empty($edital->deadline)) {
+            try {
+                if (\Carbon\Carbon::parse($edital->deadline)->isPast()) {
+                    $score = max(35, $score - 15);
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        return min(98, max(35, $score));
+    }
+
+    /**
      * RF-11: Alterna o estado de favorito de um edital
      * POST /api/editais/{id}/favoritar
      */
@@ -164,77 +258,5 @@ class EditalController extends Controller
     {
         $request->merge(['apenas_favoritos' => 1]);
         return $this->index($request);
-    }
-
-    /**
-     * Calcula o percentual de compatibilidade (Match) em PHP com custo zero de IA.
-     */
-    private function calcularScoreMatch(Edital $edital, ?Startup $startup): int
-    {
-        if (!empty($edital->ai_match) && (int) $edital->ai_match > 0) {
-            return min(99, max(1, (int) $edital->ai_match));
-        }
-
-        if (!$startup) {
-            return 0;
-        }
-
-        $score = 42;
-
-        // 1. Aderência por palavras-chave de nicho e pitch da startup vs título/objetivo do edital
-        $textoEdital = mb_strtolower(trim(
-            ($edital->title ?? '') . ' ' .
-            ($edital->objetivo ?? '') . ' ' .
-            ($edital->ai_nicho ?? '') . ' ' .
-            ($edital->nicho ?? '') . ' ' .
-            ($edital->conteudo_completo ?? '')
-        ));
-
-        $textoStartup = mb_strtolower(trim(($startup->nicho_atuacao ?? '') . ' ' . ($startup->pitch ?? '')));
-        $palavras = preg_split('/[\s,;.\-\/()]+/u', $textoStartup, -1, PREG_SPLIT_NO_EMPTY);
-        $stopWords = ['para', 'com', 'como', 'uma', 'uns', 'das', 'dos', 'nos', 'nas', 'por', 'que', 'mais', 'sobre', 'entre', 'empresa', 'startup'];
-
-        $acertos = 0;
-        $verificadas = [];
-        foreach ($palavras as $palavra) {
-            if (mb_strlen($palavra) < 4 || in_array($palavra, $stopWords, true) || isset($verificadas[$palavra])) {
-                continue;
-            }
-            $verificadas[$palavra] = true;
-            if (str_contains($textoEdital, $palavra)) {
-                $acertos++;
-                if ($acertos >= 6) {
-                    break;
-                }
-            }
-        }
-        $score += min(32, $acertos * 6);
-
-        // 2. Porte empresarial vs público-alvo do edital
-        $publico = mb_strtolower($edital->publico ?? '');
-        $porte = mb_strtolower($startup->porte ?? '');
-        if (
-            str_contains($publico, 'startup') ||
-            str_contains($publico, 'empresa') ||
-            (!empty($porte) && str_contains($publico, $porte))
-        ) {
-            $score += 12;
-        } elseif (str_contains($publico, 'micro') || str_contains($publico, 'pequena') || str_contains($publico, 'mei')) {
-            $score += 10;
-        }
-
-        // 3. Região / Estado
-        $regiao = mb_strtolower($edital->regiao ?? '');
-        $estado = mb_strtolower($startup->estado ?? '');
-        if (str_contains($regiao, 'nacional') || (!empty($estado) && str_contains($regiao, $estado))) {
-            $score += 8;
-        }
-
-        // 4. Teto orçamentário definido
-        if (!empty($edital->max_budget) && $edital->max_budget > 0) {
-            $score += 6;
-        }
-
-        return min(96, max(35, $score));
     }
 }

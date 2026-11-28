@@ -95,6 +95,32 @@ body.is-capacitor .link-download-app-header {
     display: none !important;
 }
 
+/* Espaçamento seguro do topo e rodapé no APK Android (Status Bar / Notch / Navigation Bar) */
+body.is-capacitor .top-navbar,
+body.is-capacitor .admin-header {
+    padding-top: max(54px, calc(var(--safe-area-top) + 24px)) !important;
+}
+
+body.is-capacitor .sidebar {
+    padding-top: max(56px, calc(var(--safe-area-top) + 26px)) !important;
+    padding-bottom: max(68px, calc(var(--safe-area-bottom) + 48px)) !important;
+}
+
+body.is-capacitor .detail-panel {
+    padding-top: max(54px, calc(var(--safe-area-top) + 24px)) !important;
+    padding-bottom: max(72px, calc(var(--safe-area-bottom) + 52px)) !important;
+}
+
+body.is-capacitor .main-content,
+body.is-capacitor .admin-main-wrapper {
+    padding-bottom: max(72px, calc(var(--safe-area-bottom) + 52px)) !important;
+}
+
+body.is-capacitor:not(:has(.top-navbar)):not(:has(.admin-header)):not(:has(.topbar-institucional)) {
+    padding-top: max(54px, calc(var(--safe-area-top) + 24px)) !important;
+    padding-bottom: max(72px, calc(var(--safe-area-bottom) + 52px)) !important;
+}
+
 .card-mobile-actions,
 .btn-fechar-detalhes-mobile {
     display: none;
